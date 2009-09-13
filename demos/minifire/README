@@ -1,0 +1,19 @@
+Minifire (c) TyRaNiD 2k6
+
+You know you're bored when...
+
+Here is a mini fire demo for the PSP, size (minus EBOOT header) is 671 bytes, it could be smaller
+but I couldn't be bothered. This is to show that pure asm coding isn't totally dead and size 
+coding is where the real action is.
+
+Provided with source, as I use straight syscalls then you need to build it different for v1 and
+v1.5, just type make BUILD_V1=1 for v1 version. Of course the executable you end up with is 
+slightly larger than my mini version even though it is the same code. I'll leave that as an 
+excercise for the reader on how to make it smaller ;) If I had a better binary assembler I would
+have put it out in one package.
+
+Oh and while it is running hit any button to exit back to the VSH.
+
+Props to the usual group, you know who you are.
+
+Let the size coding begin.

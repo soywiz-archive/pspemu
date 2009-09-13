@@ -1,0 +1,119 @@
+@ABS.S
+	float f = FS; sFD = (f < 0) ? -f : f;
+
+@ADD.S
+	sFD = FS + FT;
+
+@BC1F
+	branch(!regs.CC);
+
+@BC1FL
+	branchl(!regs.CC);
+
+@BC1T
+	branch(regs.CC);
+
+@BC1TL
+	branchl(regs.CC);
+
+@C.F.S
+	regs.CC = false;
+
+@C.UN.S
+	regs.CC = (isnan(FS) ||  isnan(FT));
+
+@C.EQ.S
+	regs.CC = (FS == FT);
+
+@C.UEQ.S
+	 regs.CC = (FS != FT);
+
+@C.OLT.S
+	// Unimplemented
+
+@C.ULT.S
+	// Unimplemented
+
+@C.OLE.S
+	// Unimplemented
+
+@C.ULE.S
+	// Unimplemented
+
+@C.SF.S
+	// Unimplemented
+
+@C.NGLE.S
+	// Unimplemented
+
+@C.SEQ.S
+	// Unimplemented
+
+@C.NGL.S
+	// Unimplemented
+
+@C.LT.S
+	regs.CC = (FS <  FT); if (QNAN) regs.CC = !regs.CC;
+
+@C.NGE.S
+	// Unimplemented
+
+@C.LE.S
+	regs.CC = (FS <= FT); if (QNAN) regs.CC = !regs.CC;
+
+@C.NGT.S
+	// Unimplemented
+
+@CEIL.W.S
+	// Unimplemented
+
+@CFC1
+	sRT = regs.CC;
+	
+@CTC1
+	regs.CC =  RT;
+	
+@CVT.S.W
+	CVT_S_W();
+
+@CVT.W.S
+	// Unimplemented
+
+@DIV.S
+	sFD = FS / FT;
+
+@FLOOR.W.S
+	// Unimplemented
+
+@LWC1
+	sFT = I_F(mem.read4(RS + IMM));
+
+@MFC1
+	sRT = F_I(FS);
+
+@MOV.S
+	sFD = FS;
+
+@MTC1
+	sFS = I_F(RT);
+
+@MUL.S
+	sFD = FS * FT;
+
+@NEG.S
+	sFD = -FS;
+
+@ROUND.W.S
+	// Unimplemented
+
+@SQRT.S
+	sFD = sqrt(FS);
+
+@SUB.S
+	sFD = FS - FT;
+	
+@SWC1
+	mem.write4(RS + IMM, F_I(FT));
+
+@TRUNC.W.S
+	TRUNC_W_S();

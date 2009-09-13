@@ -1,0 +1,6 @@
+101 ICON DISCARDABLE "res/psp.ico"
+libdoc RCDATA DISCARDABLE "libdoc/psplibdoc.lst"
+gpu_vert RCDATA DISCARDABLE "src/core/gpu.vert"
+gpu_frag RCDATA DISCARDABLE "src/core/gpu.frag"
+//about_rtf RCDATA DISCARDABLE "res/about.rtf"
+//about_txt RCDATA DISCARDABLE "res/about.txt"

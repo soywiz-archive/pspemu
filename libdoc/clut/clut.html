@@ -1,0 +1,325 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head>
+
+
+<meta name="Author" content="Eskil Steenberg">
+<meta name="Keywords" content="love verse colaboration modeling rendering OpenGL networked pipeline games modeling shaders 3d engine" lang="en">
+<meta name="Description" content="Love Quel solaar Loq Airou Nill Salentinn co on">
+<meta name="Generator" content="My Creative Mind v 0.2">
+<meta name="Resource-Type" content="document">
+<meta name="Content-Type" content="text/html, charset=iso-8859-1"><title>Clut Technology.txt</title></head><body class="Main" bgcolor="#000000" link="#cccccc" text="#000000" vlink="#999999">
+<br><br><br><br><br><br><br><br><br><center>
+<table border="0" cellpadding="0" cellspacing="0" cols="2">
+<tbody><tr><td background="clut_files/clut_backdropp.png" valign="top" width="936">
+<center>
+<table border="0" cellpadding="0" cellspacing="0" cols="2" width="85%"><tbody><tr><td valign="top" width="95%"><center><nobr>
+<a href="http://www.quelsolaar.com/technology/index.html">About</a> | 
+<a href="http://www.quelsolaar.com/technology/enough.html">Enough</a> | 
+<a href="http://www.quelsolaar.com/technology/betray.html">Betray</a> | 
+<a href="http://www.quelsolaar.com/technology/seduce.html">Seduce</a> | 
+<a href="http://www.quelsolaar.com/technology/persuade.html">Persuade</a> | 
+Clut | 
+<a href="http://www.quelsolaar.com/technology/reserch.html">Reserch</a> | 
+<a href="http://www.quelsolaar.com/technology/download.html">Download</a></nobr>
+</center></td><td><nobr>
+<a href="http://www.quelsolaar.com/love/index.html"><img src="clut_files/micro_love.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/quel_solaar/index.html"><img src="clut_files/micro_quel_solaar.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/loq_airou/index.html"><img src="clut_files/micro_loq_airou.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/co_on/index.html"><img src="clut_files/micro_co_on.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/nil_salentinn/index.html"><img src="clut_files/micro_nil_salentinn.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/verse/index.html"><img src="clut_files/micro_verse.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/technology/index.html"><img src="clut_files/micro_technology.png" border="0"></a>
+<img src="clut_files/micro_space.png" border="0">
+<a href="http://www.quelsolaar.com/files/index.html"><img src="clut_files/micro_files.png" border="0"></a>
+</nobr></td></tr></tbody></table>
+
+<table background="clut_files/netscape_sucks.htm" border="0" cellpadding="0" cellspacing="0" cols="2" width="95%">
+<tbody><tr><td width="55%">
+</td><td valign="top" width="45%">
+<p>
+Introduction.
+</p><p>
+Today varius techniques are used to modefy colors in digital images.
+Thes techniques are used to calibrate images between different mediums
+such as film stock, digital files and varius display equipment such
+projectors monitors and displays, or aqesition equipment such as CCDs,
+Telecine machines and film scaners. By applying corrections the images
+can retain their look betwean the different mediums. But they also make
+it possible to simulate specific input or prosess, such as a specific
+film stock or film prosses. Going even further one can create new
+"looks" where the colorist can design a custom artistic feel by
+modifying the colors of an image.
+</p><p>All color are defined in a color space, usually they are 3
+dimentional but they dont have to be. There are multiple color spaces
+such as XYZ, LAB, HSV but the most common one is RGB. RGB is comprised
+of three color Red, Green And Blue.
+</p>
+</td></tr>
+</tbody></table>
+</center></td><td bgcolor="#000000" width="2">
+<img src="clut_files/black_line.jpg" border="0"><br>
+</td></tr>
+<tr><td bgcolor="#333333"><center>
+<table background="clut_files/netscape_sucks.htm" border="0" cellpadding="0" cellspacing="0" cols="1" width="536">
+<tbody><tr><td valign="top">
+<font color="#999999" size="3">
+</font><p>
+<font color="#999999" size="3">Any color correection can be expressed
+as a Color Look Up Table or CLUT (some times written as "Color LUT").
+This a 3D dimentional table where all colors are represented in color
+space. For each color in the color look up table there is a destination
+color value that correspondd to what the particulat color becomes when
+it is corrected using the CLUT. Thees tables are by nature
+3-Dimensional (Red Green and Blue) and therefore special file formats
+are used to store them. Hald CLUTs however have been converted to a 2D
+space and since tables store colors the CLUT can be be saved as a
+image, in any non destructive image format.
+</font></p>
+<center>
+<font color="#999999" size="3"><img src="clut_files/Hald_CLUT_view.png" border="0"><br>
+</font></center>
+
+<font color="#999999" size="3"><font color="#ffffff" size="3"><b>
++ Concept:
+</b></font><font color="#999999" size="3">
+</font></font><p>
+<font color="#999999" size="3"><font color="#999999" size="3">A Hald
+CLUT is an image that has a specific color patter on it. In this
+pattern all colors in color space are represented. A application that
+uses the HALD CLUT image to color correct a image, takes a source image
+color and looks it up in the color pattern of the HALD CLUT, and the
+color it finds in that place is the corrected color that should replace
+the source color in the destination image. If the color doesnt exist in
+the CLUT one can look up several colors and interpolate betwean them.
+</font></font></p><p>
+<font color="#999999" size="3"><font color="#999999" size="3">This simple prosediure has some very elegant propertys:
+
+<li><b>You can store any color correction.</b></li>
+<li><b>Suported Buy multiple applications.</b></li>
+<li><b>By use of interpolation to save size and presission.</b></li>
+<li><b>Hardware suported.</b></li>
+<li><b>You can have multiple sizes of CLUTs.</b></li>
+<li><b>Uses file formats that are well known and documented.</b></li>
+
+</font></font></p>
+<center>
+<font color="#999999" size="3"><font color="#999999" size="3"><a href="http://www.quelsolaar.com/technology/Hald_CLUT_Identity.png"><img src="clut_files/example1.png" border="1"></a><br>
+<font color="#ffffff" size="3">A identity Hald Clut Click for full size</font><br>
+</font></font></center>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#ffffff" size="3"><b>
++ Creating Hald Cluts:
+</b></font><font color="#999999" size="3">
+</font></font></font><p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3">In
+order to Create a CLUT you can either generate it using a custom
+program, or you can take an identity clut and color correct it in order
+to generate color correction CLUT. An identity CLUT is a CLUT that
+doesnt affect the image it is applyed to.
+</font></font></font></p>
+<p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3">The
+great thing about Hald CLUTs is that you can use any color correcting
+appliaction to create them. For example if you start up an application
+like photoshop and use it to color correct an image, you can take the
+same color correction settings and correct an identity CLUT. The
+correction then gets embedded on to that CLUT. The CLUT can then be
+used to correct any image.
+</font></font></font></p>
+<table border="0" cellpadding="0" cellspacing="0" cols="2" width="50%">
+<tbody><tr><td valign="top">
+<img src="clut_files/example2.png" border="0"><br>
+<font color="#ffffff" size="3">Original image</font>
+</td><td valign="top">
+<img src="clut_files/example1.png" border="0"><br>
+<font color="#ffffff" size="3">Identity Hald CLUT</font>
+</td></tr><tr><td valign="top">
+<img src="clut_files/example3.png" border="0"><br>
+<font color="#ffffff" size="3">Corrected Image</font>
+</td><td valign="top">
+<img src="clut_files/example4.png" border="0"><br>
+<font color="#ffffff" size="3">Same correctinon applyed to CLUT</font>
+</td></tr></tbody></table>
+
+<center>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><img src="clut_files/example3.png" border="0"><br>
+<font color="#ffffff" size="3">Original image corrected using corrected CLUT, Identical to corrected image</font><br>
+<img src="clut_files/example5.png" border="0"><br>
+<font color="#ffffff" size="3">Other image corrected using the same CLUT</font><br>
+</font></font></font></center>
+
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#ffffff" size="3"><b>
++ Manipulating CLUTS:
+</b></font><font color="#999999" size="3">
+</font></font></font></font><p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3">Since
+cluts are simple images you can use any image manipulation application
+to presses them. For instance you can blend betwean two different cluts
+in order to create a color correction that avrages two different looks.
+</font></font></font></font></p>
+
+<table border="0" cellpadding="0" cellspacing="0" cols="2" width="50%">
+<tbody><tr><td valign="top">
+<img src="clut_files/example1.png" border="0"><br>
+<font color="#ffffff" size="3">Identity Hald CLUT</font>
+</td><td valign="top">
+<img src="clut_files/example2.png" border="0"><br>
+<font color="#ffffff" size="3">Image corrected using identity clut is unchanged</font>
+</td></tr>
+<tr><td valign="top">
+<img src="clut_files/example6.png" border="0"><br>
+<font color="#ffffff" size="3">Nonocrome CLUT</font>
+</td><td valign="top">
+<img src="clut_files/example7.png" border="0"><br>
+<font color="#ffffff" size="3">Monocrome CLUT applyed to image</font>
+</td></tr>
+<tr><td valign="top">
+<img src="clut_files/example4.png" border="0"><br>
+<font color="#ffffff" size="3">CLUT created by avrageing Monocrome and Identity CLUT</font>
+</td><td valign="top">
+<img src="clut_files/example3.png" border="0"><br>
+<font color="#ffffff" size="3">CLUT applyed to image creates a desaturated effect</font>
+</td></tr></tbody></table>
+
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3">
+<p>If you have several CLUT that you would like to apply, you can merge
+CLUTSs simply by correcting a CLUT with an other CLUT. The new CLUT
+will then contain both corrections and any image corrected using this
+CLUT will get the same treatment as if corrected by the two original
+CLUTs.
+</p></font>
+<font color="#ffffff" size="3"><b>
++ Programming CLUTs:
+</b></font><font color="#999999" size="3">
+<p>It is also very easy to program you own color corrections to create
+custom functions. Often it is very use full to programm a custom efect
+and then tweek the correction in a color correction application to get
+the special look you are after. Included in the files are varius
+example of programs that creats custom color corrections. This sample
+code can easely be modifyed to create you own looks.
+</p></font>
+<font color="#ffffff" size="3"><b>
++ File Formats:
+</b></font><font color="#999999" size="3">
+<p>Any Image format or bit deapth can be used to store But a Hald CLUT
+should never be stored using a destructive image format such as JPEG,
+since it can create artifacts. Thees artifacts may be very severe since
+the JPEG algorithem is not designed to compress CLUTs. How ever there
+are other efective ways to compress a Hald CLUT. Using a 4096 by 4096
+identity CLUT It will take up roughly 50Mb in a raw file format such as
+Targa, Compressed using ZIP it will come down ot 36 MB, but RAR
+compression will render a file size of only 124Kb. With the PNG file
+format you can also get drastic compression down to 131Kb. We strongly
+recomend the PNG file format if size is a factor. Other file formats
+that may be useful are RGBe and OpenEXR for High Dynamic Range use.
+</p></font>
+<font color="#ffffff" size="3"><b>
++ Image Levels:
+</b></font><font color="#999999" size="3">
+</font></font></font></font></font><p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3">A
+color look uptable can have different dencity. Most often you dont need
+to represent every possible color in color space but instead you can
+interpolate the color with out any vissable artifacts. Therefore the
+Hald CLUT suport multiple different sizes. The larger the image the
+larger the presision, and the more memory is used. A clut can therfor
+be compute in a numbre of levels from 2 and up. Any implementation that
+suports Hald Cluts must be able to handle at least up to level 16. To
+compute the size of a clut of a specific Level one takes the level to
+the power of three. All Hald Cluts must always be square. In order to
+find out what level a clut has been encoded to you simply take the size
+of the image and compute the cubicrot. In order to comput how many
+colors for each component can be stored in the CLUT you take the level
+to the power of two. Using level 4 (64 * 64 size) or 8 (512 * 512
+size)is recomended using 8 bit per chanel or lower images. Level 16 is
+recomended for advanced 8 corrections and 10, 12 and 16 bit images. </font></font></font></font></font></p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#ffffff" size="3"><b>
++ Encoding:
+</b></font><font color="#999999" size="3">
+<p>
+The concoding is very simple. The encoding encodes to a continius
+buffer as if the buffer was 3 Dimentional. where width is red, height
+is green and depth is blue. The first pixel is in the upper left,
+closer corner starting at black and the last pixel is in the lower
+right deep corner. (this means that in terms of scanlines of a tv or
+monitor, the image is right, where as in a cordinate system, or OpenGL
+Texture it is upside down)
+</p>
+<p>
+Here is a typical example of a implementation on a identity CLUT generator.
+</p></font>
+<font color="#ffffff" size="3"><code><br>
+cube_size = level * level;<br>
+image_size = level * level * level;<br>
+data = p = malloc((sizeof *data) * image_size * image_size * 3);<br>
+for(blue = 0; blue &lt; cube_size; blue++)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; for(green = 0; green &lt; cube_size; green++)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for(red = 0; red &lt; cube_size; red++)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *p++ = (float)red / (float)(cube_size - 1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *p++ = (float)green / (float)(cube_size - 1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *p++ = (float)blue / (float)(cube_size - 1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+}<br>
+</code></font>
+<font color="#ffffff" size="3"><b>
++ Hardware Correction:
+</b></font><font color="#999999" size="3">
+</font></font></font></font></font><p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3">Modern
+Graphics hardware is very capable of computing this color correction in
+hardware. The CLUT is then encoded in to a 3D texture that is applyed
+to a image in a shader program. Using OpenGLs Shading Language the
+pixel shader would look like this:
+<font color="#ffffff" size="3"><code><br><br>
+/* Fragment shader for color correction */<br>
+uniform sampler2D image;<br>
+uniform sampler3D clut;<br>
+<br>
+void main()<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; vec4 color;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* reading out a pixel */<br>
+&nbsp;&nbsp;&nbsp;&nbsp; color = texture2D(image, gl_TexCoord[0].st);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* corecting the color using CLUT */<br>
+&nbsp;&nbsp;&nbsp;&nbsp; color = texture3D(clut, color.rgb);<br>
+&nbsp;&nbsp;&nbsp;&nbsp; gl_FragColor = color;<br>
+}<br><br>
+</code></font>Make sure the the 3D texture is set to LINEAR
+interpolation. The image to be corrected should if kossible use NEAREST
+interpolation since he algorithem will otherwhise correct avrages
+between pixels that may result in border artifacts. Note: some graphics
+cards claims to suport 3D textures in porder to be OpenGL 1.2 or late
+compatible, but does not in fact have 3D texturing in hardware. Thees
+card will run sades using 3D textures in software resulting in
+adramatic reduction in performance. The textures need to be set to to
+border clamp. And note remember that a clamped edge will not properly
+extrapolate the correction for HDR pixels out of range for the CLUT.
+Also remember to turn the CLUT upside down.
+</font></font></font></font></font></p>
+<font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#999999" size="3"><font color="#ffffff" size="3"><b>
++ Download:
+</b></font><font color="#999999" size="3">
+<p>I have some sample Hald CLUTs and some sample applications for
+creating identity CLUTs, and correcting images with them. The archive
+also contains source code and a gallery of Hald CLUTs. find the files <a href="http://www.quelsolaar.com/files/index.html"><font color="#ffffff" size="3">here</font></a>.
+</p>
+</font>
+
+</font></font></font></font></font></td></tr>
+</tbody></table>
+</center>
+
+
+</td></tr>
+</tbody></table>
+</center>
+</body></html>

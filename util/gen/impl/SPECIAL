@@ -1,0 +1,125 @@
+@SRL // Shift Word Right Logical
+	sRD = SRL(RT, POS);
+
+@ROTR // Rotate Word Right
+	sRD = ROTR(RT, POS);
+
+@ROTRV // Rotate Word Right Variable
+	sRD = ROTR(RT, RS);
+
+@SRLV // Shift Word Right Logical Variable
+	sRD = SRL(RT, RS);
+	
+@SLL // Shift Word Left Logical
+	sRD = SLL(RT, POS);
+
+@SLLV // Shift Word Left Logical Variable
+	sRD = SLL(RT, RS);
+
+@SRA // Shift Word Right Arithmetic
+	sRD = SRA(RT, POS);
+
+@SRAV // Shift Word Right Arithmetic Variable
+	sRD = SRA(RT, RS);
+
+@ADDU // ADD Unsigned
+	sRD = RSU + RTU;
+
+@SUB // SUBstract (Signed)	
+	sRD = RSU - RTU;
+
+@SUBU // SUBstract Unsigned
+	sRD = RSU - RTU;
+
+@SLTU // Set Less Than Unsigned	
+	sRD = RSU < RTU;
+
+@SLT  // Set Less Than (Signed)
+	//sRD = (cast(int)RSU < RT);
+	sRD = RS < RT;
+
+@SYSCALL // System call
+	sync_out(); bios.syscall(CODE); sync_in();
+
+@BREAK // Break
+	sync_out(); throw(new InterruptException("CPU BREAK"));
+
+@DBREAK // Debug Break
+	sync_out(); throw(new InterruptException("CPU DEBUG BREAK"));
+	
+@SYNC // Sync
+	// Unimplemented
+
+@MOVZ
+	// Copiamos el valor si RT es igual a 0
+	if (RT == 0) sRD = RS;
+
+@MOVN
+	// Copiamos el valor si RT es distinto de 0
+	if (RT != 0) sRD = RS;
+
+@MULT
+	MULT(RS, RT);
+	
+@MULTU
+	MULTU(RS, RT);
+	
+@DIV
+	DIV(RS, RT);
+	
+@DIVU
+	DIVU(RS, RT);
+
+@MFHI
+	sRD = regs.HI;
+	
+@MTHI
+	regs.HI =  RS;
+	
+@MFLO
+	sRD = regs.LO;
+	
+@MTLO
+	regs.LO =  RS;
+
+@CLZ
+	// Unimplemented
+
+@CLO
+	// Unimplemented
+	
+@ADD
+	sRD = RS + RT;
+
+@NEG
+	sRD = -RT;
+	
+@AND
+	sRD = RS & RT;
+	
+@OR
+	sRD = RS | RT;
+
+@XOR
+	sRD = RS ^ RT;
+
+@NOR	
+	sRD =  ~(RS | RT);
+
+@MAX
+	sRD = MAX(RS, RT);
+	
+@MIN
+	sRD = MIN(RS, RT);
+
+@MADD
+	MADD();
+
+@MADDU
+	// Unimplemented
+
+@MSUB
+	// Unimplemented
+
+@MSUBU
+	// Unimplemented

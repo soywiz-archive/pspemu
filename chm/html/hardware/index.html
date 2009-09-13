@@ -1,0 +1,74 @@
+<html>
+<head>
+	<title>PSP hardware</title>
+	<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<h1>PSP hardware</h1>
+<p><a href="http://wiki.ps2dev.org/psp:hardware_specifications" target="_blank">http://wiki.ps2dev.org/psp:hardware_specifications</a></p>
+<pre>
+CPU
+  * Allegrex CPU
+     o MIPS r4000 32-bit core 1-333mhz
+     o 16kib I-Cache & D-Cache
+        + 64-byte line length
+        + 2-way set associative, LRU
+     o No TLB
+     o 7-stage pipeline
+     o 32 32-bit registers
+     o FPU (COP1)
+        + 32-bit single precision
+        + 32 32-bit registers
+        + IEEE 754 compliant
+        + Sqrt (28 cycles), div(28 cycles), most others 1 cycle
+     o VFPU (COP2)
+        + Vector FPU “Macromode only”
+        + Designed for vector and matrix ops
+        + 128 32-bit registers
+           # Reconfigurable as scalar, vector or matrix
+           # IEEE 754 Single precision float
+        + Can also handle 32-bit int, 16-bit int, 8-bit int, half float
+        + vmmul.z vd, vs, vt - 4×4 matrix/vector multiply, 22 cycles
+
+  * Media Block CPU
+     o MIPS r4000-based core
+     o 2MB Embedded DRAM
+     o VME - Virtual Mobile Engine
+        + Reconfigurable processor to decode audio & video
+        + ATRAC3plus & MP3 for music
+           # ATRAC3plus & ADPCM for games but not MP3 due to licensing issues
+     o AVC H.264 engine
+        + MPEG-4 Hardware accelerator
+        + Up to 720x480x30fps
+           # Libraries support 480x272x29.97fps
+
+Bus
+  * Main bus shared by CPU and Graphics Engine
+  * CPU only has level-1 cache, recomend minimizing memory usage
+  * Cache miss ~70 cycles
+  * VRAM read ~44 cycles
+     o contention with GE
+  * Scratchpad read ~38 cycles
+
+Graphics
+  * Graphics Engine (GE)
+     o 2MB Embedded DRAM
+     o Supports Lighting, skinning (8 weights), morphing, subdivision, pixel operations
+     o Operates at bus speed (default 111mhz)
+     o 3.5GB/s Bus bandwidth
+     o 444 Mpixels/sec fill rate
+     o 23 Mploys/sec T&L
+
+Storage
+  * UMD
+     o UMD 1.8 GiB DISC
+
+Ports
+  * Serial-Port (RS-232)
+     o http://mc.pp.se/psp/phones.xhtml
+
+  * USB-Port
+</pre>
+
+</body>
+</html>

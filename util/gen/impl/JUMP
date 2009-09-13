@@ -1,0 +1,27 @@
+@J // Jump
+	jump(JUMP);
+	if (nPC == 0x_00000000) {
+		nPC = PC + 4;
+		sync_out();
+			uint callPC = PC - 4;
+			try {
+				bios.jump0(callPC);
+			} catch (Exception e) {
+				throw(new Exception(std.string.format("Kernel Exception 0x%08X - '%s' : %s", callPC, e.toString, bios.addInfo(callPC))));
+			}
+		sync_in();
+	}
+	
+@JAL // Jump And Link
+	callstack_push(nPC);
+	sRA = nPC + 4;
+	jump(JUMP);
+	
+@JALR // Jump And Link Register
+	callstack_push(nPC);
+	sRA = nPC + 4; // Se guarda la dirección de retorno
+	jump(RS);
+	
+@JR // Jump Register
+	jump(RS);
+	if (((OP >> 21) & 0x1F) == 31) callstack_pop();

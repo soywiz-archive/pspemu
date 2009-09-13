@@ -1,0 +1,20 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head></head>
+<body>
+
+<object type="text/site properties"><param name="FrameName" value="main"></object>
+
+<ul>
+	<li><object type="text/sitemap"><param name="Name" value="PSP Emulator"><param name="Local" value="html/index.html"></object><ul>
+		<li><object type="text/sitemap"><param name="Name" value="Controls"><param name="Local" value="html/controls.html"></object></li>
+		<li><object type="text/sitemap"><param name="Name" value="Debugger"><param name="Local" value="html/debugger.html"></object></li>
+	</ul></li>
+	<li><object type="text/sitemap"><param name="Name" value="PSP Hardware"><param name="Local" value="html/hardware/index.html"></object><ul>
+		<li><object type="text/sitemap"><param name="Name" value="Memory mapping"><param name="Local" value="html/hardware/memory.html"></object></li>
+		<li><object type="text/sitemap"><param name="Name" value="GE (Graphic Engine)"><param name="Local" value="html/hardware/ge.html"></object></li>
+	</ul></li>
+</ul>
+
+</body>
+</html>

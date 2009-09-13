@@ -1,0 +1,20 @@
+@MFIC
+	sRT = regs.IC;
+	
+@MTIC
+	regs.IC  = RT;
+
+@EXT
+	EXT();
+	
+@INS
+	INS();
+
+@SEB
+	sRD = SEB(RT);
+
+@SEH // TODO?
+	sRD = SEB(RT);
+
+@BITREV
+	sRD = REV4(RT);
