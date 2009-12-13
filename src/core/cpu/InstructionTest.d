@@ -5,37 +5,34 @@ import core.cpu.InstructionSwitch;
 import core.cpu.InstructionTable;
 
 uint[32] Registers;
-
 alias Registers R;
 
-void OP_ADD(OPCODE o) {
-	R[o.RD] = R[o.RS] + R[o.RT];
+void OP_ADD(Instruction i) {
+	R[i.RD] = R[i.RS] + R[i.RT];
 }
 
-void OP_ADDI(OPCODE o) {
-	R[o.RT] = R[o.RS] + o.IMM;
+void OP_ADDI(Instruction i) {
+	R[i.RT] = R[i.RS] + i.IMM;
 }
 
-void OP_UNK(OPCODE o) {
-	writefln("Unknown operator (%d)", o.v);
+void OP_UNK(Instruction i) {
+	writefln("Unknown opcode (0x%08X)", i.v);
 }
-
-// http://svn.ps2dev.org/filedetails.php?repname=psp&path=/trunk/prxtool/disasm.C&rev=0&sc=0
 
 //debug = GeneratedSwitch;
 
 debug (GeneratedSwitch) {
 	pragma(msg, "{{{");
-	pragma(msg, InstructionSwitch.genSwitch(PspInstructions));
+	pragma(msg, core.cpu.InstructionSwitch.genSwitch("OP_", PspInstructions));
 	pragma(msg, "}}}");
-	void execute(OPCODE o) { }
+	void execute(Instruction i) { }
 } else {
-	void execute(OPCODE o) {
+	void execute(Instruction i) {
 		mixin(core.cpu.InstructionSwitch.genSwitch("OP_", PspInstructions));
 	}
 }
 
 void main() {
-	execute(OPCODE(0x_00ffffff));
+	execute(Instruction(0x_00ffffff));
 	//mixin(Instruction.genSwitch(PspInstructions));
 }

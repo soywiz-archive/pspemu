@@ -2,7 +2,7 @@ module core.cpu.Instruction;
 
 import std.bitmanip;
 
-struct Instruction {
+struct InstructionDefinition {
 	string   name;
 	uint     opcode;
 	uint     mask;
@@ -15,7 +15,7 @@ struct Instruction {
 	Type     type;
 };
 
-struct OPCODE {
+struct Instruction {
 	union {
 		// Normal value.
 		uint v;
@@ -36,8 +36,7 @@ struct OPCODE {
 		)); }
 	}
 
-	// Length of OPCODE should be 4 bytes / 32 bits.
-	static assert (OPCODE.sizeof == 4);
+	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/ 32 bits.");
 
 	uint opCast() { return v; }
 }
