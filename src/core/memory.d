@@ -1,9 +1,9 @@
 module pspemu.core.memory;
 
+import std.stdio;
 import std.stream;
 import std.string;
 import std.ctype;
-import std.stdio;
 import std.metastrings;
 
 version = VERSION_CHECK_MEMORY;
@@ -178,11 +178,17 @@ class Memory : Stream {
 	mixin(readGen("8" ));
 	mixin(readGen("16"));
 	mixin(readGen("32"));
+
+	alias read8 opIndex;
+	//alias write8 opIndexAssign;
+	ubyte opIndexAssign(ubyte value, uint address) { write8(address, value); return read8(address); }
 	
 	mixin MemoryStreamTemplate;
 }
 
 unittest {
+	writefln("Unittesting: Memory...");
+
 	const int pos = Memory.frameBufferAddress;
 
 	scope memory = new Memory();
@@ -210,11 +216,14 @@ unittest {
 	// Check Slicing.
 	memory[pos + 4..pos + 8] = memory[pos + 0..pos + 4];
 	assert(memory[pos + 0..pos + 8] == cast(ubyte[])"HolaHola");
-	
-	memory.reset();
-}
 
-/*
-void main() {
+	// Check opIndex, opIndexAssign.
+	memory[pos] = 1U;
+	assert(memory[pos] == 1U);
+
+	// Reset memory should set all positions to 0.
+	memory.reset();
+	assert(memory[pos] == 0);
+
+	//static void main() { }
 }
-*/

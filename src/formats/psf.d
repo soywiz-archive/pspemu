@@ -58,7 +58,7 @@ class PSF {
 
 			switch (entry.type) {
 				case Entry.Type.Binary : value = cast(ubyte[])valueRaw; break;
-				case Entry.Type.String : value = cast(char[] )valueRaw; break;
+				case Entry.Type.String : value = cast(string)valueRaw; break;
 				case Entry.Type.Integer: value = *cast(uint *)valueRaw.ptr; break;
 			}
 
@@ -99,24 +99,25 @@ class PSF {
 }
 
 unittest {
-	const testPath = "../../demos";
+	writefln("Unittesting: formats/PSF...");
+
+	const testPath = "demos";
 	auto psf = new PSF(new BufferedFile(testPath ~ "/controller.sfo", FileMode.In));
 
 	assert(psf["BOOTABLE"].type == typeid(uint));
 	assert(psf["BOOTABLE"] == 1U);
 
-	assert(psf["CATEGORY"].type == typeid(char[]));
-	assert(psf["CATEGORY"] == cast(char[])"MG\0");
+	assert(psf["CATEGORY"].type == typeid(string));
+	assert(psf["CATEGORY"] == "MG\0");
 
 	assert(psf["REGION"].type == typeid(uint));
-	assert(psf["REGION"]   == cast(uint)32768);
+	assert(psf["REGION"]   == 32768U);
 
-	assert(psf["TITLE"].type == typeid(char[]));
-	assert(psf["TITLE"]    == cast(char[])"Basic controller sample");
+	assert(psf["TITLE"].type == typeid(string));
+	assert(psf["TITLE"]    == "Basic controller sample");
 
 	// No unexpected values.
-	auto list = ["BOOTABLE":0, "CATEGORY":1, "REGION":2, "TITLE":3];
-	foreach (key, value; psf) assert(key in list);
+	foreach (key, value; psf) assert(key in ["BOOTABLE":0, "CATEGORY":1, "REGION":2, "TITLE":3]);
 	
-	static void main() { }
+	//static void main() { }
 }

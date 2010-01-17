@@ -61,7 +61,9 @@ class PBP {
 }
 
 unittest {
-	const testPath = "../../demos";
+	writefln("Unittesting: formats/PBP...");
+
+	const testPath = "demos";
 	auto pbp = new PBP(new BufferedFile(testPath ~ "/controller.pbp", FileMode.In));
 
 	auto list = [
@@ -107,5 +109,5 @@ unittest {
 		assert(isfile("pbp-test/psp.data"));
 	}
 	
-	static void main() { }
+	//static void main() { }
 }

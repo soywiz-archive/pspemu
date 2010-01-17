@@ -1,6 +1,6 @@
-module core.cpu.InstructionTable;
+module pspemu.core.cpu.cpu_table;
 
-import core.cpu.Instruction;
+import pspemu.core.cpu.cpu_switch;
 
 alias InstructionDefinition array;
 
