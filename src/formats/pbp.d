@@ -1,57 +1,68 @@
 module pspemu.formats.pbp;
 
-import std.stdio, std.stream, std.string;
+import std.stdio, std.stream, std.string, std.file;
 
 class PBP {
-	static struct Header {
-		ubyte[4] pmagic   = ['P', 'B', 'P', 0];
+	static auto files = ["param.sfo", "icon0.png", "icon1.pmf", "pic0.png", "pic1.png", "snd0.at3", "psp.data", "psar.data"];
+
+	static protected struct Header {
+		ubyte[4] pmagic   = [0, 'P', 'B', 'P'];
 		ubyte[4] pversion = [0, 0, 1, 0];
 		uint [8] offsets;
 
 		// Check the size of the struct.
-		static assert(Header.sizeof == 4 + 4 + (4 * 8));
+		static assert(this.sizeof == 40);
+
+		void read(Stream stream) {
+			// Reads the header.
+			stream.readExact(&this, this.sizeof);
+
+			// Check header and version.
+			assert(pmagic   == this.init.pmagic  , "Not a valid PBP file.");
+			assert(pversion == this.init.pversion, "Unknown version for PBP file.");
+		}
 	}
 
 	Stream stream;
 	Header header;
 	Stream[string] slices;
 
-	this(Stream stream) {
-		this.stream = new SliceStream(stream, 0);
-		this.stream.readExact(&header, header.sizeof);
-		uint[] offsets = header.offsets;
-		offsets ~= cast(uint)stream.size;
-		foreach (n, name; ["param.sfo", "icon0.png", "icon1.pmf", "pic0.png", "pic1.png", "snd0.at3", "psp.data", "psar.data"]) {
+	this(Stream _stream) {
+		// Extracts a slice of the stream.
+		stream = new SliceStream(_stream, 0);
+
+		// Reads the header.
+		header.read(stream);
+
+		// Extract offsets and adds the end of the stream.
+		auto offsets = header.offsets ~ cast(uint)stream.size;
+
+		// Process all the files.
+		foreach (n, name; files) {
 			assert(offsets[n + 1] >= offsets[n], format("Invalid entry '%s' (0x%08X >= 0x%08X)", name, offsets[n + 1], offsets[n]));
-			if (offsets[n + 1] != offsets[n]) {
-				slices[name] = new SliceStream(stream, offsets[n], offsets[n + 1]);
-			}
+			if (offsets[n + 1] != offsets[n]) slices[name] = new SliceStream(stream, offsets[n], offsets[n + 1]);
 		}
 	}
 
-	Stream opIndex(string name) {
-		assert(has(name));
-		return new SliceStream(slices[name], 0);
-		//return slices[name];
-	}
-
 	bool has(string name) { return (name in slices) !is null; }
+	Stream opIndex(string name) { assert(has(name)); return new SliceStream(slices[name], 0); }
 
-	int opApply(int delegate(ref string, ref Stream) callback) {
-		int result = 0;
-		foreach (name, stream; slices) if ((result = callback(name, stream)) != 0) break;
-		return result;
-	}
+	int opApply(int delegate(ref string, ref Stream) callback) { int result = 0; foreach (name, stream; slices) if ((result = callback(name, stream)) != 0) break; return result; }
+	int opApply(int delegate(ref string) callback) { int result = 0; foreach (name; slices.keys) if ((result = callback(name)) != 0) break; return result; }
 
-	int opApply(int delegate(ref string) callback) {
-		int result = 0;
-		foreach (name; slices.keys) if ((result = callback(name)) != 0) break;
-		return result;
+	void unpackTo(string folder = "pbp", bool createPath = true) {
+		if (createPath) mkdirRecurse(folder);
+		foreach (name, stream; this) {
+			scope file = new std.stream.File(folder ~ "/" ~ name, FileMode.OutNew);
+			file.copyFrom(stream);
+			file.close();
+		}
 	}
 }
 
 unittest {
-	auto pbp = new PBP(new BufferedFile("../../demos/controller.pbp", FileMode.In));
+	const testPath = "../../demos";
+	auto pbp = new PBP(new BufferedFile(testPath ~ "/controller.pbp", FileMode.In));
 
 	auto list = [
 		"param.sfo" : true, // has
@@ -77,6 +88,24 @@ unittest {
 	// Check that reads the correct contents.
 	auto param_sfo = pbp["param.sfo"];
 	assert(param_sfo.toHash == 0x_B0AD9414);
+
+	// Stores a file to disk.
+	{
+		scope (exit) std.file.remove("test.elf");
+		scope file = new std.stream.File("test.elf", FileMode.OutNew);
+		file.copyFrom(pbp["psp.data" ]);
+		file.close();
+		assert(std.file.read("test.elf") == std.file.read(testPath ~ "/controller.elf"));
+	}
+
+	// Check the unpack.
+	{
+		scope (exit) rmdirRecurse("pbp-test");
+		pbp.unpackTo("pbp-test"); 
+		assert(isdir("pbp-test"));
+		assert(isfile("pbp-test/param.sfo"));
+		assert(isfile("pbp-test/psp.data"));
+	}
 	
 	static void main() { }
 }
