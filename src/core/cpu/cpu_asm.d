@@ -64,7 +64,7 @@ class AllegrexAssembler {
 					case "%d"  : instruction.RD  = getRegister; break;
 					case "%s"  : instruction.RS  = getRegister; break;
 					case "%t"  : instruction.RT  = getRegister; break;
-					case "%imm": instruction.IMM = cast(uint)getLiteral;  break;
+					case "%i"  : instruction.IMM = cast(uint)getLiteral;  break;
 				}
 			}
 
@@ -99,6 +99,8 @@ class AllegrexAssembler {
 		uint PC;
 		return assemble(PC, instruction, line);
 	}
+
+	alias assemble opCall;
 }
 
 unittest {
@@ -108,8 +110,8 @@ unittest {
 	uint PC; Instruction instruction;
 	
 	assembler.startSegment("code", 0x1000);
-	assembler.assemble(PC, instruction, "addi a0, zero, 1"); assert((PC == 0x1000) && (instruction.v == 0x_20040001));
-	assembler.assemble(PC, instruction, "addi a1, zero, 2"); assert((PC == 0x1004) && (instruction.v == 0x_20050002));
-	assembler.assemble(PC, instruction, "add v0, a0, a1  "); assert((PC == 0x1008) && (instruction.v == 0x_00851020));
-	assembler.assemble(PC, instruction, "addi v0, v0, -2 "); assert((PC == 0x100C) && (instruction.v == 0x_2042FFFE));
+	assembler(PC, instruction, "addi a0, zero, 1"); assert((PC == 0x1000) && (instruction.v == 0x_20040001));
+	assembler(PC, instruction, "addi a1, zero, 2"); assert((PC == 0x1004) && (instruction.v == 0x_20050002));
+	assembler(PC, instruction, "add v0, a0, a1  "); assert((PC == 0x1008) && (instruction.v == 0x_00851020));
+	assembler(PC, instruction, "addi v0, v0, -2 "); assert((PC == 0x100C) && (instruction.v == 0x_2042FFFE));
 }

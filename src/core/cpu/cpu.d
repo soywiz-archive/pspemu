@@ -49,10 +49,10 @@ unittest {
 	writefln("  (v0 = (7 + 11 - 5)) == 13");
 	{
 		assembler.startSegment("code", Memory.mainMemoryAddress);
-		assembler.assemble("addi a0, zero, 7");
-		assembler.assemble("addi a1, zero, 11");
-		assembler.assemble("add v0, a0, a1  ");
-		assembler.assemble("addi v0, v0, -5 ");
+		assembler("addi a0, zero, 7");
+		assembler("addi a1, zero, 11");
+		assembler("add v0, a0, a1  ");
+		assembler("addi v0, v0, -5 ");
 
 		cpu.registers.set_pc(Memory.mainMemoryAddress);
 		cpu.execute(4);

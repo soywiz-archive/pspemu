@@ -6,16 +6,57 @@ import std.stdio;
 
 alias InstructionDefinition array;
 
+// --------------------------
+//  Related implementations:
+// --------------------------
+// OLD:       http://pspemu.googlecode.com/svn/branches/old/util/gen/tables/cpu_table.php
+// PSPPlayer: 
+// Jpcsp:     http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/Allegrex.isa
+// mfzpsp:    
+// pcsp:      
+
 // http://svn.ps2dev.org/filedetails.php?repname=psp&path=/trunk/prxtool/disasm.C&rev=0&sc=0
+/* Format codes
+ * %d - Rd
+ * %t - Rt
+ * %s - Rs
+ * %i - 16bit signed immediate
+ * %I - 16bit unsigned immediate (always printed in hex)
+ * %o - 16bit signed offset (rs base)
+ * %O - 16bit signed offset (PC relative)
+ * %j - 26bit absolute offset
+ * %J - Register jump
+ * %a - SA
+ * %0 - Cop0 register
+ * %1 - Cop1 register
+ * %2? - Cop2 register (? is (s, d))
+ * %p - General cop (i.e. numbered) register
+ * %n? - ins/ext size, ? (e, i)
+ * %r - Debug register
+ * %k - Cache function
+ * %D - Fd
+ * %T - Ft
+ * %S - Fs
+ * %x? - Vt (? is (s/scalar, p/pair, t/triple, q/quad, m/matrix pair, n/matrix triple, o/matrix quad)
+ * %y? - Vs
+ * %z? - Vd
+ * %X? - Vo (? is (s, q))
+ * %Y - VFPU offset
+ * %Z? - VFPU condition code/name (? is (c, n))
+ * %v? - VFPU immediate, ? (3, 5, 8, k, i, h, r, p? (? is (0, 1, 2, 3, 4, 5, 6, 7)))
+ * %c - code (for break)
+ * %C - code (for syscall)
+ * %? - Indicates vmmul special exception
+ */
 const PspInstructions = [
 	// MIPS instructions
 	array("add"      , 0x00000020, 0xFC0007FF, "%d, %s, %t"),
-	array("addi"     , 0x20000000, 0xFC000000, "%t, %s, %imm"),
+	array("addi"     , 0x20000000, 0xFC000000, "%t, %s, %i"),
+	array("addiu"    , 0x24000000, 0xFC000000, "%t, %s, %i"),
+	array("addu"     , 0x00000021, 0xFC0007FF, "%d, %s, %t"),
+	array("and"      , 0x00000024, 0xFC0007FF, "%d, %s, %t"),
+	array("andi"     , 0x30000000, 0xFC000000, "%t, %s, %I"),
 	/*
-	array("addiu"    , 0x24000000, 0xFC000000),
-	array("addu"     , 0x00000021, 0xFC0007FF),
-	array("and"      , 0x00000024, 0xFC0007FF),
-	array("andi"     , 0x30000000, 0xFC000000),
 	array("beq"      , 0x10000000, 0xFC000000),
 	array("beql"     , 0x50000000, 0xFC000000),
 	array("bgez"     , 0x04010000, 0xFC1F0000),

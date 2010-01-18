@@ -39,6 +39,12 @@ struct Instruction {
 			int, "IMM", 16,
 			uint, "IMM_", 16
 		)); }
+
+		// Type Immediate Unsigned.
+		struct { mixin(bitfields!(
+			uint, "IMMU", 16,
+			uint, "IMMU_", 16
+		)); }
 	}
 
 	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/32 bits.");
