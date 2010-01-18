@@ -1,11 +1,12 @@
 module pspemu.core.cpu.instruction;
 
-import std.stdio, std.bitmanip;
+import std.stdio, std.string, std.bitmanip;
 
 struct Instruction {
 	union {
 		// Normal value.
 		uint v;
+		ubyte[4] vv;
 		
 		// Type Register.
 		struct { mixin(bitfields!(
@@ -26,10 +27,11 @@ struct Instruction {
 	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/32 bits.");
 
 	uint opCast() { return v; }
+	string toString() { return std.string.format("OP(%08X)", v); }
 }
 
 unittest {
-	writefln("Unittesting: Instruction...");
+	writefln("Unittesting: core.cpu.instruction...");
 	Instruction i;
 	//       ------ SSSSS TTTTT DDDDD -----------
 	i.v = 0b_111111_10001_11011_00100_11111111111;

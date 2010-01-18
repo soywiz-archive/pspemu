@@ -30,10 +30,15 @@ class Registers {
 		PC = nPC;
 		nPC += offset;
 	}
+
+	void set_pc(uint address) {
+		PC  = address;
+		nPC = PC + 4;
+	}
 }
 
 unittest {
-	writefln("Unittesting: Registers...");
+	writefln("Unittesting: core.cpu.registers...");
 	scope registers = new Registers();
 
 	// Set all the integer registers expect the 0.
@@ -51,9 +56,11 @@ unittest {
 		assert(registers[0] == 1);
 	}
 
-	// Check PC increment.
-	registers.PC  = 0x1000;
-	registers.nPC = 0x1004;
+	// Check PC set and increment.
+	registers.set_pc(0x1000);
+	assert(registers.PC == 0x1000);
+	assert(registers.nPC == 0x1004);
+
 	registers.advance_pc(4);
 	assert(registers.PC == 0x1004);
 	assert(registers.nPC == 0x1008);

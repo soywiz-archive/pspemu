@@ -64,14 +64,14 @@ static pure nothrow {
 		if (ilist.length == 0) {
 			// ""
 		} else if (ilist.length == 1) {
-			r = indent(level, prefix ~ process_name(ilist[0].name) ~ "(i); return;\n");
+			r = indent(level, prefix ~ process_name(ilist[0].name) ~ "(); return;\n");
 		} if (ilist.length > 1) {
 			InstructionDefinition[512] ci; int ci_len = ilist.length;
 
 			uint[] cvalues;
 
 			uint mask = getCommonMask(cast(InstructionDefinition[])ilist, _mask);
-			r ~= indent(level + 0, "switch (i.v & " ~ getString(mask) ~ ") {\n");
+			r ~= indent(level + 0, "switch (instruction.v & " ~ getString(mask) ~ ") {\n");
 			foreach (i; ilist) {
 				uint cvalue = i.opcode & mask; if (inArray(cvalues, cvalue)) continue;
 
@@ -85,7 +85,7 @@ static pure nothrow {
 				
 				cvalues ~= cvalue;
 			}
-			r ~= indent(level + 1, "default: " ~ prefix ~  "UNK(i); return;\n");
+			r ~= indent(level + 1, "default: " ~ prefix ~  "UNK(); return;\n");
 			r ~= indent(level + 0, "}\n");
 		}
 		return r;
@@ -94,7 +94,7 @@ static pure nothrow {
 }
 
 unittest {
-	writefln("Unittesting: CPU_SWITCH...");
+	writefln("Unittesting: core.cpu.cpu_switch...");
 
 	static const testList = [
 		InstructionDefinition("add"      , 0x00000020, 0xFC0007FF),
@@ -124,22 +124,22 @@ unittest {
 
 	// Check genSwitch function.
 	{
-		Instruction i;
+		Instruction instruction;
 
 		bool[string] called;
 
-		void PREFIX_ADD (Instruction i) { called["add"]  = true; }
-		void PREFIX_ADDI(Instruction i) { called["addi"] = true; }
-		void PREFIX_UNK (Instruction i) { called["unk"]  = true; }
+		void TEST_PREFIX_ADD () { called["add"]  = true; }
+		void TEST_PREFIX_ADDI() { called["addi"] = true; }
+		void TEST_PREFIX_UNK () { called["unk"]  = true; }
 
-		void EXECUTE() { mixin(genSwitch(testList[0..2], "PREFIX_")); }
+		void EXECUTE() { mixin(genSwitch(testList[0..2], "TEST_PREFIX_")); }
 
-		i.v = 0x_00000020; EXECUTE();
-		i.v = 0x_20000000; EXECUTE();
-		i.v = 0x_30000020; EXECUTE();
+		instruction.v = 0x_00000020; EXECUTE(); // ADD
+		instruction.v = 0x_20000000; EXECUTE(); // ADDI
+		instruction.v = 0x_30000020; EXECUTE(); // UNK
 
-		assert("add" in called);
+		assert("add"  in called);
 		assert("addi" in called);
-		assert("unk" in called);
+		assert("unk"  in called);
 	}
 }

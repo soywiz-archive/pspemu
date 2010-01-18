@@ -187,7 +187,7 @@ class Memory : Stream {
 }
 
 unittest {
-	writefln("Unittesting: Memory...");
+	writefln("Unittesting: core.memory...");
 
 	const int pos = Memory.frameBufferAddress;
 

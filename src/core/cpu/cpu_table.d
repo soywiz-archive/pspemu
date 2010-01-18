@@ -2,13 +2,15 @@ module pspemu.core.cpu.cpu_table;
 
 import pspemu.core.cpu.cpu_switch;
 
+import std.stdio;
+
 alias InstructionDefinition array;
 
 // http://svn.ps2dev.org/filedetails.php?repname=psp&path=/trunk/prxtool/disasm.C&rev=0&sc=0
 const PspInstructions = [
 	// MIPS instructions
-	array("add"      , 0x00000020, 0xFC0007FF),
-	array("addi"     , 0x20000000, 0xFC000000),
+	array("add"      , 0x00000020, 0xFC0007FF, "%d, %s, %t"),
+	array("addi"     , 0x20000000, 0xFC000000, "%t, %s, %i"),
 	/*
 	array("addiu"    , 0x24000000, 0xFC000000),
 	array("addu"     , 0x00000021, 0xFC0007FF),
@@ -151,3 +153,7 @@ const PspInstructions = [
 	array("trunc.w.s", 0x4600000D, 0xFFFF003F),
 	*/
 ];
+
+unittest {
+	writefln("Unittesting: core.cpu.cpu_table...");
+}

@@ -19,7 +19,7 @@ template TemplateCpu_ALU() {
 }
 
 unittest {
-	writefln("Unittesting: CPU.ALU...");
+	writefln("Unittesting: core.cpu.cpu_alu...");
 	scope memory    = new Memory;
 	scope registers = new Registers;
 	Instruction instruction = void;
