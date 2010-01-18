@@ -56,8 +56,8 @@ const PspInstructions = [
 	array("addu"     , 0x00000021, 0xFC0007FF, "%d, %s, %t"),
 	array("and"      , 0x00000024, 0xFC0007FF, "%d, %s, %t"),
 	array("andi"     , 0x30000000, 0xFC000000, "%t, %s, %I"),
+	array("beq"      , 0x10000000, 0xFC000000, "%s, %t, %O"),
 	/*
-	array("beq"      , 0x10000000, 0xFC000000),
 	array("beql"     , 0x50000000, 0xFC000000),
 	array("bgez"     , 0x04010000, 0xFC1F0000),
 	array("bgezal"   , 0x04110000, 0xFC1F0000),

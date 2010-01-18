@@ -3,7 +3,8 @@ module pspemu.core.cpu.cpu;
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.cpu_table;
 import pspemu.core.cpu.cpu_switch;
-import pspemu.core.cpu.cpu_alu;
+import pspemu.core.cpu.cpu_ops_alu;
+import pspemu.core.cpu.cpu_ops_branch;
 import pspemu.core.cpu.cpu_asm;
 import pspemu.core.cpu.instruction;
 import pspemu.core.memory;
@@ -25,6 +26,7 @@ class CPU {
 
 		// Operations.
 		mixin TemplateCpu_ALU;
+		mixin TemplateCpu_BRANCH;
 		void OP_UNK() { writefln("Unknown operation %s", instruction); }
 
 		while (count--) {

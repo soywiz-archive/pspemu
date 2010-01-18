@@ -45,6 +45,8 @@ struct Instruction {
 			uint, "IMMU", 16,
 			uint, "IMMU_", 16
 		)); }
+
+		alias IMM OFFSET;
 	}
 
 	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/32 bits.");

@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_alu;
+module pspemu.core.cpu.cpu_ops_alu;
 
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.instruction;
@@ -51,7 +51,7 @@ template TemplateCpu_ALU() {
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.cpu_alu...");
+	writefln("Unittesting: core.cpu.cpu_ops_alu...");
 	scope memory    = new Memory;
 	scope registers = new Registers;
 	Instruction instruction = void;
