@@ -23,3 +23,6 @@ As for today I know there are two active and very promising psp emulators:
 I plan to continue developing my emulator.
 I think D is a great language for creating an emulator and any kind of application.
 Like I said some time ago I don't have too much spare time, but I like toying with D and reverse enginering.
+
+All the libs/sources i'm using have their own license.
+All my code is released as (WTFPL - Do What The Fuck You Want To Public License) http://sam.zoy.org/wtfpl/

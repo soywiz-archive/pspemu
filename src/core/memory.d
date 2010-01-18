@@ -1,13 +1,22 @@
 module pspemu.core.memory;
 
+// --------------------------
+//  Related implementations:
+// --------------------------
+// OLD:       http://pspemu.googlecode.com/svn/branches/old/src/core/memory.d
+// PSPPlayer: http://pspplayer.googlecode.com/svn/trunk/Noxa.Emulation.Psp.Cpu.R4000Ultra/R4000Memory.cpp
+// Jpcsp:     http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/memory/StandardMemory.java
+// mfzpsp:    http://mfzpsp.googlecode.com/svn/c/mfzpsp/src/core/memory.c
+// pcsp:      http://pcsp.googlecode.com/svn/trunk/pcsp-dbg/src/memory.h
+
 import std.stdio;
 import std.stream;
 import std.string;
 import std.ctype;
 import std.metastrings;
 
-version = VERSION_CHECK_MEMORY;
-version = VERSION_CHECK_ALIGNMENT;
+version = VERSION_CHECK_MEMORY;    // Check more memory positions.
+version = VERSION_CHECK_ALIGNMENT; // Check that read and writes are aligned.
 
 // +----------------------------------+
 // | Adress                           |
@@ -213,7 +222,7 @@ unittest {
 	memory.position = pos;
 	assert(memory.readString(25 + 12) == "Hola, esto es una prueba. Indeed 023.");
 
-	// Check Slicing.
+	// Check opSlice, opSliceAssign.
 	memory[pos + 4..pos + 8] = memory[pos + 0..pos + 4];
 	assert(memory[pos + 0..pos + 8] == cast(ubyte[])"HolaHola");
 
