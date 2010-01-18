@@ -13,7 +13,7 @@ template TemplateCpu_ALU() {
 	}
 
 	void OP_ADDI() {
-		registers[instruction.RD] = registers[instruction.RS] + instruction.IMM;
+		registers[instruction.RT] = registers[instruction.RS] + instruction.IMM;
 		registers.advance_pc(4);
 	}
 }

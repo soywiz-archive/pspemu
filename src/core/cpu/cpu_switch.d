@@ -4,19 +4,6 @@ import pspemu.core.cpu.instruction;
 
 import std.stdio;
 
-struct InstructionDefinition {
-	string   name;
-	uint     opcode;
-	uint     mask;
-
-	// Extra.
-	enum Type    { NONE = 0, PSP = 1, B = 2, JUMP = 4, JAL = 8, BRANCH = B | JUMP | JAL }
-	enum Address { NONE = 0, T16 = 1, T26 = 2, REG = 3 }
-	string   fmt;
-	Address  addrtype;
-	Type     type;
-}
-
 // Compile-time functions.
 static pure nothrow {
 

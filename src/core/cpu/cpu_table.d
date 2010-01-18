@@ -1,6 +1,6 @@
 module pspemu.core.cpu.cpu_table;
 
-import pspemu.core.cpu.cpu_switch;
+import pspemu.core.cpu.instruction;
 
 import std.stdio;
 
@@ -10,7 +10,7 @@ alias InstructionDefinition array;
 const PspInstructions = [
 	// MIPS instructions
 	array("add"      , 0x00000020, 0xFC0007FF, "%d, %s, %t"),
-	array("addi"     , 0x20000000, 0xFC000000, "%t, %s, %i"),
+	array("addi"     , 0x20000000, 0xFC000000, "%t, %s, %imm"),
 	/*
 	array("addiu"    , 0x24000000, 0xFC000000),
 	array("addu"     , 0x00000021, 0xFC0007FF),

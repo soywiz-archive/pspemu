@@ -4,6 +4,7 @@ import pspemu.core.cpu.registers;
 import pspemu.core.cpu.cpu_table;
 import pspemu.core.cpu.cpu_switch;
 import pspemu.core.cpu.cpu_alu;
+import pspemu.core.cpu.cpu_asm;
 import pspemu.core.cpu.instruction;
 import pspemu.core.memory;
 
@@ -28,7 +29,8 @@ class CPU {
 
 		while (count--) {
 			instruction.v = memory.read32(registers.PC);
-			mixin(genSwitch(PspInstructions));
+			void EXEC() { mixin(genSwitch(PspInstructions)); }
+			EXEC();
 		}
 	}
 
@@ -39,15 +41,21 @@ class CPU {
 
 unittest {
 	writefln("Unittesting: core.cpu.cpu...");
-	scope cpu = new CPU();
-	cpu.memory.position = Memory.mainMemoryAddress;
-	cpu.memory.write(cast(uint)0x_FFFFFFFF);
-	cpu.memory.write(cast(uint)0x_FFFFFFFF);
-	
-	foreach (n; 0..32) cpu.registers[n] = n;
+	scope cpu = new CPU(); foreach (n; 0..32) cpu.registers[n] = 0;
 
-	cpu.registers.set_pc(Memory.mainMemoryAddress);
-	cpu.executeSingle();
+	scope assembler = new AllegrexAssembler(cpu.memory);
+
+	// (v0 = (7 + 11 - 5)) == 13
+	writefln("  (v0 = (7 + 11 - 5)) == 13");
+	{
+		assembler.startSegment("code", Memory.mainMemoryAddress);
+		assembler.assemble("addi a0, zero, 7");
+		assembler.assemble("addi a1, zero, 11");
+		assembler.assemble("add v0, a0, a1  ");
+		assembler.assemble("addi v0, v0, -5 ");
+
+		cpu.registers.set_pc(Memory.mainMemoryAddress);
+		cpu.execute(4);
+		assert(cpu.registers["v0"] == 13);
+	}
 }
-
-//unittest { static void main() { } }
