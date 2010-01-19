@@ -4,6 +4,14 @@ import std.stdio, std.string;
 
 version = VERSION_R0_CHECK;
 
+/*
+FIXME:
+string[] list1 = ["r0", "r1", ...];
+string[] list2 = ["v0", "v1", "a0", ...];
+static this() {
+	foreach (list; [list1, list2]) foreach (index, name; list) registerAliases[name] = index;
+}
+*/
 static int[string] registerAliases;
 static this() {
 	foreach (n; 0..32) registerAliases[format("r%d", n)] = registerAliases[format("$%d", n)] = n;
@@ -29,10 +37,10 @@ class Registers {
 	union { float[32] F; double[16] D; }
 
 	void reset() {
-		nPC = PC = 0;
+		PC = 0; nPC = 4;
 		R[0..$] = 0;
 		F[0..$] = 0.0;
-		D[0..$] = 0.0;
+		//D[0..$] = 0.0;
 	}
 
 	uint opIndex(uint index) {

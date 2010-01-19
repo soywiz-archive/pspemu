@@ -20,6 +20,11 @@ class CPU {
 		memory    = new Memory();
 	}
 
+	void reset() {
+		registers.reset();
+		memory.reset();
+	}
+
 	void execute(uint count = 0x_FFFFFFFF) {
 		Registers registers = this.registers;
 		Instruction instruction = void;
@@ -43,21 +48,48 @@ class CPU {
 
 unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
-	scope cpu = new CPU(); foreach (n; 0..32) cpu.registers[n] = 0;
-
+	scope cpu = new CPU();
 	scope assembler = new AllegrexAssembler(cpu.memory);
 
-	// (v0 = (7 + 11 - 5)) == 13
+	void reset() {
+		cpu.reset();
+	}
+
 	writefln("  (v0 = (7 + 11 - 5)) == 13");
 	{
-		assembler.startSegment("code", Memory.mainMemoryAddress);
-		assembler("addi a0, zero, 7");
-		assembler("addi a1, zero, 11");
-		assembler("add v0, a0, a1  ");
-		assembler("addi v0, v0, -5 ");
+		reset();
 
-		cpu.registers.set_pc(Memory.mainMemoryAddress);
+		assembler.assembleBlock(r"
+			.text
+			addi a0, zero, 7
+			addi a1, zero, 11
+			add  v0, a0, a1
+			addi v0, v0, -5
+		");
+
+		cpu.registers.set_pc(assembler.segments["text"]);
 		cpu.execute(4);
+		//cpu.registers.dump(true);
 		assert(cpu.registers["v0"] == 13);
+	}
+
+	writefln("  v0 = 2; while (v--);");
+	{
+		reset();
+
+		assembler.assembleBlock(r"
+			.text
+			addi v0, zero, 2
+			loop:
+				bgez v0, loop
+				addi v0, v0, -1
+		");
+
+		cpu.registers.set_pc(assembler.segments["text"]);
+		foreach (step, expectedValue; [2, 2, 1, 1, 0, 0]) {
+			//writefln("PC: %08X, nPC: %08X, STEP: %d", cpu.registers.PC, cpu.registers.nPC, step);
+			cpu.executeSingle();
+			assert(cpu.registers["v0"] == expectedValue, format("step: %d; v0 = %d; v0 != %d", step, cpu.registers["v0"], expectedValue));
+		}
 	}
 }

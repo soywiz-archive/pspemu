@@ -3,6 +3,7 @@ module pspemu.core.cpu.cpu_asm;
 import pspemu.utils.sparse_memory;
 import pspemu.utils.expression;
 
+import pspemu.core.memory;
 import pspemu.core.cpu.instruction;
 import pspemu.core.cpu.cpu_switch;
 import pspemu.core.cpu.cpu_table;
@@ -45,7 +46,7 @@ class AllegrexAssembler : ISymbolResolver {
 				case Type.MipsPc16:
 					assert(symbolResolver.hasSymbol(symbolName), format("Symbol '%s' not found.", symbolName));
 					uint symbolAddress = symbolResolver.getSymbolAddress(symbolName);
-					short writeValue = cast(short)((symbolAddress - address) >> 2); // FIXME: Check overflow.
+					short writeValue = cast(short)((symbolAddress - address - 4) >> 2); // FIXME: Check overflow.
 					stream.position = address;
 					//writefln("%08X", stream.position);
 					//writefln("VALUE(%08X)", writeValue);
@@ -63,9 +64,10 @@ class AllegrexAssembler : ISymbolResolver {
 		this.stream = stream;
 	}
 
-	void startSegment(string name, uint position) {
-		segments[name] = position;
+	void startSegment(string segmentName, uint position) {
+		segments[segmentName] = position;
 		stream.position = position;
+		//writefln("startSegment('%s')", segmentName);
 	}
 
 	void addReloc(Reloc reloc) {
@@ -75,6 +77,7 @@ class AllegrexAssembler : ISymbolResolver {
 	bool assembleInternal(uint PC, string line, ref Instruction instruction) {
 		// Non empty line.
 		if (line.length > 0) {
+			//writefln("  '%s'", line);
 			auto regexp = new RegExp(r"^(\w+)\s*(.*)$", "");
 			auto parts = regexp.match(line);
 			string instructionName   = parts[1];
@@ -127,7 +130,9 @@ class AllegrexAssembler : ISymbolResolver {
 	bool assemble(ref uint PC, ref Instruction instruction, string line) {
 		// Clean line. Strip comments and spaces.
 		{
-			line = strip(RegExp(r"^\s*(.*)(;.*)?$").match(line)[1]);
+			scope matches = RegExp(r"^\s*(.*)(;.*)?$").match(line);
+			if (matches.length < 2) return false;
+			line = strip(matches[1]);
 		}
 		// Extract label.
 		{
@@ -150,8 +155,8 @@ class AllegrexAssembler : ISymbolResolver {
 				switch (parts[1]) {
 					// Sections.
 					case "text", "data": {
-						scope const defaults = ["text" : 0x1000, "data" : 0x2000]; // FIXME
-						auto segmentName = parts[1], segmentAddress = parts[2];
+						scope const defaults = ["text" : Memory.mainMemoryAddress, "data" : Memory.mainMemoryAddress | 0x80000]; // FIXME
+						auto segmentName = strip(parts[1]), segmentAddress = strip(parts[2]);
 
 						startSegment(
 							segmentName,
@@ -185,8 +190,15 @@ class AllegrexAssembler : ISymbolResolver {
 		return labels[symbolName];
 	}
 
+	// FIXME: Rename relocate to something like 'address fixing'. Because it's not really relocation.
 	void relocate() {
 		foreach (reloc; relocs) reloc.relocate(stream, this);
+		relocs = [];
+	}
+
+	void assembleBlock(string block) {
+		foreach (line; splitlines(block)) assemble(line);
+		relocate();
 	}
 
 	alias assemble opCall;
@@ -214,6 +226,7 @@ unittest {
 
 	// Check relocations.
 	assembler.stream.position = 0x1010;
-	assembler.stream.read(instruction.v); assert(instruction.v == 0x_1042FFFD);
+	assembler.stream.read(instruction.v);
+	assert(instruction.v == 0x_1042FFFC);
 	
 }
