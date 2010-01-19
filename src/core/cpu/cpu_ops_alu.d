@@ -25,6 +25,16 @@ template TemplateCpu_ALU() {
 		}
 	}
 
+	// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+	static uint  REV4(uint v) {
+		v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
+		v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
+		v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
+		v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
+		v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
+		return v;
+	}
+
 	// ADD -- Add
 	// ADDU -- Add unsigned
 	// Adds two registers and stores the result in a register
@@ -57,6 +67,12 @@ template TemplateCpu_ALU() {
 	// $t = (imm << 16); advance_pc (4);
 	void OP_LUI() {
 		registers[instruction.RT] = instruction.IMMU << 16;
+		registers.pcAdvance(4);
+	}
+
+	// BITREV - Bit Reverse
+	void OP_BITREV() {
+		registers[instruction.RD] = REV4(registers[instruction.RT]);
 		registers.pcAdvance(4);
 	}
 }
@@ -105,5 +121,36 @@ unittest {
 		OP_ANDI();
 		assert(registers[1] == (0x_FFFFFFFF & 0x_FF77));
 		assert(registers.nPC == registers.PC + 4);
+	}
+
+	writefln("  Check BITREV");
+	{
+		// php -r"$r = ''; for ($n = 0; $n < 32; $n++) $r .= mt_rand(0, 1); echo '0b_' . $r . ' : 0b_' . strrev($r) . ',' . chr(10);"
+		scope expectedList = [
+			// Hand crafted.
+			0b_00000000000000000000000000000000 : 0b_00000000000000000000000000000000,
+			0b_11111111111111111111111111111111 : 0b_11111111111111111111111111111111,
+			0b_10000000000000000000000000000000 : 0b_00000000000000000000000000000001,
+
+			// Random.
+			0b_10110010011111100010101010000011 : 0b_11000001010101000111111001001101,
+			0b_01110101010111100111010110010001 : 0b_10001001101011100111101010101110,
+			0b_10001010010110110111011100101011 : 0b_11010100111011101101101001010001,
+			0b_01101110000110111011101110001010 : 0b_01010001110111011101100001110110,
+			0b_10000110001100101110100111011111 : 0b_11111011100101110100110001100001,
+			0b_11001001000110110011001010111110 : 0b_01111101010011001101100010010011,
+		];
+
+		foreach (a, b; expectedList) {
+			foreach (entry; [[a, b], [b, a]]) {
+				registers[2] = entry[0];
+				instruction.RD = 1;
+				instruction.RT = 2;
+				OP_BITREV();
+				//registers.dump(); writefln("%08X:%08X", entry[0], entry[1]);
+				assert(registers[1] == entry[1]);
+				assert(registers.nPC == registers.PC + 4);
+			}
+		}
 	}
 }

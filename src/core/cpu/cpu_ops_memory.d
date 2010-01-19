@@ -26,6 +26,13 @@ template TemplateCpu_MEMORY() {
 				"registers.pcAdvance(4);"
 			);
 		}
+
+		string STORE(string size) {
+			return (
+				"memory.write" ~ size ~ "(registers[instruction.RS] + instruction.OFFSET, cast(u" ~ size ~ ")registers[instruction.RT]);" ~
+				"registers.pcAdvance(4);"
+			);
+		}
 	}
 
 	// LB(U) -- Load byte (unsigned)
@@ -40,6 +47,19 @@ template TemplateCpu_MEMORY() {
 	void OP_LHU() { mixin(LOAD("16", Unsigned)); }
 
 	void OP_LW () { mixin(LOAD("32", Unsigned)); }
+
+	// SB -- Store byte
+	// SH -- Store half
+	// SW -- Store word
+	// The contents of $t is stored at the specified address.
+	// MEM[$s + offset] = $t; advance_pc (4);
+	void OP_SB() { mixin(STORE("8" )); }
+	void OP_SH() { mixin(STORE("16")); }
+	void OP_SW() { mixin(STORE("32")); }
+
+	void OP_CACHE() {
+		.writefln("Unimplemented CACHE");
+	}
 }
 
 unittest {

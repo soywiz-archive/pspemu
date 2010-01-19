@@ -4,6 +4,14 @@ import pspemu.core.cpu.instruction;
 
 import std.stdio;
 
+// Here is the magic of the instruction decoding.
+// OLD OLD:   http://pspemu.googlecode.com/svn/branches/old/util/gen/cpu_switch.back.d
+// OLD:       http://pspemu.googlecode.com/svn/branches/old/util/gen/cpu_gen.php
+// PSPPlayer: 
+// Jpcsp:     http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/Allegrex.isa
+// mfzpsp:    
+// pcsp:      
+
 // Compile-time functions.
 static pure nothrow {
 

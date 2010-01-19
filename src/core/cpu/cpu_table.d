@@ -57,26 +57,26 @@ const PspInstructions = [
 	array("and"      , 0x00000024, 0xFC0007FF, "%d, %s, %t"),
 	array("andi"     , 0x30000000, 0xFC000000, "%t, %s, %I"),
 	array("beq"      , 0x10000000, 0xFC000000, "%s, %t, %O"),
-	/*
-	array("beql"     , 0x50000000, 0xFC000000),
-	*/
+	array("beql"     , 0x50000000, 0xFC000000, "%s, %t, %O"),
 	array("bgez"     , 0x04010000, 0xFC1F0000, "%s, %O"),
 	array("bgezal"   , 0x04110000, 0xFC1F0000, "%s, %O"),
 	array("bgezl"    , 0x04030000, 0xFC1F0000, "%s, %O"),
+	array("bgtz"     , 0x1C000000, 0xFC1F0000, "%s, %O"),
+	array("bgtzl"    , 0x5C000000, 0xFC1F0000, "%s, %O"),
+	array("bitrev"   , 0x7C000520, 0xFFE007FF, "%d, %t"),
+	array("blez"     , 0x18000000, 0xFC1F0000, "%s, %O"),
+	array("blezl"    , 0x58000000, 0xFC1F0000, "%s, %O"),
+	array("bltz"     , 0x04000000, 0xFC1F0000, "%s, %O"),
+	array("bltzl"    , 0x04020000, 0xFC1F0000, "%s, %O"),
+	array("bltzal"   , 0x04100000, 0xFC1F0000, "%s, %O"),
+	array("bltzall"  , 0x04120000, 0xFC1F0000, "%s, %O"),
+	array("bne"      , 0x14000000, 0xFC000000, "%s, %t, %O"),
+	array("bnel"     , 0x54000000, 0xFC000000, "%s, %t, %O"),
 	/*
-	array("bgtz"     , 0x1C000000, 0xFC1F0000),
-	array("bgtzl"    , 0x5C000000, 0xFC1F0000),
-	array("bitrev"   , 0x7C000520, 0xFFE007FF),
-	array("blez"     , 0x18000000, 0xFC1F0000),
-	array("blezl"    , 0x58000000, 0xFC1F0000),
-	array("bltz"     , 0x04000000, 0xFC1F0000),
-	array("bltzl"    , 0x04020000, 0xFC1F0000),
-	array("bltzal"   , 0x04100000, 0xFC1F0000),
-	array("bltzall"  , 0x04120000, 0xFC1F0000),
-	array("bne"      , 0x14000000, 0xFC000000),
-	array("bnel"     , 0x54000000, 0xFC000000),
 	array("break"    , 0x0000000D, 0xFC00003F),
+	*/
 	array("cache"    , 0xBC000000, 0xFC000000),
+	/*
 	array("cfc0"     , 0x40400000, 0xFFE007FF),
 	array("clo"      , 0x00000017, 0xFC1F07FF),
 	array("clz"      , 0x00000016, 0xFC1F07FF),
@@ -135,8 +135,10 @@ const PspInstructions = [
 	array("rotrv"    , 0x00000046, 0xFC0007FF), // ?
 	array("seb"      , 0x7C000420, 0xFFE007FF),
 	array("seh"      , 0x7C000620, 0xFFE007FF),
-	array("sb"       , 0xA0000000, 0xFC000000),
-	array("sh"       , 0xA4000000, 0xFC000000),
+	*/
+	array("sb"       , 0xA0000000, 0xFC000000, "%t, %o"),
+	array("sh"       , 0xA4000000, 0xFC000000, "%t, %o"),
+	/*
 	array("sllv"     , 0x00000004, 0xFC0007FF),
 	array("sll"      , 0x00000000, 0xFFE0003F),
 	array("slt"      , 0x0000002A, 0xFC0007FF),
@@ -147,7 +149,9 @@ const PspInstructions = [
 	array("srav"     , 0x00000007, 0xFC0007FF),
 	array("srlv"     , 0x00000006, 0xFC0007FF),
 	array("srl"      , 0x00000002, 0xFFE0003F),
-	array("sw"       , 0xAC000000, 0xFC000000),
+	*/
+	array("sw"       , 0xAC000000, 0xFC000000, "%t, %o"),
+	/*
 	array("swl"      , 0xA8000000, 0xFC000000),
 	array("swr"      , 0xB8000000, 0xFC000000),
 	array("sub"      , 0x00000022, 0xFC0007FF),
