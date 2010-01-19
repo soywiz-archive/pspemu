@@ -95,14 +95,16 @@ const PspInstructions = [
 	array("jr"       , 0x00000008, 0xFC1FFFFF, "%J"),
 	array("jalr"     , 0x00000009, 0xFC1F07FF, "%J"),
 	array("jal"      , 0x0C000000, 0xFC000000, "%j"),
+	array("lb"       , 0x80000000, 0xFC000000, "%t, %o"),
+	array("lbu"      , 0x90000000, 0xFC000000, "%t, %o"),
+	array("lh"       , 0x84000000, 0xFC000000, "%t, %o"),
+	array("lhu"      , 0x94000000, 0xFC000000, "%t, %o"),
 	/*
-	array("lb"       , 0x80000000, 0xFC000000),
-	array("lbu"      , 0x90000000, 0xFC000000),
-	array("lh"       , 0x84000000, 0xFC000000),
-	array("lhu"      , 0x94000000, 0xFC000000),
 	array("ll"       , 0xC0000000, 0xFC000000),
-	array("lui"      , 0x3C000000, 0xFFE00000),
-	array("lw"       , 0x8C000000, 0xFC000000),
+	*/
+	array("lui"      , 0x3C000000, 0xFFE00000, "%t, %I"),
+	array("lw"       , 0x8C000000, 0xFC000000, "%t, %o"),
+	/*
 	array("lwl"      , 0x88000000, 0xFC000000),
 	array("lwr"      , 0x98000000, 0xFC000000),
 	array("madd"     , 0x0000001C, 0xFC00FFFF),
@@ -125,8 +127,10 @@ const PspInstructions = [
 	array("mult"     , 0x00000018, 0xFC00FFFF),
 	array("multu"    , 0x00000019, 0xFC0007FF),
 	array("nor"      , 0x00000027, 0xFC0007FF),
-	array("or"       , 0x00000025, 0xFC0007FF),
-	array("ori"      , 0x34000000, 0xFC000000),
+	*/
+	array("or"       , 0x00000025, 0xFC0007FF, "%d, %s, %t"),
+	array("ori"      , 0x34000000, 0xFC000000, "%t, %s, %I"),
+	/*
 	array("rotr"     , 0x00200002, 0xFFE0003F),
 	array("rotrv"    , 0x00000046, 0xFC0007FF), // ?
 	array("seb"      , 0x7C000420, 0xFFE007FF),

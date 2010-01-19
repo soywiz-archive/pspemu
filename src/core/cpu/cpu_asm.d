@@ -20,6 +20,7 @@ static this() {
 interface ISymbolResolver {
 	bool hasSymbol(string name);
 	uint getSymbolAddress(string name);
+	void symbolDump();
 }
 
 template AllegrexAssemblerSymbolTemplate() {
@@ -50,7 +51,7 @@ class AllegrexAssembler : ISymbolResolver {
 	mixin AllegrexAssemblerSymbolTemplate;
 
 	// FIXME: We should reuse this struct/class. See formats.elf.
-	struct Reloc {
+	static struct Reloc {
 		enum Type : byte { None = 0, Mips16, Mips32, MipsRel32, Mips26, MipsHi16, MipsLo16, MipsGpRel16, MipsLiteral, MipsGot16, MipsPc16, MipsCall16, MipsGpRel32 }
 
 		Type   type;

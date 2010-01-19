@@ -3,12 +3,15 @@ module pspemu.core.cpu.cpu;
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.cpu_table;
 import pspemu.core.cpu.cpu_switch;
-import pspemu.core.cpu.cpu_ops_alu;
-import pspemu.core.cpu.cpu_ops_branch;
-import pspemu.core.cpu.cpu_ops_jump;
 import pspemu.core.cpu.cpu_asm;
 import pspemu.core.cpu.instruction;
 import pspemu.core.memory;
+
+// OPS.
+import pspemu.core.cpu.cpu_ops_alu;
+import pspemu.core.cpu.cpu_ops_branch;
+import pspemu.core.cpu.cpu_ops_jump;
+import pspemu.core.cpu.cpu_ops_memory;
 
 import std.stdio, std.string;
 
@@ -27,13 +30,16 @@ class CPU {
 	}
 
 	void execute(uint count = 0x_FFFFFFFF) {
-		Registers registers = this.registers;
-		Instruction instruction = void;
+		Registers   registers = this.registers;
+		Memory      memory    = this.memory;
+		Instruction instruction;
 
 		// Operations.
 		mixin TemplateCpu_ALU;
 		mixin TemplateCpu_BRANCH;
 		mixin TemplateCpu_JUMP;
+		mixin TemplateCpu_MEMORY;
+
 		void OP_UNK() {
 			.writefln("Unknown operation %s", instruction);
 			registers.pcAdvance(4);
@@ -154,8 +160,8 @@ unittest {
 			addi  r1, zero, 1      ; r1 = 1 ; shouldn't be executed!
 
 		label1:
-			addi  r9, zero, 0      ; jumps
-			bgezl r9, label2       ;
+			addi  r9, zero, 0      ;
+			bgezl r9, label2       ; jumps
 			addi  r2, zero, 1      ; r2 = 1 ; should be executed plus the jump!
 
 		label2:
@@ -168,5 +174,20 @@ unittest {
 		assert(cpu.registers["r2"] == 1);
 		//dump();
 		assert(cpu.registers.PC    == assembler.getSymbolAddress("label2"));
+	}
+	
+	// Load immediate. LUI + ORI.
+	writefln("  LI 32 bits LUI + ORI");
+	{
+		reset();
+		assembler.assembleBlock(r"
+			.text
+
+			lui a0, 0x8000
+			ori a0, a0, 0x1111
+		");
+		cpu.registers.pcSet(assembler.segments["text"]);
+		cpu.execute(2);
+		assert(cpu.registers["a0"] == 0x_8000_1111);
 	}
 }

@@ -7,45 +7,56 @@ import pspemu.core.memory;
 import std.stdio;
 
 template TemplateCpu_ALU() {
+	enum { Unsigned, Signed }
+	enum { Register, Immediate }
+
+	static pure nothrow {
+		string ALU(string operator, bool immediate, bool signed) {
+			string r;
+			if (immediate) {
+				r ~= "registers[instruction.RT] = registers[instruction.RS] " ~ operator ~ " instruction." ~ (signed ? "IMM" : "IMMU") ~ ";";
+				r ~= "registers.pcAdvance(4);";
+			} else {
+				// FIXME: Check if we need sign here.
+				r ~= "registers[instruction.RD] = registers[instruction.RS] " ~ operator ~ " registers[instruction.RT];";
+				r ~= "registers.pcAdvance(4);";
+			}
+			return r;
+		}
+	}
+
 	// ADD -- Add
-	// Adds two registers and stores the result in a register
-	// $d = $s + $t; advance_pc (4);
-	void OP_ADD() {
-		registers[instruction.RD] = registers[instruction.RS] + registers[instruction.RT];
-		registers.pcAdvance(4);
-	}
-
-	// ADDI -- Add immediate
-	// Adds a register and a signed immediate value and stores the result in a register
-	// $t = $s + imm; advance_pc (4);
-	void OP_ADDI() {
-		registers[instruction.RT] = registers[instruction.RS] + instruction.IMM;
-		registers.pcAdvance(4);
-	}
-
-	// ADDIU -- Add immediate unsigned
-	// Adds a register and an unsigned immediate value and stores the result in a register
-	// $t = $s + imm; advance_pc (4);
-	alias OP_ADDI OP_ADDIU;
-
 	// ADDU -- Add unsigned
 	// Adds two registers and stores the result in a register
 	// $d = $s + $t; advance_pc (4);
-	alias OP_ADD OP_ADDU;
+	void OP_ADD () { mixin(ALU("+", Register, Signed  )); }
+	void OP_ADDU() { mixin(ALU("+", Register, Unsigned)); }
+
+	// ADDI -- Add immediate
+	// ADDIU -- Add immediate unsigned
+	// Adds a register and a signed immediate value and stores the result in a register
+	// $t = $s + imm; advance_pc (4);
+	void OP_ADDI () { mixin(ALU("+", Immediate, Signed  )); }
+	void OP_ADDIU() { mixin(ALU("+", Immediate, Unsigned)); }
 
 	// AND -- Bitwise and
 	// Bitwise ands two registers and stores the result in a register
 	// $d = $s & $t; advance_pc (4);
-	void OP_AND() {
-		registers[instruction.RD] = registers[instruction.RS] & registers[instruction.RT];
-		registers.pcAdvance(4);
-	}
+	void OP_AND() { mixin(ALU("&", Register, Unsigned)); }
+	void OP_OR () { mixin(ALU("|", Register, Unsigned)); }
 
 	// ANDI -- Bitwise and immediate
+	// ORI -- Bitwise and immediate
 	// Bitwise ands a register and an immediate value and stores the result in a register
 	// $t = $s & imm; advance_pc (4);
-	void OP_ANDI() {
-		registers[instruction.RT] = registers[instruction.RS] & instruction.IMMU;
+	void OP_ANDI() { mixin(ALU("&", Immediate, Unsigned)); }
+	void OP_ORI () { mixin(ALU("|", Immediate, Unsigned)); }
+
+	// LUI -- Load upper immediate
+	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
+	// $t = (imm << 16); advance_pc (4);
+	void OP_LUI() {
+		registers[instruction.RT] = instruction.IMMU << 16;
 		registers.pcAdvance(4);
 	}
 }

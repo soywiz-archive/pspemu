@@ -9,12 +9,7 @@ import std.stdio;
 template TemplateCpu_BRANCH() {
 	static enum Flags { None = 0, Link = 1, Likely = 2 }
 
-	/*
-	$text = preg_replace('/branch\\(([^;]+)\\);/Umsi', 'PC = nPC; nPC += ($1) ? (IMM << 2) : 4;', $text);
-	$text = preg_replace('/branchl\\(([^;]+)\\);/Umsi', 'if ($1) { PC = nPC; nPC += (IMM << 2); } else { PC = nPC + 4; nPC = PC + 4; }', $text);
-	*/
-
-	static string BRANCH(string condition, Flags flags) {
+	static pure nothrow string BRANCH(string condition, Flags flags) {
 		string r;
 		r ~= "if (" ~ condition ~ ") {";
 			if (flags & Flags.Link) {
