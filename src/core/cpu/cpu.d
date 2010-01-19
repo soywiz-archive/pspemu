@@ -36,7 +36,7 @@ class CPU {
 		mixin TemplateCpu_JUMP;
 		void OP_UNK() {
 			.writefln("Unknown operation %s", instruction);
-			registers.advance_pc(4);
+			registers.pcAdvance(4);
 		}
 
 		while (count--) {
@@ -61,8 +61,13 @@ unittest {
 		assembler.reset();
 	}
 
-	writefln("  (v0 = (7 + 11 - 5)) == 13");
+	void dump() {
+		cpu.registers.dump();
+		assembler.symbolDump();
+	}
+
 	// ADD/ADDI test.
+	writefln("  (v0 = (7 + 11 - 5)) == 13");
 	{
 		reset();
 
@@ -74,26 +79,26 @@ unittest {
 			addi v0, v0, -5    ; v0 = v0 - 5
 		");
 
-		cpu.registers.set_pc(assembler.segments["text"]);
+		cpu.registers.pcSet(assembler.segments["text"]);
 		cpu.execute(4);
 		//cpu.registers.dump(true);
 		assert(cpu.registers["v0"] == 13);
 	}
 
-	writefln("  v0 = 2; while (v--);");
 	// BGEZ test.
+	writefln("  v0 = 2; while (v--);");
 	{
 		reset();
 
 		assembler.assembleBlock(r"
 			.text
-			addi v0, zero, 2      ; v0 = 2
-			loop:                 ;
-				bgez v0, loop     ;
-				addi v0, v0, -1   ; v0-- . Because of the delayed branch it should be executed anyways.
+			addi v0, zero, 2   ; v0 = 2
+		loop:                  ;
+			bgez v0, loop      ;
+			addi v0, v0, -1    ; v0-- . Because of the delayed branch it should be executed anyways.
 		");
 
-		cpu.registers.set_pc(assembler.segments["text"]);
+		cpu.registers.pcSet(assembler.segments["text"]);
 		foreach (step, expectedValue; [2, 2, 1, 1, 0, 0]) {
 			//writefln("PC: %08X, nPC: %08X, STEP: %d", cpu.registers.PC, cpu.registers.nPC, step);
 			cpu.executeSingle();
@@ -101,51 +106,67 @@ unittest {
 		}
 	}
 
-	// Test fordward label references
-	// Test JAL and JR
+	// Test JAL and JR.
+	writefln("  Simple function call");
 	{
 		reset();
 
 		assembler.assembleBlock(r"
 			.text
 
-			jal  my_function      ;               ; 0x08000000
-			addi r1, zero, 1      ; r1 = 1        ; 0x08000004
-			addi r4, zero, 1      ; r4 = 1        ; 0x08000008
+			jal  my_function        ;             ; 0x08000000
+			addi r1, zero, 1        ; r1 = 1      ; 0x08000004
+			addi r4, zero, 1        ; r4 = 1      ; 0x08000008
 
-			my_function:            ;
-				addi r2, zero, 1    ; r2 = 1      ; 0x0800000C
-				jr ra               ; Returns     ; 0x08000010
-				addi r3, zero, 1    ; r3 = 1      ; 0x08000014
+		my_function:                ;
+			addi r2, zero, 1        ; r2 = 1      ; 0x0800000C
+			jr ra                   ; Returns     ; 0x08000010
+			addi r3, zero, 1        ; r3 = 1      ; 0x08000014
 		");
 
-		cpu.registers.set_pc(assembler.segments["text"]);
+		cpu.registers.pcSet(assembler.segments["text"]);
 		cpu.execute(3);
 		assert(cpu.registers["r1"] == 1);
 		assert(cpu.registers["r2"] == 1);
-		assert(cpu.registers["ra"] == assembler.labels["my_function"] - 4);
+		assert(cpu.registers["r4"] == 0);
+		assert(cpu.registers["ra"] == assembler.getSymbolAddress("my_function") - 4);
 		cpu.execute(3);
 		assert(cpu.registers["r3"] == 1);
 		assert(cpu.registers["r4"] == 1);
 	}
 
-	// Test fordward label references
-	// Test function calls and returns (JR ra)
-	// NO Test likely branch
+	// Test function calls and returns (JR ra).
+	// NO Test likely branch.
+	writefln("  Simple branch likely");
 	{
 		reset();
 
 		assembler.assembleBlock(r"
 			.text
 
-			addi   v0, zero, 1      ; v0 = 1
-			bgezal v0, my_function  ;
-			addi   a0, zero, 1      ; a0 = 1
-			addi   a1, zero, 1      ; a1 = 1
+			; Ensures that the registers are setted to zero. (Though them should be already).
+			add   r1, zero, zero   ; r1 = 0
+			add   r2, zero, zero   ; r2 = 0
 
-			my_function:            ;
-				addi a2, zero, 1    ; a2 = 1
-				jr ra               ; Returns from the function
+		label0:
+			addi  r9, zero, -1     ;
+			bgezl r9, label1       ; no jumps
+			addi  r1, zero, 1      ; r1 = 1 ; shouldn't be executed!
+
+		label1:
+			addi  r9, zero, 0      ; jumps
+			bgezl r9, label2       ;
+			addi  r2, zero, 1      ; r2 = 1 ; should be executed plus the jump!
+
+		label2:
+			add   zr, zr, zr       ; nop
 		");
+
+		cpu.registers.pcSet(assembler.segments["text"]);
+		cpu.execute(7);
+		assert(cpu.registers["r1"] == 0);
+		assert(cpu.registers["r2"] == 1);
+		//dump();
+		assert(cpu.registers.PC    == assembler.getSymbolAddress("label2"));
 	}
 }

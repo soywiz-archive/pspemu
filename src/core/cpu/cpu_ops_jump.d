@@ -7,22 +7,24 @@ import pspemu.core.memory;
 import std.stdio;
 
 template TemplateCpu_JUMP() {
-	static string LINK() {
-		return q{
-			registers[31] = registers.nPC + 4;
-		};
-	}
-	static string JUMP() {
-		return q{
-			registers.PC  = registers.nPC;
-			registers.nPC = (registers.PC & 0x_F0000000) | (instruction.JUMP << 2);
-		};
-	}
-	static string JUMPR() {
-		return q{
-			registers.PC  = registers.nPC;
-			registers.nPC = registers[instruction.RS];
-		};
+	static pure nothrow {
+		string LINK() {
+			return q{
+				registers[31] = registers.nPC + 4;
+			};
+		}
+		string JUMP() {
+			return q{
+				registers.PC  = registers.nPC;
+				registers.nPC = (registers.PC & 0x_F0000000) | (instruction.JUMP << 2);
+			};
+		}
+		string JUMPR() {
+			return q{
+				registers.PC  = registers.nPC;
+				registers.nPC = registers[instruction.RS];
+			};
+		}
 	}
 
 	// J -- Jump

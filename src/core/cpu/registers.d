@@ -4,37 +4,23 @@ import std.stdio, std.string;
 
 version = VERSION_R0_CHECK;
 
-/*
-FIXME:
-string[] list1 = ["r0", "r1", ...];
-string[] list2 = ["v0", "v1", "a0", ...];
-static this() {
-	foreach (list; [list1, list2]) foreach (index, name; list) registerAliases[name] = index;
-}
-*/
-static int[string] registerAliases;
-static this() {
-	foreach (n; 0..32) registerAliases[format("r%d", n)] = registerAliases[format("$%d", n)] = n;
-	registerAliases["zero"] = 0;
-	foreach (n; 0..10) {
-		if (n <= 1) registerAliases[format("v%d", n)] =  2 + n;
-		if (n <= 3) registerAliases[format("a%d", n)] =  4 + n;
-		if (n <= 7) registerAliases[format("t%d", n)] =  9 + n;
-		if (n <= 7) registerAliases[format("s%d", n)] = 16 + n;
-		if (n <= 1) registerAliases[format("k%d", n)] = 26 + n;
-	}
-	registerAliases["t8"] = 24;
-	registerAliases["t9"] = 25;
-	registerAliases["gp"] = 28;
-	registerAliases["sp"] = 29;
-	registerAliases["s8"] = 30;
-	registerAliases["ra"] = 31;
-}
-
 class Registers {
 	uint PC, nPC;
 	uint[32] R;
 	union { float[32] F; double[16] D; }
+	protected static int[string] aliases;
+
+	static this() {
+		aliases["zero"] = 0;
+		foreach (n; 0..32) aliases[format("r%d", n)] = aliases[format("$%d", n)] = n;
+		foreach (n, name; [
+			"zr", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+			"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+			"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+			"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
+		]) aliases[name] = n;
+		aliases = aliases.rehash;
+	}
 
 	void reset() {
 		PC = 0; nPC = 4;
@@ -43,17 +29,12 @@ class Registers {
 		//D[0..$] = 0.0;
 	}
 
-	uint opIndex(uint index) {
-		return R[index];
-	}
-
-	uint opIndex(string index) {
-		return this[registerAliases[index]];
-	}
+	uint opIndex(uint   index) { return R[index]; }
+	uint opIndex(string index) { return this[aliases[index]]; }
 
 	static int getAlias(string aliasName) {
-		assert(aliasName in registerAliases, format("Unknown register alias '%s'", aliasName));
-		return registerAliases[aliasName];
+		assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
+		return aliases[aliasName];
 	}
 
 	uint opIndexAssign(uint value, uint index) {
@@ -62,15 +43,8 @@ class Registers {
 		return R[index];
 	}
 
-	void advance_pc(int offset = 4) {
-		PC = nPC;
-		nPC += offset;
-	}
-
-	void set_pc(uint address) {
-		PC  = address;
-		nPC = PC + 4;
-	}
+	void pcAdvance(int offset = 4) { PC = nPC; nPC += offset; }
+	void pcSet(uint address) { PC  = address; nPC = PC + 4; }
 
 	void dump(bool reduced = true) {
 		writefln("Registers {");
@@ -103,11 +77,11 @@ unittest {
 	}
 
 	// Check PC set and increment.
-	registers.set_pc(0x1000);
+	registers.pcSet(0x1000);
 	assert(registers.PC == 0x1000);
 	assert(registers.nPC == 0x1004);
 
-	registers.advance_pc(4);
+	registers.pcAdvance(4);
 	assert(registers.PC == 0x1004);
 	assert(registers.nPC == 0x1008);
 }

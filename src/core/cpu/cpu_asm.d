@@ -22,12 +22,32 @@ interface ISymbolResolver {
 	uint getSymbolAddress(string name);
 }
 
+template AllegrexAssemblerSymbolTemplate() {
+	bool hasSymbol(string symbolName) {
+		return (symbolName in labels) !is null;
+	}
+
+	uint getSymbolAddress(string symbolName) {
+		return labels[symbolName];
+	}
+
+	void symbolDump() {
+		.writefln("Symbols {");
+		foreach (symbolName, address; labels) {
+			writefln("  '%s' : 0x%08X", symbolName, address);
+		}
+		.writefln("}");
+	}
+}
+
 // http://en.wikibooks.org/wiki/MIPS_Assembly/MIPS_Instructions
 class AllegrexAssembler : ISymbolResolver {
 	Stream stream;
 	uint[string] labels;
 	uint[string] segments;
 	Reloc[] relocs;
+	
+	mixin AllegrexAssemblerSymbolTemplate;
 
 	// FIXME: We should reuse this struct/class. See formats.elf.
 	struct Reloc {
@@ -220,14 +240,6 @@ class AllegrexAssembler : ISymbolResolver {
 		Instruction instruction;
 		uint PC;
 		return assemble(PC, instruction, line);
-	}
-
-	bool hasSymbol(string symbolName) {
-		return (symbolName in labels) !is null;
-	}
-
-	uint getSymbolAddress(string symbolName) {
-		return labels[symbolName];
 	}
 
 	// FIXME: Rename relocate to something like 'address fixing'. Because it's not really relocation.

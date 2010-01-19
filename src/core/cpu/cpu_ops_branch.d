@@ -17,40 +17,40 @@ template TemplateCpu_BRANCH() {
 	static string BRANCH(string condition, Flags flags) {
 		string r;
 		r ~= "if (" ~ condition ~ ") {";
-		if (flags & Flags.Link) {
-			assert(!(flags & Flags.Likely));
-			//r ~= "	registers[31] = registers.PC + 8;";
-			r ~= "	registers[31] = registers.nPC + 4;";
-		}
-		r ~= "	registers.advance_pc(instruction.OFFSET << 2);";
+			if (flags & Flags.Link) {
+				assert(!(flags & Flags.Likely));
+				//r ~= "	registers[31] = registers.PC + 8;";
+				r ~= "	registers[31] = registers.nPC + 4;";
+			}
+		r ~= "	registers.pcAdvance(instruction.OFFSET << 2);";
 		r ~= "} else {";
-		if (flags & Flags.Likely) {
-			r ~= "	registers.PC  = registers.nPC + 4;";
-			r ~= "  registers.nPC = registers.PC  + 4;";
-		} else {
-			r ~= "	registers.advance_pc(4);";
-		}
+			if (flags & Flags.Likely) {
+				r ~= "	registers.PC  = registers.nPC + 4;";
+				r ~= "  registers.nPC = registers.PC  + 4;";
+			} else {
+				r ~= "	registers.pcAdvance(4);";
+			}
 		r ~= "}";
 		return r;
 	}
 
 	// BEQ -- Branch on equal
 	// Branches if the two registers are equal
-	// if $s == $t advance_pc (offset << 2)); else advance_pc (4);
-	void OP_BEQ() { mixin(BRANCH(q{ registers[instruction.RS] == registers[instruction.RT] }, Flags.None)); }
+	// if $s == $t .pcAdvance (offset << 2)); else .pcAdvance (4);
+	void OP_BEQ() { mixin(BRANCH(q{ (cast(int)registers[instruction.RS]) == (cast(int)registers[instruction.RT]) }, Flags.None)); }
 
 	// BGEZ -- Branch on greater than or equal to zero
 	// Branches if the register is greater than or equal to zero
-	// if $s >= 0 advance_pc (offset << 2)); else advance_pc (4);
-	void OP_BGEZ() { mixin(BRANCH(q{ registers[instruction.RS] >= 0 }, Flags.None)); }
+	// if $s >= 0 .pcAdvance (offset << 2)); else .pcAdvance (4);
+	void OP_BGEZ() { mixin(BRANCH(q{ (cast(int)registers[instruction.RS]) >= 0 }, Flags.None)); }
 
 	// BGEZAL -- Branch on greater than or equal to zero and link
 	// Branches if the register is greater than or equal to zero and saves the return address in $31
-	// if $s >= 0 $31 = PC + 8 (or nPC + 4); advance_pc (offset << 2)); else advance_pc (4);
-	void OP_BGEZAL() { mixin(BRANCH(q{ registers[instruction.RS] >= 0 }, Flags.Link)); }
+	// if $s >= 0 $31 = PC + 8 (or nPC + 4); advance_pc (offset << 2)); else .pcAdvance (4);
+	void OP_BGEZAL() { mixin(BRANCH(q{ (cast(int)registers[instruction.RS]) >= 0 }, Flags.Link)); }
 
 	// BGEZL -- Branch on greater than or equal to zero likely
-	void OP_BGEZL() { mixin(BRANCH(q{ registers[instruction.RS] >= 0 }, Flags.Likely)); }
+	void OP_BGEZL() { mixin(BRANCH(q{ (cast(int)registers[instruction.RS]) >= 0 }, Flags.Likely)); }
 }
 
 unittest {
@@ -62,27 +62,50 @@ unittest {
 	mixin TemplateCpu_BRANCH;
 
 	uint base = 0x1000;
-	registers[1] = 1;
+	registers[0] =  0;
+	registers[1] = +1;
+	registers[2] = -1;
+	int offset = -7;
+
+	void set_RS_RT_OFFSET(int rs, int rt = 0) {
+		instruction.RS = rs;
+		instruction.RT = rt;
+		instruction.OFFSET = offset;
+	}
 
 	writefln("  Check BEQ (Branch)");
 	{
-		registers.set_pc(base);
-		instruction.RS = 0;
-		instruction.RT = 0;
-		instruction.OFFSET = -7;
+		registers.pcSet(base);
+		set_RS_RT_OFFSET(0, 0);
 		OP_BEQ();
 		assert(registers.PC == base + 4);
-		assert(registers.nPC == base + 4 - 7 * 4);
+		assert(registers.nPC == registers.PC + offset * 4);
 	}
 
 	writefln("  Check BEQ (No branch)");
 	{
-		registers.set_pc(base);
-		instruction.RS = 0;
-		instruction.RT = 1;
-		instruction.OFFSET = -7;
+		registers.pcSet(base);
+		set_RS_RT_OFFSET(0, 1);
 		OP_BEQ();
 		assert(registers.PC == base + 4);
 		assert(registers.nPC == base + 8);
+	}
+
+	writefln("  Check OP_BGEZL (Branch)");
+	{
+		registers.pcSet(base);
+		set_RS_RT_OFFSET(1);
+		OP_BGEZL();
+		assert(registers.PC == base + 4);
+		assert(registers.nPC ==  registers.PC + offset * 4);
+	}
+
+	writefln("  Check OP_BGEZL (No Branch)");
+	{
+		registers.pcSet(base);
+		set_RS_RT_OFFSET(2);
+		OP_BGEZL();
+		assert(registers.PC == base + 8);
+		assert(registers.nPC == registers.PC + 4);
 	}
 }

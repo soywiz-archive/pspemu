@@ -12,7 +12,7 @@ template TemplateCpu_ALU() {
 	// $d = $s + $t; advance_pc (4);
 	void OP_ADD() {
 		registers[instruction.RD] = registers[instruction.RS] + registers[instruction.RT];
-		registers.advance_pc(4);
+		registers.pcAdvance(4);
 	}
 
 	// ADDI -- Add immediate
@@ -20,7 +20,7 @@ template TemplateCpu_ALU() {
 	// $t = $s + imm; advance_pc (4);
 	void OP_ADDI() {
 		registers[instruction.RT] = registers[instruction.RS] + instruction.IMM;
-		registers.advance_pc(4);
+		registers.pcAdvance(4);
 	}
 
 	// ADDIU -- Add immediate unsigned
@@ -38,7 +38,7 @@ template TemplateCpu_ALU() {
 	// $d = $s & $t; advance_pc (4);
 	void OP_AND() {
 		registers[instruction.RD] = registers[instruction.RS] & registers[instruction.RT];
-		registers.advance_pc(4);
+		registers.pcAdvance(4);
 	}
 
 	// ANDI -- Bitwise and immediate
@@ -46,7 +46,7 @@ template TemplateCpu_ALU() {
 	// $t = $s & imm; advance_pc (4);
 	void OP_ANDI() {
 		registers[instruction.RT] = registers[instruction.RS] & instruction.IMMU;
-		registers.advance_pc(4);
+		registers.pcAdvance(4);
 	}
 }
 
