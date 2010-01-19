@@ -51,6 +51,11 @@ class Registers {
 		return this[registerAliases[index]];
 	}
 
+	static int getAlias(string aliasName) {
+		assert(aliasName in registerAliases, format("Unknown register alias '%s'", aliasName));
+		return registerAliases[aliasName];
+	}
+
 	uint opIndexAssign(uint value, uint index) {
 		R[index] = value;
 		version (VERSION_R0_CHECK) if (index == 0) R[index] = 0;
@@ -69,6 +74,7 @@ class Registers {
 
 	void dump(bool reduced = true) {
 		writefln("Registers {");
+		writefln("  PC = 0x%08X | nPC = 0x%08X", PC, nPC);
 		foreach (k, v; R) {
 			if (reduced && (v == 0)) continue;
 			writefln("  r%-2d = 0x%08X", k, v);

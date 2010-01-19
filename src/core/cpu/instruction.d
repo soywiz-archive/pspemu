@@ -46,6 +46,12 @@ struct Instruction {
 			uint, "IMMU_", 16
 		)); }
 
+		// JUMP 26 bits.
+		struct { mixin(bitfields!(
+			uint, "JUMP", 26,
+			uint, "JUMP_", 6
+		)); }
+
 		alias IMM OFFSET;
 	}
 

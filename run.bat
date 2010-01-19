@@ -12,6 +12,7 @@ SET SOURCES=%SOURCES% src/core/cpu/instruction.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_switch.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_alu.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_branch.d
+SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_jump.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_table.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_asm.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu.d

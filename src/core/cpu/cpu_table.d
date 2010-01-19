@@ -61,9 +61,9 @@ const PspInstructions = [
 	array("beql"     , 0x50000000, 0xFC000000),
 	*/
 	array("bgez"     , 0x04010000, 0xFC1F0000, "%s, %O"),
+	array("bgezal"   , 0x04110000, 0xFC1F0000, "%s, %O"),
+	array("bgezl"    , 0x04030000, 0xFC1F0000, "%s, %O"),
 	/*
-	array("bgezal"   , 0x04110000, 0xFC1F0000),
-	array("bgezl"    , 0x04030000, 0xFC1F0000),
 	array("bgtz"     , 0x1C000000, 0xFC1F0000),
 	array("bgtzl"    , 0x5C000000, 0xFC1F0000),
 	array("bitrev"   , 0x7C000520, 0xFFE007FF),
@@ -90,10 +90,12 @@ const PspInstructions = [
 	array("eret"     , 0x42000018, 0xFFFFFFFF),
 	array("ext"      , 0x7C000000, 0xFC00003F),
 	array("ins"      , 0x7C000004, 0xFC00003F),
-	array("j"        , 0x08000000, 0xFC000000),
-	array("jr"       , 0x00000008, 0xFC1FFFFF),
-	array("jalr"     , 0x00000009, 0xFC1F07FF),
-	array("jal"      , 0x0C000000, 0xFC000000),
+	*/
+	array("j"        , 0x08000000, 0xFC000000, "%j"),
+	array("jr"       , 0x00000008, 0xFC1FFFFF, "%J"),
+	array("jalr"     , 0x00000009, 0xFC1F07FF, "%J"),
+	array("jal"      , 0x0C000000, 0xFC000000, "%j"),
+	/*
 	array("lb"       , 0x80000000, 0xFC000000),
 	array("lbu"      , 0x90000000, 0xFC000000),
 	array("lh"       , 0x84000000, 0xFC000000),
