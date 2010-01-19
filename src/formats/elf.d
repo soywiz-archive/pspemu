@@ -207,7 +207,7 @@ class ELF {
 }
 
 unittest {
-	writefln("Unittesting: formats.elf...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	const testPath = "demos";
 	scope elf = new ELF(new BufferedFile(testPath ~ "/controller.elf", FileMode.In));

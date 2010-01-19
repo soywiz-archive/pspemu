@@ -85,7 +85,7 @@ class SparseMemoryStream : Stream {
 }
 
 unittest {
-	writefln("Unittesting: utils.sparse_memory...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	// Test SparseMemoryStream.
 	{

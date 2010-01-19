@@ -99,7 +99,7 @@ class PSF {
 }
 
 unittest {
-	writefln("Unittesting: formats.psf...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	const testPath = "demos";
 	auto psf = new PSF(new BufferedFile(testPath ~ "/controller.sfo", FileMode.In));

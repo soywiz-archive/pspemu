@@ -59,7 +59,9 @@ const PspInstructions = [
 	array("beq"      , 0x10000000, 0xFC000000, "%s, %t, %O"),
 	/*
 	array("beql"     , 0x50000000, 0xFC000000),
-	array("bgez"     , 0x04010000, 0xFC1F0000),
+	*/
+	array("bgez"     , 0x04010000, 0xFC1F0000, "%s, %O"),
+	/*
 	array("bgezal"   , 0x04110000, 0xFC1F0000),
 	array("bgezl"    , 0x04030000, 0xFC1F0000),
 	array("bgtz"     , 0x1C000000, 0xFC1F0000),
@@ -196,5 +198,5 @@ const PspInstructions = [
 ];
 
 unittest {
-	writefln("Unittesting: core.cpu.cpu_table...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 }

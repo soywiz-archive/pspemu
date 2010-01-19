@@ -61,7 +61,7 @@ class PBP {
 }
 
 unittest {
-	writefln("Unittesting: formats.pbp...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	const testPath = "demos";
 	auto pbp = new PBP(new BufferedFile(testPath ~ "/controller.pbp", FileMode.In));

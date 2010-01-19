@@ -7,20 +7,29 @@ import pspemu.core.memory;
 import std.stdio;
 
 template TemplateCpu_BRANCH() {
+	static string BRANCH(string condition) {
+		string r;
+		r ~= "if (" ~ condition ~ ") {";
+		r ~= "	registers.advance_pc(instruction.OFFSET << 2);";
+		r ~= "} else {";
+		r ~= "	registers.advance_pc(4);";
+		r ~= "}";
+		return r;
+	}
+
 	// BEQ -- Branch on equal
 	// Branches if the two registers are equal
 	// if $s == $t advance_pc (offset << 2)); else advance_pc (4);
-	void OP_BEQ() {
-		if (registers[instruction.RS] == registers[instruction.RT]) {
-			registers.advance_pc(instruction.OFFSET << 2);
-		} else {
-			registers.advance_pc(4);
-		}		
-	}
+	void OP_BEQ() { mixin(BRANCH(q{ registers[instruction.RS] == registers[instruction.RT] })); }
+
+	// BGEZ -- Branch on greater than or equal to zero
+	// Branches if the register is greater than or equal to zero
+	// if $s >= 0 advance_pc (offset << 2)); else advance_pc (4);
+	void OP_BGEZ() { mixin(BRANCH(q{ registers[instruction.RS] >= 0 })); }
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.cpu_ops_branch...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	scope memory    = new Memory;
 	scope registers = new Registers;
 	Instruction instruction = void;

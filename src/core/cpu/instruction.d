@@ -56,7 +56,7 @@ struct Instruction {
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.instruction...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	Instruction i;
 	//       ------ SSSSS TTTTT DDDDD -----------
 	i.v = 0b_111111_10001_11011_00100_11111111111;

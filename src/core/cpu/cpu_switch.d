@@ -81,7 +81,7 @@ static pure nothrow {
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.cpu_switch...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	static const testList = [
 		InstructionDefinition("add"      , 0x00000020, 0xFC0007FF),

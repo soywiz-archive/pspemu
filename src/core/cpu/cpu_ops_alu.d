@@ -51,7 +51,7 @@ template TemplateCpu_ALU() {
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.cpu_ops_alu...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	scope memory    = new Memory;
 	scope registers = new Registers;
 	Instruction instruction = void;

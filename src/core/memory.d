@@ -196,7 +196,7 @@ class Memory : Stream {
 }
 
 unittest {
-	writefln("Unittesting: core.memory...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	const int pos = Memory.frameBufferAddress;
 

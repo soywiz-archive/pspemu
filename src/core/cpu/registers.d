@@ -70,7 +70,7 @@ class Registers {
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.registers...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	scope registers = new Registers();
 
 	// Set all the integer registers expect the 0.

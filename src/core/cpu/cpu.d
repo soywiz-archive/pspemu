@@ -42,7 +42,7 @@ class CPU {
 }
 
 unittest {
-	writefln("Unittesting: core.cpu.cpu...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	scope cpu = new CPU(); foreach (n; 0..32) cpu.registers[n] = 0;
 
 	scope assembler = new AllegrexAssembler(cpu.memory);

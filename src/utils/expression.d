@@ -16,8 +16,7 @@ static long parseStringBaseUnsigned(string s, int base) {
 	return r;
 }
 
-static long parseString(string s) {
-	long v = 0;
+static long parseString(string s, long default_value = 0) {
 	if (s.length > 0) {
 		switch (s[0]) {
 			case '-':
@@ -37,11 +36,11 @@ static long parseString(string s) {
 			break;
 		}
 	}
-	return v;
+	return default_value;
 }
 
 unittest {
-	writefln("Unittesting: utils.expression...");
+	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	assert(parseString("-0x05") == -0x05);
 }
