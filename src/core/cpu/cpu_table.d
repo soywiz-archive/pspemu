@@ -81,8 +81,10 @@ const PspInstructions = [
 	array("clo"      , 0x00000017, 0xFC1F07FF),
 	array("clz"      , 0x00000016, 0xFC1F07FF),
 	array("ctc0"     , 0x40C00000, 0xFFE007FF),
-	array("max"      , 0x0000002C, 0xFC0007FF),
-	array("min"      , 0x0000002D, 0xFC0007FF),
+	*/
+	array("max"      , 0x0000002C, 0xFC0007FF, "%d, %s, %t"),
+	array("min"      , 0x0000002D, 0xFC0007FF, "%d, %s, %t"),
+	/*
 	array("dbreak"   , 0x7000003F, 0xFFFFFFFF),
 	array("div"      , 0x0000001A, 0xFC00FFFF),
 	array("divu"     , 0x0000001B, 0xFC00FFFF),

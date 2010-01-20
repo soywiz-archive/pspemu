@@ -132,9 +132,23 @@ class AllegrexAssembler : ISymbolResolver {
 			instruction.v = instructionDefinition.opcode & instructionDefinition.mask;
 
 			foreach (n; 0..paramTypes.length) {
-				auto paramType = paramTypes[n]; auto paramValue = paramValues[n];
-				uint getRegister() { return cast(uint)Registers.getAlias(paramValue); }
-				uint getImmediate() { return cast(uint)parseString(paramValue); }
+				auto paramType = paramTypes[n], paramValue = paramValues[n];
+				uint getRegister() {
+					return cast(uint)Registers.getAlias(paramValue);
+				}
+				uint getImmediate(bool signed) {
+					scope value = parseString(paramValue);
+					if (signed) {
+						scope values = cast(short)value;
+						assert(values >= cast(short) (1 << 15));
+						assert(values <  cast(short)~(1 << 15));
+					} else {
+						scope valueu = cast(ushort)value;
+						assert(valueu >= 0);
+						assert(valueu < 0x1_0000);
+					}
+					return cast(uint)value;
+				}
 				uint getOffset() {
 					//writefln("OFFSET: %08X", PC);
 					addReloc(Reloc(Reloc.Type.MipsPc16, paramValue, PC));
@@ -150,8 +164,8 @@ class AllegrexAssembler : ISymbolResolver {
 					case "%d" : instruction.RD     = getRegister;  break; // Rd
 					case "%s" : instruction.RS     = getRegister;  break; // Rs
 					case "%t" : instruction.RT     = getRegister;  break; // Rt
-					case "%i" : instruction.IMM    = getImmediate; break; // 16bit signed immediate
-					case "%I" : instruction.IMMU   = getImmediate; break; // 16bit unsigned immediate (always printed in hex)
+					case "%i" : instruction.IMM    = getImmediate(true); break; // 16bit signed immediate
+					case "%I" : instruction.IMMU   = getImmediate(false); break; // 16bit unsigned immediate (always printed in hex)
 					case "%O" : instruction.OFFSET = getOffset;    break; // 16bit signed offset (PC relative)
 					case "%j" : instruction.JUMP   = getAbsoluteOffset; break; // 26bit absolute offset
 					case "%J" : instruction.RS     = getRegister;  break; // register jump

@@ -9,7 +9,6 @@ import std.stdio;
 template TemplateCpu_BRANCH() {
 	enum Likely { NO, YES }
 	enum Link   { NO, YES }
-	static enum Flags { None = 0, Link = 1, Likely = 2 }
 
 	static pure nothrow string BRANCH(Likely likely, Link link, string condition) {
 		string r;

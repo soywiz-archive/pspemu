@@ -176,8 +176,8 @@ unittest {
 		assert(cpu.registers.PC    == assembler.getSymbolAddress("label2"));
 	}
 	
-	// Load immediate. LUI + ORI.
-	writefln("  LI 32 bits LUI + ORI");
+	// Load immediate. LUI + ORI + BITREV.
+	writefln("  LI 32 bits LUI + ORI. BITREV.");
 	{
 		reset();
 		assembler.assembleBlock(r"
@@ -185,9 +185,37 @@ unittest {
 
 			lui a0, 0x8000
 			ori a0, a0, 0x1111
+			bitrev a0, a0
 		");
+
 		cpu.registers.pcSet(assembler.segments["text"]);
-		cpu.execute(2);
+
+		cpu.execute(2); // lui+ori
 		assert(cpu.registers["a0"] == 0x_8000_1111);
+		
+		cpu.execute(1); // bitrev
+		assert(cpu.registers["a0"] == 0x_88880001);
+	}
+
+	// MIN, MAX.
+	writefln("  MIN, MAX");
+	{
+		reset();
+		assembler.assembleBlock(r"
+			.text
+
+			addi r1, zero, -5
+			addi r2, zero,  5
+			max r11, r1, r2
+			min r12, r1, r2
+			min r13, zero, zero
+		");
+
+		cpu.registers.pcSet(assembler.segments["text"]);
+
+		cpu.execute(5);
+		assert(cpu.registers[11] == +5);
+		assert(cpu.registers[12] == -5);
+		assert(cpu.registers[13] ==  0);
 	}
 }

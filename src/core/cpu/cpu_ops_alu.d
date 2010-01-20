@@ -75,6 +75,20 @@ template TemplateCpu_ALU() {
 		registers[instruction.RD] = REV4(registers[instruction.RT]);
 		registers.pcAdvance(4);
 	}
+
+	// MAX
+	void OP_MAX() {
+		static int MAX(int a, int b) { return (a > b) ? a : b; }
+		registers[instruction.RD] = MAX(cast(int)registers[instruction.RS], cast(int)registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+	
+	// MIN
+	void OP_MIN() {
+		static int MIN(int a, int b) { return (a < b) ? a : b; }
+		registers[instruction.RD] = MIN(cast(int)registers[instruction.RS], cast(int)registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
 }
 
 unittest {
