@@ -6,6 +6,9 @@ import pspemu.core.memory;
 
 import std.stdio;
 
+// http://pspemu.googlecode.com/svn/branches/old/src/core/cpu.d
+// http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/SPECIAL
+// http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/MISC
 template TemplateCpu_ALU() {
 	enum { Unsigned, Signed }
 	enum { Register, Immediate }
@@ -54,6 +57,12 @@ template TemplateCpu_ALU() {
 	// $d = $s & $t; advance_pc (4);
 	void OP_AND() { mixin(ALU("&", Register, Unsigned)); }
 	void OP_OR () { mixin(ALU("|", Register, Unsigned)); }
+	void OP_XOR() { mixin(ALU("^", Register, Unsigned)); }
+
+	void OP_NOR() {
+		registers[instruction.RD] = ~(registers[instruction.RS] | registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
 
 	// ANDI -- Bitwise and immediate
 	// ORI -- Bitwise and immediate
@@ -61,12 +70,52 @@ template TemplateCpu_ALU() {
 	// $t = $s & imm; advance_pc (4);
 	void OP_ANDI() { mixin(ALU("&", Immediate, Unsigned)); }
 	void OP_ORI () { mixin(ALU("|", Immediate, Unsigned)); }
+	void OP_XORI() { mixin(ALU("^", Immediate, Unsigned)); }
 
 	// LUI -- Load upper immediate
 	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
 	// $t = (imm << 16); advance_pc (4);
 	void OP_LUI() {
 		registers[instruction.RT] = instruction.IMMU << 16;
+		registers.pcAdvance(4);
+	}
+
+	// SEB - Sign Extension Byte
+	// SEH - Sign Extension Half
+	// FIXME: Check if we can get it using cast(). Try when the unittesting is done.
+	void OP_SEB() {
+		static uint SEB(ubyte  r0) { uint r1; asm { xor EAX, EAX; mov AL, r0; movsx EBX, AL; mov r1, EBX; } return r1; }
+		registers[instruction.RD] = SEB(cast(ubyte)registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+	void OP_SEH() {
+		uint SEH(ushort r0) { uint r1; asm { xor EAX, EAX; mov AX, r0; movsx EBX, AX; mov r1, EBX; } return r1; }
+		registers[instruction.RD] = SEH(cast(ushort)registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+
+	static uint ROTR(uint a, uint b) { b = (b & 0x1F); asm { mov EAX, a; mov ECX, b; ror EAX, CL; mov a, EAX; } return a; }
+	// ROTR -- Rotate Word Right
+	// ROTV -- Rotate Word Right Variable
+	void OP_ROTR() {
+		registers[instruction.RD] = ROTR(registers[instruction.RT], registers[instruction.POS]);
+		registers.pcAdvance(4);
+	}
+	void OP_ROTV() {
+		registers[instruction.RD] = ROTR(registers[instruction.RT], registers[instruction.RS]);
+		registers.pcAdvance(4);
+	}
+
+	static final int MASK(uint bits) { return ((1 << cast(ubyte)bits) - 1); }
+	// EXT -- EXTract
+	// INS -- INSert
+	void OP_EXT() {
+		registers[instruction.RT] = (registers[instruction.RS] >> instruction.POS) & MASK(instruction.SIZE + 1);
+		registers.pcAdvance(4);
+	}
+	void OP_INS() {
+		uint mask = MASK(instruction.SIZE - instruction.POS + 1);
+		registers[instruction.RT] = (registers[instruction.RT] & ~(mask << instruction.POS)) | ((registers[instruction.RS] & mask) << instruction.POS);
 		registers.pcAdvance(4);
 	}
 
@@ -89,6 +138,41 @@ template TemplateCpu_ALU() {
 		registers[instruction.RD] = MIN(cast(int)registers[instruction.RS], cast(int)registers[instruction.RT]);
 		registers.pcAdvance(4);
 	}
+
+	// DIV -- Divide
+	// DIVU -- Divide Unsigned
+	// Divides $s by $t and stores the quotient in $LO and the remainder in $HI
+	// $LO = $s / $t; $HI = $s % $t; advance_pc (4);
+	void OP_DIV() {
+		void DIVS(int a, int b) { registers.LO = a / b; registers.HI = a % b; }
+		DIVS(registers[instruction.RS], registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+	void OP_DIVU() {
+		void DIVU(uint a, uint b) { registers.LO = a / b; registers.HI = a % b; }
+		DIVU(registers[instruction.RS], registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+
+	// MULT -- Multiply
+	// MULTU -- Multiply unsigned
+	void OP_MULT() {
+		void MULTS(int  a, int  b) { int l, h; asm { mov EAX, a; mov EBX, b; imul EBX; mov l, EAX; mov h, EDX; } registers.LO = l; registers.HI = h; }
+		MULTS(registers[instruction.RS], registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+	void OP_MULTU() {
+		void MULTU(uint a, uint b) { int l, h; asm { mov EAX, a; mov EBX, b; mul EBX; mov l, EAX; mov h, EDX; } registers.LO = l; registers.HI = h; }
+		MULTU(registers[instruction.RS], registers[instruction.RT]);
+		registers.pcAdvance(4);
+	}
+
+	// MFHI/MFLO -- Move from HI/LO
+	// MTHI/MTLO -- Move to HI/LO
+	void OP_MFHI() { registers[instruction.RD] = registers.HI; registers.pcAdvance(4); }
+	void OP_MFLO() { registers[instruction.RD] = registers.LO; registers.pcAdvance(4); }
+	void OP_MTHI() { registers.HI = registers[instruction.RS]; registers.pcAdvance(4); }
+	void OP_MTLO() { registers.LO = registers[instruction.RS]; registers.pcAdvance(4); }
 }
 
 unittest {

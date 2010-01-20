@@ -6,6 +6,7 @@ version = VERSION_R0_CHECK;
 
 class Registers {
 	uint PC, nPC;
+	uint HI, LO;
 	uint[32] R;
 	union { float[32] F; double[16] D; }
 	protected static int[string] aliases;

@@ -84,15 +84,15 @@ const PspInstructions = [
 	*/
 	array("max"      , 0x0000002C, 0xFC0007FF, "%d, %s, %t"),
 	array("min"      , 0x0000002D, 0xFC0007FF, "%d, %s, %t"),
+	array("div"      , 0x0000001A, 0xFC00FFFF, "%s, %t"),
+	array("divu"     , 0x0000001B, 0xFC00FFFF, "%s, %t"),
 	/*
 	array("dbreak"   , 0x7000003F, 0xFFFFFFFF),
-	array("div"      , 0x0000001A, 0xFC00FFFF),
-	array("divu"     , 0x0000001B, 0xFC00FFFF),
 	array("dret"     , 0x7000003E, 0xFFFFFFFF),
 	array("eret"     , 0x42000018, 0xFFFFFFFF),
-	array("ext"      , 0x7C000000, 0xFC00003F),
-	array("ins"      , 0x7C000004, 0xFC00003F),
 	*/
+	array("ext"      , 0x7C000000, 0xFC00003F, "%t, %s, %a, %ne"),
+	array("ins"      , 0x7C000004, 0xFC00003F, "%t, %s, %a, %ni"),
 	array("j"        , 0x08000000, 0xFC000000, "%j"),
 	array("jr"       , 0x00000008, 0xFC1FFFFF, "%J"),
 	array("jalr"     , 0x00000009, 0xFC1F07FF, "%J"),
@@ -106,16 +106,20 @@ const PspInstructions = [
 	*/
 	array("lui"      , 0x3C000000, 0xFFE00000, "%t, %I"),
 	array("lw"       , 0x8C000000, 0xFC000000, "%t, %o"),
+	array("lwl"      , 0x88000000, 0xFC000000, "%t, %o"),
+	array("lwr"      , 0x98000000, 0xFC000000, "%t, %o"),
 	/*
-	array("lwl"      , 0x88000000, 0xFC000000),
-	array("lwr"      , 0x98000000, 0xFC000000),
 	array("madd"     , 0x0000001C, 0xFC00FFFF),
 	array("maddu"    , 0x0000001D, 0xFC00FFFF),
 	array("mfc0"     , 0x40000000, 0xFFE007FF),
 	array("mfdr"     , 0x7000003D, 0xFFE007FF),
-	array("mfhi"     , 0x00000010, 0xFFFF07FF),
+	*/
+	array("mfhi"     , 0x00000010, 0xFFFF07FF, "%d"),
+	/*
 	array("mfic"     , 0x70000024, 0xFFE007FF),
-	array("mflo"     , 0x00000012, 0xFFFF07FF),
+	*/
+	array("mflo"     , 0x00000012, 0xFFFF07FF, "%d"),
+	/*
 	array("movn"     , 0x0000000B, 0xFC0007FF),
 	array("movz"     , 0x0000000A, 0xFC0007FF),
 	array("msub"     , 0x0000002E, 0xFC00FFFF),
@@ -124,20 +128,18 @@ const PspInstructions = [
 	array("mtdr"     , 0x7080003D, 0xFFE007FF),
 	array("mtic"     , 0x70000026, 0xFFE007FF),
 	array("halt"     , 0x70000000, 0xFFFFFFFF),
-	array("mthi"     , 0x00000011, 0xFC1FFFFF),
-	array("mtlo"     , 0x00000013, 0xFC1FFFFF),
-	array("mult"     , 0x00000018, 0xFC00FFFF),
-	array("multu"    , 0x00000019, 0xFC0007FF),
-	array("nor"      , 0x00000027, 0xFC0007FF),
 	*/
+	array("mthi"     , 0x00000011, 0xFC1FFFFF, "%s"),
+	array("mtlo"     , 0x00000013, 0xFC1FFFFF, "%s"),
+	array("mult"     , 0x00000018, 0xFC00FFFF, "%s, %t"),
+	array("multu"    , 0x00000019, 0xFC0007FF, "%s, %t"),
+	array("nor"      , 0x00000027, 0xFC0007FF, "%d, %s, %t"),
 	array("or"       , 0x00000025, 0xFC0007FF, "%d, %s, %t"),
 	array("ori"      , 0x34000000, 0xFC000000, "%t, %s, %I"),
-	/*
-	array("rotr"     , 0x00200002, 0xFFE0003F),
-	array("rotrv"    , 0x00000046, 0xFC0007FF), // ?
-	array("seb"      , 0x7C000420, 0xFFE007FF),
-	array("seh"      , 0x7C000620, 0xFFE007FF),
-	*/
+	array("rotr"     , 0x00200002, 0xFFE0003F, "%d, %t, %a"),
+	array("rotv"     , 0x00000046, 0xFC0007FF, "%d, %t, %s"),
+	array("seb"      , 0x7C000420, 0xFFE007FF, "%d, %t"),
+	array("seh"      , 0x7C000620, 0xFFE007FF, "%d, %t"),
 	array("sb"       , 0xA0000000, 0xFC000000, "%t, %o"),
 	array("sh"       , 0xA4000000, 0xFC000000, "%t, %o"),
 	/*
@@ -160,8 +162,10 @@ const PspInstructions = [
 	array("subu"     , 0x00000023, 0xFC0007FF),
 	array("sync"     , 0x0000000F, 0xFFFFFFFF),
 	array("syscall"  , 0x0000000C, 0xFC00003F),
-	array("xor"      , 0x00000026, 0xFC0007FF),
-	array("xori"     , 0x38000000, 0xFC000000),
+	*/
+	array("xor"      , 0x00000026, 0xFC0007FF, "%d, %s, %t"),
+	array("xori"     , 0x38000000, 0xFC000000, "%t, %s, %I"),
+	/*
 	array("wsbh"     , 0x7C0000A0, 0xFFE007FF),
 	array("wsbw"     , 0x7C0000E0, 0xFFE007FF),
 

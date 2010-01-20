@@ -36,13 +36,13 @@ struct Instruction {
 
 		// Type Immediate.
 		struct { mixin(bitfields!(
-			int, "IMM", 16,
-			uint, "IMM_", 16
+			int, "IMM" , 16,
+			int, "IMM_", 16
 		)); }
 
 		// Type Immediate Unsigned.
 		struct { mixin(bitfields!(
-			uint, "IMMU", 16,
+			uint, "IMMU" , 16,
 			uint, "IMMU_", 16
 		)); }
 
@@ -50,6 +50,14 @@ struct Instruction {
 		struct { mixin(bitfields!(
 			uint, "JUMP", 26,
 			uint, "JUMP_", 6
+		)); }
+
+		// POS
+		struct { mixin(bitfields!(
+			uint, "POS_0", 6,
+			uint, "POS",   5,
+			uint, "SIZE",  5,
+			uint, "POS_1", 16
 		)); }
 
 		alias IMM OFFSET;

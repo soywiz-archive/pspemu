@@ -57,6 +57,24 @@ template TemplateCpu_MEMORY() {
 	void OP_SH() { mixin(STORE("16")); }
 	void OP_SW() { mixin(STORE("32")); }
 
+	// LWL -- Load Word Left
+	// LWR -- Load Word Right
+	void OP_LWL() {
+		registers[instruction.RT] = (
+			(registers[instruction.RT] & 0x_0000_FFFF) |
+			((memory.read16(registers[instruction.RS] + instruction.IMM - 1) << 16) & 0x_FFFF_0000)
+		);
+		registers.pcAdvance(4);
+	}
+	void OP_LWR() {
+		registers[instruction.RT] = (
+			(registers[instruction.RT] & 0x_FFFF_0000) |
+			((memory.read16(registers[instruction.RS] + instruction.IMM - 0) << 0) & 0x_0000_FFFF)
+		);
+		registers.pcAdvance(4);
+	}
+
+	// CACHE
 	void OP_CACHE() {
 		.writefln("Unimplemented CACHE");
 	}
