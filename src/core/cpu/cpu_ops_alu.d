@@ -28,22 +28,16 @@ template TemplateCpu_ALU() {
 		}
 	}
 
-	// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-	static uint  REV4(uint v) {
-		v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
-		v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
-		v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
-		v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
-		v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
-		return v;
-	}
+	static final int MASK(uint bits) { return ((1 << cast(ubyte)bits) - 1); }
 
-	// ADD -- Add
-	// ADDU -- Add unsigned
+	// ADD(U) -- Add (Unsigned)
 	// Adds two registers and stores the result in a register
 	// $d = $s + $t; advance_pc (4);
 	void OP_ADD () { mixin(ALU("+", Register, Signed  )); }
 	void OP_ADDU() { mixin(ALU("+", Register, Unsigned)); }
+
+	void OP_SUB () { mixin(ALU("-", Register, Signed  )); }
+	void OP_SUBU() { mixin(ALU("-", Register, Unsigned)); }
 
 	// ADDI -- Add immediate
 	// ADDIU -- Add immediate unsigned
@@ -58,11 +52,12 @@ template TemplateCpu_ALU() {
 	void OP_AND() { mixin(ALU("&", Register, Unsigned)); }
 	void OP_OR () { mixin(ALU("|", Register, Unsigned)); }
 	void OP_XOR() { mixin(ALU("^", Register, Unsigned)); }
+	void OP_NOR() { registers[instruction.RD] = ~(registers[instruction.RS] | registers[instruction.RT]); registers.pcAdvance(4); }
 
-	void OP_NOR() {
-		registers[instruction.RD] = ~(registers[instruction.RS] | registers[instruction.RT]);
-		registers.pcAdvance(4);
-	}
+	// MOVZ -- MOV If Zero?
+	// MOVN -- MOV If Non Zero?
+	void OP_MOVZ() { if (registers[instruction.RT] == 0) registers[instruction.RD] = registers[instruction.RS]; registers.pcAdvance(4); }
+	void OP_MOVN() { if (registers[instruction.RT] != 0) registers[instruction.RD] = registers[instruction.RS]; registers.pcAdvance(4); }
 
 	// ANDI -- Bitwise and immediate
 	// ORI -- Bitwise and immediate
@@ -71,6 +66,12 @@ template TemplateCpu_ALU() {
 	void OP_ANDI() { mixin(ALU("&", Immediate, Unsigned)); }
 	void OP_ORI () { mixin(ALU("|", Immediate, Unsigned)); }
 	void OP_XORI() { mixin(ALU("^", Immediate, Unsigned)); }
+
+	// SLT(I)(U)  -- Set Less Than (Immediate) (Unsigned)
+	void OP_SLT  () { mixin(ALU("<", Register , Signed  )); }
+	void OP_SLTU () { mixin(ALU("<", Register , Unsigned)); }
+	void OP_SLTI () { mixin(ALU("<", Immediate, Signed  )); }
+	void OP_SLTIU() { mixin(ALU("<", Immediate, Unsigned)); }
 
 	// LUI -- Load upper immediate
 	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
@@ -106,7 +107,24 @@ template TemplateCpu_ALU() {
 		registers.pcAdvance(4);
 	}
 
-	static final int MASK(uint bits) { return ((1 << cast(ubyte)bits) - 1); }
+	// Not used.
+	//static uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
+
+	// SLL(V) - Shift Word Left Logical (Variable)
+	static uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
+	void OP_SLL () { registers[instruction.RD] = SLL(registers[instruction.RT], registers[instruction.POS]); registers.pcAdvance(4); }
+	void OP_SLLV() { registers[instruction.RD] = SLL(registers[instruction.RT], registers[instruction.RS ]); registers.pcAdvance(4); }
+
+	// SRA(V) - Shift Word Right Arithmetic (Variable)
+	static uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
+	void OP_SRA () { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.POS]); registers.pcAdvance(4); }
+	void OP_SRAV() { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.RS ]); registers.pcAdvance(4); }
+
+	// SRL(V) - Shift Word Right Logic (Variable)
+	static uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
+	void OP_SRL () { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.POS]); registers.pcAdvance(4); }
+	void OP_SRLV() { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.RS ]); registers.pcAdvance(4); }
+
 	// EXT -- EXTract
 	// INS -- INSert
 	void OP_EXT() {
@@ -121,6 +139,15 @@ template TemplateCpu_ALU() {
 
 	// BITREV - Bit Reverse
 	void OP_BITREV() {
+		// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+		static uint  REV4(uint v) {
+			v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
+			v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
+			v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
+			v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
+			v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
+			return v;
+		}
 		registers[instruction.RD] = REV4(registers[instruction.RT]);
 		registers.pcAdvance(4);
 	}
@@ -167,12 +194,62 @@ template TemplateCpu_ALU() {
 		registers.pcAdvance(4);
 	}
 
+	// MADD
+	void OP_MADD() {
+		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
+		asm { mov EAX, rs; imul rt; add lo, EAX; adc hi, EDX; }
+		registers.LO = lo;
+		registers.HI = hi;
+		registers.pcAdvance(4);
+	}
+	void OP_MADDU() {
+		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
+		asm { mov EAX, rs; mul rt; add lo, EAX; adc hi, EDX; }
+		registers.LO = lo;
+		registers.HI = hi;
+		registers.pcAdvance(4);
+	}
+
+	// MSUB
+	void OP_MSUB() { // FIXME: CHECK.
+		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
+		asm { mov EAX, rs; imul rt; sub lo, EAX; sub hi, EDX; }
+		registers.LO = lo;
+		registers.HI = hi;
+		registers.pcAdvance(4);
+	}
+	void OP_MSUBU() { // FIXME: CHECK.
+		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
+		asm { mov EAX, rs; mul rt; sub lo, EAX; sub hi, EDX; }
+		registers.LO = lo;
+		registers.HI = hi;
+		registers.pcAdvance(4);
+	}
+
 	// MFHI/MFLO -- Move from HI/LO
 	// MTHI/MTLO -- Move to HI/LO
 	void OP_MFHI() { registers[instruction.RD] = registers.HI; registers.pcAdvance(4); }
 	void OP_MFLO() { registers[instruction.RD] = registers.LO; registers.pcAdvance(4); }
 	void OP_MTHI() { registers.HI = registers[instruction.RS]; registers.pcAdvance(4); }
 	void OP_MTLO() { registers.LO = registers[instruction.RS]; registers.pcAdvance(4); }
+
+	// WSBH -- Word Swap Bytes Within Halfwords
+	void OP_WSBH() {
+		static uint WSBH(uint v) { return ((v & 0x_FF00_FF00) >> 8) | ((v & 0x_00FF_00FF) << 8); }
+		registers[instruction.RD] = WSBH(registers[instruction.RT]); registers.pcAdvance(4);
+	}
+
+	// WSBW -- Word Swap Bytes Within Words?? // FIXME! Not sure about this!
+	static uint WSBW(uint v) {
+		static struct UINT { union { uint i; ubyte[4] b; } }
+		UINT vs = void, vd = void; vs.i = v;
+		vd.b[0] = vs.b[3];
+		vd.b[1] = vs.b[2];
+		vd.b[2] = vs.b[1];
+		vd.b[3] = vs.b[0];
+		return vd.i;
+	}
+	void OP_WSBW() { registers[instruction.RD] = WSBW(registers[instruction.RT]); registers.pcAdvance(4); }
 }
 
 unittest {

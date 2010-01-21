@@ -12,9 +12,11 @@ import pspemu.core.cpu.registers;
 import std.stdio, std.string, std.stream, std.regexp, std.traits;
 
 static InstructionDefinition[string] instructions;
+static bool[string] macros;
 static this() {
 	// Instruction.
 	foreach (instruction; PspInstructions) instructions[instruction.name] = instruction;
+	//foreach (macro; ["nop", "li"]) macros[macro] = true;
 }
 
 interface ISymbolResolver {
@@ -126,7 +128,10 @@ class AllegrexAssembler : ISymbolResolver {
 			auto paramTypes    = getParams(instructionDefinition.fmt);
 			auto paramMatches  = RegExp(getPattern(instructionDefinition.fmt)).match(instructionParams);
 
-			assert(paramMatches.length > 1, format("params:'%s'; pattern:'%s'", instructionParams, getPattern(instructionDefinition.fmt)));
+			// Fix empty parameters.
+			if (instructionParams == "") paramMatches ~= "";
+
+			assert(paramMatches.length > 1, format("instruction:'%s'; params:'%s'; pattern:'%s'", instructionName, instructionParams, getPattern(instructionDefinition.fmt)));
 			auto paramValues   = paramMatches[1..$];
 
 			instruction.v = instructionDefinition.opcode & instructionDefinition.mask;
@@ -184,7 +189,7 @@ class AllegrexAssembler : ISymbolResolver {
 
 	static string getPattern(string pattern) {
 		pattern = replace(pattern, " ", r"\s+");
-		pattern = RegExp(r"%\w+", "g").replace(pattern, r"([\d\w\-]+)");
+		pattern = RegExp(r"%\w+", "g").replace(pattern, r"([\d\w\-\+\_]+)");
 		return '^' ~ pattern ~ "$";
 	}
 
@@ -281,6 +286,8 @@ unittest {
 	
 	assembler.startSegment("text", 0x2000); assert((assembler.stream.position == 0x2000));
 
+	assembler_("halt"); // Instruction without parameters.
+	assembler_("lui r1, 0x_000F");
 	assembler_(";"); // Tests empty comment.
 	assembler_(".data ;"); // Tests empty comment with instruction before.
 	assembler_("label: .data ;"); // Tests empty comment with instruction before.

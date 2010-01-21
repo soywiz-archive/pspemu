@@ -48,15 +48,6 @@ template TemplateCpu_MEMORY() {
 
 	void OP_LW () { mixin(LOAD("32", Unsigned)); }
 
-	// SB -- Store byte
-	// SH -- Store half
-	// SW -- Store word
-	// The contents of $t is stored at the specified address.
-	// MEM[$s + offset] = $t; advance_pc (4);
-	void OP_SB() { mixin(STORE("8" )); }
-	void OP_SH() { mixin(STORE("16")); }
-	void OP_SW() { mixin(STORE("32")); }
-
 	// LWL -- Load Word Left
 	// LWR -- Load Word Right
 	void OP_LWL() {
@@ -74,9 +65,24 @@ template TemplateCpu_MEMORY() {
 		registers.pcAdvance(4);
 	}
 
+	// SB -- Store byte
+	// SH -- Store half
+	// SW -- Store word
+	// The contents of $t is stored at the specified address.
+	// MEM[$s + offset] = $t; advance_pc (4);
+	void OP_SB() { mixin(STORE("8" )); }
+	void OP_SH() { mixin(STORE("16")); }
+	void OP_SW() { mixin(STORE("32")); }
+
+	// SWL -- Store Word Left
+	// SWR -- Store Word Right
+	void OP_SWL() { memory.write16(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); }
+	void OP_SWR() { memory.write16(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); }
+
 	// CACHE
 	void OP_CACHE() {
 		.writefln("Unimplemented CACHE");
+		registers.pcAdvance(4);
 	}
 }
 

@@ -7,6 +7,7 @@ version = VERSION_R0_CHECK;
 class Registers {
 	uint PC, nPC;
 	uint HI, LO;
+	uint IC;
 	uint[32] R;
 	union { float[32] F; double[16] D; }
 	protected static int[string] aliases;
@@ -50,6 +51,8 @@ class Registers {
 	void dump(bool reduced = true) {
 		writefln("Registers {");
 		writefln("  PC = 0x%08X | nPC = 0x%08X", PC, nPC);
+		writefln("  LO = 0x%08X | HI  = 0x%08X", LO, HI );
+		writefln("  IC = 0x%08X", IC);
 		foreach (k, v; R) {
 			if (reduced && (v == 0)) continue;
 			writefln("  r%-2d = 0x%08X", k, v);

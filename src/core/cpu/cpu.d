@@ -12,6 +12,7 @@ import pspemu.core.cpu.cpu_ops_alu;
 import pspemu.core.cpu.cpu_ops_branch;
 import pspemu.core.cpu.cpu_ops_jump;
 import pspemu.core.cpu.cpu_ops_memory;
+import pspemu.core.cpu.cpu_ops_misc;
 
 import std.stdio, std.string;
 
@@ -39,6 +40,7 @@ class CPU {
 		mixin TemplateCpu_BRANCH;
 		mixin TemplateCpu_JUMP;
 		mixin TemplateCpu_MEMORY;
+		mixin TemplateCpu_MISC;
 
 		void OP_UNK() {
 			.writefln("Unknown operation %s", instruction);
@@ -54,6 +56,10 @@ class CPU {
 
 	void executeSingle() {
 		execute(1);
+	}
+
+	void executeUntilHalt() {
+		try { execute(); } catch (HaltException he) { }
 	}
 }
 
@@ -72,6 +78,10 @@ unittest {
 		assembler.symbolDump();
 	}
 
+	void gotoText() {
+		cpu.registers.pcSet(assembler.segments["text"]);
+	}
+
 	// ADD/ADDI test.
 	writefln("  (v0 = (7 + 11 - 5)) == 13");
 	{
@@ -85,7 +95,7 @@ unittest {
 			addi v0, v0, -5    ; v0 = v0 - 5
 		");
 
-		cpu.registers.pcSet(assembler.segments["text"]);
+		gotoText();
 		cpu.execute(4);
 		//cpu.registers.dump(true);
 		assert(cpu.registers["v0"] == 13);
@@ -104,7 +114,7 @@ unittest {
 			addi v0, v0, -1    ; v0-- . Because of the delayed branch it should be executed anyways.
 		");
 
-		cpu.registers.pcSet(assembler.segments["text"]);
+		gotoText();
 		foreach (step, expectedValue; [2, 2, 1, 1, 0, 0]) {
 			//writefln("PC: %08X, nPC: %08X, STEP: %d", cpu.registers.PC, cpu.registers.nPC, step);
 			cpu.executeSingle();
@@ -130,7 +140,7 @@ unittest {
 			addi r3, zero, 1        ; r3 = 1      ; 0x08000014
 		");
 
-		cpu.registers.pcSet(assembler.segments["text"]);
+		gotoText();
 		cpu.execute(3);
 		assert(cpu.registers["r1"] == 1);
 		assert(cpu.registers["r2"] == 1);
@@ -168,7 +178,7 @@ unittest {
 			add   zr, zr, zr       ; nop
 		");
 
-		cpu.registers.pcSet(assembler.segments["text"]);
+		gotoText();
 		cpu.execute(7);
 		assert(cpu.registers["r1"] == 0);
 		assert(cpu.registers["r2"] == 1);
@@ -188,13 +198,13 @@ unittest {
 			bitrev a0, a0
 		");
 
-		cpu.registers.pcSet(assembler.segments["text"]);
+		gotoText();
 
 		cpu.execute(2); // lui+ori
 		assert(cpu.registers["a0"] == 0x_8000_1111);
 		
 		cpu.execute(1); // bitrev
-		assert(cpu.registers["a0"] == 0x_88880001);
+		assert(cpu.registers["a0"] == 0x_8888_0001);
 	}
 
 	// MIN, MAX.
@@ -209,13 +219,123 @@ unittest {
 			max r11, r1, r2
 			min r12, r1, r2
 			min r13, zero, zero
+
+			halt
 		");
 
-		cpu.registers.pcSet(assembler.segments["text"]);
+		gotoText();
 
-		cpu.execute(5);
+		cpu.executeUntilHalt();
 		assert(cpu.registers[11] == +5);
 		assert(cpu.registers[12] == -5);
 		assert(cpu.registers[13] ==  0);
+	}
+
+	// MULT
+	writefln("  MULT/MFHI/MFLO");
+	{
+		reset();
+		assembler.assembleBlock(r"
+			.text
+
+			addi r1, zero, 2
+			addi r2, zero, 3
+			mult r1, r2
+			mflo r3
+			mfhi r4
+
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+
+		assert(cpu.registers[1] == 2);
+		assert(cpu.registers[2] == 3);
+		assert(cpu.registers[3] == 2 * 3);
+		assert(cpu.registers[4] == 0);
+		assert(cpu.registers.LO == cpu.registers[3]);
+		assert(cpu.registers.HI == cpu.registers[4]);
+	}
+
+	writefln("  MADD/MTHI/MTLO");
+	{
+		reset();
+		assembler.assembleBlock(r"
+			.text
+
+			addi r1, zero, 2
+			addi r2, zero, 3
+			addi r3, zero, 7
+			mtlo r3
+			mthi r3
+			madd r1, r2
+			
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+
+		assert(cpu.registers[1] == 2);
+		assert(cpu.registers[2] == 3);
+		assert(cpu.registers[3] == 7);
+		assert(cpu.registers.LO == cpu.registers[3] + (cpu.registers[1] * cpu.registers[2]));
+		assert(cpu.registers.HI == cpu.registers[3] + (0));
+	}
+
+	writefln("  MOVZ/MOVN");
+	{
+		reset();
+		assembler.assembleBlock(r"
+			.text
+
+			addi r0, zero, 0
+			addi r1, zero, 1
+			addi r2, zero, 2
+
+			movz r11, r2, r0
+			movz r12, r2, r1
+
+			movn r21, r2, r0
+			movn r22, r2, r1
+
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+		//dump();
+		assert(cpu.registers[11] == 2);
+		assert(cpu.registers[12] == 0);
+		assert(cpu.registers[21] == 0);
+		assert(cpu.registers[22] == 2);
+	}
+
+	writefln("  NOR");
+	{
+		reset();
+		assembler.assembleBlock(r"
+			.text
+
+			;li r1, 0x_000FF000
+			lui r1, 0x_000F
+			ori r1, r1, 0x_F000
+
+			;li r2, 0x_F33FF33F
+			lui r2, 0x_F33F
+			ori r2, r2, 0x_F33F
+
+			nor r3, r1, r2
+
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+		//cpu.execute(5);
+		assert(cpu.registers[1] == 0x_000FF000);
+		assert(cpu.registers[2] == 0x_F33FF33F);
+		assert(cpu.registers[3] == 0x_0CC00CC0);
 	}
 }
