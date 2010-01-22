@@ -5,10 +5,10 @@ import std.stdio, std.string;
 version = VERSION_R0_CHECK;
 
 class Registers {
-	uint PC, nPC;
-	uint HI, LO;
-	uint IC;
-	uint[32] R;
+	uint PC, nPC;    // Program Counter
+	uint HI, LO;     // HIgh, LOw for multiplications and divisions.
+	uint IC;         // Interrupt controller
+	uint[32] R;      // General Purpose Registers
 	union { float[32] F; double[16] D; }
 	protected static int[string] aliases;
 

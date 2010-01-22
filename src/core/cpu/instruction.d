@@ -34,6 +34,15 @@ struct Instruction {
 			uint, "",   6
 		)); }
 
+		// Type Float Register.
+		struct { mixin(bitfields!(
+			uint, "",   6,
+			uint, "FD", 5,
+			uint, "FS", 5,
+			uint, "FT", 5,
+			uint, "",   11
+		)); }
+
 		// Type Immediate.
 		struct { mixin(bitfields!(
 			int, "IMM" , 16,

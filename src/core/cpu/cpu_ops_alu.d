@@ -1,10 +1,11 @@
 module pspemu.core.cpu.cpu_ops_alu;
 
-import pspemu.core.cpu.registers;
-import pspemu.core.cpu.instruction;
-import pspemu.core.memory;
+private import pspemu.core.cpu.cpu_utils;
+private import pspemu.core.cpu.registers;
+private import pspemu.core.cpu.instruction;
+private import pspemu.core.memory;
 
-import std.stdio;
+private import std.stdio;
 
 // http://pspemu.googlecode.com/svn/branches/old/src/core/cpu.d
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/SPECIAL
@@ -17,12 +18,14 @@ template TemplateCpu_ALU() {
 		string ALU(string operator, bool immediate, bool signed) {
 			string r;
 			if (immediate) {
-				r ~= "registers[instruction.RT] = registers[instruction.RS] " ~ operator ~ " instruction." ~ (signed ? "IMM" : "IMMU") ~ ";";
-				r ~= "registers.pcAdvance(4);";
+				return CpuExpression("$rt = $rs " ~ operator ~ " " ~ (signed ? "$im" : "$um") ~ ";");
 			} else {
 				// FIXME: Check if we need sign here.
-				r ~= "registers[instruction.RD] = registers[instruction.RS] " ~ operator ~ " registers[instruction.RT];";
-				r ~= "registers.pcAdvance(4);";
+				if (signed) {
+					return CpuExpression("$rd = cast(int)$rs " ~ operator ~ " cast(int)$rt;");
+				} else {
+					return CpuExpression("$rd = cast(uint)$rs " ~ operator ~ " cast(uint)$rt;");
+				}
 			}
 			return r;
 		}
@@ -52,12 +55,12 @@ template TemplateCpu_ALU() {
 	void OP_AND() { mixin(ALU("&", Register, Unsigned)); }
 	void OP_OR () { mixin(ALU("|", Register, Unsigned)); }
 	void OP_XOR() { mixin(ALU("^", Register, Unsigned)); }
-	void OP_NOR() { registers[instruction.RD] = ~(registers[instruction.RS] | registers[instruction.RT]); registers.pcAdvance(4); }
+	void OP_NOR() { mixin(CpuExpression("$rd = ~($rs | $rt);")); }
 
 	// MOVZ -- MOV If Zero?
 	// MOVN -- MOV If Non Zero?
-	void OP_MOVZ() { if (registers[instruction.RT] == 0) registers[instruction.RD] = registers[instruction.RS]; registers.pcAdvance(4); }
-	void OP_MOVN() { if (registers[instruction.RT] != 0) registers[instruction.RD] = registers[instruction.RS]; registers.pcAdvance(4); }
+	void OP_MOVZ() { mixin(CpuExpression("if ($rt == 0) $rd = $rs;")); }
+	void OP_MOVN() { mixin(CpuExpression("if ($rt != 0) $rd = $rs;")); }
 
 	// ANDI -- Bitwise and immediate
 	// ORI -- Bitwise and immediate
@@ -76,65 +79,48 @@ template TemplateCpu_ALU() {
 	// LUI -- Load upper immediate
 	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
 	// $t = (imm << 16); advance_pc (4);
-	void OP_LUI() {
-		registers[instruction.RT] = instruction.IMMU << 16;
-		registers.pcAdvance(4);
-	}
+	void OP_LUI() { mixin(CpuExpression("$rt = ($um << 16);")); }
 
 	// SEB - Sign Extension Byte
 	// SEH - Sign Extension Half
 	// FIXME: Check if we can get it using cast(). Try when the unittesting is done.
 	void OP_SEB() {
 		static uint SEB(ubyte  r0) { uint r1; asm { xor EAX, EAX; mov AL, r0; movsx EBX, AL; mov r1, EBX; } return r1; }
-		registers[instruction.RD] = SEB(cast(ubyte)registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("$rd = SEB(cast(ubyte)$rt);"));
 	}
 	void OP_SEH() {
 		uint SEH(ushort r0) { uint r1; asm { xor EAX, EAX; mov AX, r0; movsx EBX, AX; mov r1, EBX; } return r1; }
-		registers[instruction.RD] = SEH(cast(ushort)registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("$rd = SEH(cast(ushort)$rt);"));
 	}
 
 	static uint ROTR(uint a, uint b) { b = (b & 0x1F); asm { mov EAX, a; mov ECX, b; ror EAX, CL; mov a, EAX; } return a; }
 	// ROTR -- Rotate Word Right
 	// ROTV -- Rotate Word Right Variable
-	void OP_ROTR() {
-		registers[instruction.RD] = ROTR(registers[instruction.RT], registers[instruction.POS]);
-		registers.pcAdvance(4);
-	}
-	void OP_ROTV() {
-		registers[instruction.RD] = ROTR(registers[instruction.RT], registers[instruction.RS]);
-		registers.pcAdvance(4);
-	}
+	void OP_ROTR() { mixin(CpuExpression("$rd = ROTR($rt, $ps);")); }
+	void OP_ROTV() { mixin(CpuExpression("$rd = ROTR($rt, $rs);")); }
 
 	// Not used.
-	//static uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
+	static uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
+	static uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
+	static uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
+	static uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
 
 	// SLL(V) - Shift Word Left Logical (Variable)
-	static uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
-	void OP_SLL () { registers[instruction.RD] = SLL(registers[instruction.RT], registers[instruction.POS]); registers.pcAdvance(4); }
-	void OP_SLLV() { registers[instruction.RD] = SLL(registers[instruction.RT], registers[instruction.RS ]); registers.pcAdvance(4); }
-
 	// SRA(V) - Shift Word Right Arithmetic (Variable)
-	static uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
-	void OP_SRA () { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.POS]); registers.pcAdvance(4); }
-	void OP_SRAV() { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.RS ]); registers.pcAdvance(4); }
-
 	// SRL(V) - Shift Word Right Logic (Variable)
-	static uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
-	void OP_SRL () { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.POS]); registers.pcAdvance(4); }
-	void OP_SRLV() { registers[instruction.RD] = SRA(registers[instruction.RT], registers[instruction.RS ]); registers.pcAdvance(4); }
+	void OP_SLL () { mixin(CpuExpression("$rd = SLL($rt, $ps);")); }
+	void OP_SLLV() { mixin(CpuExpression("$rd = SLL($rt, $rs);")); }
+	void OP_SRA () { mixin(CpuExpression("$rd = SRA($rt, $ps);")); }
+	void OP_SRAV() { mixin(CpuExpression("$rd = SRA($rt, $rs);")); }
+	void OP_SRL () { mixin(CpuExpression("$rd = SRL($rt, $ps);")); }
+	void OP_SRLV() { mixin(CpuExpression("$rd = SRL($rt, $rs);")); }
 
 	// EXT -- EXTract
 	// INS -- INSert
-	void OP_EXT() {
-		registers[instruction.RT] = (registers[instruction.RS] >> instruction.POS) & MASK(instruction.SIZE + 1);
-		registers.pcAdvance(4);
-	}
+	void OP_EXT() { mixin(CpuExpression("$rt = ($rs >> $ps) & MASK($sz + 1);")); }
 	void OP_INS() {
 		uint mask = MASK(instruction.SIZE - instruction.POS + 1);
-		registers[instruction.RT] = (registers[instruction.RT] & ~(mask << instruction.POS)) | ((registers[instruction.RS] & mask) << instruction.POS);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("$rt = ($rt & ~(mask << $ps)) | (($rs & mask) << $ps);"));
 	}
 
 	// BITREV - Bit Reverse
@@ -148,23 +134,16 @@ template TemplateCpu_ALU() {
 			v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
 			return v;
 		}
-		registers[instruction.RD] = REV4(registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("$rd = REV4($rt);"));
 	}
 
 	// MAX
-	void OP_MAX() {
-		static int MAX(int a, int b) { return (a > b) ? a : b; }
-		registers[instruction.RD] = MAX(cast(int)registers[instruction.RS], cast(int)registers[instruction.RT]);
-		registers.pcAdvance(4);
-	}
-	
 	// MIN
-	void OP_MIN() {
-		static int MIN(int a, int b) { return (a < b) ? a : b; }
-		registers[instruction.RD] = MIN(cast(int)registers[instruction.RS], cast(int)registers[instruction.RT]);
-		registers.pcAdvance(4);
-	}
+	static int MAX(int a, int b) { return (a > b) ? a : b; }
+	static int MIN(int a, int b) { return (a < b) ? a : b; }
+
+	void OP_MAX() { mixin(CpuExpression("$rd = MAX(cast(int)$rs, cast(int)$rt);")); }
+	void OP_MIN() { mixin(CpuExpression("$rd = MIN(cast(int)$rs, cast(int)$rt);")); }
 
 	// DIV -- Divide
 	// DIVU -- Divide Unsigned
@@ -172,26 +151,22 @@ template TemplateCpu_ALU() {
 	// $LO = $s / $t; $HI = $s % $t; advance_pc (4);
 	void OP_DIV() {
 		void DIVS(int a, int b) { registers.LO = a / b; registers.HI = a % b; }
-		DIVS(registers[instruction.RS], registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("DIVS($rs, $rt);"));
 	}
 	void OP_DIVU() {
 		void DIVU(uint a, uint b) { registers.LO = a / b; registers.HI = a % b; }
-		DIVU(registers[instruction.RS], registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("DIVU($rs, $rt);"));
 	}
 
 	// MULT -- Multiply
 	// MULTU -- Multiply unsigned
 	void OP_MULT() {
 		void MULTS(int  a, int  b) { int l, h; asm { mov EAX, a; mov EBX, b; imul EBX; mov l, EAX; mov h, EDX; } registers.LO = l; registers.HI = h; }
-		MULTS(registers[instruction.RS], registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("MULTS($rs, $rt);"));
 	}
 	void OP_MULTU() {
 		void MULTU(uint a, uint b) { int l, h; asm { mov EAX, a; mov EBX, b; mul EBX; mov l, EAX; mov h, EDX; } registers.LO = l; registers.HI = h; }
-		MULTU(registers[instruction.RS], registers[instruction.RT]);
-		registers.pcAdvance(4);
+		mixin(CpuExpression("MULTU($rs, $rt);"));
 	}
 
 	// MADD
@@ -228,15 +203,15 @@ template TemplateCpu_ALU() {
 
 	// MFHI/MFLO -- Move from HI/LO
 	// MTHI/MTLO -- Move to HI/LO
-	void OP_MFHI() { registers[instruction.RD] = registers.HI; registers.pcAdvance(4); }
-	void OP_MFLO() { registers[instruction.RD] = registers.LO; registers.pcAdvance(4); }
-	void OP_MTHI() { registers.HI = registers[instruction.RS]; registers.pcAdvance(4); }
-	void OP_MTLO() { registers.LO = registers[instruction.RS]; registers.pcAdvance(4); }
+	void OP_MFHI() { mixin(CpuExpression("$rd = $hi;")); }
+	void OP_MFLO() { mixin(CpuExpression("$rd = $lo;")); }
+	void OP_MTHI() { mixin(CpuExpression("$hi = $rs;")); }
+	void OP_MTLO() { mixin(CpuExpression("$hi = $lo;")); }
 
 	// WSBH -- Word Swap Bytes Within Halfwords
 	void OP_WSBH() {
 		static uint WSBH(uint v) { return ((v & 0x_FF00_FF00) >> 8) | ((v & 0x_00FF_00FF) << 8); }
-		registers[instruction.RD] = WSBH(registers[instruction.RT]); registers.pcAdvance(4);
+		mixin(CpuExpression("$rd = WSBH($rt);"));
 	}
 
 	// WSBW -- Word Swap Bytes Within Words?? // FIXME! Not sure about this!
@@ -249,7 +224,7 @@ template TemplateCpu_ALU() {
 		vd.b[3] = vs.b[0];
 		return vd.i;
 	}
-	void OP_WSBW() { registers[instruction.RD] = WSBW(registers[instruction.RT]); registers.pcAdvance(4); }
+	void OP_WSBW() { mixin(CpuExpression("$rd = WSBW($rt);")); }
 }
 
 unittest {

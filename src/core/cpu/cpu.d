@@ -8,11 +8,13 @@ import pspemu.core.cpu.instruction;
 import pspemu.core.memory;
 
 // OPS.
+import pspemu.core.cpu.cpu_utils;
 import pspemu.core.cpu.cpu_ops_alu;
 import pspemu.core.cpu.cpu_ops_branch;
 import pspemu.core.cpu.cpu_ops_jump;
 import pspemu.core.cpu.cpu_ops_memory;
 import pspemu.core.cpu.cpu_ops_misc;
+import pspemu.core.cpu.cpu_ops_fpu;
 
 import std.stdio, std.string;
 
@@ -41,6 +43,7 @@ class CPU {
 		mixin TemplateCpu_JUMP;
 		mixin TemplateCpu_MEMORY;
 		mixin TemplateCpu_MISC;
+		mixin TemplateCpu_FPU;
 
 		void OP_UNK() {
 			.writefln("Unknown operation %s", instruction);
@@ -88,16 +91,16 @@ unittest {
 		reset();
 
 		assembler.assembleBlock(r"
-			.text
+		.text
 			addi a0, zero, 7   ; a0 = 7
 			addi a1, zero, 11  ; a1 = 11
 			add  v0, a0, a1    ; v0 = a0 + a1
 			addi v0, v0, -5    ; v0 = v0 - 5
+			halt
 		");
 
 		gotoText();
-		cpu.execute(4);
-		//cpu.registers.dump(true);
+		cpu.executeUntilHalt();
 		assert(cpu.registers["v0"] == 13);
 	}
 
@@ -107,7 +110,7 @@ unittest {
 		reset();
 
 		assembler.assembleBlock(r"
-			.text
+		.text
 			addi v0, zero, 2   ; v0 = 2
 		loop:                  ;
 			bgez v0, loop      ;
@@ -128,7 +131,7 @@ unittest {
 		reset();
 
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			jal  my_function        ;             ; 0x08000000
 			addi r1, zero, 1        ; r1 = 1      ; 0x08000004
@@ -158,7 +161,7 @@ unittest {
 		reset();
 
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			; Ensures that the registers are setted to zero. (Though them should be already).
 			add   r1, zero, zero   ; r1 = 0
@@ -176,14 +179,16 @@ unittest {
 
 		label2:
 			add   zr, zr, zr       ; nop
+
+			halt
 		");
 
 		gotoText();
-		cpu.execute(7);
+		cpu.executeUntilHalt();
 		assert(cpu.registers["r1"] == 0);
 		assert(cpu.registers["r2"] == 1);
 		//dump();
-		assert(cpu.registers.PC    == assembler.getSymbolAddress("label2"));
+		assert(cpu.registers.PC    == assembler.getSymbolAddress("label2") + 8);
 	}
 	
 	// Load immediate. LUI + ORI + BITREV.
@@ -191,20 +196,19 @@ unittest {
 	{
 		reset();
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			lui a0, 0x8000
 			ori a0, a0, 0x1111
-			bitrev a0, a0
+			bitrev a1, a0
+			
+			halt
 		");
 
 		gotoText();
-
-		cpu.execute(2); // lui+ori
+		cpu.executeUntilHalt();
 		assert(cpu.registers["a0"] == 0x_8000_1111);
-		
-		cpu.execute(1); // bitrev
-		assert(cpu.registers["a0"] == 0x_8888_0001);
+		assert(cpu.registers["a1"] == 0x_8888_0001);
 	}
 
 	// MIN, MAX.
@@ -212,7 +216,7 @@ unittest {
 	{
 		reset();
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			addi r1, zero, -5
 			addi r2, zero,  5
@@ -236,7 +240,7 @@ unittest {
 	{
 		reset();
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			addi r1, zero, 2
 			addi r2, zero, 3
@@ -262,7 +266,7 @@ unittest {
 	{
 		reset();
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			addi r1, zero, 2
 			addi r2, zero, 3
@@ -288,7 +292,7 @@ unittest {
 	{
 		reset();
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			addi r0, zero, 0
 			addi r1, zero, 1
@@ -316,7 +320,7 @@ unittest {
 	{
 		reset();
 		assembler.assembleBlock(r"
-			.text
+		.text
 
 			;li r1, 0x_000FF000
 			lui r1, 0x_000F

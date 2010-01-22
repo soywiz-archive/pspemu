@@ -160,11 +160,11 @@ const PspInstructions = [
 	array("wsbh"     , 0x7C0000A0, 0xFFE007FF, "%d, %t"),
 	array("wsbw"     , 0x7C0000E0, 0xFFE007FF, "%d, %t"),
 
-	/*
+	array("abs.s"    , 0x46000005, 0xFFFF003F, "%D, %S"),
+	array("add.s"    , 0x46000000, 0xFFE0003F, "%D, %S, %T"),
 
+	/*
 	// FPU instructions
-	array("abs.s"    , 0x46000005, 0xFFFF003F),
-	array("add.s"    , 0x46000000, 0xFFE0003F),
 	array("bc1f"     , 0x45000000, 0xFFFF0000),
 	array("bc1fl"    , 0x45020000, 0xFFFF0000),
 	array("bc1t"     , 0x45010000, 0xFFFF0000),
