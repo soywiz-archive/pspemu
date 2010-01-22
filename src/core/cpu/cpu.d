@@ -16,7 +16,7 @@ import pspemu.core.cpu.cpu_ops_memory;
 import pspemu.core.cpu.cpu_ops_misc;
 import pspemu.core.cpu.cpu_ops_fpu;
 
-import std.stdio, std.string;
+import std.stdio, std.string, std.math;
 
 class CPU {
 	Registers registers;
@@ -192,7 +192,7 @@ unittest {
 	}
 	
 	// Load immediate. LUI + ORI + BITREV.
-	writefln("  LI 32 bits LUI + ORI. BITREV.");
+	writefln("  LI 32 bits LUI + ORI + LI MACRO. BITREV.");
 	{
 		reset();
 		assembler.assembleBlock(r"
@@ -201,6 +201,7 @@ unittest {
 			lui a0, 0x8000
 			ori a0, a0, 0x1111
 			bitrev a1, a0
+			li a2, 0x80001111
 			
 			halt
 		");
@@ -209,6 +210,7 @@ unittest {
 		cpu.executeUntilHalt();
 		assert(cpu.registers["a0"] == 0x_8000_1111);
 		assert(cpu.registers["a1"] == 0x_8888_0001);
+		assert(cpu.registers["a2"] == cpu.registers["a0"]);
 	}
 
 	// MIN, MAX.
@@ -341,5 +343,43 @@ unittest {
 		assert(cpu.registers[1] == 0x_000FF000);
 		assert(cpu.registers[2] == 0x_F33FF33F);
 		assert(cpu.registers[3] == 0x_0CC00CC0);
+	}
+
+	writefln("  LI");
+	{
+		reset();
+		assembler.assembleBlock(r"
+		.text
+
+			li r2, 0x_F33FF33F
+			li r3, -2
+
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+		assert(cpu.registers[2] == 0x_F33FF33F);
+		assert(cpu.registers[3] == -2);
+	}
+
+	writefln("  FLOAT");
+	{
+		reset();
+		assembler.assembleBlock(r"
+		.data
+			value: .float 1.5, 1.6
+
+		.text
+			la $1, value
+			lwc1 $f2, 0($1)
+			ceil.w.s $f1, $f2
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+		assert(cpu.registers.F[2] == 1.5);
+		assert(cpu.registers.RF[1] == 2);
 	}
 }

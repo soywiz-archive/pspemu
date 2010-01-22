@@ -17,44 +17,66 @@ template TemplateCpu_ALU() {
 	static pure nothrow {
 		string ALU(string operator, bool immediate, bool signed) {
 			string r;
+			string sign = signed ? "#" : "$";
 			if (immediate) {
-				return CpuExpression("$rt = $rs " ~ operator ~ " " ~ (signed ? "$im" : "$um") ~ ";");
+				return CpuExpression("$rt = $rs " ~ operator ~ " " ~ sign ~ "im;");
 			} else {
-				// FIXME: Check if we need sign here.
-				if (signed) {
-					return CpuExpression("$rd = cast(int)$rs " ~ operator ~ " cast(int)$rt;");
-				} else {
-					return CpuExpression("$rd = cast(uint)$rs " ~ operator ~ " cast(uint)$rt;");
-				}
+				return CpuExpression("$rd = " ~ sign ~ "rs " ~ operator ~ " " ~ sign ~ "rt;");
 			}
 			return r;
 		}
 	}
 
 	static final int MASK(uint bits) { return ((1 << cast(ubyte)bits) - 1); }
+	static uint SEB(ubyte  r0) { uint r1; asm { xor EAX, EAX; mov AL, r0; movsx EBX, AL; mov r1, EBX; } return r1; }
+	static uint SEH(ushort r0) { uint r1; asm { xor EAX, EAX; mov AX, r0; movsx EBX, AX; mov r1, EBX; } return r1; }
+	static uint ROTR(uint a, uint b) { b = (b & 0x1F); asm { mov EAX, a; mov ECX, b; ror EAX, CL; mov a, EAX; } return a; }
+	static uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
+	static uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
+	static uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
+	static uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
+	// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+	static uint  REV4(uint v) {
+		v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
+		v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
+		v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
+		v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
+		v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
+		return v;
+	}
+	static int MAX(int a, int b) { return (a > b) ? a : b; }
+	static int MIN(int a, int b) { return (a < b) ? a : b; }
+	static uint WSBH(uint v) { return ((v & 0x_FF00_FF00) >> 8) | ((v & 0x_00FF_00FF) << 8); }
+	static uint WSBW(uint v) {
+		static struct UINT { union { uint i; ubyte[4] b; } }
+		UINT vs = void, vd = void; vs.i = v;
+		vd.b[0] = vs.b[3];
+		vd.b[1] = vs.b[2];
+		vd.b[2] = vs.b[1];
+		vd.b[3] = vs.b[0];
+		return vd.i;
+	}
 
 	// ADD(U) -- Add (Unsigned)
 	// Adds two registers and stores the result in a register
 	// $d = $s + $t; advance_pc (4);
-	void OP_ADD () { mixin(ALU("+", Register, Signed  )); }
-	void OP_ADDU() { mixin(ALU("+", Register, Unsigned)); }
+	void OP_ADD () { mixin(CpuExpression("$rd = #rs + #rt;")); }
+	void OP_ADDU() { mixin(CpuExpression("$rd = $rs + $rt;")); }
+	void OP_SUB () { mixin(CpuExpression("$rd = #rs - #rt;")); }
+	void OP_SUBU() { mixin(CpuExpression("$rd = $rs - $rt;")); }
 
-	void OP_SUB () { mixin(ALU("-", Register, Signed  )); }
-	void OP_SUBU() { mixin(ALU("-", Register, Unsigned)); }
-
-	// ADDI -- Add immediate
-	// ADDIU -- Add immediate unsigned
+	// ADDI(U) -- Add immediate (Unsigned)
 	// Adds a register and a signed immediate value and stores the result in a register
 	// $t = $s + imm; advance_pc (4);
-	void OP_ADDI () { mixin(ALU("+", Immediate, Signed  )); }
-	void OP_ADDIU() { mixin(ALU("+", Immediate, Unsigned)); }
+	void OP_ADDI () { mixin(CpuExpression("$rt = #rs + #im;")); }
+	void OP_ADDIU() { mixin(CpuExpression("$rt = $rs + $im;")); }
 
 	// AND -- Bitwise and
 	// Bitwise ands two registers and stores the result in a register
 	// $d = $s & $t; advance_pc (4);
-	void OP_AND() { mixin(ALU("&", Register, Unsigned)); }
-	void OP_OR () { mixin(ALU("|", Register, Unsigned)); }
-	void OP_XOR() { mixin(ALU("^", Register, Unsigned)); }
+	void OP_AND() { mixin(CpuExpression("$rd = $rs & $rt;")); }
+	void OP_OR () { mixin(CpuExpression("$rd = $rs | $rt;")); }
+	void OP_XOR() { mixin(CpuExpression("$rd = $rs ^ $rt;")); }
 	void OP_NOR() { mixin(CpuExpression("$rd = ~($rs | $rt);")); }
 
 	// MOVZ -- MOV If Zero?
@@ -66,44 +88,30 @@ template TemplateCpu_ALU() {
 	// ORI -- Bitwise and immediate
 	// Bitwise ands a register and an immediate value and stores the result in a register
 	// $t = $s & imm; advance_pc (4);
-	void OP_ANDI() { mixin(ALU("&", Immediate, Unsigned)); }
-	void OP_ORI () { mixin(ALU("|", Immediate, Unsigned)); }
-	void OP_XORI() { mixin(ALU("^", Immediate, Unsigned)); }
+	void OP_ANDI() { mixin(CpuExpression("$rt = $rs & $im;")); }
+	void OP_ORI () { mixin(CpuExpression("$rt = $rs | $im;")); }
+	void OP_XORI() { mixin(CpuExpression("$rt = $rs ^ $im;")); }
 
 	// SLT(I)(U)  -- Set Less Than (Immediate) (Unsigned)
-	void OP_SLT  () { mixin(ALU("<", Register , Signed  )); }
-	void OP_SLTU () { mixin(ALU("<", Register , Unsigned)); }
-	void OP_SLTI () { mixin(ALU("<", Immediate, Signed  )); }
-	void OP_SLTIU() { mixin(ALU("<", Immediate, Unsigned)); }
+	void OP_SLT  () { mixin(CpuExpression("$rd = #rs < #rt;")); }
+	void OP_SLTU () { mixin(CpuExpression("$rd = $rs < $rt;")); }
+	void OP_SLTI () { mixin(CpuExpression("$rt = #rs < #im;")); }
+	void OP_SLTIU() { mixin(CpuExpression("$rt = $rs < $im;")); }
 
 	// LUI -- Load upper immediate
 	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
 	// $t = (imm << 16); advance_pc (4);
-	void OP_LUI() { mixin(CpuExpression("$rt = ($um << 16);")); }
+	void OP_LUI() { mixin(CpuExpression("$rt = (#im << 16);")); }
 
 	// SEB - Sign Extension Byte
 	// SEH - Sign Extension Half
-	// FIXME: Check if we can get it using cast(). Try when the unittesting is done.
-	void OP_SEB() {
-		static uint SEB(ubyte  r0) { uint r1; asm { xor EAX, EAX; mov AL, r0; movsx EBX, AL; mov r1, EBX; } return r1; }
-		mixin(CpuExpression("$rd = SEB(cast(ubyte)$rt);"));
-	}
-	void OP_SEH() {
-		uint SEH(ushort r0) { uint r1; asm { xor EAX, EAX; mov AX, r0; movsx EBX, AX; mov r1, EBX; } return r1; }
-		mixin(CpuExpression("$rd = SEH(cast(ushort)$rt);"));
-	}
+	void OP_SEB() { mixin(CpuExpression("$rd = SEB(cast(ubyte )$rt);")); }
+	void OP_SEH() { mixin(CpuExpression("$rd = SEH(cast(ushort)$rt);")); }
 
-	static uint ROTR(uint a, uint b) { b = (b & 0x1F); asm { mov EAX, a; mov ECX, b; ror EAX, CL; mov a, EAX; } return a; }
 	// ROTR -- Rotate Word Right
 	// ROTV -- Rotate Word Right Variable
 	void OP_ROTR() { mixin(CpuExpression("$rd = ROTR($rt, $ps);")); }
 	void OP_ROTV() { mixin(CpuExpression("$rd = ROTR($rt, $rs);")); }
-
-	// Not used.
-	static uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
-	static uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
-	static uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
-	static uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
 
 	// SLL(V) - Shift Word Left Logical (Variable)
 	// SRA(V) - Shift Word Right Arithmetic (Variable)
@@ -118,32 +126,14 @@ template TemplateCpu_ALU() {
 	// EXT -- EXTract
 	// INS -- INSert
 	void OP_EXT() { mixin(CpuExpression("$rt = ($rs >> $ps) & MASK($sz + 1);")); }
-	void OP_INS() {
-		uint mask = MASK(instruction.SIZE - instruction.POS + 1);
-		mixin(CpuExpression("$rt = ($rt & ~(mask << $ps)) | (($rs & mask) << $ps);"));
-	}
+	void OP_INS() { mixin(CpuExpression("uint mask = MASK(instruction.SIZE - instruction.POS + 1); $rt = ($rt & ~(mask << $ps)) | (($rs & mask) << $ps);")); }
 
 	// BITREV - Bit Reverse
-	void OP_BITREV() {
-		// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-		static uint  REV4(uint v) {
-			v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
-			v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
-			v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
-			v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
-			v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
-			return v;
-		}
-		mixin(CpuExpression("$rd = REV4($rt);"));
-	}
+	void OP_BITREV() { mixin(CpuExpression("$rd = REV4($rt);")); }
 
-	// MAX
-	// MIN
-	static int MAX(int a, int b) { return (a > b) ? a : b; }
-	static int MIN(int a, int b) { return (a < b) ? a : b; }
-
-	void OP_MAX() { mixin(CpuExpression("$rd = MAX(cast(int)$rs, cast(int)$rt);")); }
-	void OP_MIN() { mixin(CpuExpression("$rd = MIN(cast(int)$rs, cast(int)$rt);")); }
+	// MAX/MIN
+	void OP_MAX() { mixin(CpuExpression("$rd = MAX(#rs, #rt);")); }
+	void OP_MIN() { mixin(CpuExpression("$rd = MIN(#rs, #rt);")); }
 
 	// DIV -- Divide
 	// DIVU -- Divide Unsigned
@@ -206,24 +196,11 @@ template TemplateCpu_ALU() {
 	void OP_MFHI() { mixin(CpuExpression("$rd = $hi;")); }
 	void OP_MFLO() { mixin(CpuExpression("$rd = $lo;")); }
 	void OP_MTHI() { mixin(CpuExpression("$hi = $rs;")); }
-	void OP_MTLO() { mixin(CpuExpression("$hi = $lo;")); }
+	void OP_MTLO() { mixin(CpuExpression("$lo = $rs;")); }
 
 	// WSBH -- Word Swap Bytes Within Halfwords
-	void OP_WSBH() {
-		static uint WSBH(uint v) { return ((v & 0x_FF00_FF00) >> 8) | ((v & 0x_00FF_00FF) << 8); }
-		mixin(CpuExpression("$rd = WSBH($rt);"));
-	}
-
 	// WSBW -- Word Swap Bytes Within Words?? // FIXME! Not sure about this!
-	static uint WSBW(uint v) {
-		static struct UINT { union { uint i; ubyte[4] b; } }
-		UINT vs = void, vd = void; vs.i = v;
-		vd.b[0] = vs.b[3];
-		vd.b[1] = vs.b[2];
-		vd.b[2] = vs.b[1];
-		vd.b[3] = vs.b[0];
-		return vd.i;
-	}
+	void OP_WSBH() { mixin(CpuExpression("$rd = WSBH($rt);")); }
 	void OP_WSBW() { mixin(CpuExpression("$rd = WSBW($rt);")); }
 }
 

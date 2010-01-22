@@ -5,12 +5,29 @@ import std.stdio, std.string;
 version = VERSION_R0_CHECK;
 
 class Registers {
+	protected static int[string] aliases;
+	enum Fcsr { Rint = 0, Cast, Ceil, Floor }
+
 	uint PC, nPC;    // Program Counter
 	uint HI, LO;     // HIgh, LOw for multiplications and divisions.
 	uint IC;         // Interrupt controller
+	Fcsr FCSR;       // Floating point Control / Status register
 	uint[32] R;      // General Purpose Registers
-	union { float[32] F; double[16] D; }
-	protected static int[string] aliases;
+	union { uint[32] RF; float[32] F; double[16] D; } // Floating point registers.
+
+	static class FP {
+		protected static int[string] aliases;
+
+		static this() {
+			foreach (n; 0..32) aliases[format("$f%d", n)] = n;
+			aliases = aliases.rehash;
+		}
+
+		static int getAlias(string aliasName) {
+			assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
+			return aliases[aliasName];
+		}
+	}
 
 	static this() {
 		aliases["zero"] = 0;
@@ -34,16 +51,17 @@ class Registers {
 	uint opIndex(uint   index) { return R[index]; }
 	uint opIndex(string index) { return this[aliases[index]]; }
 
-	static int getAlias(string aliasName) {
-		assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
-		return aliases[aliasName];
-	}
-
 	uint opIndexAssign(uint value, uint index) {
 		R[index] = value;
 		version (VERSION_R0_CHECK) if (index == 0) R[index] = 0;
 		return R[index];
 	}
+
+	static int getAlias(string aliasName) {
+		assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
+		return aliases[aliasName];
+	}
+
 
 	void pcAdvance(int offset = 4) { PC = nPC; nPC += offset; }
 	void pcSet(uint address) { PC  = address; nPC = PC + 4; }
@@ -56,6 +74,12 @@ class Registers {
 		foreach (k, v; R) {
 			if (reduced && (v == 0)) continue;
 			writefln("  r%-2d = 0x%08X", k, v);
+		}
+		writefln("}");
+		writefln("Float registers {");
+		foreach (k, v; F) {
+			if (reduced && (v == 0.0)) continue;
+			writefln("  f%-2d = %f", k, v);
 		}
 		writefln("}");
 	}

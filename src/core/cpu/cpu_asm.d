@@ -9,13 +9,13 @@ import pspemu.core.cpu.cpu_switch;
 import pspemu.core.cpu.cpu_table;
 import pspemu.core.cpu.registers;
 
-import std.stdio, std.string, std.stream, std.regexp, std.traits;
+import std.stdio, std.string, std.stream, std.regexp, std.traits, std.conv;
 
-static InstructionDefinition[string] instructions;
+static InstructionDefinition[string] instructionsAvailable;
 static bool[string] macros;
 static this() {
 	// Instruction.
-	foreach (instruction; PspInstructions) instructions[instruction.name] = instruction;
+	foreach (instruction; PspInstructions) instructionsAvailable[instruction.name] = instruction;
 	//foreach (macro; ["nop", "li"]) macros[macro] = true;
 }
 
@@ -112,18 +112,45 @@ class AllegrexAssembler : ISymbolResolver {
 		relocs ~= reloc;
 	}
 
-	bool assembleInternal(uint PC, string line, ref Instruction instruction) {
+	private Instruction[] assembleInternal(ref uint PC, string line) {
+		//writefln("%s", line);
 		// Non empty line.
 		if (line.length > 0) {
 			//writefln("  '%s'", line);
-			auto regexp = new RegExp(r"^(\w+)\s*(.*)$", "");
+			auto regexp = new RegExp(r"^([\w\.]+)\s*(.*)$", "");
 			auto parts = regexp.match(line);
 			string instructionName   = parts[1];
 			string instructionParams = parts[2];
 
+			// Check macro
+			switch (instructionName) {
+				case "la": {
+					scope params = RegExp(getPattern("%s, %s")).match(instructionParams);
+					assert(params.length == 3);
+					scope value = getSymbolAddress(params[2]);
+					
+					return (
+						assembleInternal(PC, format("lui $1, 0x%04X", (value >> 16) & 0xFFFF)) ~
+						assembleInternal(PC, format("ori " ~ params[1] ~ ", $1, 0x%04X", (value >>  0) & 0xFFFF))
+					);
+				} break;
+				case "li": {
+					scope params = RegExp(getPattern("%s, %s")).match(instructionParams);
+					assert(params.length == 3);
+					scope value = parseString(params[2]);
+
+					return (
+						assembleInternal(PC, format("lui $1, 0x%04X", (value >> 16) & 0xFFFF)) ~
+						assembleInternal(PC, format("ori " ~ params[1] ~ ", $1, 0x%04X", (value >>  0) & 0xFFFF))
+					);
+				} break;
+				// Ignore.
+				default: break;
+			}
+
 			// Obtain instruction.
-			assert(instructionName in instructions, format("Can't assemble unknown instruction '%s'", instructionName));
-			auto instructionDefinition = instructions[instructionName];
+			assert(instructionName in instructionsAvailable, format("Can't assemble unknown instruction '%s'", instructionName));
+			auto instructionDefinition = instructionsAvailable[instructionName];
 
 			auto paramTypes    = getParams(instructionDefinition.fmt);
 			auto paramMatches  = RegExp(getPattern(instructionDefinition.fmt)).match(instructionParams);
@@ -134,12 +161,17 @@ class AllegrexAssembler : ISymbolResolver {
 			assert(paramMatches.length > 1, format("instruction:'%s'; params:'%s'; pattern:'%s'", instructionName, instructionParams, getPattern(instructionDefinition.fmt)));
 			auto paramValues   = paramMatches[1..$];
 
-			instruction.v = instructionDefinition.opcode & instructionDefinition.mask;
+			Instruction instruction;
+
+			instruction.v = (instructionDefinition.opcode & instructionDefinition.mask);
 
 			foreach (n; 0..paramTypes.length) {
 				auto paramType = paramTypes[n], paramValue = paramValues[n];
 				uint getRegister() {
 					return cast(uint)Registers.getAlias(paramValue);
+				}
+				uint getFPRegister() {
+					return cast(uint)Registers.FP.getAlias(paramValue);
 				}
 				uint getImmediate(bool signed) {
 					scope value = parseString(paramValue);
@@ -169,17 +201,28 @@ class AllegrexAssembler : ISymbolResolver {
 					case "%d" : instruction.RD     = getRegister;  break; // Rd
 					case "%s" : instruction.RS     = getRegister;  break; // Rs
 					case "%t" : instruction.RT     = getRegister;  break; // Rt
+					case "%D" : instruction.FD     = getFPRegister; break; // Fd
+					case "%S" : instruction.FS     = getFPRegister; break; // Fs
+					case "%T" : instruction.FT     = getFPRegister; break; // Ft
 					case "%i" : instruction.IMM    = getImmediate(true); break; // 16bit signed immediate
 					case "%I" : instruction.IMMU   = getImmediate(false); break; // 16bit unsigned immediate (always printed in hex)
 					case "%O" : instruction.OFFSET = getOffset;    break; // 16bit signed offset (PC relative)
 					case "%j" : instruction.JUMP   = getAbsoluteOffset; break; // 26bit absolute offset
 					case "%J" : instruction.RS     = getRegister;  break; // register jump
+					case "%o" : {
+						scope results = RegExp(r"^(\-?\d+)\(([\$\d\w\-\+\_]+)\)$", "").match(paramValue);
+						assert(results.length == 3);
+						instruction.OFFSET = cast(int)parseString(results[1]);
+						instruction.RS     = cast(uint)Registers.getAlias(results[2]);
+						//writefln("%s", results[1]);
+					} break;
  				}
 			}
 
-			return true;
+			PC += 4;
+			return [instruction];
 		}
-		return false;
+		return [];
 	}
 
 	static string[] getParams(string pattern) {
@@ -189,7 +232,8 @@ class AllegrexAssembler : ISymbolResolver {
 
 	static string getPattern(string pattern) {
 		pattern = replace(pattern, " ", r"\s+");
-		pattern = RegExp(r"%\w+", "g").replace(pattern, r"([\d\w\-\+\_]+)");
+		pattern = replace(pattern, "%o", r"(\-?\d+\([\$\d\w\-\+\_]+\))");
+		pattern = RegExp(r"%\w+", "g").replace(pattern, r"([\$\d\w\-\+\_]+)");
 		return '^' ~ pattern ~ "$";
 	}
 
@@ -213,10 +257,10 @@ class AllegrexAssembler : ISymbolResolver {
 	}
 
 	// Returns true if writted something.
-	bool assemble(ref uint PC, ref Instruction instruction, string line) {
+	Instruction[] assemble(ref uint PC, string line) {
 		// Clean line. Strip comments and spaces.
 		string labelName, operation;
-
+		
 		parseLine(line, labelName, operation);
 
 		// Extract label.
@@ -226,8 +270,8 @@ class AllegrexAssembler : ISymbolResolver {
 				labels[labelName] = (PC = cast(uint)stream.position);
 			}
 		}
+
 		if (operation.length) {
-			
 			// Directives.
 			if (operation[0] == '.') {
 				scope parts = RegExp(r"^(\w+)\s*(.*)$").match(operation[1..$]);
@@ -243,23 +287,37 @@ class AllegrexAssembler : ISymbolResolver {
 							PC = cast(uint)parseString(segmentAddress, defaults[segmentName])
 						);
 					} break;
+					// Data
+					case "float": {
+						string process = parts[2];
+						int pos;
+						while (1) {
+							if ((pos = std.string.indexOf(process, ',')) == -1) pos = process.length;
+							float v = to!(float)(strip(process[0..pos]));
+							stream.write(v);
+							if (pos >= process.length) break;
+							process = process[pos + 1..$];
+						}
+					} break;
 				}
-				return false;
+				return [];
 			}
 
-			if (assembleInternal(PC = cast(uint)stream.position, operation, instruction)) {
+			PC = cast(uint)stream.position;
+			uint nPC = PC;
+			auto instructions = assembleInternal(nPC, operation);
+			foreach (instruction; instructions) {
 				//writefln("%08X: %08X", stream.position, instruction.v);
 				stream.write(instruction.v);
-				return true;
 			}
+			return instructions;
 		}
-		return false;
+		return [];
 	}
 
-	bool assemble(string line) {
-		Instruction instruction;
+	Instruction[] assemble(string line) {
 		uint PC;
-		return assemble(PC, instruction, line);
+		return assemble(PC, line);
 	}
 
 	// FIXME: Rename relocate to something like 'address fixing'. Because it's not really relocation.
@@ -280,9 +338,9 @@ unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	scope assembler = new AllegrexAssembler;
-	uint PC; Instruction instruction;
+	uint PC; Instruction[] instructions;
 
-	ReturnType!(assembler.opCall) assembler_(string line) { return assembler(PC, instruction, line); }
+	ReturnType!(assembler.opCall) assembler_(string line) { return instructions = assembler(PC, line); }
 	
 	assembler.startSegment("text", 0x2000); assert((assembler.stream.position == 0x2000));
 
@@ -298,19 +356,22 @@ unittest {
 	} catch {
 	}
 
+	assembler.assembleBlock(".data\n value: .float 1.5, 1.6");
+	assembler.assembleBlock("label2: la $1, label");
+
 	assembler_(".text 0x1000        "); assert((PC == 0x1000));
 	assembler_("; comment           "); assert((PC == 0x1000));
-	assembler_("	addi a0, zero, 1 ; this is a comment"); assert((PC == 0x1000) && (instruction.v == 0x_20040001));
+	assembler_("	addi a0, zero, 1 ; this is a comment"); assert((PC == 0x1000) && (instructions[0].v == 0x_20040001));
 	assembler_("loop:               "); assert((PC == 0x1004));
-	assembler_("  addi a1, zero, 2  "); assert((PC == 0x1004) && (instruction.v == 0x_20050002));
-	assembler_("  add v0, a0, a1    "); assert((PC == 0x1008) && (instruction.v == 0x_00851020));
-	assembler_("  addi v0, v0, -2   "); assert((PC == 0x100C) && (instruction.v == 0x_2042FFFE));
-	assembler_("  beq  v0, v0, loop "); assert((PC == 0x1010) && (instruction.v == 0x_10420000));
+	assembler_("  addi a1, zero, 2  "); assert((PC == 0x1004) && (instructions[0].v == 0x_20050002));
+	assembler_("  add v0, a0, a1    "); assert((PC == 0x1008) && (instructions[0].v == 0x_00851020));
+	assembler_("  addi v0, v0, -2   "); assert((PC == 0x100C) && (instructions[0].v == 0x_2042FFFE));
+	assembler_("  beq  v0, v0, loop "); assert((PC == 0x1010) && (instructions[0].v == 0x_10420000));
 	assembler.relocate();
 
 	// Check relocations.
 	assembler.stream.position = 0x1010;
-	assembler.stream.read(instruction.v);
-	assert(instruction.v == 0x_1042FFFC);
+	assembler.stream.read(instructions[0].v);
+	assert(instructions[0].v == 0x_1042FFFC);
 	
 }

@@ -185,20 +185,28 @@ const PspInstructions = [
 	array("c.nge.s"  , 0x4600003D, 0xFFE007FF),
 	array("c.le.s"   , 0x4600003E, 0xFFE007FF),
 	array("c.ngt.s"  , 0x4600003F, 0xFFE007FF),
-	array("ceil.w.s" , 0x4600000E, 0xFFFF003F),
+	*/
+	array("ceil.w.s" , 0x4600000E, 0xFFFF003F, "%D, %S"),
+	/*
 	array("cfc1"     , 0x44400000, 0xFFE007FF),
 	array("ctc1"     , 0x44C00000, 0xFFE007FF),
 	array("cvt.s.w"  , 0x46800020, 0xFFFF003F),
-	array("cvt.w.s"  , 0x46000024, 0xFFFF003F),
+	*/
+	array("cvt.w.s"  , 0x46000024, 0xFFFF003F, "%D, %S"),
+	/*
 	array("div.s"    , 0x46000003, 0xFFE0003F),
-	array("floor.w.s", 0x4600000F, 0xFFFF003F),
-	array("lwc1"     , 0xC4000000, 0xFC000000),
+	*/
+	array("floor.w.s", 0x4600000F, 0xFFFF003F, "%D, %S"),
+	array("lwc1"     , 0xC4000000, 0xFC000000, "%T, %o"),
+	/*
 	array("mfc1"     , 0x44000000, 0xFFE007FF),
 	array("mov.s"    , 0x46000006, 0xFFFF003F),
 	array("mtc1"     , 0x44800000, 0xFFE007FF),
 	array("mul.s"    , 0x46000002, 0xFFE0003F),
 	array("neg.s"    , 0x46000007, 0xFFFF003F),
-	array("round.w.s", 0x4600000C, 0xFFFF003F),
+	*/
+	array("round.w.s", 0x4600000C, 0xFFFF003F, "%D, %S"),
+	/*
 	array("sqrt.s"   , 0x46000004, 0xFFFF003F),
 	array("sub.s"    , 0x46000001, 0xFFE0003F),
 	array("swc1"     , 0xE4000000, 0xFC000000),

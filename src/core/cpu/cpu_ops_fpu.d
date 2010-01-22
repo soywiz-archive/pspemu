@@ -7,7 +7,7 @@ import pspemu.core.memory;
 
 import std.stdio;
 import std.traits;
-import std.math : fabs;
+import std.math;
 
 template TemplateCpu_FPU() {
 	// ABSolute Single.
@@ -15,6 +15,24 @@ template TemplateCpu_FPU() {
 
 	// ADD Single.
 	void OP_ADD_S() { mixin(CpuExpression("$fd = $fs + $ft;")); }
+
+	// Floating Point Ceiling Convert to Word Fixed Point
+	void OP_CEIL_W_S () { mixin(CpuExpression("$Fd = cast(int)ceil($fs);")); }
+	void OP_FLOOR_W_S() { mixin(CpuExpression("$Fd = cast(int)($fs);")); }
+	void OP_ROUND_W_S() { mixin(CpuExpression("$Fd = cast(int)round($fs);")); }
+
+	void OP_CVT_W_S() {
+		// From: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
+		switch (registers.FCSR) {
+			default:
+			case Registers.Fcsr.Rint : mixin(CpuExpression("$Fd = cast(int)rint($fs);"));  break;
+			case Registers.Fcsr.Cast : mixin(CpuExpression("$Fd = cast(int)($fs);"));      break;
+			case Registers.Fcsr.Ceil : mixin(CpuExpression("$Fd = cast(int)ceil($fs);"));  break;
+			case Registers.Fcsr.Floor: mixin(CpuExpression("$Fd = cast(int)floor($fs);")); break;
+		}
+	}
+
+	void OP_LWC1() { mixin(CpuExpression("$Ft = memory.read32($rs + $im);")); }
 }
 
 unittest {
