@@ -13,30 +13,30 @@ class HaltException : Exception { this(string type = "HALT") { super(type); } }
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/MISC
 template TemplateCpu_MISC() {
 	// sceKernelSuspendInterrupts
-	void OP_MFIC() { registers[instruction.RT] = registers.IC; registers.pcAdvance(4); }
-	void OP_MTIC() { registers.IC = registers[instruction.RT]; registers.pcAdvance(4); }
+	auto OP_MFIC() { registers[instruction.RT] = registers.IC; registers.pcAdvance(4); }
+	auto OP_MTIC() { registers.IC = registers[instruction.RT]; registers.pcAdvance(4); }
 
-	void OP_BREAK() {
+	auto OP_BREAK() {
 		registers.pcAdvance(4);
 		throw(new HaltException("BREAK"));
 	}
 
-	void OP_DBREAK() {
+	auto OP_DBREAK() {
 		registers.pcAdvance(4);
 		throw(new HaltException("DBREAK"));
 	}
 
-	void OP_HALT() {
+	auto OP_HALT() {
 		registers.pcAdvance(4);
 		throw(new HaltException("HALT"));
 	}
 
-	void OP_SYNC() {
+	auto OP_SYNC() {
 		.writefln("Unimplemented SYNC");
 		registers.pcAdvance(4);
 	}
 
-	void OP_SYSCALL() {
+	auto OP_SYSCALL() {
 		.writefln("Unimplemented SYSCALL");
 		registers.pcAdvance(4);
 	}

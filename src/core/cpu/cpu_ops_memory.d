@@ -40,24 +40,24 @@ template TemplateCpu_MEMORY() {
 	// LW    -- Load word
 	// A byte/half/word is loaded into a register from the specified address.
 	// $t = MEM[$s + offset]; advance_pc (4);
-	void OP_LB () { mixin(LOAD("8" , Signed  )); }
-	void OP_LBU() { mixin(LOAD("8" , Unsigned)); }
+	auto OP_LB () { mixin(LOAD("8" , Signed  )); }
+	auto OP_LBU() { mixin(LOAD("8" , Unsigned)); }
 
-	void OP_LH () { mixin(LOAD("16", Signed  )); }
-	void OP_LHU() { mixin(LOAD("16", Unsigned)); }
+	auto OP_LH () { mixin(LOAD("16", Signed  )); }
+	auto OP_LHU() { mixin(LOAD("16", Unsigned)); }
 
-	void OP_LW () { mixin(LOAD("32", Unsigned)); }
+	auto OP_LW () { mixin(LOAD("32", Unsigned)); }
 
 	// LWL -- Load Word Left
 	// LWR -- Load Word Right
-	void OP_LWL() {
+	auto OP_LWL() {
 		registers[instruction.RT] = (
 			(registers[instruction.RT] & 0x_0000_FFFF) |
 			((memory.read16(registers[instruction.RS] + instruction.IMM - 1) << 16) & 0x_FFFF_0000)
 		);
 		registers.pcAdvance(4);
 	}
-	void OP_LWR() {
+	auto OP_LWR() {
 		registers[instruction.RT] = (
 			(registers[instruction.RT] & 0x_FFFF_0000) |
 			((memory.read16(registers[instruction.RS] + instruction.IMM - 0) << 0) & 0x_0000_FFFF)
@@ -70,17 +70,17 @@ template TemplateCpu_MEMORY() {
 	// SW -- Store word
 	// The contents of $t is stored at the specified address.
 	// MEM[$s + offset] = $t; advance_pc (4);
-	void OP_SB() { mixin(STORE("8" )); }
-	void OP_SH() { mixin(STORE("16")); }
-	void OP_SW() { mixin(STORE("32")); }
+	auto OP_SB() { mixin(STORE("8" )); }
+	auto OP_SH() { mixin(STORE("16")); }
+	auto OP_SW() { mixin(STORE("32")); }
 
 	// SWL -- Store Word Left
 	// SWR -- Store Word Right
-	void OP_SWL() { memory.write16(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); }
-	void OP_SWR() { memory.write16(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); }
+	auto OP_SWL() { memory.write16(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); }
+	auto OP_SWR() { memory.write16(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); }
 
 	// CACHE
-	void OP_CACHE() {
+	auto OP_CACHE() {
 		.writefln("Unimplemented CACHE");
 		registers.pcAdvance(4);
 	}

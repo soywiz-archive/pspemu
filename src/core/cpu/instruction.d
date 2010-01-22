@@ -43,6 +43,10 @@ struct Instruction {
 			uint, "",   11
 		)); }
 
+		//010001:00010:rt:c1cr:00000:000000
+		//alias RD C1CR;
+		alias FS C1CR;
+
 		// Type Immediate.
 		struct { mixin(bitfields!(
 			int, "IMM" , 16,

@@ -30,18 +30,18 @@ template TemplateCpu_JUMP() {
 	// J -- Jump
 	// Jumps to the calculated address
 	// PC = nPC; nPC = (PC & 0xf0000000) | (target << 2);
-	void OP_J() { mixin(JUMP); }
+	auto OP_J() { mixin(JUMP); }
 
 	// JAL -- Jump and link
 	// Jumps to the calculated address and stores the return address in $31
 	// $31 = PC + 8 (or nPC + 4); PC = nPC; nPC = (PC & 0xf0000000) | (target << 2);
-	void OP_JAL() { mixin(LINK ~ JUMP); }
+	auto OP_JAL() { mixin(LINK ~ JUMP); }
 
 	// JR -- Jump register
 	// Jump to the address contained in register $s
 	// PC = nPC; nPC = $s;
-	void OP_JR() { mixin(JUMPR); }
+	auto OP_JR() { mixin(JUMPR); }
 
 	// JALR -- Jump and link register
-	void OP_JALR() { mixin(LINK ~ JUMPR); }
+	auto OP_JALR() { mixin(LINK ~ JUMPR); }
 }

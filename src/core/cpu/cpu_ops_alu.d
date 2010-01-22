@@ -19,9 +19,9 @@ template TemplateCpu_ALU() {
 			string r;
 			string sign = signed ? "#" : "$";
 			if (immediate) {
-				return CpuExpression("$rt = $rs " ~ operator ~ " " ~ sign ~ "im;");
+				return CE("$rt = $rs " ~ operator ~ " " ~ sign ~ "im;");
 			} else {
-				return CpuExpression("$rd = " ~ sign ~ "rs " ~ operator ~ " " ~ sign ~ "rt;");
+				return CE("$rd = " ~ sign ~ "rs " ~ operator ~ " " ~ sign ~ "rt;");
 			}
 			return r;
 		}
@@ -60,114 +60,114 @@ template TemplateCpu_ALU() {
 	// ADD(U) -- Add (Unsigned)
 	// Adds two registers and stores the result in a register
 	// $d = $s + $t; advance_pc (4);
-	void OP_ADD () { mixin(CpuExpression("$rd = #rs + #rt;")); }
-	void OP_ADDU() { mixin(CpuExpression("$rd = $rs + $rt;")); }
-	void OP_SUB () { mixin(CpuExpression("$rd = #rs - #rt;")); }
-	void OP_SUBU() { mixin(CpuExpression("$rd = $rs - $rt;")); }
+	auto OP_ADD () { mixin(CE("$rd = #rs + #rt;")); }
+	auto OP_ADDU() { mixin(CE("$rd = $rs + $rt;")); }
+	auto OP_SUB () { mixin(CE("$rd = #rs - #rt;")); }
+	auto OP_SUBU() { mixin(CE("$rd = $rs - $rt;")); }
 
 	// ADDI(U) -- Add immediate (Unsigned)
 	// Adds a register and a signed immediate value and stores the result in a register
 	// $t = $s + imm; advance_pc (4);
-	void OP_ADDI () { mixin(CpuExpression("$rt = #rs + #im;")); }
-	void OP_ADDIU() { mixin(CpuExpression("$rt = $rs + $im;")); }
+	auto OP_ADDI () { mixin(CE("$rt = #rs + #im;")); }
+	auto OP_ADDIU() { mixin(CE("$rt = $rs + $im;")); }
 
 	// AND -- Bitwise and
 	// Bitwise ands two registers and stores the result in a register
 	// $d = $s & $t; advance_pc (4);
-	void OP_AND() { mixin(CpuExpression("$rd = $rs & $rt;")); }
-	void OP_OR () { mixin(CpuExpression("$rd = $rs | $rt;")); }
-	void OP_XOR() { mixin(CpuExpression("$rd = $rs ^ $rt;")); }
-	void OP_NOR() { mixin(CpuExpression("$rd = ~($rs | $rt);")); }
+	auto OP_AND() { mixin(CE("$rd = $rs & $rt;")); }
+	auto OP_OR () { mixin(CE("$rd = $rs | $rt;")); }
+	auto OP_XOR() { mixin(CE("$rd = $rs ^ $rt;")); }
+	auto OP_NOR() { mixin(CE("$rd = ~($rs | $rt);")); }
 
 	// MOVZ -- MOV If Zero?
 	// MOVN -- MOV If Non Zero?
-	void OP_MOVZ() { mixin(CpuExpression("if ($rt == 0) $rd = $rs;")); }
-	void OP_MOVN() { mixin(CpuExpression("if ($rt != 0) $rd = $rs;")); }
+	auto OP_MOVZ() { mixin(CE("if ($rt == 0) $rd = $rs;")); }
+	auto OP_MOVN() { mixin(CE("if ($rt != 0) $rd = $rs;")); }
 
 	// ANDI -- Bitwise and immediate
 	// ORI -- Bitwise and immediate
 	// Bitwise ands a register and an immediate value and stores the result in a register
 	// $t = $s & imm; advance_pc (4);
-	void OP_ANDI() { mixin(CpuExpression("$rt = $rs & $im;")); }
-	void OP_ORI () { mixin(CpuExpression("$rt = $rs | $im;")); }
-	void OP_XORI() { mixin(CpuExpression("$rt = $rs ^ $im;")); }
+	auto OP_ANDI() { mixin(CE("$rt = $rs & $im;")); }
+	auto OP_ORI () { mixin(CE("$rt = $rs | $im;")); }
+	auto OP_XORI() { mixin(CE("$rt = $rs ^ $im;")); }
 
 	// SLT(I)(U)  -- Set Less Than (Immediate) (Unsigned)
-	void OP_SLT  () { mixin(CpuExpression("$rd = #rs < #rt;")); }
-	void OP_SLTU () { mixin(CpuExpression("$rd = $rs < $rt;")); }
-	void OP_SLTI () { mixin(CpuExpression("$rt = #rs < #im;")); }
-	void OP_SLTIU() { mixin(CpuExpression("$rt = $rs < $im;")); }
+	auto OP_SLT  () { mixin(CE("$rd = #rs < #rt;")); }
+	auto OP_SLTU () { mixin(CE("$rd = $rs < $rt;")); }
+	auto OP_SLTI () { mixin(CE("$rt = #rs < #im;")); }
+	auto OP_SLTIU() { mixin(CE("$rt = $rs < $im;")); }
 
 	// LUI -- Load upper immediate
 	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
 	// $t = (imm << 16); advance_pc (4);
-	void OP_LUI() { mixin(CpuExpression("$rt = (#im << 16);")); }
+	auto OP_LUI() { mixin(CE("$rt = (#im << 16);")); }
 
 	// SEB - Sign Extension Byte
 	// SEH - Sign Extension Half
-	void OP_SEB() { mixin(CpuExpression("$rd = SEB(cast(ubyte )$rt);")); }
-	void OP_SEH() { mixin(CpuExpression("$rd = SEH(cast(ushort)$rt);")); }
+	auto OP_SEB() { mixin(CE("$rd = SEB(cast(ubyte )$rt);")); }
+	auto OP_SEH() { mixin(CE("$rd = SEH(cast(ushort)$rt);")); }
 
 	// ROTR -- Rotate Word Right
 	// ROTV -- Rotate Word Right Variable
-	void OP_ROTR() { mixin(CpuExpression("$rd = ROTR($rt, $ps);")); }
-	void OP_ROTV() { mixin(CpuExpression("$rd = ROTR($rt, $rs);")); }
+	auto OP_ROTR() { mixin(CE("$rd = ROTR($rt, $ps);")); }
+	auto OP_ROTV() { mixin(CE("$rd = ROTR($rt, $rs);")); }
 
 	// SLL(V) - Shift Word Left Logical (Variable)
 	// SRA(V) - Shift Word Right Arithmetic (Variable)
 	// SRL(V) - Shift Word Right Logic (Variable)
-	void OP_SLL () { mixin(CpuExpression("$rd = SLL($rt, $ps);")); }
-	void OP_SLLV() { mixin(CpuExpression("$rd = SLL($rt, $rs);")); }
-	void OP_SRA () { mixin(CpuExpression("$rd = SRA($rt, $ps);")); }
-	void OP_SRAV() { mixin(CpuExpression("$rd = SRA($rt, $rs);")); }
-	void OP_SRL () { mixin(CpuExpression("$rd = SRL($rt, $ps);")); }
-	void OP_SRLV() { mixin(CpuExpression("$rd = SRL($rt, $rs);")); }
+	auto OP_SLL () { mixin(CE("$rd = SLL($rt, $ps);")); }
+	auto OP_SLLV() { mixin(CE("$rd = SLL($rt, $rs);")); }
+	auto OP_SRA () { mixin(CE("$rd = SRA($rt, $ps);")); }
+	auto OP_SRAV() { mixin(CE("$rd = SRA($rt, $rs);")); }
+	auto OP_SRL () { mixin(CE("$rd = SRL($rt, $ps);")); }
+	auto OP_SRLV() { mixin(CE("$rd = SRL($rt, $rs);")); }
 
 	// EXT -- EXTract
 	// INS -- INSert
-	void OP_EXT() { mixin(CpuExpression("$rt = ($rs >> $ps) & MASK($sz + 1);")); }
-	void OP_INS() { mixin(CpuExpression("uint mask = MASK(instruction.SIZE - instruction.POS + 1); $rt = ($rt & ~(mask << $ps)) | (($rs & mask) << $ps);")); }
+	auto OP_EXT() { mixin(CE("$rt = ($rs >> $ps) & MASK($sz + 1);")); }
+	auto OP_INS() { mixin(CE("uint mask = MASK(instruction.SIZE - instruction.POS + 1); $rt = ($rt & ~(mask << $ps)) | (($rs & mask) << $ps);")); }
 
 	// BITREV - Bit Reverse
-	void OP_BITREV() { mixin(CpuExpression("$rd = REV4($rt);")); }
+	auto OP_BITREV() { mixin(CE("$rd = REV4($rt);")); }
 
 	// MAX/MIN
-	void OP_MAX() { mixin(CpuExpression("$rd = MAX(#rs, #rt);")); }
-	void OP_MIN() { mixin(CpuExpression("$rd = MIN(#rs, #rt);")); }
+	auto OP_MAX() { mixin(CE("$rd = MAX(#rs, #rt);")); }
+	auto OP_MIN() { mixin(CE("$rd = MIN(#rs, #rt);")); }
 
 	// DIV -- Divide
 	// DIVU -- Divide Unsigned
 	// Divides $s by $t and stores the quotient in $LO and the remainder in $HI
 	// $LO = $s / $t; $HI = $s % $t; advance_pc (4);
-	void OP_DIV() {
+	auto OP_DIV() {
 		void DIVS(int a, int b) { registers.LO = a / b; registers.HI = a % b; }
-		mixin(CpuExpression("DIVS($rs, $rt);"));
+		mixin(CE("DIVS($rs, $rt);"));
 	}
-	void OP_DIVU() {
+	auto OP_DIVU() {
 		void DIVU(uint a, uint b) { registers.LO = a / b; registers.HI = a % b; }
-		mixin(CpuExpression("DIVU($rs, $rt);"));
+		mixin(CE("DIVU($rs, $rt);"));
 	}
 
 	// MULT -- Multiply
 	// MULTU -- Multiply unsigned
-	void OP_MULT() {
+	auto OP_MULT() {
 		void MULTS(int  a, int  b) { int l, h; asm { mov EAX, a; mov EBX, b; imul EBX; mov l, EAX; mov h, EDX; } registers.LO = l; registers.HI = h; }
-		mixin(CpuExpression("MULTS($rs, $rt);"));
+		mixin(CE("MULTS($rs, $rt);"));
 	}
-	void OP_MULTU() {
+	auto OP_MULTU() {
 		void MULTU(uint a, uint b) { int l, h; asm { mov EAX, a; mov EBX, b; mul EBX; mov l, EAX; mov h, EDX; } registers.LO = l; registers.HI = h; }
-		mixin(CpuExpression("MULTU($rs, $rt);"));
+		mixin(CE("MULTU($rs, $rt);"));
 	}
 
 	// MADD
-	void OP_MADD() {
+	auto OP_MADD() {
 		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
 		asm { mov EAX, rs; imul rt; add lo, EAX; adc hi, EDX; }
 		registers.LO = lo;
 		registers.HI = hi;
 		registers.pcAdvance(4);
 	}
-	void OP_MADDU() {
+	auto OP_MADDU() {
 		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
 		asm { mov EAX, rs; mul rt; add lo, EAX; adc hi, EDX; }
 		registers.LO = lo;
@@ -176,14 +176,14 @@ template TemplateCpu_ALU() {
 	}
 
 	// MSUB
-	void OP_MSUB() { // FIXME: CHECK.
+	auto OP_MSUB() { // FIXME: CHECK.
 		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
 		asm { mov EAX, rs; imul rt; sub lo, EAX; sub hi, EDX; }
 		registers.LO = lo;
 		registers.HI = hi;
 		registers.pcAdvance(4);
 	}
-	void OP_MSUBU() { // FIXME: CHECK.
+	auto OP_MSUBU() { // FIXME: CHECK.
 		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
 		asm { mov EAX, rs; mul rt; sub lo, EAX; sub hi, EDX; }
 		registers.LO = lo;
@@ -193,15 +193,15 @@ template TemplateCpu_ALU() {
 
 	// MFHI/MFLO -- Move from HI/LO
 	// MTHI/MTLO -- Move to HI/LO
-	void OP_MFHI() { mixin(CpuExpression("$rd = $hi;")); }
-	void OP_MFLO() { mixin(CpuExpression("$rd = $lo;")); }
-	void OP_MTHI() { mixin(CpuExpression("$hi = $rs;")); }
-	void OP_MTLO() { mixin(CpuExpression("$lo = $rs;")); }
+	auto OP_MFHI() { mixin(CE("$rd = $hi;")); }
+	auto OP_MFLO() { mixin(CE("$rd = $lo;")); }
+	auto OP_MTHI() { mixin(CE("$hi = $rs;")); }
+	auto OP_MTLO() { mixin(CE("$lo = $rs;")); }
 
 	// WSBH -- Word Swap Bytes Within Halfwords
 	// WSBW -- Word Swap Bytes Within Words?? // FIXME! Not sure about this!
-	void OP_WSBH() { mixin(CpuExpression("$rd = WSBH($rt);")); }
-	void OP_WSBW() { mixin(CpuExpression("$rd = WSBW($rt);")); }
+	auto OP_WSBH() { mixin(CE("$rd = WSBH($rt);")); }
+	auto OP_WSBW() { mixin(CE("$rd = WSBW($rt);")); }
 }
 
 unittest {

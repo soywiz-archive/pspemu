@@ -30,6 +30,7 @@ static pure nothrow {
 					case "sz": add ~= "instruction.SIZE"; break;
 					case "hi": add ~= "registers.HI"; break;
 					case "lo": add ~= "registers.LO"; break;
+					case "cc": add ~= "registers.CC"; break;
 					default:
 						replace = false;
 						r ~= s[n];
@@ -48,10 +49,12 @@ static pure nothrow {
 	}
 }
 
+alias CpuExpression CE;
+
 unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
-	//pragma(msg, CpuExpression("$hi = $lo;"));
-	assert(CpuExpression("$hi = $lo;") == "(registers.HI) = (registers.LO);registers.pcAdvance(4);");
-	assert(CpuExpression("#hi", Advance.NO) == "(cast(int)registers.HI)");
+	//pragma(msg, CE("$hi = $lo;"));
+	assert(CE("$hi = $lo;") == "(registers.HI) = (registers.LO);registers.pcAdvance(4);");
+	assert(CE("#hi", Advance.NO) == "(cast(int)registers.HI)");
 }

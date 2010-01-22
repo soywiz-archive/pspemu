@@ -363,23 +363,29 @@ unittest {
 		assert(cpu.registers[3] == -2);
 	}
 
-	writefln("  FLOAT");
+	writefln("  FLOAT (LWC1/SWC1, ADD.S, CEIL.W.S)");
 	{
 		reset();
 		assembler.assembleBlock(r"
 		.data
-			value: .float 1.5, 1.6
+			values: .float 1.5, 1.6
 
 		.text
-			la $1, value
+			la $1, values
 			lwc1 $f2, 0($1)
+			lwc1 $f3, 4($1)
+			add.s $f4, $f2, $f3
+			swc1 $f4, 8($1)
 			ceil.w.s $f1, $f2
 			halt
 		");
 
 		gotoText();
 		cpu.executeUntilHalt();
+		//dump();
 		assert(cpu.registers.F[2] == 1.5);
+		assert(cpu.registers.F[4] == 1.5f + 1.6f);
+		assert(cpu.registers.RF[4] == cpu.memory.read32(assembler.segments["data"] + 8));
 		assert(cpu.registers.RF[1] == 2);
 	}
 }
