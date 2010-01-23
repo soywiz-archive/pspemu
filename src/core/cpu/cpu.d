@@ -6,6 +6,7 @@ import pspemu.core.cpu.cpu_switch;
 import pspemu.core.cpu.cpu_asm;
 import pspemu.core.cpu.instruction;
 import pspemu.core.memory;
+import pspemu.utils.assertion;
 
 // OPS.
 import pspemu.core.cpu.cpu_utils;
@@ -30,6 +31,11 @@ class CPU {
 	void reset() {
 		registers.reset();
 		memory.reset();
+	}
+
+	void resetFast() {
+		registers.reset();
+		//memory.reset();
 	}
 
 	void execute(uint count = 0x_FFFFFFFF) {
@@ -72,7 +78,7 @@ unittest {
 	scope assembler = new AllegrexAssembler(cpu.memory);
 
 	void reset() {
-		cpu.reset();
+		cpu.resetFast(); // It doesn't zeroes memory.
 		assembler.reset();
 	}
 
@@ -101,7 +107,7 @@ unittest {
 
 		gotoText();
 		cpu.executeUntilHalt();
-		assert(cpu.registers["v0"] == 13);
+		assertTrue(cpu.registers["v0"] == 13);
 	}
 
 	// BGEZ test.
@@ -121,7 +127,7 @@ unittest {
 		foreach (step, expectedValue; [2, 2, 1, 1, 0, 0]) {
 			//writefln("PC: %08X, nPC: %08X, STEP: %d", cpu.registers.PC, cpu.registers.nPC, step);
 			cpu.executeSingle();
-			assert(cpu.registers["v0"] == expectedValue, format("step: %d; v0 = %d; v0 != %d", step, cpu.registers["v0"], expectedValue));
+			assertTrue(cpu.registers["v0"] == expectedValue, format("step: %d; v0 = %d; v0 != %d", step, cpu.registers["v0"], expectedValue));
 		}
 	}
 
@@ -145,13 +151,13 @@ unittest {
 
 		gotoText();
 		cpu.execute(3);
-		assert(cpu.registers["r1"] == 1);
-		assert(cpu.registers["r2"] == 1);
-		assert(cpu.registers["r4"] == 0);
-		assert(cpu.registers["ra"] == assembler.getSymbolAddress("my_function") - 4);
+		assertTrue(cpu.registers["r1"] == 1);
+		assertTrue(cpu.registers["r2"] == 1);
+		assertTrue(cpu.registers["r4"] == 0);
+		assertTrue(cpu.registers["ra"] == assembler.getSymbolAddress("my_function") - 4);
 		cpu.execute(3);
-		assert(cpu.registers["r3"] == 1);
-		assert(cpu.registers["r4"] == 1);
+		assertTrue(cpu.registers["r3"] == 1);
+		assertTrue(cpu.registers["r4"] == 1);
 	}
 
 	// Test function calls and returns (JR ra).
@@ -185,10 +191,10 @@ unittest {
 
 		gotoText();
 		cpu.executeUntilHalt();
-		assert(cpu.registers["r1"] == 0);
-		assert(cpu.registers["r2"] == 1);
+		assertTrue(cpu.registers["r1"] == 0);
+		assertTrue(cpu.registers["r2"] == 1);
 		//dump();
-		assert(cpu.registers.PC    == assembler.getSymbolAddress("label2") + 8);
+		assertTrue(cpu.registers.PC    == assembler.getSymbolAddress("label2") + 8);
 	}
 	
 	// Load immediate. LUI + ORI + BITREV.
@@ -208,9 +214,9 @@ unittest {
 
 		gotoText();
 		cpu.executeUntilHalt();
-		assert(cpu.registers["a0"] == 0x_8000_1111);
-		assert(cpu.registers["a1"] == 0x_8888_0001);
-		assert(cpu.registers["a2"] == cpu.registers["a0"]);
+		assertTrue(cpu.registers["a0"] == 0x_8000_1111);
+		assertTrue(cpu.registers["a1"] == 0x_8888_0001);
+		assertTrue(cpu.registers["a2"] == cpu.registers["a0"]);
 	}
 
 	// MIN, MAX.
@@ -232,9 +238,9 @@ unittest {
 		gotoText();
 
 		cpu.executeUntilHalt();
-		assert(cpu.registers[11] == +5);
-		assert(cpu.registers[12] == -5);
-		assert(cpu.registers[13] ==  0);
+		assertTrue(cpu.registers[11] == +5);
+		assertTrue(cpu.registers[12] == -5);
+		assertTrue(cpu.registers[13] ==  0);
 	}
 
 	// MULT
@@ -256,12 +262,12 @@ unittest {
 		gotoText();
 		cpu.executeUntilHalt();
 
-		assert(cpu.registers[1] == 2);
-		assert(cpu.registers[2] == 3);
-		assert(cpu.registers[3] == 2 * 3);
-		assert(cpu.registers[4] == 0);
-		assert(cpu.registers.LO == cpu.registers[3]);
-		assert(cpu.registers.HI == cpu.registers[4]);
+		assertTrue(cpu.registers[1] == 2);
+		assertTrue(cpu.registers[2] == 3);
+		assertTrue(cpu.registers[3] == 2 * 3);
+		assertTrue(cpu.registers[4] == 0);
+		assertTrue(cpu.registers.LO == cpu.registers[3]);
+		assertTrue(cpu.registers.HI == cpu.registers[4]);
 	}
 
 	writefln("  MADD/MTHI/MTLO");
@@ -283,11 +289,11 @@ unittest {
 		gotoText();
 		cpu.executeUntilHalt();
 
-		assert(cpu.registers[1] == 2);
-		assert(cpu.registers[2] == 3);
-		assert(cpu.registers[3] == 7);
-		assert(cpu.registers.LO == cpu.registers[3] + (cpu.registers[1] * cpu.registers[2]));
-		assert(cpu.registers.HI == cpu.registers[3] + (0));
+		assertTrue(cpu.registers[1] == 2);
+		assertTrue(cpu.registers[2] == 3);
+		assertTrue(cpu.registers[3] == 7);
+		assertTrue(cpu.registers.LO == cpu.registers[3] + (cpu.registers[1] * cpu.registers[2]));
+		assertTrue(cpu.registers.HI == cpu.registers[3] + (0));
 	}
 
 	writefln("  MOVZ/MOVN");
@@ -312,10 +318,10 @@ unittest {
 		gotoText();
 		cpu.executeUntilHalt();
 		//dump();
-		assert(cpu.registers[11] == 2);
-		assert(cpu.registers[12] == 0);
-		assert(cpu.registers[21] == 0);
-		assert(cpu.registers[22] == 2);
+		assertTrue(cpu.registers[11] == 2);
+		assertTrue(cpu.registers[12] == 0);
+		assertTrue(cpu.registers[21] == 0);
+		assertTrue(cpu.registers[22] == 2);
 	}
 
 	writefln("  NOR");
@@ -340,9 +346,9 @@ unittest {
 		gotoText();
 		cpu.executeUntilHalt();
 		//cpu.execute(5);
-		assert(cpu.registers[1] == 0x_000FF000);
-		assert(cpu.registers[2] == 0x_F33FF33F);
-		assert(cpu.registers[3] == 0x_0CC00CC0);
+		assertTrue(cpu.registers[1] == 0x_000FF000);
+		assertTrue(cpu.registers[2] == 0x_F33FF33F);
+		assertTrue(cpu.registers[3] == 0x_0CC00CC0);
 	}
 
 	writefln("  LI");
@@ -359,8 +365,8 @@ unittest {
 
 		gotoText();
 		cpu.executeUntilHalt();
-		assert(cpu.registers[2] == 0x_F33FF33F);
-		assert(cpu.registers[3] == -2);
+		assertTrue(cpu.registers[2] == 0x_F33FF33F);
+		assertTrue(cpu.registers[3] == -2);
 	}
 
 	writefln("  FLOAT (LWC1/SWC1, ADD.S, CEIL.W.S)");
@@ -383,9 +389,9 @@ unittest {
 		gotoText();
 		cpu.executeUntilHalt();
 		//dump();
-		assert(cpu.registers.F[2] == 1.5);
-		assert(cpu.registers.F[4] == 1.5f + 1.6f);
-		assert(cpu.registers.RF[4] == cpu.memory.read32(assembler.segments["data"] + 8));
-		assert(cpu.registers.RF[1] == 2);
+		assertTrue(cpu.registers.F[2] == 1.5);
+		assertTrue(cpu.registers.F[4] == 1.5f + 1.6f);
+		assertTrue(cpu.registers.RF[4] == cpu.memory.read32(assembler.segments["data"] + 8));
+		assertTrue(cpu.registers.RF[1] == 2);
 	}
 }

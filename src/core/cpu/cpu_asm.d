@@ -31,6 +31,7 @@ template AllegrexAssemblerSymbolTemplate() {
 	}
 
 	uint getSymbolAddress(string symbolName) {
+		assert(symbolName in labels, std.string.format("Can't find '%s'", symbolName));
 		return labels[symbolName];
 	}
 
@@ -70,10 +71,31 @@ class AllegrexAssembler : ISymbolResolver {
 			assert(symbolResolver.hasSymbol(symbolName), format("Symbol '%s' not found.", symbolName));
 			uint symbolAddress = symbolResolver.getSymbolAddress(symbolName);
 
-			void readInstruction () { stream.position = address; stream.read (instruction.v); }
-			void writeInstruction() { stream.position = address; stream.write(instruction.v); }
+			void readInstruction () {
+				stream.position = address;
+				try {
+					stream.read(instruction.v);
+				} catch {
+					assert(0, format("Can't read 4 bytes from address 0x%08X | %s", address, this));
+				}
+			}
+			void writeInstruction() {
+				stream.position = address;
+				stream.write(instruction.v);
+			}
 
+			//writefln("fixAddress: 0x%08X, symbolAddress: 0x%08X", address, symbolAddress);
 			switch (type) {
+				case Type.MipsLo16:
+					readInstruction();
+					instruction.IMMU = cast(ushort)((symbolAddress >>  0) & 0xFFFF);
+					writeInstruction();
+				break;
+				case Type.MipsHi16:
+					readInstruction();
+					instruction.IMMU = cast(ushort)((symbolAddress >> 16) & 0xFFFF);
+					writeInstruction();
+				break;
 				case Type.MipsPc16:
 					readInstruction();
 					instruction.IMM  = cast(short)((symbolAddress - address - 4) >> 2); // FIXME: Check overflow.
@@ -127,12 +149,23 @@ class AllegrexAssembler : ISymbolResolver {
 				case "la": {
 					scope params = RegExp(getPattern("%s, %s")).match(instructionParams);
 					assert(params.length == 3);
-					scope value = getSymbolAddress(params[2]);
+					//scope value = getSymbolAddress(params[2]);
 					
+					uint PC_BASE = PC;
+
+					auto i1 = assembleInternal(PC, "lui $1, 0");
+					auto i2 = assembleInternal(PC, "ori " ~ params[1] ~ ", $1, 0");
+
+					addReloc(Reloc(Reloc.Type.MipsHi16, params[2], PC_BASE + 0));
+					addReloc(Reloc(Reloc.Type.MipsLo16, params[2], PC_BASE + 4));
+
+					return i1 ~ i2;
+					/*
 					return (
 						assembleInternal(PC, format("lui $1, 0x%04X", (value >> 16) & 0xFFFF)) ~
-						assembleInternal(PC, format("ori " ~ params[1] ~ ", $1, 0x%04X", (value >>  0) & 0xFFFF))
+						assembleInternal(PC, format("ori %s, $1, 0x%04X", params[1], (value >>  0) & 0xFFFF))
 					);
+					*/
 				} break;
 				case "li": {
 					scope params = RegExp(getPattern("%s, %s")).match(instructionParams);
@@ -357,7 +390,13 @@ unittest {
 	}
 
 	assembler.assembleBlock(".data\n value: .float 1.5, 1.6");
-	assembler.assembleBlock("label2: la $1, label");
+	assembler.assembleBlock("label2: la $1, label2");
+
+	// Post reference.
+	assembler.assembleBlock(r"
+		la $1, label3
+		label3: .float 1.0
+	");
 
 	assembler_(".text 0x1000        "); assert((PC == 0x1000));
 	assembler_("; comment           "); assert((PC == 0x1000));

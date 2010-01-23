@@ -1,6 +1,7 @@
 module pspemu.core.cpu.cpu_switch;
 
 import pspemu.core.cpu.instruction;
+import pspemu.utils.assertion;
 
 import std.stdio;
 
@@ -98,24 +99,24 @@ unittest {
 	];
 
 	// Check indentation function.
-	assert(indent(2, "Test") == "\t\tTest");
+	assertTrue(indent(2, "Test") == "\t\tTest");
 
 	// Check getString function.
-	assert(getString(0) == "0x_00000000");
-	assert(getString(0x15) == "0x_00000015");
-	assert(getString(-0x999) == "0x_FFFFF667");
+	assertTrue(getString(0) == "0x_00000000");
+	assertTrue(getString(0x15) == "0x_00000015");
+	assertTrue(getString(-0x999) == "0x_FFFFF667");
 
 	// Check process_name function.
-	assert(process_name("floor.w.s") == "FLOOR_W_S");
+	assertTrue(process_name("floor.w.s") == "FLOOR_W_S");
 	
 	// Check inArray function.
-	assert(inArray([1, 2, 3], 3) == true);
-	assert(inArray([-1, 1], 0) == false);
-	assert(inArray([], 0) == false);
+	assertTrue(inArray([1, 2, 3], 3) == true);
+	assertTrue(inArray([-1, 1], 0) == false);
+	assertTrue(inArray([], 0) == false);
 
 	// Check getCommonMask function.
-	assert(getCommonMask(testList[0..2]) == 0xFC000000);
-	assert(getCommonMask(testList[0..3]) == 0x0C000000);
+	assertTrue(getCommonMask(testList[0..2]) == 0xFC000000);
+	assertTrue(getCommonMask(testList[0..3]) == 0x0C000000);
 
 	// Check genSwitch function.
 	{
@@ -133,8 +134,8 @@ unittest {
 		instruction.v = 0x_20000000; EXECUTE(); // ADDI
 		instruction.v = 0x_30000020; EXECUTE(); // UNK
 
-		assert("add"  in called);
-		assert("addi" in called);
-		assert("unk"  in called);
+		assertTrue(("add"  in called) !is null);
+		assertTrue(("addi" in called) !is null);
+		assertTrue(("unk"  in called) !is null);
 	}
 }
