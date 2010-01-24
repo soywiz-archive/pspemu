@@ -153,6 +153,7 @@ class AllegrexAssembler : ISymbolResolver {
 					
 					uint PC_BASE = PC;
 
+					// TODO. If we already know where the label is, we could maybe remove the ori.
 					auto i1 = assembleInternal(PC, "lui $1, 0");
 					auto i2 = assembleInternal(PC, "ori " ~ params[1] ~ ", $1, 0");
 
@@ -160,22 +161,33 @@ class AllegrexAssembler : ISymbolResolver {
 					addReloc(Reloc(Reloc.Type.MipsLo16, params[2], PC_BASE + 4));
 
 					return i1 ~ i2;
-					/*
-					return (
-						assembleInternal(PC, format("lui $1, 0x%04X", (value >> 16) & 0xFFFF)) ~
-						assembleInternal(PC, format("ori %s, $1, 0x%04X", params[1], (value >>  0) & 0xFFFF))
-					);
-					*/
 				} break;
 				case "li": {
 					scope params = RegExp(getPattern("%s, %s")).match(instructionParams);
 					assert(params.length == 3);
 					scope value = parseString(params[2]);
 
-					return (
-						assembleInternal(PC, format("lui $1, 0x%04X", (value >> 16) & 0xFFFF)) ~
-						assembleInternal(PC, format("ori " ~ params[1] ~ ", $1, 0x%04X", (value >>  0) & 0xFFFF))
-					);
+					Instruction[] ii = [];
+
+					// No upper part
+					if ((value >> 16) == 0) {
+						ii ~= assembleInternal(PC, format("ori %s, $0, 0x%04X", params[1], (value >>  0) & 0xFFFF));
+					}
+					// No lower part
+					else if ((value & 0xFFFF) == 0) {
+						ii ~= assembleInternal(PC, format("lui %s, 0x%04X", params[1], (value >> 16) & 0xFFFF));
+					}
+					// Signed short
+					else if ((cast(short)value) == value) {
+						ii ~= assembleInternal(PC, format("addi %s, $0, 0x%04X", params[1], value));
+					}
+					// Full 32 bit.
+					else {
+						ii ~= assembleInternal(PC, format("lui $1, 0x%04X", (value >> 16) & 0xFFFF));
+						ii ~= assembleInternal(PC, format("ori %s, $1, 0x%04X", params[1], (value >>  0) & 0xFFFF));
+					}
+					
+					return ii;
 				} break;
 				// Ignore.
 				default: break;

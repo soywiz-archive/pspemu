@@ -46,6 +46,7 @@ class PBP {
 
 	bool has(string name) { return (name in slices) !is null; }
 	Stream opIndex(string name) { assert(has(name)); return new SliceStream(slices[name], 0); }
+	Stream opIndexAssign(string name, Stream stream) { return slices[name] = stream; }
 
 	int opApply(int delegate(ref string, ref Stream) callback) { int result = 0; foreach (name, stream; slices) if ((result = callback(name, stream)) != 0) break; return result; }
 	int opApply(int delegate(ref string) callback) { int result = 0; foreach (name; slices.keys) if ((result = callback(name)) != 0) break; return result; }

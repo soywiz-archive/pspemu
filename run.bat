@@ -20,7 +20,10 @@ SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_misc.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_fpu.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_table.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_asm.d
+SET SOURCES=%SOURCES% src/core/cpu/cpu_disasm.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_test.d
 
+REM -cov to code coverage, then show the last line of .lst files.
+REM -cov seems to fail with -unittest
 dmd %SOURCES% -unittest -run src/exe/test.d %*
