@@ -80,7 +80,7 @@ class Registers {
 		writefln("Float registers {");
 		foreach (k, v; F) {
 			if (reduced && (v == 0.0)) continue;
-			writefln("  f%-2d = %f", k, v);
+			writefln("  f%-2d = %f | 0x%08X", k, v, RF[k]);
 		}
 		writefln("}");
 	}

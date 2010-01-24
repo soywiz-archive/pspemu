@@ -21,5 +21,6 @@ SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_fpu.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_table.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_asm.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu.d
+SET SOURCES=%SOURCES% src/core/cpu/cpu_test.d
 
-dmd %SOURCES% -unittest -run src/main.d %*
+dmd %SOURCES% -unittest -run src/exe/test.d %*
