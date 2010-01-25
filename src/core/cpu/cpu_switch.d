@@ -3,7 +3,7 @@ module pspemu.core.cpu.cpu_switch;
 import pspemu.core.cpu.instruction;
 import pspemu.utils.assertion;
 
-import std.stdio;
+import std.stdio, std.traits;
 
 // Here is the magic of the instruction decoding.
 // OLD OLD:   http://pspemu.googlecode.com/svn/branches/old/util/gen/cpu_switch.back.d
@@ -51,8 +51,18 @@ static pure nothrow {
 		return false;
 	}
 
+	/**
+	 * Returns a string with a mixin if the function return a string (inlined).
+	 * Returns a string with a call to that function if not. (void)
+	 */
+	string callFunction(string opname) {
+		//return "OP_" ~ process_name(opname) ~ "();";
+		string funcName = "OP_" ~ process_name(opname);
+		return "static if (is(ReturnType!(" ~ funcName ~ ") : string)) { mixin(" ~ funcName ~ "); } else {" ~ funcName ~ "();}";
+	}
+
 	// Generate a set of switch for decoding instructions.
-	string genSwitch(InstructionDefinition[] ilist, string prefix = "OP_", uint _mask = 0x_FFFFFFFF, int level = 0) {
+	string genSwitch(InstructionDefinition[] ilist, string processor = "callFunction", uint _mask = 0x_FFFFFFFF, int level = 0) {
 		string r = "";
 		
 		//static assert (level > 16);
@@ -60,7 +70,8 @@ static pure nothrow {
 		if (ilist.length == 0) {
 			// ""
 		} else if (ilist.length == 1) {
-			r = indent(level, prefix ~ process_name(ilist[0].name) ~ "(); return;\n");
+			//r = indent(level, prefix ~ process_name(ilist[0].name) ~ "(); return;\n");
+			r = indent(level, "{mixin(" ~ processor ~ "(\"" ~ ilist[0].name ~ "\"));}\n");
 		} if (ilist.length > 1) {
 			InstructionDefinition[512] ci; int ci_len = ilist.length;
 
@@ -76,12 +87,12 @@ static pure nothrow {
 				foreach (i2; ilist) {
 					if ((i.opcode & mask) == (i2.opcode & mask)) ci[ci_len++] = i2;
 				}
-				r ~= genSwitch(ci[0..ci_len], prefix, ~mask, level + 2);
+				r ~= genSwitch(ci[0..ci_len], processor, ~mask, level + 2);
 				r ~= indent(level + 1, "break;\n");
 				
 				cvalues ~= cvalue;
 			}
-			r ~= indent(level + 1, "default: " ~ prefix ~  "UNK(); return;\n");
+			r ~= indent(level + 1, "default:{mixin(" ~ processor ~ "(\"unk\"));}\n");
 			r ~= indent(level + 0, "}\n");
 		}
 		return r;
@@ -90,8 +101,6 @@ static pure nothrow {
 }
 
 unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-
 	static const testList = [
 		InstructionDefinition("add"      , 0x00000020, 0xFC0007FF),
 		InstructionDefinition("addi"     , 0x20000000, 0xFC000000),
@@ -99,24 +108,24 @@ unittest {
 	];
 
 	// Check indentation function.
-	assertTrue(indent(2, "Test") == "\t\tTest");
+	assertTrue(indent(2, "Test") == "\t\tTest", "Checks indentation");
 
 	// Check getString function.
-	assertTrue(getString(0) == "0x_00000000");
-	assertTrue(getString(0x15) == "0x_00000015");
-	assertTrue(getString(-0x999) == "0x_FFFFF667");
+	assertTrue(getString(0) == "0x_00000000", "Checks 0 value");
+	assertTrue(getString(0x15) == "0x_00000015", "Checks unsigned integer");
+	assertTrue(getString(-0x999) == "0x_FFFFF667", "Checks signed");
 
 	// Check process_name function.
-	assertTrue(process_name("floor.w.s") == "FLOOR_W_S");
+	assertTrue(process_name("floor.w.s") == "FLOOR_W_S", "Checks process_name conversion");
 	
 	// Check inArray function.
-	assertTrue(inArray([1, 2, 3], 3) == true);
-	assertTrue(inArray([-1, 1], 0) == false);
-	assertTrue(inArray([], 0) == false);
+	assertTrue(inArray([1, 2, 3], 3) == true , "Checks inArray with 3 items");
+	assertTrue(inArray([-1, 1  ], 0) == false, "Checks inArray with 2 items");
+	assertTrue(inArray([       ], 0) == false, "Checks inArray with 0 items");
 
 	// Check getCommonMask function.
-	assertTrue(getCommonMask(testList[0..2]) == 0xFC000000);
-	assertTrue(getCommonMask(testList[0..3]) == 0x0C000000);
+	assertTrue(getCommonMask(testList[0..2]) == 0xFC000000, "getCommonMask check 1");
+	assertTrue(getCommonMask(testList[0..3]) == 0x0C000000, "getCommonMask check 2");
 
 	// Check genSwitch function.
 	{
@@ -124,18 +133,16 @@ unittest {
 
 		bool[string] called;
 
-		void TEST_PREFIX_ADD () { called["add"]  = true; }
-		void TEST_PREFIX_ADDI() { called["addi"] = true; }
-		void TEST_PREFIX_UNK () { called["unk"]  = true; }
+		static string setCalledArray(string opname) { return "called[\"" ~ (opname) ~ "\"] = true;"; }
 
-		void EXECUTE() { mixin(genSwitch(testList[0..2], "TEST_PREFIX_")); }
+		void EXECUTE() { mixin(genSwitch(testList[0..2], "setCalledArray")); }
 
 		instruction.v = 0x_00000020; EXECUTE(); // ADD
 		instruction.v = 0x_20000000; EXECUTE(); // ADDI
 		instruction.v = 0x_30000020; EXECUTE(); // UNK
 
-		assertTrue(("add"  in called) !is null);
-		assertTrue(("addi" in called) !is null);
-		assertTrue(("unk"  in called) !is null);
+		assertTrue(("add"  in called) !is null, "Check ADD was called");
+		assertTrue(("addi" in called) !is null, "Check ADDI was called");
+		assertTrue(("unk"  in called) !is null, "Check an unknown/invalid instruction was detected");
 	}
 }

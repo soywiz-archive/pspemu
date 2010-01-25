@@ -40,6 +40,11 @@ template TemplateCpu_MISC() {
 		.writefln("Unimplemented SYSCALL");
 		registers.pcAdvance(4);
 	}
+
+	auto OP_UNK() {
+		.writefln("Unknown operation %s", instruction);
+		registers.pcAdvance(4);
+	}
 }
 
 unittest {

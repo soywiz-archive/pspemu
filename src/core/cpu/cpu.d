@@ -1,5 +1,7 @@
 module pspemu.core.cpu.cpu;
 
+//debug = DEBUG_GEN_SWITCH;
+
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.cpu_table;
 import pspemu.core.cpu.cpu_switch;
@@ -50,15 +52,9 @@ class CPU {
 		mixin TemplateCpu_MISC;
 		mixin TemplateCpu_FPU;
 
-		void OP_UNK() {
-			.writefln("Unknown operation %s", instruction);
-			registers.pcAdvance(4);
-		}
-
 		while (count--) {
 			instruction.v = memory.read32(registers.PC);
-			void EXEC() { mixin(genSwitch(PspInstructions)); }
-			EXEC();
+			mixin(genSwitch(PspInstructions));
 		}
 	}
 
@@ -69,4 +65,9 @@ class CPU {
 	void executeUntilHalt() {
 		try { execute(); } catch (HaltException he) { }
 	}
+}
+
+// Shows the generated switch.
+debug (DEBUG_GEN_SWITCH) {
+	pragma(msg, genSwitch(PspInstructions));
 }
