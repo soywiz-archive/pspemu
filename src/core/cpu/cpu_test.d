@@ -1,17 +1,21 @@
 module pspemu.core.cpu.cpu_test;
 
+version (Unittest):
+
 import pspemu.core.memory;
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.instruction;
 import pspemu.core.cpu.cpu;
 import pspemu.core.cpu.cpu_asm;
+import pspemu.core.cpu.cpu_disasm;
 import pspemu.utils.assertion;
 
 import std.c.stdlib, std.stdio, std.string, std.math;
 
 unittest {
-	auto cpu = new CPU();
-	auto assembler = new AllegrexAssembler(cpu.memory);
+	auto cpu          = new CPU();
+	auto assembler    = new AllegrexAssembler(cpu.memory);
+	auto dissasembler = new AllegrexDisassembler(cpu.memory);
 
 	void reset() { cpu.resetFast(); assembler.reset(); }
 	void dump() { cpu.registers.dump(); assembler.symbolDump(); }
@@ -19,6 +23,7 @@ unittest {
 	assertOnFail({
 		// If an assert failed, we will dump registers.
 		dump();
+		dissasembler.dump(cpu.registers.PC, -6, +6);
 		//assert(0);
 		exit(-1);
 	});
@@ -49,6 +54,10 @@ unittest {
 		");
 
 		gotoText();
+
+		// FALSE for testing.
+		//assertTrue(false, "");
+
 		foreach (step, expectedValue; [2, 2, 1, 1, 0, 0]) {
 			//writefln("PC: %08X, nPC: %08X, STEP: %d", cpu.registers.PC, cpu.registers.nPC, step);
 			cpu.executeSingle();

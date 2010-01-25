@@ -27,6 +27,12 @@ SET SOURCES=%SOURCES% src/core/cpu/cpu_test.d
 REM SET RELEASE=-noboundscheck -inline -O -release
 SET RELEASE=
 
+REM SET EXTRA=-quiet -deps=deps.lst
+SET EXTRA=
+
+SET UNITTEST=-unittest -version=Unittest
+REM SET UNITTEST=
+
 REM -cov to code coverage, then show the last line of .lst files.
 REM -cov seems to fail with -unittest
-dmd %SOURCES% -quiet -deps=deps.lst %RELEASE% -unittest -run src/exe/test.d %*
+dmd %SOURCES% %EXTRA% %RELEASE% %UNITTEST% -run src/exe/test.d %*

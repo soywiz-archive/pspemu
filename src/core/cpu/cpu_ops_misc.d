@@ -41,10 +41,11 @@ template TemplateCpu_MISC() {
 		registers.pcAdvance(4);
 	}
 
-	auto OP_UNK() {
+	// Inlined.
+	auto OP_UNK() { return q{
 		.writefln("Unknown operation %s", instruction);
 		registers.pcAdvance(4);
-	}
+	}; }
 }
 
 unittest {

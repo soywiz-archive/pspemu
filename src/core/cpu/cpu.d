@@ -20,29 +20,52 @@ import pspemu.core.cpu.cpu_ops_fpu;
 
 import std.stdio, std.string, std.math;
 
+/**
+ * Class that will be on charge of the emulation of Allegrex main CPU.
+ */
 class CPU {
 	Registers registers;
 	Memory    memory;
 
-	this() {
-		registers = new Registers();
-		memory    = new Memory();
+	/**
+	 * Constructor. It will create the registers and the memory.
+	 *
+	 * @param  memory  Optional. A Memory object.
+	 */
+	this(Memory memory = null) {
+		this.registers = new Registers();
+		this.memory    = (memory !is null) ? memory : (new Memory());
 	}
 
+	/**
+	 * It will reset the cpu status: registers and memory.
+	 */
 	void reset() {
 		registers.reset();
 		memory.reset();
 	}
 
+	/**
+	 * It will reset only registers.
+	 */
 	void resetFast() {
 		registers.reset();
-		//memory.reset();
 	}
 
-	void execute(uint count = 0x_FFFFFFFF) {
-		Registers   registers = this.registers;
-		Memory      memory    = this.memory;
-		Instruction instruction;
+	/**
+	 * Will execute a number of instructions.
+	 *
+	 * Note: Some instructions may throw some kind of exceptions that will break the flow.
+	 *
+	 * @param  count  Maximum number of instructions executed.
+	 */
+	void execute(uint count) {
+		// Shortcuts for registers and memory.
+		auto registers = this.registers;
+		auto memory    = this.memory;
+
+		// Declaration for instruction struct that will allow to decode instructions easily.
+		Instruction instruction = void;
 
 		// Operations.
 		mixin TemplateCpu_ALU;
@@ -53,15 +76,30 @@ class CPU {
 		mixin TemplateCpu_FPU;
 
 		while (count--) {
+			// TODO: Process IRQ (Interrupt ReQuest)
 			instruction.v = memory.read32(registers.PC);
 			mixin(genSwitch(PspInstructions));
 		}
 	}
 
+	/**
+	 * Will execute forever (Until a unhandled Exception is thrown).
+	 */
+	void execute() {
+		while (true) execute(0x_FFFFFFFF);
+	}
+
+	/**
+	 * Executes a single instruction. Shortcut for execute(1).
+	 */
 	void executeSingle() {
 		execute(1);
 	}
 
+	/**
+	 * Executes until halt. It will execute until a HaltException is thrown.
+	 * The instructions that throw HaltException are: BREAK, DBREAK, HALT.
+	 */
 	void executeUntilHalt() {
 		try { execute(); } catch (HaltException he) { }
 	}
