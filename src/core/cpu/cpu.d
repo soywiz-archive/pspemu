@@ -57,7 +57,7 @@ class CPU {
 	 *
 	 * Note: Some instructions may throw some kind of exceptions that will break the flow.
 	 *
-	 * @param  count  Maximum number of instructions executed.
+	 * @param  count  Maximum number of instructions to execute.
 	 */
 	void execute(uint count) {
 		// Shortcuts for registers and memory.

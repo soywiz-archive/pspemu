@@ -1,38 +1,12 @@
 @echo off
 
-SET SOURCES=
-SET SOURCES=%SOURCES% src/utils/sparse_memory.d
-SET SOURCES=%SOURCES% src/utils/expression.d
-SET SOURCES=%SOURCES% src/utils/assertion.d
-SET SOURCES=%SOURCES% src/formats/pbp.d
-SET SOURCES=%SOURCES% src/formats/psf.d
-SET SOURCES=%SOURCES% src/formats/elf.d
-SET SOURCES=%SOURCES% src/core/memory.d
-SET SOURCES=%SOURCES% src/core/cpu/registers.d
-SET SOURCES=%SOURCES% src/core/cpu/instruction.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_switch.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_utils.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_alu.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_branch.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_jump.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_memory.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_misc.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_fpu.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_table.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_asm.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_disasm.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_test.d
+CALL _sources.bat
 
-REM SET RELEASE=-noboundscheck -inline -O -release
-SET RELEASE=
-
-REM SET EXTRA=-quiet -deps=deps.lst
-SET EXTRA=
-
-SET UNITTEST=-unittest -version=Unittest
-REM SET UNITTEST=
-
-REM -cov to code coverage, then show the last line of .lst files.
-REM -cov seems to fail with -unittest
-dmd %SOURCES% %EXTRA% %RELEASE% %UNITTEST% -run src/exe/test.d %*
+del /q pspemu.exe 2> NUL
+dmd %SOURCES% %UNITTEST% -gc src/exe/test.d -ofpspemu
+del /q pspemu.map 2> NUL
+del /q pspemu.obj 2> NUL
+if EXIST "pspemu.exe" (
+	REM ddbg pspemu.exe %*
+	pspemu.exe %*
+)

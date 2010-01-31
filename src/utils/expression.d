@@ -19,21 +19,24 @@ static long parseStringBaseUnsigned(string s, int base) {
 
 static long parseString(string s, long default_value = 0) {
 	if (s.length > 0) {
-		switch (s[0]) {
-			case '-': return -parseString(s[1..$]);
-			case '+': return +parseString(s[1..$]);
-			case '0':
-				if (s.length > 1) {
-					switch (s[1]) {
-						case 'b': return parseStringBaseUnsigned(s[2..$], 2);
-						case 'x': return parseStringBaseUnsigned(s[2..$], 16);
-						default:  return parseStringBaseUnsigned(s[1..$], 8);
+		try {
+			switch (s[0]) {
+				case '-': return -parseString(s[1..$]);
+				case '+': return +parseString(s[1..$]);
+				case '0':
+					if (s.length > 1) {
+						switch (s[1]) {
+							case 'b': return parseStringBaseUnsigned(s[2..$], 2);
+							case 'x': return parseStringBaseUnsigned(s[2..$], 16);
+							default:  return parseStringBaseUnsigned(s[1..$], 8);
+						}
 					}
-				}
-			break;
-			default:
-				return parseStringBaseUnsigned(s, 10);
-			break;
+				break;
+				default:
+					return parseStringBaseUnsigned(s, 10);
+				break;
+			}
+		} catch {
 		}
 	}
 	return default_value;

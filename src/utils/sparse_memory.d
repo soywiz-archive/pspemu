@@ -30,6 +30,42 @@ class SparseMemoryStream : Stream {
 	Segment[uint] segments;
 
 	uint streamPosition;
+
+	void smartDump() {
+		int group = 4;
+		.writefln("Segments: %d", segments.length);
+		foreach (segment; segments) {
+			.writefln("--------------------------------------------------------");
+			.writefln("Segment (0x%08X)", segment.start);
+			.writefln("--------------------------------------------------------");
+			auto data = cast(ubyte[])(new SliceStream(segment.stream, 0)).readString(cast(uint)segment.stream.size);
+			int pos = 0;
+			while (true) {
+				.writef("%08X |", segment.start + pos);
+				for (int n = 0; n < 16; n++, pos++) {
+					if ((n % group) == 0) .writef(" ");
+					if (pos < data.length) {
+						.writef("%02X", data[pos]);
+					} else {
+						.writef("??");
+					}
+				}
+				.writef(" | ");
+				pos -= 16;
+				for (int n = 0; n < 16; n++, pos++) {
+					if (pos < data.length) {
+						char c = data[pos];
+						.writef("%s", std.ctype.isalnum(c) ? c : '.');
+					} else {
+						.writef("?");
+					}
+				}
+				.writefln("");
+				if (pos >= data.length) break;
+			}
+			.writefln("");
+		}
+	}
 	
 	Segment[] segmentsBetween(int start, int end) {
 		Segment[] list;
