@@ -344,6 +344,59 @@ class AllegrexAssembler : ISymbolResolver {
 							process = process[pos + 1..$];
 						}
 					} break;
+					case "byte", "half", "word": {
+						string process = parts[2];
+						string current_string;
+						bool is_string;
+						void write_integer(long value) {
+							void doalign(int n) {
+								while ((stream.position % n) != 0) stream.write(cast(ubyte)0);
+							}
+							switch (parts[1]) {
+								case "byte": doalign(1); stream.write(cast(byte)value); break;
+								case "half": doalign(2); stream.write(cast(short)value); break;
+								case "word": doalign(4); stream.write(cast(int)value); break;
+							}
+						}
+						void token() {
+							if (!current_string.length) return;
+							if (is_string) {
+								foreach (c; current_string) write_integer(c);
+							} else {
+								write_integer(parseString(current_string));
+							}
+							//writefln("TOKEN:'%s'", current_string);
+							current_string = "";
+							is_string = false;
+						}
+						for (int n = 0; n < process.length; n++) {
+							char c = process[n];
+							//writefln("%s", c);
+							// Ignore spaces.
+							if (std.ctype.isspace(c)) {
+								assert(current_string.length == 0);
+								continue;
+							}
+							// Ignore commas.
+							else if (c == ',') {
+								token();
+							}
+							// String.
+							else if (c == '\'') {
+								for (n++; n < process.length; n++) {
+									c = process[n];
+									if (c == '\'') break;
+									current_string ~= c;
+								}
+								is_string = true;
+							} else {
+								current_string ~= c;
+							}
+						}
+						token();
+						//writefln("%s", process);
+						//assert(0);
+					} break;
 				}
 				return [];
 			}
@@ -376,6 +429,21 @@ class AllegrexAssembler : ISymbolResolver {
 		relocate();
 	}
 
+	void smartDump() {
+		auto sms = cast(SparseMemoryStream)stream;
+		if (sms) {
+			sms.smartDump();
+		} else {
+			writefln("Not a SparseMemoryStream");
+		}
+	}
+
+	bool checkMemory(uint offset, ubyte[] data) {
+		auto bpos = stream.position; scope (exit) stream.position = bpos;
+		stream.position = offset;
+		return (cast(ubyte[])stream.readString(data.length) == data);
+	}
+
 	alias assemble opCall;
 }
 
@@ -403,6 +471,16 @@ unittest {
 
 	assembler.assembleBlock(".data\n value: .float 1.5, 1.6");
 	assembler.assembleBlock("label2: la $1, label2");
+
+	// Check inserting data and alignment.
+	assembler.assembleBlock(r"
+		.text 0x1000
+		.byte 'hello', 0x0A, 10, 0, 1
+		.word 0x7FFF
+		.byte 1
+		.half 2
+	");
+	assert(assembler.checkMemory(0x1000, cast(ubyte[])x"68656C6C 6F0A0A00 01000000 FF7F0000 01000200"));
 
 	// Post reference.
 	assembler.assembleBlock(r"

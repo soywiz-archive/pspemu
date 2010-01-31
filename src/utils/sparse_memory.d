@@ -47,7 +47,7 @@ class SparseMemoryStream : Stream {
 					if (pos < data.length) {
 						.writef("%02X", data[pos]);
 					} else {
-						.writef("??");
+						.writef("  ");
 					}
 				}
 				.writef(" | ");
@@ -57,7 +57,7 @@ class SparseMemoryStream : Stream {
 						char c = data[pos];
 						.writef("%s", std.ctype.isalnum(c) ? c : '.');
 					} else {
-						.writef("?");
+						.writef(" ");
 					}
 				}
 				.writefln("");

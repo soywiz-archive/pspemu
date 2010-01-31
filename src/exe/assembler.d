@@ -27,7 +27,7 @@ int main(string[] args) {
 		"version", &mipsVersion
 	);
 
-	if (args.length) {
+	if (args.length > 1) {
 		foreach (fileName; args[1..$]) {
 			writef("Compiling file '%s'...", fileName);
 			compile(fileName);
