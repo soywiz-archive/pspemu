@@ -60,7 +60,7 @@ template MemoryStreamTemplate() {
 	override ulong seek(long offset, SeekPos whence) {
 		switch (whence) {
 			case SeekPos.Current: streamPosition += offset; break;
-			case SeekPos.Set: case SeekPos.End: streamPosition = cast(uint)offset; break;
+			case SeekPos.Set, SeekPos.End: streamPosition = cast(uint)offset; break;
 		}
 		return streamPosition;
 	}

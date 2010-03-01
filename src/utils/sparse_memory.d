@@ -35,9 +35,9 @@ class SparseMemoryStream : Stream {
 		int group = 4;
 		.writefln("Segments: %d", segments.length);
 		foreach (segment; segments) {
-			.writefln("--------------------------------------------------------");
+			.writefln("-------------------------------------------------------------------");
 			.writefln("Segment (0x%08X)", segment.start);
-			.writefln("--------------------------------------------------------");
+			.writefln("-------------------------------------------------------------------");
 			auto data = cast(ubyte[])(new SliceStream(segment.stream, 0)).readString(cast(uint)segment.stream.size);
 			int pos = 0;
 			while (true) {
@@ -60,7 +60,7 @@ class SparseMemoryStream : Stream {
 						.writef(" ");
 					}
 				}
-				.writefln("");
+				.writefln(" |");
 				if (pos >= data.length) break;
 			}
 			.writefln("");

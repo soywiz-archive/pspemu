@@ -27,7 +27,14 @@ class PBP {
 	Header header;
 	Stream[string] slices;
 
+	this() {
+	}
+
 	this(Stream _stream) {
+		load(_stream);
+	}
+
+	void load(Stream _stream) {
 		// Extracts a slice of the stream.
 		stream = new SliceStream(_stream, 0);
 
@@ -38,6 +45,7 @@ class PBP {
 		auto offsets = header.offsets ~ cast(uint)stream.size;
 
 		// Process all the files.
+		slices = null;
 		foreach (n, name; files) {
 			assert(offsets[n + 1] >= offsets[n], format("Invalid entry '%s' (0x%08X >= 0x%08X)", name, offsets[n + 1], offsets[n]));
 			if (offsets[n + 1] != offsets[n]) slices[name] = new SliceStream(stream, offsets[n], offsets[n + 1]);
@@ -96,7 +104,7 @@ unittest {
 	{
 		scope (exit) std.file.remove("test.elf");
 		scope file = new std.stream.File("test.elf", FileMode.OutNew);
-		file.copyFrom(pbp["psp.data" ]);
+		file.copyFrom(pbp["psp.data"]);
 		file.close();
 		assert(std.file.read("test.elf") == std.file.read(testPath ~ "/controller.elf"));
 	}

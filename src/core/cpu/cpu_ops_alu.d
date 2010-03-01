@@ -11,51 +11,7 @@ private import std.stdio;
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/SPECIAL
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/MISC
 template TemplateCpu_ALU() {
-	enum { Unsigned, Signed }
-	enum { Register, Immediate }
-
-	static pure nothrow {
-		string ALU(string operator, bool immediate, bool signed) {
-			string r;
-			string sign = signed ? "#" : "$";
-			if (immediate) {
-				return CE("$rt = $rs " ~ operator ~ " " ~ sign ~ "im;");
-			} else {
-				return CE("$rd = " ~ sign ~ "rs " ~ operator ~ " " ~ sign ~ "rt;");
-			}
-			return r;
-		}
-	}
-
-	static final int MASK(uint bits) { return ((1 << cast(ubyte)bits) - 1); }
-	static uint SEB(ubyte  r0) { uint r1; asm { xor EAX, EAX; mov AL, r0; movsx EBX, AL; mov r1, EBX; } return r1; }
-	static uint SEH(ushort r0) { uint r1; asm { xor EAX, EAX; mov AX, r0; movsx EBX, AX; mov r1, EBX; } return r1; }
-	static uint ROTR(uint a, uint b) { b = (b & 0x1F); asm { mov EAX, a; mov ECX, b; ror EAX, CL; mov a, EAX; } return a; }
-	static uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
-	static uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
-	static uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
-	static uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
-	// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-	static uint  REV4(uint v) {
-		v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
-		v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
-		v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
-		v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
-		v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
-		return v;
-	}
-	static int MAX(int a, int b) { return (a > b) ? a : b; }
-	static int MIN(int a, int b) { return (a < b) ? a : b; }
-	static uint WSBH(uint v) { return ((v & 0x_FF00_FF00) >> 8) | ((v & 0x_00FF_00FF) << 8); }
-	static uint WSBW(uint v) {
-		static struct UINT { union { uint i; ubyte[4] b; } }
-		UINT vs = void, vd = void; vs.i = v;
-		vd.b[0] = vs.b[3];
-		vd.b[1] = vs.b[2];
-		vd.b[2] = vs.b[1];
-		vd.b[3] = vs.b[0];
-		return vd.i;
-	}
+	mixin TemplateCpu_ALU_Utils;
 
 	// ADD(U) -- Add (Unsigned)
 	// Adds two registers and stores the result in a register
@@ -204,6 +160,40 @@ template TemplateCpu_ALU() {
 	auto OP_WSBW() { mixin(CE("$rd = WSBW($rt);")); }
 }
 
+template TemplateCpu_ALU_Utils() {
+	static final {
+		int MASK(uint bits) { return ((1 << cast(ubyte)bits) - 1); }
+		uint SEB(ubyte  r0) { uint r1; asm { xor EAX, EAX; mov AL, r0; movsx EBX, AL; mov r1, EBX; } return r1; }
+		uint SEH(ushort r0) { uint r1; asm { xor EAX, EAX; mov AX, r0; movsx EBX, AX; mov r1, EBX; } return r1; }
+		uint ROTR(uint a, uint b) { b = (b & 0x1F); asm { mov EAX, a; mov ECX, b; ror EAX, CL; mov a, EAX; } return a; }
+		uint SLA(int a, int b) { asm { mov EAX, a; mov ECX, b; sal EAX, CL; mov a, EAX; } return a; }
+		uint SLL(int a, int b) { asm { mov EAX, a; mov ECX, b; shl EAX, CL; mov a, EAX; } return a; }
+		uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
+		uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
+		// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+		uint REV4(uint v) {
+			v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
+			v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
+			v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 
+			v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8 ); // swap bytes
+			v = ( v >> 16             ) | ( v               << 16); // swap 2-byte long pairs
+			return v;
+		}
+		T MAX(T)(T a, T b) { return (a > b) ? a : b; }
+		T MIN(T)(T a, T b) { return (a < b) ? a : b; }
+		uint WSBH(uint v) { return ((v & 0x_FF00_FF00) >> 8) | ((v & 0x_00FF_00FF) << 8); } // swap bytes
+		uint WSBW(uint v) {
+			static struct UINT { union { uint i; ubyte[4] b; } }
+			UINT vs = void, vd = void; vs.i = v;
+			vd.b[0] = vs.b[3];
+			vd.b[1] = vs.b[2];
+			vd.b[2] = vs.b[1];
+			vd.b[3] = vs.b[0];
+			return vd.i;
+		}
+	}
+}
+
 unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	scope memory    = new Memory;
@@ -252,7 +242,9 @@ unittest {
 
 	writefln("  Check BITREV");
 	{
-		// php -r"$r = ''; for ($n = 0; $n < 32; $n++) $r .= mt_rand(0, 1); echo '0b_' . $r . ' : 0b_' . strrev($r) . ',' . chr(10);"
+		// php -r"for ($r = '', $n = 0; $n < 32; $n++) $r .= mt_rand(0, 1); printf('0b_%s : 0b_%s,' . chr(10), $r, strrev($r));"
+		// def bin(r, dig=32):return ''.join([str((r >> x) & 1) for x in xrange(dig, -1, -1)])
+		// import random; x = ''.join([str(random.randint(0, 1)) for x in xrange(0, 32)]); print '0b_%s : 0b_%s' % (x, x[::-1])
 		scope expectedList = [
 			// Hand crafted.
 			0b_00000000000000000000000000000000 : 0b_00000000000000000000000000000000,
