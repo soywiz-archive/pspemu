@@ -24,7 +24,14 @@ import std.stdio, std.string, std.math;
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
 class CPU {
+	/**
+	 * Registers.
+	 */
 	Registers registers;
+
+	/**
+	 * Memory.
+	 */
 	Memory    memory;
 
 	/**
@@ -75,6 +82,7 @@ class CPU {
 		mixin TemplateCpu_MISC;
 		mixin TemplateCpu_FPU;
 
+		// Will execute instructions until count reach zero or an exception is thrown.
 		while (count--) {
 			// TODO: Process IRQ (Interrupt ReQuest)
 			instruction.v = memory.read32(registers.PC);

@@ -11,18 +11,20 @@ SET SOURCES=%SOURCES% src/core/memory.d
 SET SOURCES=%SOURCES% src/core/cpu/registers.d
 SET SOURCES=%SOURCES% src/core/cpu/instruction.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu_switch.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_utils.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_alu.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_branch.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_jump.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_memory.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_misc.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_ops_fpu.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_table.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_asm.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_disasm.d
+SET SOURCES=%SOURCES% src/core/cpu/utils.d
+
+SET SOURCES=%SOURCES% src/core/cpu/ops/alu.d
+SET SOURCES=%SOURCES% src/core/cpu/ops/branch.d
+SET SOURCES=%SOURCES% src/core/cpu/ops/jump.d
+SET SOURCES=%SOURCES% src/core/cpu/ops/memory.d
+SET SOURCES=%SOURCES% src/core/cpu/ops/misc.d
+SET SOURCES=%SOURCES% src/core/cpu/ops/fpu.d
+
+SET SOURCES=%SOURCES% src/core/cpu/table.d
+SET SOURCES=%SOURCES% src/core/cpu/assembler.d
+SET SOURCES=%SOURCES% src/core/cpu/disassembler.d
 SET SOURCES=%SOURCES% src/core/cpu/cpu.d
-SET SOURCES=%SOURCES% src/core/cpu/cpu_test.d
+SET SOURCES=%SOURCES% src/core/cpu/test.d
 
 SET RELEASE=-noboundscheck -inline -O -release
 

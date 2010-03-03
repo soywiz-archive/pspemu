@@ -4,7 +4,7 @@ import std.stdio, std.string;
 
 version = VERSION_R0_CHECK;
 
-class Registers {
+final class Registers {
 	protected static int[string] aliases;
 	protected static const auto aliasesInv = [
 		"zr", "at", "v0", "v1", "a0", "a1", "a2", "a3",
