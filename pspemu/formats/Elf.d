@@ -107,37 +107,12 @@ class Elf {
 		Bind   bind;
 		ubyte  other;
 		ushort index;
-		
-		/*
-		static Symbol opCall(Stream symbol_s, Stream string_s) {
-			Symbol symbol;
-			symbol.name  = extractStringz(string_s, read4(symbol_s));
-			symbol.value = read4(symbol_s);
-			symbol.size  = read4(symbol_s);
-			ubyte info   = read1(symbol_s);
-			symbol.type  = cast(Type)((info >> 0) & 0xF);
-			symbol.bind  = cast(Bind)((info >> 4) & 0xF);
-			symbol.other = read1(symbol_s);
-			symbol.index = read2(symbol_s);
-			return symbol;
-		}
-		*/
 	}
 	
 	struct LoaderResult {
 		uint EntryAddress;
 		uint GlobalPointer;
 		char[] Name;
-		
-		/*
-		void dump() {
-			writefln("LoaderResult {");
-			writefln("  EntryAddress : %08X", EntryAddress);
-			writefln("  GlobalPointer: %08X", GlobalPointer);
-			writefln("  ModuleName:    %s"  , Name);
-			writefln("}");
-		}
-		*/
 	}
 
 	Stream stream;
@@ -147,8 +122,23 @@ class Elf {
 	SectionHeader[string] sectionHeadersNamed;
 
 	bool needsRelocation() { return (header.entryPoint < 0x08000000) || (header.type == Header.Type.Prx); }
-	Stream SectionStream(SectionHeader sectionHeader) { return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size); }
-	Stream SectionStream(string name) { return SectionStream(sectionHeadersNamed[name]); }
+	Stream SectionStream(SectionHeader sectionHeader) {
+		//writefln("SectionStream(Address=%08X, Offset=%08X, Size=%08X, Type=%08X)", sectionHeader.address, sectionHeader.offset, sectionHeader.size, sectionHeader.type);
+
+		switch (sectionHeader.type) {
+			case SectionHeader.Type.PROGBITS:
+			case SectionHeader.Type.STRTAB:
+				return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
+			break;
+			default:
+				return new SliceStream(stream, sectionHeader.address, sectionHeader.address + sectionHeader.size);
+			break;
+		}
+	}
+	Stream SectionStream(string name) {
+		assert ((name in sectionHeadersNamed) !is null, std.string.format("SectionHeader('%s') not found.", name));
+		return SectionStream(sectionHeadersNamed[name]);
+	}
 
 	this(Stream _stream) {
 		stream = new SliceStream(_stream, 0);
@@ -166,20 +156,33 @@ class Elf {
 	}
 
 	void extractSectionHeaderNames() {
-		auto stringTableStream = SectionStream(sectionHeaderStringTable);
 		sectionHeaderNames = [];
-		while (!stringTableStream.eof) {
-			auto name = readStringz(stringTableStream);
-			sectionHeadersNamed[name] = sectionHeaders[sectionHeaderNames.length];
-			sectionHeaderNames ~= name;
+		try {
+			//writefln("lalala");
+			auto stringTableStream = SectionStream(sectionHeaderStringTable);
+			while (!stringTableStream.eof) {
+				auto name = readStringz(stringTableStream);
+				sectionHeadersNamed[name] = sectionHeaders[sectionHeaderNames.length];
+				sectionHeaderNames ~= name;
+				//writefln("%s", name);
+			}
+		} catch (Object e) {
+			writefln("extractSectionHeaderNames.Error: (%08X) %s", sectionHeaderStringTable.offset, e);
 		}
+		while (sectionHeaderNames.length < sectionHeaders.length) sectionHeaderNames ~= "";
 	}
 
 	ref SectionHeader sectionHeaderStringTable() {
 		foreach (ref sectionHeader; sectionHeaders) {
+			if (sectionHeader.type == SectionHeader.Type.STRTAB) {
+				return sectionHeader;
+			}
+		}
+		foreach (ref sectionHeader; sectionHeaders) {
 			//writefln("%08X", sectionHeader.offset);
 			auto stream = SectionStream(sectionHeader);
 			auto text = stream.readString(min(11, cast(int)stream.size));
+			//writefln("'%s'", text);
 			if (text == "\0.shstrtab\0") {
 				return sectionHeader;
 			}
@@ -189,12 +192,15 @@ class Elf {
 
 	void extractSectionHeaders() {
 		sectionHeaders = []; assert(SectionHeader.sizeof >= header.sectionHeaderEntrySize);
-		foreach (index; 0 .. header.sectionHeaderCount) {
-			SectionHeader sectionHeader = read!(SectionHeader)(
-				stream,
-				header.sectionHeaderOffset + (index * header.sectionHeaderEntrySize)
-			);
-			sectionHeaders ~= sectionHeader;
+		try {
+			foreach (index; 0 .. header.sectionHeaderCount) {
+				SectionHeader sectionHeader = read!(SectionHeader)(
+					stream,
+					header.sectionHeaderOffset + (index * header.sectionHeaderEntrySize)
+				);
+				sectionHeaders ~= sectionHeader;
+			}
+		} catch {
 		}
 	}
 
@@ -209,29 +215,42 @@ class Elf {
 
 	void writeToMemory(Stream stream, uint baseAddress = 0) {
 		if (needsRelocation) baseAddress += 0x08900000;
-		foreach (sectionHeader; sectionHeaders) {			
+		foreach (k, sectionHeader; sectionHeaders) {			
 			stream.position = baseAddress + sectionHeader.address;
+			uint sectionHeaderOffset = cast(uint)stream.position;
+			
+			string typeString = "None";
 			
 			// Section to allocate
 			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
 				bool reserved = true;
 				
 				switch (sectionHeader.type) {
-					default: reserved = false; break;
-					case SectionHeader.Type.PROGBITS: stream.copyFrom(SectionStream(sectionHeader)); break;
-					case SectionHeader.Type.NOBITS  : writeZero(stream, sectionHeader.size); break;
+					default: reserved = false; typeString = "UNKNOWN"; break;
+					case SectionHeader.Type.PROGBITS: typeString = "PROGBITS"; stream.copyFrom(SectionStream(sectionHeader)); break;
+					case SectionHeader.Type.NOBITS  : typeString = "NOBITS"  ; writeZero(stream, sectionHeader.size); break;
 				}
 				
 				if (reserved) reserveMemory(sectionHeader.address, sectionHeader.size);
 				
-				//debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", stype, sh.addr, sh.size, extractStringz(shstrtab_s, sh.name));
+				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
 			}
 			// Section not to allocate
 			else {
-				//debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", stype, sh.offset, sh.size, extractStringz(shstrtab_s, sh.name));
+				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
 			}
 		}
 		if (needsRelocation) performRelocation();
+	}
+
+	SectionHeader[] relocationSectionHeaders() {
+		SectionHeader[] list;
+		foreach (sectionHeader; sectionHeaders) {
+			if ((sectionHeader.type == SectionHeader.Type.PRXRELOC) || (sectionHeader.type == SectionHeader.Type.REL)) {
+				list ~= sectionHeader;
+			}
+		}
+		return list;
 	}
 }
 

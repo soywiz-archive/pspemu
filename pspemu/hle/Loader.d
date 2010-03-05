@@ -7,6 +7,10 @@ import pspemu.utils.Utils;
 import pspemu.formats.Elf;
 import pspemu.formats.Pbp;
 
+import pspemu.hle.Module;
+
+import std.xml;
+
 version (unittest) {
 	import pspemu.utils.SparseMemory;
 }
@@ -76,6 +80,7 @@ class Loader {
 		this.elf    = new Elf(stream);
 		this.memory = memory;
 		load();
+		Module.dumpKnownModules();
 	}
 
 	void load() {
@@ -86,14 +91,31 @@ class Loader {
 		auto exportsStream = new SliceStream(memory, moduleInfo.exportsStart, moduleInfo.exportsEnd);
 
 		// Load Imports.
+		writefln("Imports:");
 		while (!importsStream.eof) {
 			auto moduleImport = read!(ModuleImport)(importsStream);
+			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
 			//assert(moduleImport.entry_size == moduleImport.sizeof);
+			writefln("  '%s'", moduleImportName);
 			moduleImports ~= moduleImport;
+			auto nidStream = new SliceStream(memory, moduleImport.nidAddress, moduleImport.nidAddress + moduleImport.func_count * 4);
+			auto pspModule = Module.loadModule(moduleImportName);
+			while (!nidStream.eof) {
+				uint nid = read!(uint)(nidStream);
+				
+				if (nid in pspModule.nids) {
+					writefln("    %s", pspModule.nids[nid]);
+				} else {
+					writefln("    0x%08X", nid);
+				}
+			}
 		}
 		// Load Exports.
+		writefln("Exports:");
 		while (!exportsStream.eof) {
 			auto moduleExport = read!(ModuleExport)(exportsStream);
+			auto moduleExportName = moduleExport.name ? readStringz(memory, moduleExport.name) : "<null>";
+			writefln("  '%s'", moduleExportName);
 			moduleExports ~= moduleExport;
 		}
 	}

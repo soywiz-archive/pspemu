@@ -74,7 +74,7 @@ class AllegrexDisassembler {
 									line ~= ")";
 								break;
 								case 'O':
-									line ~= std.string.format("0x%08X", PC + instruction.OFFSET * 4);
+									line ~= std.string.format("0x%08X", PC + 4 + instruction.OFFSET * 4);
 								break;
 								case 'a':
 									line ~= std.string.format("%d", instruction.POS);
@@ -101,7 +101,7 @@ class AllegrexDisassembler {
 				}
 				while ((line.length) && (!line[$ - 1].length || (line[$ - 1] == " "))) line = line[0..$ - 1];
 			} else {
-				line = ["unknown instruction"];
+				line = ["<unknown instruction>"];
 			}
 		}
 		static string callDetectedInstruction(string opname) { return "detectedInstruction(\"" ~ (opname) ~ "\");"; }

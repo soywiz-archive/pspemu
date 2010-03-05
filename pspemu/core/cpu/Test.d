@@ -44,6 +44,19 @@ unittest {
 		assertTrue(cpu.registers["v0"] == 13, "(v0 = (7 + 11 - 5)) == 13");
 	});
 
+	testGroup("ADDIU", {
+		assembler.assembleBlock(r"
+		.text
+			li a0, 1000
+			addiu a0, a0, -1
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+		assertTrue(cpu.registers["a0"] == 999, "a0 = 1000; a0--; (a0 == 999);");
+	});
+
 	testGroup("BGEZ", {
 		assembler.assembleBlock(r"
 		.text

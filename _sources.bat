@@ -24,6 +24,17 @@ SET SOURCES=%SOURCES% pspemu/formats/Psf.d
 SET SOURCES=%SOURCES% pspemu/formats/Elf.d
 
 SET SOURCES=%SOURCES% pspemu/hle/Loader.d
+SET SOURCES=%SOURCES% pspemu/hle/Module.d
+
+SET SOURCES=%SOURCES% pspemu/hle/kd/display.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/ge.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/ctrl.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/iofilemgr.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/modulemgr.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/stdio.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/sysmem.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/threadman.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/loadexec.d
 
 SET SOURCES=%SOURCES% pspemu/core/Memory.d
 

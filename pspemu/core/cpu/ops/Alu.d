@@ -25,7 +25,7 @@ template TemplateCpu_ALU() {
 	// Adds a register and a signed immediate value and stores the result in a register
 	// $t = $s + imm; advance_pc (4);
 	auto OP_ADDI () { mixin(CE("$rt = #rs + #im;")); }
-	auto OP_ADDIU() { mixin(CE("$rt = $rs + $im;")); }
+	auto OP_ADDIU() { mixin(CE("$rt = $rs + #im;")); }
 
 	// AND -- Bitwise and
 	// Bitwise ands two registers and stores the result in a register

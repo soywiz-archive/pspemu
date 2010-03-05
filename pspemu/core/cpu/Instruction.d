@@ -73,6 +73,13 @@ struct Instruction {
 			uint, "POS_1", 16
 		)); }
 
+		// CODE
+		struct { mixin(bitfields!(
+			uint, "__0",   6,
+			uint, "CODE",  20,
+			uint, "__1",   6
+		)); }
+
 		alias IMM OFFSET;
 	}
 

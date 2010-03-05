@@ -1,6 +1,6 @@
 module pspemu.exe.Pspemu;
 
-version = TRACE_EXEUCTION;
+version = TRACE_FROM_BEGINING;
 
 import std.stream, std.stdio, core.thread;
 
@@ -27,7 +27,7 @@ class PspDisplay : BasePspDisplay {
 	}
 
 	void* frameBufferPointer() {
-		return memory.getPointer(0x04000000);
+		return memory.getPointer(Memory.frameBufferAddress);
 	}
 
 	void vblank(bool status) {
@@ -41,47 +41,74 @@ int main() {
 	auto gpu     = new Gpu(memory);
 	auto display = new PspDisplay(memory);
 	
-	auto loader  = new Loader(new BufferedFile("demos/controller.elf", FileMode.In), memory);
+	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
+	
+	string elfFile = "demos/controller.elf";
+	//string elfFile = "demos/minifire.elf";
+	
+	auto loader  = new Loader(new BufferedFile(elfFile, FileMode.In), memory);
 	writefln("PC: %08X", loader.PC);
 	writefln("GP: %08X", loader.GP);
 	
 	cpu.registers.pcSet = loader.PC;
 	cpu.registers["gp"] = loader.GP;
-	cpu.registers["sp"] = 0x08800000;
+	//cpu.registers["sp"] = 0x08800000;
+	cpu.registers["sp"] = 0x09F00000;
+	cpu.registers["k0"] = 0x09F00000;
+	//cpu.registers["ra"] = 0x08900004;
+	cpu.registers["ra"] = 0;
+	//cpu.registers["ra"] = 0x089065A8;
+	cpu.registers["a0"] = 0; // argumentsLength.
+	cpu.registers["a1"] = loader.PC; // argumentsPointer
+	cpu.registers["a2"] = 0; // argumentsPointer
+
+	version (TRACE_FROM_BEGINING) {
+		cpu.checkBreakpoints = true;
+		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
+	}
+
+	if (0) {
+		cpu.checkBreakpoints = true;
+		cpu.addBreakpoint(cpu.BreakPoint(0x0890013C, ["t0", "t1", "t2", "v0"]));
+		cpu.addBreakpoint(cpu.BreakPoint(0x08900140, ["t0", "t1", "t2", "v0"]));
+		cpu.addBreakpoint(cpu.BreakPoint(0x08900144, ["t0"], true));
+	} else {
+		//cpu.addBreakpoint(cpu.BreakPoint(0x08900284, ["v1"]));
+	}
 
 	void runCPU() {
 		(new Thread({
 			auto dissasembler = new AllegrexDisassembler(memory);
+			Thread.sleep(2000_0000);
+			dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
 			try {
-				version (TRACE_EXEUCTION) {
-					while (true) {
-						try {
-							dissasembler.dumpSimple(cpu.registers.PC);
-						} catch {
-						}
-						cpu.executeSingle();
-					}
-				} else {
-					cpu.execute();
-				}
+				cpu.execute();
 			} catch (Object o) {
 				writefln("CPU Error: %s", o.toString());
 				cpu.registers.dump();
-				dissasembler.dump(cpu.registers.PC, -1, 10);
+				//dissasembler.dump(cpu.registers.PC, -1, 10);
+				dissasembler.dump(cpu.registers.PC, -6, 6);
+				//dissasembler.dump(0x08900258, -6, 6);
 				//msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
 			} finally {
 				.writefln("End CPU executing.");
+				//writefln("%08X", memory.read32(0x08906B98));
 			}
 		})).start();
 	}
 
 	runCPU();
 	
+	int retval = 0;
 	try {
 		Application.run(new DisplayForm(display));
-		return 0;
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
-		return -1;
+		retval = -1;
 	}
+	
+	cpu.stop = true;
+
+	Application.exit();
+	return retval;
 }

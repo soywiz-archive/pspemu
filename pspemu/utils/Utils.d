@@ -43,6 +43,25 @@ string readStringz(Stream stream, long position = -1) {
 	return s;
 }
 
-
 T min(T)(T l, T r) { return (l < r) ? l : r; }
 T max(T)(T l, T r) { return (l > r) ? l : r; }
+
+string tos(T)(T v, int base = 10) {
+	if (v == 0) return "0";
+	const digits = "0123456789abdef";
+	assert(base <= digits.length);
+	string r;
+	bool sign = (v < 0);
+	if (sign) v = -v;
+	while (v != 0) {
+		r = digits[v % base] ~ r;
+		v /= base;
+	}
+	if (sign) r = "-" ~ r;
+	return r;
+}
+
+unittest {
+	assert(tos(100) == "100");
+	assert(tos(-99) == "-99");
+}

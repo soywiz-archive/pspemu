@@ -112,22 +112,23 @@ class Memory : Stream {
 
 	public void* getPointer(uint address) {
 		static pure string InvalidAddress() { return "throw(new MemoryException(std.string.format(\"Invalid address 0x%08X\", address)));"; }
-		static pure string CheckAddress(string name) { return "if ((address < " ~ name ~ "Address) || (address > (" ~ name ~ "Address | " ~ name ~ "Mask))) " ~ InvalidAddress ~ ";"; }
+		static pure string CheckAddress(string name) { return "version (VERSION_CHECK_MEMORY) if ((address < " ~ name ~ "Address) || (address > (" ~ name ~ "Address | " ~ name ~ "Mask))) " ~ InvalidAddress ~ ";"; }
 		static pure string ReturnSegment(string name) { return "return &" ~ name ~ "[address & " ~ name ~ "Mask];"; }
+		static pure string CheckAndReturnSegment(string name) { return CheckAddress(name) ~ ReturnSegment(name); }
+		
+		//.writefln("Memory.getPointer(0x%08X)", address);
 
 		address &= 0x1FFFFFFF; // Ignore last 3 bits (cache / kernel)
 		switch (address >> 24) {
 			/////// hp
 			case 0b_00000:
 				// Scratch Pad-
-				version (VERSION_CHECK_MEMORY) mixin(CheckAddress("scratchPad"));
-				mixin(ReturnSegment("scratchPad"));
+				mixin(CheckAndReturnSegment("scratchPad"));
 			break;
 			/////// hp
 			case 0b_00100:
 				// Frame Buffer.
-				version (VERSION_CHECK_MEMORY) mixin(CheckAddress("frameBuffer"));
-				mixin(ReturnSegment("frameBuffer"));
+				mixin(CheckAndReturnSegment("frameBuffer"));
 			break;
 			/////// hp
 			case 0b_01000:
@@ -135,8 +136,7 @@ class Memory : Stream {
 			case 0b_01010: // SLIM ONLY
 			case 0b_01011: // SLIM ONLY
 				// Main Memory.
-				version (VERSION_CHECK_MEMORY) mixin(CheckAddress("mainMemory"));
-				mixin(ReturnSegment("mainMemory"));
+				mixin(CheckAndReturnSegment("mainMemory"));
 			break;
 			/////// hp
 			case 0b_11100: // HW IO1
@@ -159,6 +159,9 @@ class Memory : Stream {
 		{
 			r ~= "void write" ~ size ~ "(uint address, " ~ type ~ " value) {";
 			version (VERSION_CHECK_ALIGNMENT) r ~= checkAlignment(size);
+			if (size == "8") {
+				//r ~= q{.writefln("Memory.write8(0x%08X, 0x%02X)", address, value);};
+			}
 			r ~= "    auto pointer = cast(" ~ type ~ "*)getPointer(address);";
 			r ~= "    *pointer = value;";
 			r ~= "}";
