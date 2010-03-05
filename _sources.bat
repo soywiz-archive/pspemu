@@ -1,5 +1,13 @@
 @echo off
 
+SET DMD=dmd\windows\bin\dmd.exe
+
+IF NOT EXIST "%DMD%" (
+	PUSHD dmd
+	CALL setup.bat
+	POPD
+)
+
 SET SOURCES=
 SET SOURCES=%SOURCES% src/utils/sparse_memory.d
 SET SOURCES=%SOURCES% src/utils/expression.d
