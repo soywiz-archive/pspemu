@@ -1,6 +1,10 @@
 @echo off
 
 CALL _sources.bat
+SET DMD=dmd\windows\bin\dfl.exe
+SET SOURCES=%SOURCES% pspemu/gui/MainForm.d
+SET SOURCES=%SOURCES% pspemu/gui/GLControl.d
+SET SOURCES=%SOURCES% pspemu/gui/DisplayForm.d
 
 del /q pspemu.exe 2> NUL
 %DMD% %SOURCES% -g pspemu/exe/pspemu.d -ofpspemu

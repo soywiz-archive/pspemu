@@ -2,11 +2,11 @@
 
 CALL _sources.bat
 
-del /q pspemu.exe 2> NUL
-%DMD% %SOURCES% %UNITTEST% -g pspemu/exe/test.d -ofpspemu
-del /q pspemu.map 2> NUL
-del /q pspemu.obj 2> NUL
-if EXIST "pspemu.exe" (
-	REM ddbg -cmd "r;us;q" pspemu.exe %*
-	pspemu.exe %*
+del /q test.exe 2> NUL
+%DMD% %SOURCES% %UNITTEST% -g pspemu/exe/test.d -oftest
+del /q test.map 2> NUL
+del /q test.obj 2> NUL
+if EXIST "test.exe" (
+	REM ddbg -cmd "r;us;q" test.exe %*
+	test.exe %*
 )
