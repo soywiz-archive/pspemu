@@ -23,7 +23,7 @@ import std.stdio, std.string, std.math;
 /**
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
-class CPU {
+class Cpu {
 	/**
 	 * Registers.
 	 */

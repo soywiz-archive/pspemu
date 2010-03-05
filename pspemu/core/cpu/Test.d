@@ -13,7 +13,7 @@ import pspemu.utils.Assertion;
 import std.c.stdlib, std.stdio, std.string, std.math;
 
 unittest {
-	auto cpu          = new CPU();
+	auto cpu          = new Cpu();
 	auto assembler    = new AllegrexAssembler(cpu.memory);
 	auto dissasembler = new AllegrexDisassembler(cpu.memory);
 

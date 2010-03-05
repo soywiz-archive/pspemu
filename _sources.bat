@@ -16,6 +16,8 @@ SET SOURCES=%SOURCES% pspemu/utils/Expression.d
 SET SOURCES=%SOURCES% pspemu/utils/Assertion.d
 SET SOURCES=%SOURCES% pspemu/utils/OpenGL.d
 
+SET SOURCES=%SOURCES% pspemu/models/IDisplay.d
+
 SET SOURCES=%SOURCES% pspemu/formats/Pbp.d
 SET SOURCES=%SOURCES% pspemu/formats/Psf.d
 SET SOURCES=%SOURCES% pspemu/formats/Elf.d

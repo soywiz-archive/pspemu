@@ -3,83 +3,64 @@ module pspemu.gui.DisplayForm;
 import dfl.all, dfl.internal.winapi;
 import core.thread;
 import std.stdio, std.c.time;
+import std.typetuple;
 
 import pspemu.gui.GLControl;
+import pspemu.models.IDisplay;
 
 class DisplayForm : Form/*, IMessageFilter*/ {
 	GLControlDisplay glc;
+	IDisplay display;
 
-	this() {
+	this(IDisplay display = null) {
+		if (display is null) display = new NullDisplay;
+		this.display = display;
+		
+		auto displaySize = display.displaySize;
+
 		//Application.addMessageFilter(this);
 		
 		startPosition = FormStartPosition.CENTER_SCREEN;
 		icon = Application.resources.getIcon(101);
-		setClientSizeCore(480, 272);
+		setClientSizeCore(displaySize.width, displaySize.height);
 		text = "Display (OpenGL)";
 		maximumSize = Size(width, height);
 		minimumSize = Size(width, height);
 		
-		with (glc = new GLControlDisplay) {
+		with (glc = new GLControlDisplay(display)) {
 			dock    = DockStyle.FILL;
 			parent  = this;
 			visible = true;
 		}
 		
-		prepareScreen();
-
-		{
-			auto glControl = new GLControl();
-			with (glControl) {
-				width   = 480;
-				height  = 272;
-				parent  = this;
-				visible = false;
-			}
-			
-			//cpu.gpu.init(glControl);
+		with (new GLControl) {
+			width   = displaySize.width;
+			height  = displaySize.height;
+			parent  = this;
+			visible = false;
 		}
-		
-		//cpu.interrupt = false; cpu.pauseAt = 0;
 	}
 	
-	override protected void onClosing(CancelEventArgs cea) {
-		glc.stop();
-	}
-
-	void prepareScreen() {
-	}
-	
-	void repaintScreen() {
-		glc.refresh();
-	}
-	
-	override void onPaint(PaintEventArgs ea) {
-		repaintScreen();
-	}
-	
-	override void onResize(EventArgs ea) {
-		repaintScreen();
-	}       
+	override void onPaint  (PaintEventArgs ea  ) { glc.refresh(); }
+	override void onResize (EventArgs ea       ) { glc.refresh(); }
+	override void onClosing(CancelEventArgs cea) { glc.stop(); }
 	
 	override void onPaintBackground(PaintEventArgs pea) { }      
 }
 
 class GLControlDisplay : GLControl {
+	IDisplay display;
 	bool update = true, updateOnce = false;
 	bool running = true;
 	bool ready = false;
-	ubyte[] data;
+	//ubyte[] data;
 	
 	void threadRun() {
 		long bcounter, counter, frequency, delay;
 		QueryPerformanceFrequency(&frequency);
 
-		delay = frequency / 60;
+		delay = frequency / display.verticalRefreshRate;
 
-		data = new ubyte[512 * 272 * 4];
-		for (int n = 0; n < data.length; n++) {
-			data[n] = cast(ubyte)n;
-		}
 		Sleep(100);
 
 		while (running) {
@@ -102,32 +83,20 @@ class GLControlDisplay : GLControl {
 						glMatrixMode(GL_PROJECTION); glLoadIdentity();
 						glPixelZoom(1, -1); glRasterPos2f(-1, 1);
 
-						{
-							glDisable(GL_ALPHA_TEST); glDisable(GL_BLEND); glDisable(GL_DEPTH_TEST);
-							glDisable(GL_DITHER); glDisable(GL_FOG); glDisable(GL_LIGHTING);
-							glDisable(GL_LOGIC_OP); glDisable(GL_STENCIL_TEST); glDisable(GL_TEXTURE_1D);
-							glDisable(GL_TEXTURE_2D); glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
-							glPixelTransferi(GL_RED_SCALE, 1); glPixelTransferi(GL_RED_BIAS, 0);
-							glPixelTransferi(GL_GREEN_SCALE, 1); glPixelTransferi(GL_GREEN_BIAS, 0);
-							glPixelTransferi(GL_BLUE_SCALE, 1); glPixelTransferi(GL_BLUE_BIAS, 0);
-							glPixelTransferi(GL_ALPHA_SCALE, 1); glPixelTransferi(GL_ALPHA_BIAS, 0);
-							/*
-							#ifdef GL_EXT_convolution glDisable(GL_CONVOLUTION_1D_EXT);
-							glDisable(GL_CONVOLUTION_2D_EXT); glDisable(GL_SEPARABLE_2D_EXT); #endif
-							#ifdef GL_EXT_histogram glDisable(GL_HISTOGRAM_EXT);
-							glDisable(GL_MINMAX_EXT); #endif
-							#ifdef GL_EXT_texture3D glDisable(GL_TEXTURE_3D_EXT); #endif
-							*/
-						}
-						//glClearColor(1, 1, 1, 1); glClear(GL_COLOR_BUFFER_BIT);
+						disableStates();
 
-						//glDrawPixels(cpu.gpu.displayBuffer.width, 272, GL_RGBA, cpu.gpu.displayBuffer.formatGl, cpu.gpu.displayBuffer.pptr);
-						glDrawPixels(512, 272, GL_RGBA, GL_UNSIGNED_BYTE, data.ptr);
+						glDrawPixels(
+							display.frameBufferSize.width,
+							display.frameBufferSize.height,
+							GL_RGBA,
+							GL_UNSIGNED_BYTE,
+							display.frameBufferPointer
+						);
 
 						swapBuffers();
 					}
 					
-					//bios.vblank = true;
+					display.vblank(true);
 					
 					while (true) {
 						QueryPerformanceCounter(&counter);
@@ -145,6 +114,17 @@ class GLControlDisplay : GLControl {
 		}
 	}
 	
+	void disableStates() {
+		glDisable(GL_ALPHA_TEST); glDisable(GL_BLEND); glDisable(GL_DEPTH_TEST);
+		glDisable(GL_DITHER); glDisable(GL_FOG); glDisable(GL_LIGHTING);
+		glDisable(GL_LOGIC_OP); glDisable(GL_STENCIL_TEST); glDisable(GL_TEXTURE_1D);
+		glDisable(GL_TEXTURE_2D); glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+		glPixelTransferi(GL_RED_SCALE, 1); glPixelTransferi(GL_RED_BIAS, 0);
+		glPixelTransferi(GL_GREEN_SCALE, 1); glPixelTransferi(GL_GREEN_BIAS, 0);
+		glPixelTransferi(GL_BLUE_SCALE, 1); glPixelTransferi(GL_BLUE_BIAS, 0);
+		glPixelTransferi(GL_ALPHA_SCALE, 1); glPixelTransferi(GL_ALPHA_BIAS, 0);
+	}
+	
 	override void onResize(EventArgs ea) {
 		glViewport(0, 0, bounds.width, bounds.height);
 	}
@@ -158,7 +138,8 @@ class GLControlDisplay : GLControl {
 		running = false;
 	}
 	
-	this() {
+	this(IDisplay display) {
+		this.display = display;
 	}
 	
 	override void onHandleCreated(EventArgs ea) {

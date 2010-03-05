@@ -139,7 +139,7 @@ import pspemu.core.cpu.Assembler;
 import pspemu.utils.Assertion;
 
 unittest {
-	auto cpu          = new CPU();
+	auto cpu          = new Cpu();
 	auto assembler    = new AllegrexAssembler(cpu.memory);
 	auto dissasembler = new AllegrexDisassembler(cpu.memory);
 
