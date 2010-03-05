@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu;
+module pspemu.core.cpu.Cpu;
 
 //debug = DEBUG_GEN_SWITCH;
 

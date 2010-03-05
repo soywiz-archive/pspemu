@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_test;
+module pspemu.core.cpu.Test;
 
 version (Unittest):
 

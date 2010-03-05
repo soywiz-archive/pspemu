@@ -1,4 +1,4 @@
-module pspemu.utils.assertion;
+module pspemu.utils.Assertion;
 
 import std.stdio, std.string;
 

@@ -1,4 +1,4 @@
-module pspemu.formats.elf;
+module pspemu.formats.Elf;
 
 import std.stdio, std.stream, std.string;
 

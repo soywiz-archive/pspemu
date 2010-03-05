@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_asm;
+module pspemu.core.cpu.Assembler;
 
 import pspemu.utils.sparse_memory;
 import pspemu.utils.expression;

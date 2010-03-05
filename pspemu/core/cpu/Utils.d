@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_utils;
+module pspemu.core.cpu.Utils;
 
 import std.stdio;
 

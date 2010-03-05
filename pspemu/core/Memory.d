@@ -1,4 +1,4 @@
-module pspemu.core.memory;
+module pspemu.core.Memory;
 
 // --------------------------
 //  Related implementations:

@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_ops_alu;
+module pspemu.core.cpu.ops.Alu;
 
 private import pspemu.core.cpu.cpu_utils;
 private import pspemu.core.cpu.registers;

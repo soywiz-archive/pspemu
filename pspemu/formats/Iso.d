@@ -1,6 +1,6 @@
-module kernel.vfs.iso;
+module pspemu.formats.iso;
 
-import kernel.vfs.base;
+import pspemu.formats.base;
 
 class ISOContainer : FileContainer {
 	// Types

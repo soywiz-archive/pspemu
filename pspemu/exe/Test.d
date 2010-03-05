@@ -1,3 +1,5 @@
+module pspemu.exe.Test;
+
 import std.stdio;
 
 static do_unittest = false;

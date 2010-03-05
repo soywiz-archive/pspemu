@@ -1,4 +1,4 @@
-module pspemu.utils.expression;
+module pspemu.utils.Expression;
 
 import std.stdio, std.string;
 

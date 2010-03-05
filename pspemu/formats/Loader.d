@@ -1,4 +1,4 @@
-module psp.loader;
+module pspemu.formats.loader;
 
 import std.stream;
 import std.stdio;

@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_ops_misc;
+module pspemu.core.cpu.ops.Misc;
 
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.instruction;

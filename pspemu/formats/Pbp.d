@@ -1,4 +1,4 @@
-module pspemu.formats.pbp;
+module pspemu.formats.Pbp;
 
 import std.stdio, std.stream, std.string, std.file;
 

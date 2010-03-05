@@ -1,6 +1,6 @@
-module pspemu.core.cpu.cpu_table;
+module pspemu.core.cpu.Table;
 
-import pspemu.core.cpu.instruction;
+import pspemu.core.cpu.Instruction;
 
 import std.stdio;
 

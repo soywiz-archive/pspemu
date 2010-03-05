@@ -1,4 +1,4 @@
-module pspemu.core.cpu.registers;
+module pspemu.core.cpu.Registers;
 
 import std.stdio, std.string;
 

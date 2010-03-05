@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_ops_branch;
+module pspemu.core.cpu.ops.Branch;
 
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.instruction;

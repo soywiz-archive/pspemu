@@ -1,4 +1,4 @@
-module kernel.vfs.base;
+module pspemu.formats.Base;
 
 public import std.stdio, std.string, std.stream, std.file, std.path, std.date, std.intrinsic;
 

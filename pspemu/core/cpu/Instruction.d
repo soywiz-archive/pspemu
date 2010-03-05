@@ -1,4 +1,4 @@
-module pspemu.core.cpu.instruction;
+module pspemu.core.cpu.Instruction;
 
 import std.stdio, std.string, std.bitmanip;
 

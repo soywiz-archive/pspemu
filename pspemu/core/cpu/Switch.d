@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_switch;
+module pspemu.core.cpu.Switch;
 
 import pspemu.core.cpu.instruction;
 import pspemu.utils.assertion;

@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_disasm;
+module pspemu.core.cpu.Disassembler;
 
 import pspemu.core.memory;
 import pspemu.core.cpu.instruction;

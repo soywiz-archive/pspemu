@@ -1,4 +1,4 @@
-module pspemu.core.cpu.cpu_ops_memory;
+module pspemu.core.cpu.ops.Memory;
 
 import pspemu.core.cpu.registers;
 import pspemu.core.cpu.instruction;
