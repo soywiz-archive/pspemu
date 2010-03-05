@@ -2,13 +2,13 @@ module pspemu.core.cpu.Test;
 
 version (Unittest):
 
-import pspemu.core.memory;
-import pspemu.core.cpu.registers;
-import pspemu.core.cpu.instruction;
-import pspemu.core.cpu.cpu;
-import pspemu.core.cpu.cpu_asm;
-import pspemu.core.cpu.cpu_disasm;
-import pspemu.utils.assertion;
+import pspemu.core.Memory;
+import pspemu.core.cpu.Registers;
+import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Assembler;
+import pspemu.core.cpu.Disassembler;
+import pspemu.utils.Assertion;
 
 import std.c.stdlib, std.stdio, std.string, std.math;
 

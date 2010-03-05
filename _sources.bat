@@ -9,30 +9,30 @@ IF NOT EXIST "%DMD%" (
 )
 
 SET SOURCES=
-SET SOURCES=%SOURCES% pspemu/utils/sparse_memory.d
-SET SOURCES=%SOURCES% pspemu/utils/expression.d
-SET SOURCES=%SOURCES% pspemu/utils/assertion.d
-SET SOURCES=%SOURCES% pspemu/formats/pbp.d
-SET SOURCES=%SOURCES% pspemu/formats/psf.d
-SET SOURCES=%SOURCES% pspemu/formats/elf.d
-SET SOURCES=%SOURCES% pspemu/core/memory.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/registers.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/instruction.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/cpu_switch.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/utils.d
+SET SOURCES=%SOURCES% pspemu/utils/SparseMemory.d
+SET SOURCES=%SOURCES% pspemu/utils/Expression.d
+SET SOURCES=%SOURCES% pspemu/utils/Assertion.d
+SET SOURCES=%SOURCES% pspemu/formats/Pbp.d
+SET SOURCES=%SOURCES% pspemu/formats/Psf.d
+SET SOURCES=%SOURCES% pspemu/formats/Elf.d
+SET SOURCES=%SOURCES% pspemu/core/Memory.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Registers.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Instruction.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Switch.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Utils.d
 
-SET SOURCES=%SOURCES% pspemu/core/cpu/ops/alu.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/ops/branch.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/ops/jump.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/ops/memory.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/ops/misc.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/ops/fpu.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Alu.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Branch.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Jump.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Memory.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Misc.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Fpu.d
 
-SET SOURCES=%SOURCES% pspemu/core/cpu/table.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/assembler.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/disassembler.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/cpu.d
-SET SOURCES=%SOURCES% pspemu/core/cpu/test.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Table.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Assembler.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Disassembler.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Cpu.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Test.d
 
 SET RELEASE=-noboundscheck -inline -O -release
 

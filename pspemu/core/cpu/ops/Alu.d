@@ -1,9 +1,9 @@
 module pspemu.core.cpu.ops.Alu;
 
-private import pspemu.core.cpu.cpu_utils;
-private import pspemu.core.cpu.registers;
-private import pspemu.core.cpu.instruction;
-private import pspemu.core.memory;
+private import pspemu.core.cpu.Utils;
+private import pspemu.core.cpu.Registers;
+private import pspemu.core.cpu.Instruction;
+private import pspemu.core.Memory;
 
 private import std.stdio;
 

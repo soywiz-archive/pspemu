@@ -1,8 +1,8 @@
 module pspemu.core.cpu.ops.Misc;
 
-import pspemu.core.cpu.registers;
-import pspemu.core.cpu.instruction;
-import pspemu.core.memory;
+import pspemu.core.cpu.Registers;
+import pspemu.core.cpu.Instruction;
+import pspemu.core.Memory;
 
 import std.stdio;
 

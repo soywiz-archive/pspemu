@@ -1,10 +1,10 @@
 module pspemu.core.cpu.Disassembler;
 
-import pspemu.core.memory;
-import pspemu.core.cpu.instruction;
-import pspemu.core.cpu.cpu_switch;
-import pspemu.core.cpu.cpu_table;
-import pspemu.core.cpu.registers;
+import pspemu.core.Memory;
+import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Switch;
+import pspemu.core.cpu.Table;
+import pspemu.core.cpu.Registers;
 
 import std.stdio, std.string;
 
@@ -134,9 +134,9 @@ class AllegrexDisassembler {
 }
 
 version (Unittest):
-import pspemu.core.cpu.cpu;
-import pspemu.core.cpu.cpu_asm;
-import pspemu.utils.assertion;
+import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Assembler;
+import pspemu.utils.Assertion;
 
 unittest {
 	auto cpu          = new CPU();

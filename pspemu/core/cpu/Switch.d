@@ -1,7 +1,7 @@
 module pspemu.core.cpu.Switch;
 
-import pspemu.core.cpu.instruction;
-import pspemu.utils.assertion;
+import pspemu.core.cpu.Instruction;
+import pspemu.utils.Assertion;
 
 import std.stdio, std.traits;
 

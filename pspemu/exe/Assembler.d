@@ -1,7 +1,7 @@
 module pspemu.exe.Assembler;
 
-import pspemu.core.cpu.cpu_asm;
-import pspemu.utils.sparse_memory;
+import pspemu.core.cpu.Assembler;
+import pspemu.utils.SparseMemory;
 
 import std.stdio;
 import std.string;

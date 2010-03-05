@@ -9,11 +9,7 @@ module pspemu.core.Memory;
 // mfzpsp:    http://mfzpsp.googlecode.com/svn/c/mfzpsp/src/core/memory.c
 // pcsp:      http://pcsp.googlecode.com/svn/trunk/pcsp-dbg/src/memory.h
 
-import std.stdio;
-import std.stream;
-import std.string;
-import std.ctype;
-import std.metastrings;
+import std.stdio, std.stream, std.string, std.ctype, std.metastrings;
 
 version = VERSION_CHECK_MEMORY;    // Check more memory positions.
 version = VERSION_CHECK_ALIGNMENT; // Check that read and writes are aligned.

@@ -1,4 +1,4 @@
-module pspemu.utils.Sparse_memory;
+module pspemu.utils.SparseMemory;
 
 import std.stdio, std.string, std.stream;
 

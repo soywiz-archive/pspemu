@@ -2,21 +2,21 @@ module pspemu.core.cpu.Cpu;
 
 //debug = DEBUG_GEN_SWITCH;
 
-import pspemu.core.cpu.registers;
-import pspemu.core.cpu.cpu_table;
-import pspemu.core.cpu.cpu_switch;
-import pspemu.core.cpu.cpu_asm;
-import pspemu.core.cpu.instruction;
-import pspemu.core.memory;
+import pspemu.core.cpu.Registers;
+import pspemu.core.cpu.Table;
+import pspemu.core.cpu.Switch;
+import pspemu.core.cpu.Assembler;
+import pspemu.core.cpu.Instruction;
+import pspemu.core.Memory;
 
 // OPS.
-import pspemu.core.cpu.cpu_utils;
-import pspemu.core.cpu.cpu_ops_alu;
-import pspemu.core.cpu.cpu_ops_branch;
-import pspemu.core.cpu.cpu_ops_jump;
-import pspemu.core.cpu.cpu_ops_memory;
-import pspemu.core.cpu.cpu_ops_misc;
-import pspemu.core.cpu.cpu_ops_fpu;
+import pspemu.core.cpu.Utils;
+import pspemu.core.cpu.ops.Alu;
+import pspemu.core.cpu.ops.Branch;
+import pspemu.core.cpu.ops.Jump;
+import pspemu.core.cpu.ops.Memory;
+import pspemu.core.cpu.ops.Misc;
+import pspemu.core.cpu.ops.Fpu;
 
 import std.stdio, std.string, std.math;
 

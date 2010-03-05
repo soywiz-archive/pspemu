@@ -1,10 +1,10 @@
 module pspemu.core.cpu.ops.Fpu;
 
-import pspemu.core.cpu.registers;
-import pspemu.core.cpu.instruction;
-import pspemu.core.cpu.cpu_utils;
-import pspemu.core.cpu.cpu_ops_branch;
-import pspemu.core.memory;
+import pspemu.core.cpu.Registers;
+import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Utils;
+import pspemu.core.cpu.ops.Branch;
+import pspemu.core.Memory;
 
 import std.stdio;
 import std.traits;

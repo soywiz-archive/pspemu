@@ -1,13 +1,13 @@
 module pspemu.core.cpu.Assembler;
 
-import pspemu.utils.sparse_memory;
-import pspemu.utils.expression;
+import pspemu.utils.SparseMemory;
+import pspemu.utils.Expression;
 
-import pspemu.core.memory;
-import pspemu.core.cpu.instruction;
-import pspemu.core.cpu.cpu_switch;
-import pspemu.core.cpu.cpu_table;
-import pspemu.core.cpu.registers;
+import pspemu.core.Memory;
+import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Switch;
+import pspemu.core.cpu.Table;
+import pspemu.core.cpu.Registers;
 
 import std.stdio, std.string, std.stream, std.regexp, std.traits, std.conv;
 
