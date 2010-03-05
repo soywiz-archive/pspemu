@@ -22,6 +22,7 @@ class DisplayForm : Form/*, IMessageFilter*/ {
 		
 		startPosition = FormStartPosition.CENTER_SCREEN;
 		icon = Application.resources.getIcon(101);
+		maximizeBox = false;
 		setClientSizeCore(displaySize.width, displaySize.height);
 		text = "Display (OpenGL)";
 		maximumSize = Size(width, height);

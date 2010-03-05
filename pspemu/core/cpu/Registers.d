@@ -19,7 +19,15 @@ final class Registers {
 	uint IC;         // Interrupt controller
 	Fcsr FCSR;       // Floating point Control / Status register
 	bool CC;         // Control Word (Floating point? C1)
-	uint[32] R;      // General Purpose Registers
+	union {
+		uint[32] R;      // General Purpose Registers
+		struct {
+			uint _ZR, AT, V0, V1, A0, A1, A2, A3;
+			uint T0, T1, T2, T3, T4, T5, T6, T7;
+			uint S0, S1, S2, S3, S4, S5, S6, S7;
+			uint T8, T9, K0, K1, GP, SP, _FP, RA;
+		}
+	}
 	union { uint[32] RF; float[32] F; double[16] D; } // Floating point registers.
 
 	static class FP {
@@ -58,6 +66,10 @@ final class Registers {
 		version (VERSION_R0_CHECK) if (index == 0) R[index] = 0;
 		return R[index];
 	}
+	
+	uint opIndexAssign(uint value, string index) {
+		return this[aliases[index]] = value;
+	}
 
 	static int getAlias(string aliasName) {
 		assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
@@ -75,7 +87,7 @@ final class Registers {
 		writefln("  IC = 0x%08X", IC);
 		foreach (k, v; R) {
 			if (reduced && (v == 0)) continue;
-			writefln("  r%-2d = 0x%08X", k, v);
+			writefln("  r%-2d = 0x%08X (%s)", k, v, aliasesInv[k]);
 		}
 		writefln("}");
 		writefln("Float registers {");

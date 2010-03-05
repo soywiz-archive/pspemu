@@ -60,6 +60,8 @@ template MemoryStreamTemplate() {
 		}
 		return streamPosition;
 	}
+
+	override bool eof() { return false; }
 }
 
 class Memory : Stream {
@@ -69,10 +71,14 @@ class Memory : Stream {
 
 	public this() {
 		// +3 for safety.
-		scratchPad  = new ubyte[0x_4000    + 3];
-		frameBuffer = new ubyte[0x_200000  + 3];
-		mainMemory  = new ubyte[0x_2000000 + 3];
+		this.scratchPad  = new ubyte[0x_4000    + 3];
+		this.frameBuffer = new ubyte[0x_200000  + 3];
+		this.mainMemory  = new ubyte[0x_2000000 + 3];
 		// reset(); // D already sets all the new ubyte arrays to 0.
+
+		this.seekable  = true;
+		this.readable  = true;
+		this.writeable = true;
 	}
 	
 	public void reset() {

@@ -28,6 +28,12 @@ class SparseMemoryStream : Stream {
 	}
 
 	Segment[uint] segments;
+	
+	this() {
+		this.seekable  = true;
+		this.readable  = true;
+		this.writeable = true;
+	}
 
 	uint streamPosition;
 
@@ -74,6 +80,7 @@ class SparseMemoryStream : Stream {
 	}
 
 	override size_t readBlock(void *data, size_t len) {
+		//.writefln("readFrom: %08X", streamPosition);
 		foreach (segmentKey; segments.keys.sort) { auto segment = segments[segmentKey];
 			if (segment.contains(streamPosition)) {
 				segment.setGlobalPosition(streamPosition);
@@ -82,6 +89,7 @@ class SparseMemoryStream : Stream {
 				return r;
 			}
 		}
+		assert(0);
 		return 0;
 	}
 
@@ -90,6 +98,7 @@ class SparseMemoryStream : Stream {
 		size_t wlen = 0;
 
 		if ((segmentsBetween.length == 0) || !(segmentsBetween[0].contains(streamPosition))) {
+			//.writefln("writeTo: %08X", streamPosition);
 			Segment segment = Segment(streamPosition); segments[segment.start] = segment;
 			assert(segment.globalPositionToLocal(streamPosition) == 0);
 
@@ -110,11 +119,13 @@ class SparseMemoryStream : Stream {
 
 		return wlen;
 	}
+
+	override bool eof() { return false; }
 	
 	override ulong seek(long offset, SeekPos whence) {
 		switch (whence) {
 			case SeekPos.Current: streamPosition += offset; break;
-			case SeekPos.Set: case SeekPos.End: streamPosition = cast(uint)offset; break;
+			case SeekPos.Set, SeekPos.End: streamPosition = cast(uint)offset; break;
 		}
 		return streamPosition;
 	}

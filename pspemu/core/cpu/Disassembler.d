@@ -63,6 +63,8 @@ class AllegrexDisassembler {
 								case 'D': line ~= getFloatRegister(instruction.FD); break;
 								case 'S': line ~= getFloatRegister(instruction.FS); break;
 								case 'T': line ~= getFloatRegister(instruction.FT); break;
+								case 'j': line ~= std.string.format("0x%08X", (instruction.JUMP << 2)); break;
+								case 'J': line ~= getRegister(instruction.RS); break;
 								case 'i': line ~= getImmediate(instruction.IMM); break;
 								case 'I': line ~= getImmediateUnsigned(instruction.IMMU); break;
 								case 'o':
@@ -124,12 +126,19 @@ class AllegrexDisassembler {
 	}
 
 	void dump(uint PC, int min = 0, int max = 0, Memory memory = null) {
-		assert((PC & 0b11) == 0);
+		assert((PC & 0b11) == 0, "Address not aligned");
 		writefln("Disassembler dump (0x%08X, %d, %d) {", PC, min, max);
 		for (uint pos = PC + min * 4; pos <= PC + max * 4; pos += 4) {
 			writefln("%s%08X: %s", ((pos == PC) ? "->" : "  "), pos, dissasmSimple(pos, memory));
 		}
 		writefln("}");
+	}
+
+	void dumpSimple(uint PC, int min = 0, int max = 0, Memory memory = null) {
+		assert((PC & 0b11) == 0, "Address not aligned");
+		for (uint pos = PC + min * 4; pos <= PC + max * 4; pos += 4) {
+			writefln("%s%08X: %s", ((pos == PC) ? "->" : "  "), pos, dissasmSimple(pos, memory));
+		}
 	}
 }
 

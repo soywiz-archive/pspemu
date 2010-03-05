@@ -1,8 +1,12 @@
 module pspemu.formats.Elf;
 
-import std.stdio, std.stream, std.string;
+import pspemu.utils.Utils;
 
-class ELF {
+import std.stdio, std.stream, std.string, std.math;
+
+debug = MODULE_LOADER;
+
+class Elf {
 	static struct Header {
 		enum Type : ushort {
 			Executable = 0x0002,
@@ -20,38 +24,28 @@ class ELF {
 		Type     type;                           // Module type
 		Machine  machine = Machine.ALLEGREX;     //
 		uint     _version;                       //
-		uint     entry;                          // Module EntryPoint
+		uint     entryPoint;                     // Module EntryPoint (PC)
 		uint     programHeaderOffset;            // Program Header Offset
 		uint     sectionHeaderOffset;            // Section Header Offset
 		uint     flags;                          // Flags
 		ushort   ehsize;                         //
 
 		// Program Header.
-		ushort   phentsize;                      //
-		ushort   phnum;                          //
+		ushort   programHeaderEntrySize;         //
+		ushort   programHeaderCount;             //
 
 		// Section Header.
-		ushort   shentsize;                      //
-		ushort   shnum;                          // Section Header Num
-		ushort   shstrndx;                       // 
+		ushort   sectionHeaderEntrySize;         //
+		ushort   sectionHeaderCount;             // Section Header Num
+		ushort   sectionHeaderStringTable;       // 
 
-		static assert(Header.sizeof == 52);
+		// Check the size of the struct.
+		static assert(this.sizeof == 52);
 	}
 	
 	static struct SectionHeader { // ELF Section Header
 		static enum Type : uint {
-			NULL     = 0,
-			PROGBITS = 1,
-			SYMTAB   = 2,
-			STRTAB   = 3,
-			RELA     = 4,
-			HASH     = 5,
-			DYNAMIC  = 6,
-			NOTE     = 7,
-			NOBITS   = 8,
-			REL      = 9,
-			SHLIB    = 10,
-			DYNSYM   = 11,
+			NULL, PROGBITS, SYMTAB, STRTAB, RELA, HASH, DYNAMIC, NOTE, NOBITS, REL, SHLIB, DYNSYM,
 
 			LOPROC = 0x70000000, HIPROC = 0x7FFFFFFF,
 			LOUSER = 0x80000000, HIUSER = 0xFFFFFFFF,
@@ -59,25 +53,21 @@ class ELF {
 			PRXRELOC = (LOPROC | 0xA0),
 		}
 
-		static enum Flags : uint {
-			None     = 0,
-			Write    = 1,
-			Allocate = 2,
-			Execute  = 4,
-		}
+		static enum Flags : uint { None = 0, Write = 1, Allocate = 2, Execute = 4 }
 
-		uint  _name;
-		Type  _type;
-		Flags _flags;
-		uint  _addr;
-		uint  _offset;
-		uint  _size;
-		uint  _link;
-		uint  _info;
-		uint  _addralign;
-		uint  _entsize;
+		uint  name;       /// Position relative to .shstrtab of a stringz with the name.
+		Type  type;       /// Type of this section header.
+		Flags flags;      /// Flags associated to this section header.
+		uint  address;    /// Memory address where it should be stored.
+		uint  offset;     /// File position where is the data related to this section header.
+		uint  size;       /// Size of the section header.
+		uint  link;       ///
+		uint  info;       ///
+		uint  addralign;  ///
+		uint  entsize;    ///
 
-		static assert(SectionHeader.sizeof == 10 * 4);
+		// Check the size of the struct.
+		static assert(this.sizeof == 10 * 4);
 	}
 
 	enum ModuleNids : uint {
@@ -89,60 +79,21 @@ class ELF {
 		MODULE_STOP                   = 0xCEE8593C,
 		MODULE_STOP_THREAD_PARAMETER  = 0xCF0CC697,
 	}
-
-	enum PspModuleFlags : ushort {
-		User = 0x0000,
-		Kernel = 0x1000,
-	}
-
-	enum PspLibFlags : ushort {
-		DirectJump = 0x0001,
-		Syscall    = 0x4000,
-		SysLib     = 0x8000,
-	}
-
-	static struct PspModuleExport {
-		uint   name;
-		ushort _version;
-		ushort flags;
-		byte   entry_size;
-		byte   var_count;
-		ushort func_count;
-		uint   exports;
-
-		static assert(PspModuleExport.sizeof == 4 + 2 + 2 + 1 + 1 + 2 + 4);
-	}
-
-	static struct PspModuleImport {
-		uint   name;
-		ushort _version;
-		ushort flags;
-		byte   entry_size;
-		byte   var_count;
-		ushort func_count;
-		uint   nids;
-		uint   funcs;
-	}
-	
-	static struct PspModuleInfo {
-		uint flags;
-
-		char[28] name;
-
-		uint gp;
-		uint exports;
-		uint exp_end;
-		uint imports;
-		uint imp_end;
-	}
 	
 	static struct Reloc {
 		enum Type : byte { None = 0, Mips16, Mips32, MipsRel32, Mips26, MipsHi16, MipsLo16, MipsGpRel16, MipsLiteral, MipsGot16, MipsPc16, MipsCall16, MipsGpRel32 }
 		uint _offset;
-		uint _info;
+		union {
+			uint _info;
+			struct {
+				Type type;
+				ubyte[3] _dummy;
+				uint symbolIndex() { return _info >> 8; }
+			}
+		}
 
-		// Check size.
-		static assert(Reloc.sizeof == 8);
+		// Check the size of the struct.
+		static assert(this.sizeof == 8);
 	}
 
 	static struct Symbol {
@@ -191,26 +142,110 @@ class ELF {
 
 	Stream stream;
 	Header header;
+	SectionHeader[] sectionHeaders;
+	string[] sectionHeaderNames;
+	SectionHeader[string] sectionHeadersNamed;
 
-	bool needsRelocation() { return (header.entry < 0x08000000) || (header.type == Header.Type.Prx); }
-	
+	bool needsRelocation() { return (header.entryPoint < 0x08000000) || (header.type == Header.Type.Prx); }
+	Stream SectionStream(SectionHeader sectionHeader) { return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size); }
+	Stream SectionStream(string name) { return SectionStream(sectionHeadersNamed[name]); }
+
 	this(Stream _stream) {
 		stream = new SliceStream(_stream, 0);
 
 		// Reader header.
 		stream.readExact(&header, header.sizeof);
 
-		// Comprueba que sea un ELF y que sea de PSP
+		// Checks that it's an ELF file and that it's a PSP ELF file.
 		assert(header.magic   == Header.init.magic  );
 		assert(header.machine == Header.init.machine);
+
+		// Section Headers
+		extractSectionHeaders();
+		extractSectionHeaderNames();
+	}
+
+	void extractSectionHeaderNames() {
+		auto stringTableStream = SectionStream(sectionHeaderStringTable);
+		sectionHeaderNames = [];
+		while (!stringTableStream.eof) {
+			auto name = readStringz(stringTableStream);
+			sectionHeadersNamed[name] = sectionHeaders[sectionHeaderNames.length];
+			sectionHeaderNames ~= name;
+		}
+	}
+
+	ref SectionHeader sectionHeaderStringTable() {
+		foreach (ref sectionHeader; sectionHeaders) {
+			//writefln("%08X", sectionHeader.offset);
+			auto stream = SectionStream(sectionHeader);
+			auto text = stream.readString(min(11, cast(int)stream.size));
+			if (text == "\0.shstrtab\0") {
+				return sectionHeader;
+			}
+		}
+		assert(0, "Can't find SectionHeaderStringTable.");
+	}
+
+	void extractSectionHeaders() {
+		sectionHeaders = []; assert(SectionHeader.sizeof >= header.sectionHeaderEntrySize);
+		foreach (index; 0 .. header.sectionHeaderCount) {
+			SectionHeader sectionHeader = read!(SectionHeader)(
+				stream,
+				header.sectionHeaderOffset + (index * header.sectionHeaderEntrySize)
+			);
+			sectionHeaders ~= sectionHeader;
+		}
+	}
+
+	void reserveMemory(uint address, uint size) {
+		//writefln("reserveMemory(%08X, %d)", address, size);
+	}
+
+	void performRelocation() {
+		// TODO.
+		assert(0, "Not implemented relocation yet.");
+	}
+
+	void writeToMemory(Stream stream, uint baseAddress = 0) {
+		if (needsRelocation) baseAddress += 0x08900000;
+		foreach (sectionHeader; sectionHeaders) {			
+			stream.position = baseAddress + sectionHeader.address;
+			
+			// Section to allocate
+			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
+				bool reserved = true;
+				
+				switch (sectionHeader.type) {
+					default: reserved = false; break;
+					case SectionHeader.Type.PROGBITS: stream.copyFrom(SectionStream(sectionHeader)); break;
+					case SectionHeader.Type.NOBITS  : writeZero(stream, sectionHeader.size); break;
+				}
+				
+				if (reserved) reserveMemory(sectionHeader.address, sectionHeader.size);
+				
+				//debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", stype, sh.addr, sh.size, extractStringz(shstrtab_s, sh.name));
+			}
+			// Section not to allocate
+			else {
+				//debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", stype, sh.offset, sh.size, extractStringz(shstrtab_s, sh.name));
+			}
+		}
+		if (needsRelocation) performRelocation();
 	}
 }
 
+version (unittest) {
+	import pspemu.utils.SparseMemory;
+}
+
 unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-
 	const testPath = "demos";
-	scope elf = new ELF(new BufferedFile(testPath ~ "/controller.elf", FileMode.In));
+	scope memory = new SparseMemoryStream;
+	scope elf = new Elf(new BufferedFile(testPath ~ "/controller.elf", FileMode.In));
+	elf.writeToMemory(memory);
+	//memory.smartDump();
 
+	//assert(0);
 	//static void main() { }
 }
