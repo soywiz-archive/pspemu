@@ -69,6 +69,9 @@ class Memory : Stream {
 	ubyte[] frameBuffer; static const int frameBufferAddress = 0x04_000000, frameBufferMask = 0x001FFFFF;
 	ubyte[] mainMemory ; static const int mainMemoryAddress  = 0x08_000000, mainMemoryMask  = 0x01FFFFFF;
 
+	// Temporal HACK.
+	uint displayMemory = frameBufferAddress;
+
 	public this() {
 		// +3 for safety.
 		this.scratchPad  = new ubyte[0x_4000    + 3];

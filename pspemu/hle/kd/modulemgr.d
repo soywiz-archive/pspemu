@@ -2,10 +2,13 @@ module pspemu.hle.kd.modulemgr; // kd/modulemgr.prx (sceModuleManager)
 
 import pspemu.hle.Module;
 
-class ModuleMgrForKernel : Module {
+class ModuleMgrForUser : Module {
+	this() {
+		mixin(register(0xD675EBB8, "sceKernelSelfStopUnloadModule"));
+	}
 }
 
-class ModuleMgrForUser : ModuleMgrForKernel {
+class ModuleMgrForKernel : ModuleMgrForUser {
 }
 
 static this() {

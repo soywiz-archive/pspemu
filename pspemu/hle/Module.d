@@ -1,28 +1,41 @@
 module pspemu.hle.Module;
 
-import std.stdio;
-
-import pspemu.utils.Utils;
-
-import pspemu.core.cpu.Cpu;
+public import std.stdio, std.string, std.stream;
+public import pspemu.utils.Utils;
+public import pspemu.core.cpu.Cpu;
 
 abstract class Module {
-	alias void delegate() Function;
-	struct FunctionName { uint nid; string name; Function func; string toString() { return std.string.format("0x%08X:'%s'", nid, name); } }
+	static struct Function {
+		Module pspModule;
+		uint nid;
+		string name;
+		void delegate() func;
+		string toString() {
+			return std.string.format("0x%08X:'%s.%s'", nid, pspModule.baseName, name);
+		}
+	}
 	alias uint Nid;
 	Cpu cpu;
-	FunctionName[Nid] nids;
+	Function[Nid] nids;
+	Function[string] names;
 	abstract void init();
 	static ClassInfo[] knownModules;
 	static Module[string] knownModulesByName;
 
+	uint param(int n) { return cpu.registers[4 + n]; }
+	void* param_p(int n) { return cpu.memory.getPointer(cpu.registers[4 + n]); }
+	char* paramszp(int n) { return cast(char *)param_p(n); }
+	char[] paramsz(int n) { auto ptr = paramszp(n); return ptr[0..std.c.string.strlen(ptr)]; }
+
 	static string register(uint id, string name) {
-		return "nids[" ~ tos(id) ~ "] = FunctionName(" ~ tos(id) ~ ", \"" ~ name ~ "\", &this." ~ name ~ ");";
+		return "names[\"" ~ name ~ "\"] = nids[" ~ tos(id) ~ "] = Function(this, " ~ tos(id) ~ ", \"" ~ name ~ "\", &this." ~ name ~ ");";
 	}
 	static string registerModule(string moduleName) {
 		return "Module.knownModules ~= " ~ moduleName ~ ".classinfo;";
 	}
-
+	string baseName() {
+		return classInfoBaseName(typeid(this));
+	}
 	static string classInfoBaseName(ClassInfo ci) {
 		auto index = std.string.lastIndexOf(ci.name, ".");
 		if (index == -1) index = 0; else index++;
@@ -55,8 +68,8 @@ abstract class Module {
 		return loadModule(moduleName);
 	}
 
-	void opDispatch(string s)()
-	{
-		writefln("Module.opDispatch('%s')", s);
+	void opDispatch(string s)() {
+		writefln("Module.opDispatch('%s.%s')", this.baseName, s);
+		assert(0, std.string.format("Not implemented %s.%s", this.baseName, s));
 	}
 }

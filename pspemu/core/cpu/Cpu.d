@@ -74,6 +74,7 @@ class Cpu {
 	 */
 	void execute(uint count) {
 		// Shortcuts for registers and memory.
+		auto cpu       = this;
 		auto registers = this.registers;
 		auto memory    = this.memory;
 

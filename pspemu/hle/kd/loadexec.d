@@ -1,5 +1,7 @@
 module pspemu.hle.kd.loadexec; // kd/loadexec.prx (sceLoadExec)
 
+debug = DEBUG_SYSCALL;
+
 import pspemu.hle.Module;
 
 class LoadExecForUser : Module {
@@ -8,6 +10,15 @@ class LoadExecForUser : Module {
 		mixin(register(0x2AC9954B, "sceKernelExitGameWithStatus"));
 		mixin(register(0x05572A5F, "sceKernelExitGame"));
 		mixin(register(0x4AC57943, "sceKernelRegisterExitCallback"));
+	}
+
+	void sceKernelExitGame() {
+		cpu.registers.V0 = 0;
+		debug (DEBUG_SYSCALL) .writefln("_sceKernelExitGame");
+	}
+
+	void sceKernelRegisterExitCallback() {
+		debug (DEBUG_SYSCALL) .writefln("sceKernelRegisterExitCallback(cbid=0x%08X)", param(0));
 	}
 }
 

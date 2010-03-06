@@ -1,6 +1,6 @@
 module pspemu.exe.Pspemu;
 
-version = TRACE_FROM_BEGINING;
+//version = TRACE_FROM_BEGINING;
 
 import std.stream, std.stdio, core.thread;
 
@@ -10,6 +10,8 @@ import pspemu.gui.MainForm;
 import pspemu.gui.DisplayForm;
 
 import pspemu.models.IDisplay;
+
+import pspemu.formats.Pbp;
 
 import pspemu.core.Memory;
 import pspemu.core.cpu.Registers;
@@ -27,7 +29,8 @@ class PspDisplay : BasePspDisplay {
 	}
 
 	void* frameBufferPointer() {
-		return memory.getPointer(Memory.frameBufferAddress);
+		//return memory.getPointer(Memory.frameBufferAddress);
+		return memory.getPointer(memory.displayMemory);
 	}
 
 	void vblank(bool status) {
@@ -43,10 +46,14 @@ int main() {
 	
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 	
+	/*
 	string elfFile = "demos/controller.elf";
 	//string elfFile = "demos/minifire.elf";
+	stream elf = new BufferedFile(elfFile, FileMode.In);
+	*/
+	string pbpFile = "demos/counter.pbp";
 	
-	auto loader  = new Loader(new BufferedFile(elfFile, FileMode.In), memory);
+	auto loader  = new Loader((new Pbp(new BufferedFile(pbpFile, FileMode.In)))["psp.data"], memory);
 	writefln("PC: %08X", loader.PC);
 	writefln("GP: %08X", loader.GP);
 	
@@ -67,14 +74,14 @@ int main() {
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
 
-	if (0) {
+	/*if (0) {
 		cpu.checkBreakpoints = true;
 		cpu.addBreakpoint(cpu.BreakPoint(0x0890013C, ["t0", "t1", "t2", "v0"]));
 		cpu.addBreakpoint(cpu.BreakPoint(0x08900140, ["t0", "t1", "t2", "v0"]));
 		cpu.addBreakpoint(cpu.BreakPoint(0x08900144, ["t0"], true));
 	} else {
 		//cpu.addBreakpoint(cpu.BreakPoint(0x08900284, ["v1"]));
-	}
+	}*/
 
 	void runCPU() {
 		(new Thread({
@@ -86,13 +93,10 @@ int main() {
 			} catch (Object o) {
 				writefln("CPU Error: %s", o.toString());
 				cpu.registers.dump();
-				//dissasembler.dump(cpu.registers.PC, -1, 10);
 				dissasembler.dump(cpu.registers.PC, -6, 6);
-				//dissasembler.dump(0x08900258, -6, 6);
-				//msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
+				writefln("CPU Error: %s", o.toString());
 			} finally {
 				.writefln("End CPU executing.");
-				//writefln("%08X", memory.read32(0x08906B98));
 			}
 		})).start();
 	}

@@ -9,6 +9,10 @@ import pspemu.formats.Pbp;
 
 import pspemu.hle.Module;
 
+import pspemu.core.Memory;
+import pspemu.core.cpu.Assembler;
+import pspemu.core.cpu.Instruction;
+
 import std.xml;
 
 version (unittest) {
@@ -68,7 +72,7 @@ class Loader {
 	}
 
 	Elf elf;
-	Stream memory;
+	Memory memory;
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
 	ModuleExport[] moduleExports;
@@ -76,7 +80,7 @@ class Loader {
 	uint PC() { return elf.header.entryPoint; }
 	uint GP() { return moduleInfo.gp; }
 
-	this(Stream stream, Stream memory) {
+	this(Stream stream, Memory memory) {
 		this.elf    = new Elf(stream);
 		this.memory = memory;
 		load();
@@ -92,22 +96,31 @@ class Loader {
 
 		// Load Imports.
 		writefln("Imports:");
+		auto assembler = new AllegrexAssembler(memory);
 		while (!importsStream.eof) {
 			auto moduleImport = read!(ModuleImport)(importsStream);
 			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
 			//assert(moduleImport.entry_size == moduleImport.sizeof);
 			writefln("  '%s'", moduleImportName);
 			moduleImports ~= moduleImport;
-			auto nidStream = new SliceStream(memory, moduleImport.nidAddress, moduleImport.nidAddress + moduleImport.func_count * 4);
+			auto nidStream  = new SliceStream(memory, moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
+			auto callStream = new SliceStream(memory, moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
+			//writefln("%08X", moduleImport.callAddress);
 			auto pspModule = Module.loadModule(moduleImportName);
 			while (!nidStream.eof) {
 				uint nid = read!(uint)(nidStream);
 				
 				if (nid in pspModule.nids) {
 					writefln("    %s", pspModule.nids[nid]);
+					callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
+					callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
 				} else {
 					writefln("    0x%08X", nid);
+					callStream.write(cast(uint)(0x70000000));
+					callStream.write(cast(uint)0);
 				}
+				//writefln("++");
+				//writefln("--");
 			}
 		}
 		// Load Exports.

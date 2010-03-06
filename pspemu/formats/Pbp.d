@@ -2,7 +2,7 @@ module pspemu.formats.Pbp;
 
 import std.stdio, std.stream, std.string, std.file;
 
-class PBP {
+class Pbp {
 	static auto files = ["param.sfo", "icon0.png", "icon1.pmf", "pic0.png", "pic1.png", "snd0.at3", "psp.data", "psar.data"];
 
 	static protected struct Header {
@@ -73,7 +73,7 @@ unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
 	const testPath = "demos";
-	auto pbp = new PBP(new BufferedFile(testPath ~ "/controller.pbp", FileMode.In));
+	auto pbp = new Pbp(new BufferedFile(testPath ~ "/controller.pbp", FileMode.In));
 
 	auto list = [
 		"param.sfo" : true, // has

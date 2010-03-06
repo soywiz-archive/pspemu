@@ -67,6 +67,7 @@ class AllegrexDisassembler {
 								case 'J': line ~= getRegister(instruction.RS); break;
 								case 'i': line ~= getImmediate(instruction.IMM); break;
 								case 'I': line ~= getImmediateUnsigned(instruction.IMMU); break;
+								case 'C': line ~= std.string.format("0x%05X", instruction.CODE); break;
 								case 'o':
 									line ~= getImmediate(instruction.IMM);
 									line ~= "(";
