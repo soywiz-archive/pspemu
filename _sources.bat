@@ -56,6 +56,7 @@ SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Jump.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Memory.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Misc.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Fpu.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Unimplemented.d
 
 SET SOURCES=%SOURCES% pspemu/core/gpu/Gpu.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/Commands.d

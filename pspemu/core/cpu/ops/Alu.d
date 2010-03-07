@@ -21,6 +21,12 @@ template TemplateCpu_ALU() {
 	auto OP_SUB () { mixin(CE("$rd = #rs - #rt;")); }
 	auto OP_SUBU() { mixin(CE("$rd = $rs - $rt;")); }
 
+	// TODO: Check std.intrinsic
+	// Count Leading Ones in Word
+	auto OP_CLO() { mixin(CE("$rd = CLO($rs);")); }
+	// Count Leading Zeros in Word
+	auto OP_CLZ() { mixin(CE("$rd = CLZ($rs);")); }
+
 	// ADDI(U) -- Add immediate (Unsigned)
 	// Adds a register and a signed immediate value and stores the result in a register
 	// $t = $s + imm; advance_pc (4);
@@ -192,6 +198,14 @@ template TemplateCpu_ALU_Utils() {
 			vd.b[2] = vs.b[1];
 			vd.b[3] = vs.b[0];
 			return vd.i;
+		}
+		uint CLO(uint v) { // Count Leading Ones in Word
+			for (int n = 0; n < 32; n++, v <<= 1) if (!(v & 0x80000000)) return n;
+			return 32;
+		}
+		uint CLZ(uint v) { // Count Leading Zeros in Word
+			for (int n = 0; n < 32; n++, v <<= 1) if ((v & 0x80000000)) return n;
+			return 32;
 		}
 	}
 }

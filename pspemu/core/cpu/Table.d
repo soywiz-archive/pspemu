@@ -74,21 +74,17 @@ const PspInstructions = [
 	array("bnel"     , 0x54000000, 0xFC000000, "%s, %t, %O"),
 	array("break"    , 0x0000000D, 0xFC00003F, "%c"),
 	array("cache"    , 0xBC000000, 0xFC000000, "%k, %o"),
-	/*
-	array("cfc0"     , 0x40400000, 0xFFE007FF),
-	array("clo"      , 0x00000017, 0xFC1F07FF),
-	array("clz"      , 0x00000016, 0xFC1F07FF),
-	array("ctc0"     , 0x40C00000, 0xFFE007FF),
-	*/
+	array("cfc0"     , 0x40400000, 0xFFE007FF, "%t, %p"),
+	array("clo"      , 0x00000017, 0xFC1F07FF, "%d, %s"),
+	array("clz"      , 0x00000016, 0xFC1F07FF, "%d, %s"),
+	array("ctc0"     , 0x40C00000, 0xFFE007FF, "%t, %p"),
 	array("max"      , 0x0000002C, 0xFC0007FF, "%d, %s, %t"),
 	array("min"      , 0x0000002D, 0xFC0007FF, "%d, %s, %t"),
 	array("div"      , 0x0000001A, 0xFC00FFFF, "%s, %t"),
 	array("divu"     , 0x0000001B, 0xFC00FFFF, "%s, %t"),
 	array("dbreak"   , 0x7000003F, 0xFFFFFFFF, ""),
-	/*
-	array("dret"     , 0x7000003E, 0xFFFFFFFF),
-	array("eret"     , 0x42000018, 0xFFFFFFFF),
-	*/
+	array("dret"     , 0x7000003E, 0xFFFFFFFF, ""),
+	array("eret"     , 0x42000018, 0xFFFFFFFF, ""),
 	array("ext"      , 0x7C000000, 0xFC00003F, "%t, %s, %a, %ne"),
 	array("ins"      , 0x7C000004, 0xFC00003F, "%t, %s, %a, %ni"),
 	array("j"        , 0x08000000, 0xFC000000, "%j"),
@@ -99,19 +95,15 @@ const PspInstructions = [
 	array("lbu"      , 0x90000000, 0xFC000000, "%t, %o"),
 	array("lh"       , 0x84000000, 0xFC000000, "%t, %o"),
 	array("lhu"      , 0x94000000, 0xFC000000, "%t, %o"),
-	/*
-	array("ll"       , 0xC0000000, 0xFC000000),
-	*/
+	array("ll"       , 0xC0000000, 0xFC000000, "%t, %O"),
 	array("lui"      , 0x3C000000, 0xFFE00000, "%t, %I"),
 	array("lw"       , 0x8C000000, 0xFC000000, "%t, %o"),
 	array("lwl"      , 0x88000000, 0xFC000000, "%t, %o"),
 	array("lwr"      , 0x98000000, 0xFC000000, "%t, %o"),
 	array("madd"     , 0x0000001C, 0xFC00FFFF, "%s, %t"),
 	array("maddu"    , 0x0000001D, 0xFC00FFFF, "%s, %t"),
-	/*
-	array("mfc0"     , 0x40000000, 0xFFE007FF),
-	array("mfdr"     , 0x7000003D, 0xFFE007FF),
-	*/
+	array("mfc0"     , 0x40000000, 0xFFE007FF, "%t, %0"),
+	array("mfdr"     , 0x7000003D, 0xFFE007FF, "%t, %r"),
 	array("mfhi"     , 0x00000010, 0xFFFF07FF, "%d"),
 	array("mfic"     , 0x70000024, 0xFFE007FF, "%t, %p"),
 	array("mflo"     , 0x00000012, 0xFFFF07FF, "%d"),
@@ -119,10 +111,8 @@ const PspInstructions = [
 	array("movz"     , 0x0000000A, 0xFC0007FF, "%d, %s, %t"),
 	array("msub"     , 0x0000002E, 0xFC00FFFF, "%s, %t"),
 	array("msubu"    , 0x0000002F, 0xFC00FFFF, "%s, %t"),
-	/*
-	array("mtc0"     , 0x40800000, 0xFFE007FF),
-	array("mtdr"     , 0x7080003D, 0xFFE007FF),
-	*/
+	array("mtc0"     , 0x40800000, 0xFFE007FF, "%t, %0"),
+	array("mtdr"     , 0x7080003D, 0xFFE007FF, "%t, %r"),
 	array("mtic"     , 0x70000026, 0xFFE007FF, "%t, %p"),
 	array("halt"     , 0x70000000, 0xFFFFFFFF, ""),
 	array("mthi"     , 0x00000011, 0xFC1FFFFF, "%s"),
@@ -160,10 +150,9 @@ const PspInstructions = [
 	array("wsbh"     , 0x7C0000A0, 0xFFE007FF, "%d, %t"),
 	array("wsbw"     , 0x7C0000E0, 0xFFE007FF, "%d, %t"),
 
+	// FPU instructions
 	array("abs.s"    , 0x46000005, 0xFFFF003F, "%D, %S"),
 	array("add.s"    , 0x46000000, 0xFFE0003F, "%D, %S, %T"),
-
-	// FPU instructions
 	array("bc1f"     , 0x45000000, 0xFFFF0000, "%O"),
 	array("bc1fl"    , 0x45020000, 0xFFFF0000, "%O"),
 	array("bc1t"     , 0x45010000, 0xFFFF0000, "%O"),
@@ -172,24 +161,18 @@ const PspInstructions = [
 	array("c.un.s"   , 0x46000031, 0xFFE007FF, "%S, %T"),
 	array("c.eq.s"   , 0x46000032, 0xFFE007FF, "%S, %T"),
 	array("c.ueq.s"  , 0x46000033, 0xFFE007FF, "%S, %T"),
-	/*
-	array("c.olt.s"  , 0x46000034, 0xFFE007FF),
-	array("c.ult.s"  , 0x46000035, 0xFFE007FF),
-	array("c.ole.s"  , 0x46000036, 0xFFE007FF),
-	array("c.ule.s"  , 0x46000037, 0xFFE007FF),
-	array("c.sf.s"   , 0x46000038, 0xFFE007FF),
-	array("c.ngle.s" , 0x46000039, 0xFFE007FF),
-	array("c.seq.s"  , 0x4600003A, 0xFFE007FF),
-	array("c.ngl.s"  , 0x4600003B, 0xFFE007FF),
-	*/
+	array("c.olt.s"  , 0x46000034, 0xFFE007FF, "%S, %T"),
+	array("c.ult.s"  , 0x46000035, 0xFFE007FF, "%S, %T"),
+	array("c.ole.s"  , 0x46000036, 0xFFE007FF, "%S, %T"),
+	array("c.ule.s"  , 0x46000037, 0xFFE007FF, "%S, %T"),
+	array("c.sf.s"   , 0x46000038, 0xFFE007FF, "%S, %T"),
+	array("c.ngle.s" , 0x46000039, 0xFFE007FF, "%S, %T"),
+	array("c.seq.s"  , 0x4600003A, 0xFFE007FF, "%S, %T"),
+	array("c.ngl.s"  , 0x4600003B, 0xFFE007FF, "%S, %T"),
 	array("c.lt.s"   , 0x4600003C, 0xFFE007FF, "%S, %T"),
-	/*
-	array("c.nge.s"  , 0x4600003D, 0xFFE007FF),
-	*/
+	array("c.nge.s"  , 0x4600003D, 0xFFE007FF, "%S, %T"),
 	array("c.le.s"   , 0x4600003E, 0xFFE007FF, "%S, %T"),
-	/*
-	array("c.ngt.s"  , 0x4600003F, 0xFFE007FF),
-	*/
+	array("c.ngt.s"  , 0x4600003F, 0xFFE007FF, "%S, %T"),
 	array("ceil.w.s" , 0x4600000E, 0xFFFF003F, "%D, %S"),
 	array("cfc1"     , 0x44400000, 0xFFE007FF, "%t, %p"),
 	array("ctc1"     , 0x44C00000, 0xFFE007FF, "%t, %p"),
