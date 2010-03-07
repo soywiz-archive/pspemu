@@ -58,6 +58,9 @@ SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Misc.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Fpu.d
 
 SET SOURCES=%SOURCES% pspemu/core/gpu/Gpu.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/Commands.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Special.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Flow.d
 
 REM SET RELEASE=-noboundscheck -inline -O -release
 SET RELEASE=-noboundscheck -O -release

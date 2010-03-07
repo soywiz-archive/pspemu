@@ -40,10 +40,11 @@ class PspDisplay : BasePspDisplay {
 
 int main() {
 	auto memory  = new Memory;
-	auto cpu     = new Cpu(memory);
 	auto gpu     = new Gpu(memory);
+	auto cpu     = new Cpu(memory, gpu);
 	auto display = new PspDisplay(memory);
-	
+	auto dissasembler = new AllegrexDisassembler(memory);
+
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 
 	string executableFile;
@@ -54,9 +55,9 @@ int main() {
 	*/
 	//executableFile = "demos/minifire.elf";
 	//executableFile = "demos/controller.pbp";
-	executableFile = "demos/counter.pbp";
+	//executableFile = "demos/counter.pbp";
 	//executableFile = "demos/mytest.pbp";
-	//executableFile = "demos/text.pbp";
+	executableFile = "demos/text.pbp";
 	
 	auto loader  = new Loader(executableFile, memory);
 	writefln("PC: %08X", loader.PC);
@@ -73,6 +74,9 @@ int main() {
 	cpu.registers["a0"] = 0; // argumentsLength.
 	cpu.registers["a1"] = loader.PC; // argumentsPointer
 	cpu.registers["a2"] = 0; // argumentsPointer
+
+	//0x089007C4
+	//dissasembler.dump(0x08906590, -6, 6);
 
 	version (TRACE_FROM_BEGINING) {
 		cpu.checkBreakpoints = true;
@@ -93,8 +97,11 @@ int main() {
 		//cpu.addBreakpoint(cpu.BreakPoint(0x08900284, ["v1"]));
 	}*/
 
+	// Start GPU.
+	gpu.start();
+
+	// Start CPU.
 	(new Thread({
-		auto dissasembler = new AllegrexDisassembler(memory);
 		Thread.sleep(2000_0000);
 		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
 		try {
@@ -108,7 +115,7 @@ int main() {
 			.writefln("End CPU executing.");
 		}
 	})).start();
-	
+
 	int retval = 0;
 	try {
 		Application.run(new DisplayForm(display));
@@ -117,7 +124,8 @@ int main() {
 		retval = -1;
 	}
 	
-	cpu.stop = true;
+	cpu.stop();
+	gpu.stop();
 
 	Application.exit();
 	return retval;

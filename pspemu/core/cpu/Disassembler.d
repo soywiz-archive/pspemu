@@ -61,6 +61,7 @@ class AllegrexDisassembler {
 								case 's': line ~= getRegister(instruction.RS); break;
 								case 't': line ~= getRegister(instruction.RT); break;
 								case 'D': line ~= getFloatRegister(instruction.FD); break;
+								case '1':
 								case 'S': line ~= getFloatRegister(instruction.FS); break;
 								case 'T': line ~= getFloatRegister(instruction.FT); break;
 								case 'j': line ~= std.string.format("0x%08X", (instruction.JUMP << 2)); break;
@@ -102,7 +103,7 @@ class AllegrexDisassembler {
 				}
 				while ((line.length) && (!line[$ - 1].length || (line[$ - 1] == " "))) line = line[0..$ - 1];
 			} else {
-				line = ["<unknown instruction>"];
+				line = [std.string.format("<unknown instruction 0x%08X>", instruction.v)];
 			}
 		}
 		static string callDetectedInstruction(string opname) { return "detectedInstruction(\"" ~ (opname) ~ "\");"; }

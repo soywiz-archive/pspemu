@@ -2,6 +2,14 @@ module pspemu.utils.Utils;
 
 import std.stream, std.stdio;
 
+// Reinterpret.
+// float -> int
+int   F_I(float v) { return *cast(int   *)&v; }
+// int -> float
+float I_F(int   v) { return *cast(float *)&v; }
+
+T1 reinterpret(T1, T2)(T2 v) { return *cast(T1 *)&v; }
+
 ubyte[] TA(T)(ref T v) {
 	return cast(ubyte[])((&v)[0..1]);
 }

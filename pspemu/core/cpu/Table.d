@@ -193,27 +193,21 @@ const PspInstructions = [
 	array("ceil.w.s" , 0x4600000E, 0xFFFF003F, "%D, %S"),
 	array("cfc1"     , 0x44400000, 0xFFE007FF, "%t, %p"),
 	array("ctc1"     , 0x44C00000, 0xFFE007FF, "%t, %p"),
-	/*
-	array("cvt.s.w"  , 0x46800020, 0xFFFF003F),
-	*/
+	array("cvt.s.w"  , 0x46800020, 0xFFFF003F, "%D, %S"),
 	array("cvt.w.s"  , 0x46000024, 0xFFFF003F, "%D, %S"),
 	array("div.s"    , 0x46000003, 0xFFE0003F, "%D, %S, %T"),
 	array("floor.w.s", 0x4600000F, 0xFFFF003F, "%D, %S"),
 	array("lwc1"     , 0xC4000000, 0xFC000000, "%T, %o"),
-	/*
-	array("mfc1"     , 0x44000000, 0xFFE007FF),
-	array("mov.s"    , 0x46000006, 0xFFFF003F),
-	array("mtc1"     , 0x44800000, 0xFFE007FF),
-	*/
+	array("mfc1"     , 0x44000000, 0xFFE007FF, "%t, %1"),
+	array("mov.s"    , 0x46000006, 0xFFFF003F, "%D, %S"),
+	array("mtc1"     , 0x44800000, 0xFFE007FF, "%t, %1"),
 	array("mul.s"    , 0x46000002, 0xFFE0003F, "%D, %S, %T"),
 	array("neg.s"    , 0x46000007, 0xFFFF003F, "%D, %S"),
 	array("round.w.s", 0x4600000C, 0xFFFF003F, "%D, %S"),
 	array("sqrt.s"   , 0x46000004, 0xFFFF003F, "%D, %S"),
 	array("sub.s"    , 0x46000001, 0xFFE0003F, "%D, %S, %T"),
 	array("swc1"     , 0xE4000000, 0xFC000000, "%T, %o"),
-	/*
-	array("trunc.w.s", 0x4600000D, 0xFFFF003F),
-	*/
+	array("trunc.w.s", 0x4600000D, 0xFFFF003F, "%D, %S"),
 ];
 
 unittest {

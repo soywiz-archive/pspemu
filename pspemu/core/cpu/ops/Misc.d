@@ -1,5 +1,7 @@
 module pspemu.core.cpu.ops.Misc;
 
+version = STOP_AT_UNKNOWN_INSTRUCTION;
+
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Utils;
@@ -46,9 +48,9 @@ template TemplateCpu_MISC() {
 
 	// Inlined.
 	auto OP_UNK() {
-		.writefln("Unknown operation %s", instruction);
+		.writefln("Unknown operation 0x%08X at 0x%08X", instruction.v, registers.PC);
+		version (STOP_AT_UNKNOWN_INSTRUCTION) assert(0, std.string.format("Unknown operation 0x%08X at 0x%08X", instruction.v, registers.PC));
 		registers.pcAdvance(4);
-		assert(0, std.string.format("Unknown operation %s", instruction));
 	}
 }
 

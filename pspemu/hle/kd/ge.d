@@ -1,6 +1,6 @@
 module pspemu.hle.kd.ge; // kd/ge.prx (sceGE_Manager)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 
@@ -17,7 +17,8 @@ class sceGe_driver : Module {
 	void sceGeListSync() {
 		// int sceGeListSync (int qid, int syncType)
 		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("sceGeListSync(%d, %d)", param(0), param(1));
+		debug (DEBUG_SYSCALL) .writefln("sceGeListSync(qid=%d, syncType=%d)", param(0), param(1));
+		cpu.gpu.synchronizeGpu();
 	}
 
 	void sceGeEdramGetAddr() {
@@ -32,10 +33,44 @@ class sceGe_driver : Module {
 		debug (DEBUG_SYSCALL) .writefln("sceGeSetCallback(0x%08X)", param(0));
 	}
 
+	/*
+	uint last_list, last_stall;
+	uint* last_list_ptr;
+	*/
+
 	void sceGeListEnQueue() {
 		// int sceGeListEnQueue ( const void *list, void *stall, int cbid, PspGeListArgs *arg )
 		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("sceGeListEnQueue(0x%08X, 0x%08X, %d, 0x%08X)", param(0), param(1), param(2), param(3));
+		debug (DEBUG_SYSCALL) .writefln("sceGeListEnQueue(list=0x%08X, stall=0x%08X, cbid=%d, arg=0x%08X)", param(0), param(1), param(2), param(3));
+
+		/*
+		last_list  = param(0);
+		last_stall = param(1);
+		last_list_ptr = cast(uint *)param_p(0);
+		*/
+
+		cpu.gpu.setInstructionList(param_p(0), param_p(1));
+	}
+
+	void sceGeListUpdateStallAddr() {
+		// TODO
+		cpu.registers.V0 = 0;
+
+		/*
+		last_stall = param(1);
+		writefln("%08X:%08X:%08X", cpu.memory.read32(last_list), *last_list_ptr, cast(uint)cast(void *)last_list_ptr);
+		*/
+
+		cpu.gpu.setInstructionStall(param_p(1));
+
+		debug (DEBUG_SYSCALL) .writefln("sceGeListUpdateStallAddr(qid=%d, stall=0x%08X)", param(0), param(1));
+	}
+
+	void sceGeDrawSync() {
+		// TODO
+		cpu.registers.V0 = 0;
+		debug (DEBUG_SYSCALL) .writefln("sceGeDrawSync(syncType=%d)", param(0));
+		cpu.gpu.synchronizeGpu();
 	}
 }
 

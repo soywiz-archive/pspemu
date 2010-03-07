@@ -64,7 +64,7 @@ class GLControlDisplay : GLControl {
 
 		delay = frequency / display.verticalRefreshRate;
 
-		Sleep(100);
+		Thread.sleep(100_0000);
 
 		while (running) {
 			writefln("threadRun.loop started");
@@ -107,15 +107,14 @@ class GLControlDisplay : GLControl {
 					while (true) {
 						QueryPerformanceCounter(&counter);
 						if (counter - bcounter >= delay) break;
-						//usleep(1000);
-						Sleep(1);
+						Thread.sleep(0_5000);
 					}
 				}
 			} catch (Object e) {
 				writefln("GLControlDisplay.threadRun.error: %s", e);
 			} finally {
 				writefln("GLControlDisplay.threadRun.end");
-				Sleep(10);
+				Thread.sleep(10_0000);
 			}
 		}
 	}

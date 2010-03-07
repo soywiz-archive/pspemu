@@ -28,6 +28,7 @@ template TemplateCpu_FPU() {
 	auto OP_SUB_S() { mixin(CE("$fd = $fs - $ft;")); }
 	auto OP_MUL_S() { mixin(CE("$fd = $fs * $ft;")); }
 	auto OP_DIV_S() { mixin(CE("$fd = $fs / $ft;")); }
+	auto OP_MOV_S() { mixin(CE("$fd = $fs;")); }
 
 	// CC ops
 	static const QNAN = "isnan($fs) || isnan($ft)";
@@ -45,10 +46,22 @@ template TemplateCpu_FPU() {
 	auto OP_CFC1() { mixin(CE("$rt = cast(uint)$cc;")); }
 	auto OP_CTC1() { mixin(CE("$cc = cast(bool)$rt;")); }
 
+	// TODO: Dummy.
+	auto OP_MTC1() {
+		mixin(CE("$fs = reinterpret!(float)($rt);"));
+		//mixin(CE("$fs = I_F($rt);"));
+	}
+	auto OP_MFC1() {
+		mixin(CE("$rt = reinterpret!(int  )($fs);"));
+		//mixin(CE("$rt = F_I($fs);"));
+	}
+	
+
 	// Floating Point Ceiling Convert to Word Fixed Point
 	auto OP_CEIL_W_S () { mixin(CE("$Fd = cast(int)ceil($fs);")); }
 	auto OP_FLOOR_W_S() { mixin(CE("$Fd = cast(int)($fs);")); }
 	auto OP_ROUND_W_S() { mixin(CE("$Fd = cast(int)round($fs);")); }
+	auto OP_TRUNC_W_S() { mixin(CE("$Fd = cast(int)($fs);")); }
 
 	auto OP_CVT_W_S() {
 		// From: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
@@ -59,6 +72,13 @@ template TemplateCpu_FPU() {
 			case Registers.Fcsr.Ceil : mixin(CE("$Fd = cast(int)ceil($fs);"));  break;
 			case Registers.Fcsr.Floor: mixin(CE("$Fd = cast(int)floor($fs);")); break;
 		}
+	}
+
+	auto OP_CVT_S_W() {
+		// From: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
+		mixin(CE("$Fd = reinterpret!(int)($fs);"));
+		//registers.pcAdvance(4);
+		//assert(0);
 	}
 
 	// Memory transfer.

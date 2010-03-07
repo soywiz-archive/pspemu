@@ -23,7 +23,14 @@ abstract class Module {
 	static Module[string] knownModulesByName;
 
 	uint param(int n) { return cpu.registers[4 + n]; }
-	void* param_p(int n) { return cpu.memory.getPointer(cpu.registers[4 + n]); }
+	void* param_p(int n) {
+		uint v = cpu.registers[4 + n];
+		if (v != 0) {
+			return cpu.memory.getPointer(v);
+		} else {
+			return null;
+		}
+	}
 	char* paramszp(int n) { return cast(char *)param_p(n); }
 	char[] paramsz(int n) { auto ptr = paramszp(n); return ptr[0..std.c.string.strlen(ptr)]; }
 

@@ -3,6 +3,9 @@ module pspemu.core.cpu.Cpu;
 //debug = DEBUG_GEN_SWITCH;
 version = ENABLE_BREAKPOINTS;
 
+// Hack. It shoudln't be here.
+import pspemu.core.gpu.Gpu;
+
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Table;
 import pspemu.core.cpu.Switch;
@@ -41,16 +44,26 @@ class Cpu {
 	 */
 	Memory    memory;
 
-	bool stop = false;
+	/**
+	 * Gpu.
+	 */
+	Gpu    gpu;
+
+	bool running = true;
+
+	void stop() {
+		running = false;
+	}
 
 	/**
 	 * Constructor. It will create the registers and the memory.
 	 *
 	 * @param  memory  Optional. A Memory object.
 	 */
-	this(Memory memory = null) {
+	this(Memory memory = null, Gpu gpu = null) {
 		this.registers = new Registers();
 		this.memory    = (memory !is null) ? memory : (new Memory());
+		this.gpu       = gpu;
 	}
 
 	/**
@@ -68,6 +81,11 @@ class Cpu {
 		registers.reset();
 	}
 
+	/*void opDispatch(string s)() {
+		//.writefln("Unimplemented CPU instruction '%s'", s);
+		//assert(0, std.string.format("Unimplemented CPU instruction '%s'", s));
+	}*/
+
 	/**
 	 * Will execute a number of instructions.
 	 *
@@ -77,10 +95,9 @@ class Cpu {
 	 */
 	void execute(uint count) {
 		// Shortcuts for registers and memory.
-		auto cpu       = this;
 		auto registers = this.registers;
 		auto memory    = this.memory;
-
+		auto cpu       = this;
 
 		// Declaration for instruction struct that will allow to decode instructions easily.
 		Instruction instruction = void;
@@ -92,7 +109,7 @@ class Cpu {
 		mixin TemplateCpu_MEMORY;
 		mixin TemplateCpu_MISC;
 		mixin TemplateCpu_FPU;
-		
+
 		// Will execute instructions until count reach zero or an exception is thrown.
 		//writefln("Execute: %08X", count);
 		while (count--) {
@@ -103,7 +120,7 @@ class Cpu {
 				}
 			}
 			
-			if (stop) throw(new HaltException("stop"));
+			if (!running) throw(new HaltException("stop"));
 
 			instruction.v = memory.read32(registers.PC);
 			mixin(genSwitch(PspInstructions));

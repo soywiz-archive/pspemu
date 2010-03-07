@@ -72,6 +72,8 @@ static pure nothrow {
 		} else if (ilist.length == 1) {
 			//r = indent(level, prefix ~ process_name(ilist[0].name) ~ "(); return;\n");
 			r = indent(level, "{mixin(" ~ processor ~ "(\"" ~ ilist[0].name ~ "\"));}\n");
+			//r ~= "mixin(\"if (__traits(compiles, " ~ ilist[0].name ~ ")) { } else { }\");";
+			//r = indent(level, "{mixin(" ~ processor ~ "(__traits(identifier, " ~ ilist[0].name ~ ")));}\n");
 		} if (ilist.length > 1) {
 			InstructionDefinition[512] ci; int ci_len = ilist.length;
 
