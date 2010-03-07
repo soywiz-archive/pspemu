@@ -4,6 +4,8 @@ import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Instruction;
 import pspemu.core.Memory;
 
+import pspemu.utils.Utils;
+
 import std.stdio;
 
 template TemplateCpu_MEMORY() {
@@ -20,16 +22,16 @@ template TemplateCpu_MEMORY() {
 	alias ulong  u64;
 
 	static pure nothrow {
-		string LOAD(string size, bool signed) {
+		string LOAD(uint size, bool signed) {
 			return (
-				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ size ~ ")memory.read" ~ size ~ "(registers[instruction.RS] + instruction.OFFSET);" ~
+				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ tos(size) ~ ")memory.read" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET);" ~
 				"registers.pcAdvance(4);"
 			);
 		}
 
-		string STORE(string size) {
+		string STORE(uint size) {
 			return (
-				"memory.write" ~ size ~ "(registers[instruction.RS] + instruction.OFFSET, cast(u" ~ size ~ ")registers[instruction.RT]);" ~
+				"memory.write" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET, cast(u" ~ tos(size) ~ ")registers[instruction.RT]);" ~
 				"registers.pcAdvance(4);"
 			);
 		}
@@ -40,13 +42,13 @@ template TemplateCpu_MEMORY() {
 	// LW    -- Load word
 	// A byte/half/word is loaded into a register from the specified address.
 	// $t = MEM[$s + offset]; advance_pc (4);
-	auto OP_LB () { mixin(LOAD("8" , Signed  )); }
-	auto OP_LBU() { mixin(LOAD("8" , Unsigned)); }
+	auto OP_LB () { mixin(LOAD(8 , Signed  )); }
+	auto OP_LBU() { mixin(LOAD(8 , Unsigned)); }
 
-	auto OP_LH () { mixin(LOAD("16", Signed  )); }
-	auto OP_LHU() { mixin(LOAD("16", Unsigned)); }
+	auto OP_LH () { mixin(LOAD(16, Signed  )); }
+	auto OP_LHU() { mixin(LOAD(16, Unsigned)); }
 
-	auto OP_LW () { mixin(LOAD("32", Unsigned)); }
+	auto OP_LW () { mixin(LOAD(32, Unsigned)); }
 
 	// LWL -- Load Word Left
 	// LWR -- Load Word Right
@@ -70,9 +72,9 @@ template TemplateCpu_MEMORY() {
 	// SW -- Store word
 	// The contents of $t is stored at the specified address.
 	// MEM[$s + offset] = $t; advance_pc (4);
-	auto OP_SB() { mixin(STORE("8" )); }
-	auto OP_SH() { mixin(STORE("16")); }
-	auto OP_SW() { mixin(STORE("32")); }
+	auto OP_SB() { mixin(STORE(8 )); }
+	auto OP_SH() { mixin(STORE(16)); }
+	auto OP_SW() { mixin(STORE(32)); }
 
 	// SWL -- Store Word Left
 	// SWR -- Store Word Right

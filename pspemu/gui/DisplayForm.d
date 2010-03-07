@@ -1,7 +1,9 @@
 module pspemu.gui.DisplayForm;
 
 import dfl.all, dfl.internal.winapi;
-import core.thread;
+
+import core.thread, core.memory;
+
 import std.stdio, std.c.time;
 import std.typetuple;
 
@@ -98,6 +100,9 @@ class GLControlDisplay : GLControl {
 					}
 					
 					display.vblank(true);
+					
+					GC.minimize();
+					//GC.collect();
 					
 					while (true) {
 						QueryPerformanceCounter(&counter);

@@ -97,7 +97,6 @@ static pure nothrow {
 		}
 		return r;
 	}
-
 }
 
 unittest {

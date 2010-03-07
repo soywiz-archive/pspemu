@@ -45,15 +45,20 @@ int main() {
 	auto display = new PspDisplay(memory);
 	
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
-	
+
+	string executableFile;
+
 	/*
-	string elfFile = "demos/controller.elf";
-	//string elfFile = "demos/minifire.elf";
-	stream elf = new BufferedFile(elfFile, FileMode.In);
+	executableFile = "demos/controller.elf";
+	executableFile = new BufferedFile(elfFile, FileMode.In);
 	*/
-	string pbpFile = "demos/counter.pbp";
+	//executableFile = "demos/minifire.elf";
+	//executableFile = "demos/controller.pbp";
+	executableFile = "demos/counter.pbp";
+	//executableFile = "demos/mytest.pbp";
+	//executableFile = "demos/text.pbp";
 	
-	auto loader  = new Loader((new Pbp(new BufferedFile(pbpFile, FileMode.In)))["psp.data"], memory);
+	auto loader  = new Loader(executableFile, memory);
 	writefln("PC: %08X", loader.PC);
 	writefln("GP: %08X", loader.GP);
 	
@@ -74,6 +79,11 @@ int main() {
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
 
+	/*
+	cpu.checkBreakpoints = true;
+	cpu.addBreakpoint(cpu.BreakPoint(0x089006D8, ["a0", "a1", "a2", "a3", "t0"]));
+	*/
+
 	/*if (0) {
 		cpu.checkBreakpoints = true;
 		cpu.addBreakpoint(cpu.BreakPoint(0x0890013C, ["t0", "t1", "t2", "v0"]));
@@ -83,25 +93,21 @@ int main() {
 		//cpu.addBreakpoint(cpu.BreakPoint(0x08900284, ["v1"]));
 	}*/
 
-	void runCPU() {
-		(new Thread({
-			auto dissasembler = new AllegrexDisassembler(memory);
-			Thread.sleep(2000_0000);
-			dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-			try {
-				cpu.execute();
-			} catch (Object o) {
-				writefln("CPU Error: %s", o.toString());
-				cpu.registers.dump();
-				dissasembler.dump(cpu.registers.PC, -6, 6);
-				writefln("CPU Error: %s", o.toString());
-			} finally {
-				.writefln("End CPU executing.");
-			}
-		})).start();
-	}
-
-	runCPU();
+	(new Thread({
+		auto dissasembler = new AllegrexDisassembler(memory);
+		Thread.sleep(2000_0000);
+		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
+		try {
+			cpu.execute();
+		} catch (Object o) {
+			writefln("CPU Error: %s", o.toString());
+			cpu.registers.dump();
+			dissasembler.dump(cpu.registers.PC, -6, 6);
+			writefln("CPU Error: %s", o.toString());
+		} finally {
+			.writefln("End CPU executing.");
+		}
+	})).start();
 	
 	int retval = 0;
 	try {

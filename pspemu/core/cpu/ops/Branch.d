@@ -34,7 +34,7 @@ template TemplateCpu_BRANCH() {
 	// Branches if the two registers are equal
 	// if $s == $t .pcAdvance (offset << 2)); else .pcAdvance (4);
 	auto OP_BEQ () { mixin(BRANCH(Likely.NO , Link.NO , "registers[instruction.RS] == registers[instruction.RT]")); }
-	auto OP_BEQL() { mixin(BRANCH(Likely.NO , Link.NO , "registers[instruction.RS] == registers[instruction.RT]")); }
+	auto OP_BEQL() { mixin(BRANCH(Likely.YES, Link.NO , "registers[instruction.RS] == registers[instruction.RT]")); }
 
 	// BGEZ -- Branch on greater than or equal to zero
 	// BGEZAL -- Branch on greater than or equal to zero and link

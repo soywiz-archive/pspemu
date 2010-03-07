@@ -1,6 +1,6 @@
 module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 

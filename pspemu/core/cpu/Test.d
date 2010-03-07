@@ -135,6 +135,23 @@ unittest {
 		assertTrue(cpu.registers.PC    == assembler.getSymbolAddress("label2") + 8, "Simple branch likely: PC");
 	});
 	
+	testGroup("BRANCH LIKELY BEQL", {
+		assembler.assembleBlock(r"
+		.text
+
+			li a0, 1
+			beql a0, zr, label1
+			li a0, 2
+		label1:
+
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+
+		assertTrue(cpu.registers["a0"] == 1, "BEQL");
+	});
+	
 	testGroup("LI + LUI + ORI + BITREV", {
 		assembler.assembleBlock(r"
 		.text

@@ -8,7 +8,10 @@ import pspemu.core.cpu.Table;
 import pspemu.core.cpu.Switch;
 import pspemu.core.cpu.Assembler;
 import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Utils;
 import pspemu.core.Memory;
+
+import pspemu.utils.Utils;
 
 // OPS.
 import pspemu.core.cpu.Utils;
@@ -78,6 +81,7 @@ class Cpu {
 		auto registers = this.registers;
 		auto memory    = this.memory;
 
+
 		// Declaration for instruction struct that will allow to decode instructions easily.
 		Instruction instruction = void;
 
@@ -90,7 +94,7 @@ class Cpu {
 		mixin TemplateCpu_FPU;
 		
 		// Will execute instructions until count reach zero or an exception is thrown.
-		writefln("Execute: %08X", count);
+		//writefln("Execute: %08X", count);
 		while (count--) {
 			// TODO: Process IRQ (Interrupt ReQuest)
 			version (ENABLE_BREAKPOINTS) {
@@ -115,7 +119,7 @@ class Cpu {
 				}
 			}
 		}
-		writefln("Execute: end");
+		//writefln("Execute: end");
 	}
 
 	/**

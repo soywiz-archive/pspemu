@@ -4,6 +4,8 @@ import std.stdio;
 
 enum Advance { NO, YES }
 
+class HaltException : Exception { this(string type = "HALT") { super(type); } }
+
 static pure nothrow {
 	// $rd = cast(uint)registers.R[instruction.RD]
 	// #rt = cast( int)registers.R[instruction.RT]

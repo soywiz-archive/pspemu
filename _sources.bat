@@ -25,6 +25,7 @@ SET SOURCES=%SOURCES% pspemu/formats/Elf.d
 
 SET SOURCES=%SOURCES% pspemu/hle/Loader.d
 SET SOURCES=%SOURCES% pspemu/hle/Module.d
+SET SOURCES=%SOURCES% pspemu/hle/Syscall.d
 
 SET SOURCES=%SOURCES% pspemu/hle/kd/display.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/ge.d
@@ -48,6 +49,7 @@ SET SOURCES=%SOURCES% pspemu/core/cpu/Table.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Assembler.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Disassembler.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Test.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/InstructionCounter.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Alu.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Branch.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Jump.d
@@ -57,11 +59,12 @@ SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Fpu.d
 
 SET SOURCES=%SOURCES% pspemu/core/gpu/Gpu.d
 
-SET RELEASE=-noboundscheck -inline -O -release
+REM SET RELEASE=-noboundscheck -inline -O -release
+SET RELEASE=-noboundscheck -O -release
 
 SET EXTRA=-quiet -deps=deps.lst
 
-SET UNITTEST=-unittest -version=Unittest
+SET UNITTEST=-unittest -version=Unittest -d
 REM SET UNITTEST=
 
 REM -cov to code coverage, then show the last line of .lst files.

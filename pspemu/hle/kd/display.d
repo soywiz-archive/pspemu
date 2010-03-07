@@ -1,6 +1,6 @@
 module pspemu.hle.kd.display; // kd/display.prx (sceDisplay_Service)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 
@@ -18,9 +18,9 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 
 	void sceDisplaySetFrameBuf() {
 		// int 	sceDisplaySetFrameBuf (void *topaddr, int bufferwidth, int pixelformat, int sync)
-		debug (DEBUG_SYSCALL) .writefln("_sceDisplaySetFrameBuf (0x%08X, %d, %d, 0x%08X)", param(0), param(1), param(2), param(3));
 		cpu.memory.displayMemory = param(0);
 		cpu.registers.V0 = 0;
+		debug (DEBUG_SYSCALL) .writefln("_sceDisplaySetFrameBuf (0x%08X, %d, %d, 0x%08X)", param(0), param(1), param(2), param(3));
 	}
 
 	void sceDisplaySetMode() {

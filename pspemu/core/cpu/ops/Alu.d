@@ -85,7 +85,7 @@ template TemplateCpu_ALU() {
 	auto OP_INS() { mixin(CE("uint mask = MASK(instruction.SIZE - instruction.POS + 1); $rt = ($rt & ~(mask << $ps)) | (($rs & mask) << $ps);")); }
 
 	// BITREV - Bit Reverse
-	auto OP_BITREV() { mixin(CE("$rd = REV4($rt);")); }
+	auto OP_BITREV() { mixin(CE("$rd = REV32($rt);")); }
 
 	// MAX/MIN
 	auto OP_MAX() { mixin(CE("$rd = MAX(#rs, #rt);")); }
@@ -123,6 +123,7 @@ template TemplateCpu_ALU() {
 		registers.HI = hi;
 		registers.pcAdvance(4);
 	}
+	// MADDU
 	auto OP_MADDU() {
 		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
 		asm { mov EAX, rs; mul rt; add lo, EAX; adc hi, EDX; }
@@ -139,6 +140,7 @@ template TemplateCpu_ALU() {
 		registers.HI = hi;
 		registers.pcAdvance(4);
 	}
+	// MSUBU
 	auto OP_MSUBU() { // FIXME: CHECK.
 		int rs = registers[instruction.RS], rt = registers[instruction.RT], lo = registers.LO, hi = registers.HI;
 		asm { mov EAX, rs; mul rt; sub lo, EAX; sub hi, EDX; }
@@ -171,7 +173,7 @@ template TemplateCpu_ALU_Utils() {
 		uint SRA(int a, int b) { asm { mov EAX, a; mov ECX, b; sar EAX, CL; mov a, EAX; } return a; }
 		uint SRL(int a, int b) { asm { mov EAX, a; mov ECX, b; shr EAX, CL; mov a, EAX; } return a; }
 		// http://www-graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-		uint REV4(uint v) {
+		uint REV32(uint v) {
 			v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1 ); // swap odd and even bits
 			v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2 ); // swap consecutive pairs
 			v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4 ); // swap nibbles ... 

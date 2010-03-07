@@ -12,6 +12,7 @@ import pspemu.hle.Module;
 import pspemu.core.Memory;
 import pspemu.core.cpu.Assembler;
 import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.InstructionCounter;
 
 import std.xml;
 
@@ -72,7 +73,7 @@ class Loader {
 	}
 
 	Elf elf;
-	Memory memory;
+	Stream memory;
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
 	ModuleExport[] moduleExports;
@@ -80,11 +81,45 @@ class Loader {
 	uint PC() { return elf.header.entryPoint; }
 	uint GP() { return moduleInfo.gp; }
 
-	this(Stream stream, Memory memory) {
+	this(string file, Stream memory) {
+		this(new BufferedFile(file, FileMode.In), memory);
+	}
+
+	this(Stream stream, Stream memory) {
+		while (true) {
+			auto magics = new SliceStream(stream, 0, 4);
+			switch (magics.readString(4)) {
+				case "\x7FELF":
+				break;
+				case "~PSP":
+					assert(0, "Not support compressed elf files");
+				break;
+				case "\0PBP":
+					stream = (new Pbp(stream))["psp.data"];
+					continue;
+				break;
+				default:
+					assert(0, "Unknown file");
+				break;
+			}
+			break;
+		}
+
 		this.elf    = new Elf(stream);
 		this.memory = memory;
 		load();
+		count();
 		Module.dumpKnownModules();
+	}
+
+	void count() {
+		try {
+			auto counter = new InstructionCounter;
+			counter.count(elf.SectionStream(".init"));
+			counter.dump();
+		} catch (Object o) {
+			writefln("Can't count instructions: '%s'", o.toString);
+		}
 	}
 
 	void load() {

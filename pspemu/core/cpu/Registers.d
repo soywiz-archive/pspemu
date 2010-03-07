@@ -59,7 +59,7 @@ final class Registers {
 	}
 
 	uint opIndex(uint   index) { return R[index]; }
-	uint opIndex(string index) { return this[aliases[index]]; }
+	uint opIndex(string index) { return this[getAlias(index)]; }
 
 	uint opIndexAssign(uint value, uint index) {
 		R[index] = value;
@@ -68,7 +68,7 @@ final class Registers {
 	}
 	
 	uint opIndexAssign(uint value, string index) {
-		return this[aliases[index]] = value;
+		return this[getAlias(index)] = value;
 	}
 
 	static int getAlias(string aliasName) {
