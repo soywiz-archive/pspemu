@@ -29,7 +29,12 @@ interface IDisplay {
 	/**
 	 * Triggers an vblank event.
 	 */
-	void vblank(bool status);
+	bool vblank(bool status);
+
+	/**
+	 * Obtains the status of the vblank.
+	 */
+	bool vblank();
 }
 
 abstract class BasePspDisplay : IDisplay {
@@ -54,5 +59,6 @@ class NullDisplay : BasePspDisplay {
 		}
 	}
 	void* frameBufferPointer() { return data.ptr; }
-	void vblank(bool status) { }
+	bool vblank() { return false; }
+	bool vblank(bool status) { return vblank; }
 }

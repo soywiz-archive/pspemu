@@ -23,6 +23,7 @@ import pspemu.hle.Loader;
 
 class PspDisplay : BasePspDisplay {
 	Memory memory;
+	bool _vblank = true;
 
 	this(Memory memory) {
 		this.memory = memory;
@@ -33,31 +34,28 @@ class PspDisplay : BasePspDisplay {
 		return memory.getPointer(memory.displayMemory);
 	}
 
-	void vblank(bool status) {
-		// Dummy.
-	}
+	bool vblank(bool status) { return _vblank = status; }
+	bool vblank() { return _vblank; }
 }
 
 int main() {
 	auto memory  = new Memory;
-	auto gpu     = new Gpu(memory);
-	auto cpu     = new Cpu(memory, gpu);
 	auto display = new PspDisplay(memory);
+	auto gpu     = new Gpu(memory);
+	auto cpu     = new Cpu(memory, gpu, display);
 	auto dissasembler = new AllegrexDisassembler(memory);
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 
 	string executableFile;
 
-	/*
-	executableFile = "demos/controller.elf";
-	executableFile = new BufferedFile(elfFile, FileMode.In);
-	*/
 	//executableFile = "demos/minifire.elf";
 	//executableFile = "demos/controller.pbp";
 	//executableFile = "demos/counter.pbp";
 	//executableFile = "demos/mytest.pbp";
-	executableFile = "demos/text.pbp";
+	//executableFile = "demos/text.pbp";
+	//executableFile = "demos/lines.pbp";
+	executableFile = "tests/test1.elf";
 	
 	auto loader  = new Loader(executableFile, memory);
 	writefln("PC: %08X", loader.PC);

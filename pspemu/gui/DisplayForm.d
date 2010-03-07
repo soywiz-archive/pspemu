@@ -99,21 +99,25 @@ class GLControlDisplay : GLControl {
 						swapBuffers();
 					}
 					
-					display.vblank(true);
+					display.vblank = true;
 					
-					GC.minimize();
+					//GC.minimize();
 					//GC.collect();
 					
 					while (true) {
 						QueryPerformanceCounter(&counter);
+						//Thread.sleep(0_5000);
 						if (counter - bcounter >= delay) break;
 						Thread.sleep(0_5000);
 					}
+
+					display.vblank = false;
 				}
 			} catch (Object e) {
 				writefln("GLControlDisplay.threadRun.error: %s", e);
 			} finally {
 				writefln("GLControlDisplay.threadRun.end");
+				//display.vblank = true;
 				Thread.sleep(10_0000);
 			}
 		}

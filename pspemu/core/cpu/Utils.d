@@ -22,6 +22,7 @@ static pure nothrow {
 					case "fs": add ~= "registers.F[instruction.FS]"; break;
 					case "fd": add ~= "registers.F[instruction.FD]"; break;
 					case "ft": add ~= "registers.F[instruction.FT]"; break;
+					case "Fs": add ~= "registers.RF[instruction.FS]"; break;
 					case "Fd": add ~= "registers.RF[instruction.FD]"; break;
 					case "Ft": add ~= "registers.RF[instruction.FT]"; break;
 					case "rs": add ~= "registers.R[instruction.RS]"; break;

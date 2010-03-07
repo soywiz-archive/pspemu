@@ -1,5 +1,7 @@
 module pspemu.core.cpu.ops.Fpu;
 
+import pspemu.utils.Utils;
+
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.Utils;
@@ -48,11 +50,12 @@ template TemplateCpu_FPU() {
 
 	// TODO: Dummy.
 	auto OP_MTC1() {
-		mixin(CE("$fs = reinterpret!(float)($rt);"));
+		mixin(CE("$Fs = $rt;"));
+		//mixin(CE("$Fs = $rt;"));
 		//mixin(CE("$fs = I_F($rt);"));
 	}
 	auto OP_MFC1() {
-		mixin(CE("$rt = reinterpret!(int  )($fs);"));
+		mixin(CE("$rt = cast(int)$Fs;"));
 		//mixin(CE("$rt = F_I($fs);"));
 	}
 	

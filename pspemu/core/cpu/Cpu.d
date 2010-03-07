@@ -5,6 +5,7 @@ version = ENABLE_BREAKPOINTS;
 
 // Hack. It shoudln't be here.
 import pspemu.core.gpu.Gpu;
+import pspemu.models.IDisplay;
 
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Table;
@@ -49,6 +50,8 @@ class Cpu {
 	 */
 	Gpu    gpu;
 
+	IDisplay display;
+
 	bool running = true;
 
 	void stop() {
@@ -60,10 +63,11 @@ class Cpu {
 	 *
 	 * @param  memory  Optional. A Memory object.
 	 */
-	this(Memory memory = null, Gpu gpu = null) {
+	this(Memory memory = null, Gpu gpu = null, IDisplay display = null) {
 		this.registers = new Registers();
 		this.memory    = (memory !is null) ? memory : (new Memory());
 		this.gpu       = gpu;
+		this.display   = display;
 	}
 
 	/**

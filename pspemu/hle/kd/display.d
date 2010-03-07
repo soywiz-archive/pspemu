@@ -2,6 +2,8 @@ module pspemu.hle.kd.display; // kd/display.prx (sceDisplay_Service)
 
 //debug = DEBUG_SYSCALL;
 
+import core.thread;
+
 import pspemu.hle.Module;
 
 class sceDisplay_driver : Module { // Flags: 0x00010000
@@ -13,7 +15,9 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 
 	void sceDisplayWaitVblankStart() {
 		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("_sceDisplayWaitVblankStart");
+		while ( cpu.display.vblank && cpu.running) Thread.sleep(0_1000);
+		while (!cpu.display.vblank && cpu.running) Thread.sleep(0_1000);
+		debug (DEBUG_SYSCALL) .writefln("_sceDisplayWaitVblankStart()");
 	}
 
 	void sceDisplaySetFrameBuf() {
