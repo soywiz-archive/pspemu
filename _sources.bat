@@ -56,12 +56,15 @@ SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Jump.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Memory.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Misc.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Fpu.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/ops/VFpu.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Unimplemented.d
 
 SET SOURCES=%SOURCES% pspemu/core/gpu/Gpu.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/Commands.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Special.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Flow.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Colors.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Draw.d
 
 REM SET RELEASE=-noboundscheck -inline -O -release
 SET RELEASE=-noboundscheck -O -release

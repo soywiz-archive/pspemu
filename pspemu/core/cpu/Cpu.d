@@ -25,6 +25,7 @@ import pspemu.core.cpu.ops.Jump;
 import pspemu.core.cpu.ops.Memory;
 import pspemu.core.cpu.ops.Misc;
 import pspemu.core.cpu.ops.Fpu;
+import pspemu.core.cpu.ops.VFpu;
 import pspemu.core.cpu.ops.Unimplemented;
 
 // For breakpoints.
@@ -114,6 +115,7 @@ class Cpu {
 		mixin TemplateCpu_MEMORY;
 		mixin TemplateCpu_MISC;
 		mixin TemplateCpu_FPU;
+		mixin TemplateCpu_VFPU;
 		mixin TemplateCpu_UNIMPLEMENTED;
 
 		// Will execute instructions until count reach zero or an exception is thrown.

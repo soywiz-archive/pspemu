@@ -1,5 +1,7 @@
 module pspemu.hle.Loader;
 
+//debug = DEBUG_LOADER;
+
 import std.stream, std.stdio, std.string;
 
 import pspemu.utils.Utils;
@@ -108,8 +110,10 @@ class Loader {
 		this.elf    = new Elf(stream);
 		this.memory = memory;
 		load();
-		count();
-		Module.dumpKnownModules();
+		debug (DEBUG_LOADER) {
+			count();
+			Module.dumpKnownModules();
+		}
 	}
 
 	void count() {
@@ -130,13 +134,13 @@ class Loader {
 		auto exportsStream = new SliceStream(memory, moduleInfo.exportsStart, moduleInfo.exportsEnd);
 
 		// Load Imports.
-		writefln("Imports:");
+		debug (DEBUG_LOADER) writefln("Imports:");
 		auto assembler = new AllegrexAssembler(memory);
 		while (!importsStream.eof) {
 			auto moduleImport = read!(ModuleImport)(importsStream);
 			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
 			//assert(moduleImport.entry_size == moduleImport.sizeof);
-			writefln("  '%s'", moduleImportName);
+			debug (DEBUG_LOADER) writefln("  '%s'", moduleImportName);
 			moduleImports ~= moduleImport;
 			auto nidStream  = new SliceStream(memory, moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
 			auto callStream = new SliceStream(memory, moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
@@ -146,11 +150,11 @@ class Loader {
 				uint nid = read!(uint)(nidStream);
 				
 				if (nid in pspModule.nids) {
-					writefln("    %s", pspModule.nids[nid]);
+					debug (DEBUG_LOADER) writefln("    %s", pspModule.nids[nid]);
 					callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
 					callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
 				} else {
-					writefln("    0x%08X", nid);
+					debug (DEBUG_LOADER) writefln("    0x%08X", nid);
 					callStream.write(cast(uint)(0x70000000));
 					callStream.write(cast(uint)0);
 				}
@@ -159,11 +163,11 @@ class Loader {
 			}
 		}
 		// Load Exports.
-		writefln("Exports:");
+		debug (DEBUG_LOADER) writefln("Exports:");
 		while (!exportsStream.eof) {
 			auto moduleExport = read!(ModuleExport)(exportsStream);
 			auto moduleExportName = moduleExport.name ? readStringz(memory, moduleExport.name) : "<null>";
-			writefln("  '%s'", moduleExportName);
+			debug (DEBUG_LOADER) writefln("  '%s'", moduleExportName);
 			moduleExports ~= moduleExport;
 		}
 	}

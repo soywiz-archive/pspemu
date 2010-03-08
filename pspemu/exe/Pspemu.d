@@ -6,6 +6,8 @@ import std.stream, std.stdio, core.thread;
 
 import dfl.all;
 
+import std.c.windows.windows;
+
 import pspemu.gui.MainForm;
 import pspemu.gui.DisplayForm;
 
@@ -54,8 +56,8 @@ int main() {
 	//executableFile = "demos/counter.pbp";
 	//executableFile = "demos/mytest.pbp";
 	//executableFile = "demos/text.pbp";
-	//executableFile = "demos/lines.pbp";
-	executableFile = "tests/test1.elf";
+	executableFile = "demos/lines.pbp";
+	//executableFile = "tests/test1.elf";
 	
 	auto loader  = new Loader(executableFile, memory);
 	writefln("PC: %08X", loader.PC);
@@ -100,7 +102,8 @@ int main() {
 
 	// Start CPU.
 	(new Thread({
-		Thread.sleep(2000_0000);
+		//Thread.sleep(2000_0000);
+		//Sleep(2000);
 		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
 		try {
 			cpu.execute();

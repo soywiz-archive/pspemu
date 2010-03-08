@@ -15,11 +15,45 @@ PSP_MODULE_INFO("Test1", 0, 1, 1);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 
 #define assert(v) { if (!(v)) { asm("break"); } }
-void emitInt(int v) {
-	//asm("syscall 0x2308");
+void emitInt  (int   v) { asm("syscall 0x2308"); }
+void emitFloat(float v) { asm("syscall 0x2309"); }
+
+unsigned int crc_tab[256];
+
+unsigned int chksum_crc32(unsigned char *block, unsigned int length) {
+	register unsigned long crc;
+	unsigned long i;
+	crc = 0xFFFFFFFF;
+	for (i = 0; i < length; i++) { crc = ((crc >> 8) & 0x00FFFFFF) ^ crc_tab[(crc ^ *block++) & 0xFF]; }
+	return (crc ^ 0xFFFFFFFF);
 }
-void emitFloat(float f) {
-	//asm("syscall 0x2309");
+
+void chksum_crc32gentab() {
+	unsigned long crc, poly;
+	int i, j;
+
+	poly = 0xEDB88320L;
+	for (i = 0; i < 256; i++) {
+		crc = i;
+		for (j = 8; j > 0; j--) {
+			if (crc & 1) {
+				crc = (crc >> 1) ^ poly;
+			} else {
+				crc >>= 1;
+			}
+		}
+		crc_tab[i] = crc;
+	}
+}
+
+void testCrc32() {
+	chksum_crc32gentab();
+	//pspDebugScreenPrintf("%08X\n", chksum_crc32((unsigned char *)"test", 4));
+	emitInt(chksum_crc32(NULL, 0));
+	int value = chksum_crc32((unsigned char *)"test", 4);
+	assert(value == 0xD87F7E0C);
+	assert(value == -662733300);
+	emitInt(value);
 }
 
 void testIntegerSum() {
@@ -33,18 +67,24 @@ void testIntegerSum() {
 
 int main(int argc, char* argv[]) {
 	float f = 1.0;
-	pspDebugScreenInit();
+	int n;
 	//setupCallbacks();
 
+	pspDebugScreenInit();
+
 	testIntegerSum();
+	testCrc32();
 	emitFloat(0.1);
 	emitFloat(f);
-	
-	while (1) {
+
+	for (n = 0; n < 10; n++) {
 		sceDisplayWaitVblankStart();
-		//pspDebugScreenSetXY(0, 0);
-		pspDebugScreenPrintf("Hola %f!\r", f);
+		pspDebugScreenSetXY(0, 1);
+		pspDebugScreenPrintf("Hola %f!", f);
 		f += 0.1;
 	}
+
+	assert(0);
+
 	return 0;
 }

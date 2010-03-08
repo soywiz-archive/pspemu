@@ -10,6 +10,7 @@ class UtilsForUser : Module {
 	this() {
 		mixin(register(0xE860E75E, "sceKernelUtilsMt19937Init"));
 		mixin(register(0x06FB8A63, "sceKernelUtilsMt19937UInt"));
+		mixin(register(0x27CC57F0, "sceKernelLibcTime"));
 	}
 
 	void sceKernelUtilsMt19937Init() {
@@ -26,6 +27,11 @@ class UtilsForUser : Module {
 		cpu.registers.V0 = mt.front;
 		mt.popFront();
 		debug (DEBUG_SYSCALL) .writefln("_sceKernelUtilsMt19937UInt(ctx=0x%08X) == 0x%08X", param(0), cpu.registers.V0);
+	}
+
+	void sceKernelLibcTime() {
+		cpu.registers.V0 = std.c.time.time(cast(int*)param_p(0));
+		debug (DEBUG_SYSCALL) .writefln("sceKernelLibcTime(time=0x%08X) == %d", param(0), cpu.registers.V0);
 	}
 }
 

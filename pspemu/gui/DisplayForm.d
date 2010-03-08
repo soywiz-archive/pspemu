@@ -64,7 +64,8 @@ class GLControlDisplay : GLControl {
 
 		delay = frequency / display.verticalRefreshRate;
 
-		Thread.sleep(100_0000);
+		//Thread.sleep(100_0000);
+		Sleep(100);
 
 		while (running) {
 			writefln("threadRun.loop started");
@@ -108,7 +109,8 @@ class GLControlDisplay : GLControl {
 						QueryPerformanceCounter(&counter);
 						//Thread.sleep(0_5000);
 						if (counter - bcounter >= delay) break;
-						Thread.sleep(0_5000);
+						//Thread.sleep(0_5000);
+						Sleep(1);
 					}
 
 					display.vblank = false;
@@ -118,7 +120,8 @@ class GLControlDisplay : GLControl {
 			} finally {
 				writefln("GLControlDisplay.threadRun.end");
 				//display.vblank = true;
-				Thread.sleep(10_0000);
+				//Thread.sleep(10_0000);
+				Sleep(10);
 			}
 		}
 	}

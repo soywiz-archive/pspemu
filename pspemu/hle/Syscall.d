@@ -1,11 +1,16 @@
 module pspemu.hle.Syscall;
 
+//debug = DEBUG_EMIT;
+
+import pspemu.utils.Utils;
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Instruction;
 
 import pspemu.hle.Module;
 
 class Syscall {
+	static uint[] emits;
+
 	static void opCall(Cpu cpu, Instruction instruction) {
 		uint   param   (int n) { return cpu.registers[4 + n]; }
 		void*  param_p (int n) { return cpu.memory.getPointer(cpu.registers[4 + n]); }
@@ -36,6 +41,14 @@ class Syscall {
 				cpu.registers.pcSet(cpu.registers.RA);
 				func.func();
 				return;
+			} break;
+			case 0x2308: { // void emitInt(int v)
+				debug (DEBUG_EMIT) writefln("emitInt(%d)", cpu.registers["a0"]);
+				emits ~= cpu.registers["a0"];
+			} break;
+			case 0x2309: { // void emitFloat(float v)
+				debug (DEBUG_EMIT) writefln("emitFloat(%f)", cpu.registers.F[12]);
+				emits ~= reinterpret!(uint)(cpu.registers.F[12]);
 			} break;
 			default:
 				.writefln("Unimplemented SYSCALL (%08X)", instruction.CODE);

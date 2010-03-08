@@ -4,7 +4,7 @@ import pspemu.utils.Utils;
 
 import std.stdio, std.stream, std.string, std.math;
 
-debug = MODULE_LOADER;
+//debug = MODULE_LOADER;
 
 class Elf {
 	static struct Header {
