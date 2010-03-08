@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 		emitInt(chksum_crc32((unsigned char *)0x04000000, 4 * 512 * 16));
 	}
 
-	testPrintf();
+	//testPrintf();
 
 	assert(0);
 

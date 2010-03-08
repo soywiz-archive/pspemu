@@ -209,6 +209,8 @@ class AllegrexAssembler : ISymbolResolver {
 			Instruction instruction;
 
 			instruction.v = (instructionDefinition.opcode & instructionDefinition.mask);
+			
+			//writefln("%s", paramTypes.join(""));
 
 			foreach (n; 0..paramTypes.length) {
 				auto paramType = paramTypes[n], paramValue = paramValues[n];
@@ -241,13 +243,15 @@ class AllegrexAssembler : ISymbolResolver {
 					addReloc(Reloc(Reloc.Type.Mips26, paramValue, PC));
 					return 0;
 				}
+				//writefln("param:%s", paramType);
 				switch (paramType) {
 					// Register.
 					case "%d" : instruction.RD     = getRegister;  break; // Rd
 					case "%s" : instruction.RS     = getRegister;  break; // Rs
 					case "%t" : instruction.RT     = getRegister;  break; // Rt
-					case "%D" : instruction.FD     = getFPRegister; break; // Fd
+					case "%1" :
 					case "%S" : instruction.FS     = getFPRegister; break; // Fs
+					case "%D" : instruction.FD     = getFPRegister; break; // Fd
 					case "%T" : instruction.FT     = getFPRegister; break; // Ft
 					case "%i" : instruction.IMM    = getImmediate(true); break; // 16bit signed immediate
 					case "%I" : instruction.IMMU   = getImmediate(false); break; // 16bit unsigned immediate (always printed in hex)
@@ -278,7 +282,7 @@ class AllegrexAssembler : ISymbolResolver {
 	static string getPattern(string pattern) {
 		pattern = replace(pattern, " ", r"\s+");
 		pattern = replace(pattern, "%o", r"(\-?\d+\([\$\d\w\-\+\_]+\))");
-		pattern = RegExp(r"%\w+", "g").replace(pattern, r"([\$\d\w\-\+\_]+)");
+		pattern = RegExp(r"%[\w\d]+", "g").replace(pattern, r"([\$\d\w\-\+\_]+)");
 		return '^' ~ pattern ~ "$";
 	}
 

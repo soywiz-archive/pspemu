@@ -77,7 +77,8 @@ template TemplateCpu_FPU() {
 		}
 	}
 
-	auto OP_CVT_S_W() { mixin(CE("$Fd = reinterpret!(int)($fs);")); }
+	// Convert FS register (stored as an int) to float and stores the result on FD.
+	auto OP_CVT_S_W() { mixin(CE("$fd = cast(float)reinterpret!(int)($fs);")); }
 
 	// Memory transfer.
 	auto OP_LWC1() { mixin(CE("$Ft = memory.read32($rs + #im);")); }

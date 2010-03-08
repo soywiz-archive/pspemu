@@ -6,6 +6,10 @@ class ModuleMgrForUser : Module {
 	this() {
 		mixin(register(0xD675EBB8, "sceKernelSelfStopUnloadModule"));
 	}
+
+	void sceKernelSelfStopUnloadModule() {
+		throw(new Exception("sceKernelSelfStopUnloadModule"));
+	}
 }
 
 class ModuleMgrForKernel : ModuleMgrForUser {

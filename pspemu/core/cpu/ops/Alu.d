@@ -25,7 +25,7 @@ template TemplateCpu_ALU() {
 	// Count Leading Ones in Word
 	auto OP_CLO() { mixin(CE("$rd = CLO($rs);")); }
 	// Count Leading Zeros in Word
-	auto OP_CLZ() { mixin(CE("$rd = CLZ($rs);")); }
+	auto OP_CLZ() { mixin(CE("$rd = CLZ($rs);")); /*writefln("%08X (%d)", registers[instruction.RS], CLZ(registers[instruction.RS])); assert(0);*/ }
 
 	// ADDI(U) -- Add immediate (Unsigned)
 	// Adds a register and a signed immediate value and stores the result in a register
@@ -206,6 +206,16 @@ template TemplateCpu_ALU_Utils() {
 		uint CLZ(uint v) { // Count Leading Zeros in Word
 			for (int n = 0; n < 32; n++, v <<= 1) if ((v & 0x80000000)) return n;
 			return 32;
+			/*
+			uint temp = 32;
+			for (int i = 31; i >= 0; i--) {
+				if (((v >> i) & 1) == 1) {
+					temp = 31 - i;
+					break;
+				}
+			}
+			return temp;
+			*/
 		}
 	}
 }

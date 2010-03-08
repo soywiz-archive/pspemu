@@ -68,7 +68,7 @@ void testExtended(string name) {
 		cpu.checkBreakpoints = true;
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
-
+	
 	// Start GPU.
 	gpu.start();
 
@@ -83,7 +83,12 @@ void testExtended(string name) {
 	})).start();
 
 	// Start CPU.
-	try { cpu.execute(); } catch (Object o) { writefln("%s", o); }
+	try {
+		Syscall.emits = [];
+		cpu.execute();
+	} catch (Object o) {
+		writefln("%s", o);
+	}
 	gpu.stop();
 	cpu.stop();
 
@@ -130,6 +135,7 @@ unittest {
 		string name = entry.name;
 		if (name.length >= 4 && name[$ - 4..$] != ".elf") continue;
 		string full = name[0..$ - 4];
+		assert(std.file.exists(full ~ ".expected"));
 		testGroup(full, {
 			testExtended(full);
 		});

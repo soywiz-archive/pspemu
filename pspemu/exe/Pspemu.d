@@ -86,6 +86,11 @@ int main(string[] args) {
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
 
+	/*
+	cpu.checkBreakpoints = true;
+	cpu.addBreakpoint(cpu.BreakPoint(0x890042C, ["f0", "f1", "f12"], true));
+	*/
+
 	// Start GPU.
 	gpu.start();
 

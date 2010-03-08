@@ -127,7 +127,7 @@ class Loader {
 	void count() {
 		try {
 			auto counter = new InstructionCounter;
-			counter.count(elf.SectionStream(".init"));
+			counter.count(elf.SectionStream(".text"));
 			counter.dump();
 		} catch (Object o) {
 			writefln("Can't count instructions: '%s'", o.toString);

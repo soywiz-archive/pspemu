@@ -34,12 +34,15 @@ final class Registers {
 		protected static int[string] aliases;
 
 		static this() {
-			foreach (n; 0..32) aliases[format("$f%d", n)] = n;
+			foreach (n; 0..32) {
+				aliases[format("$f%d", n)] = n;
+				aliases[format("f%d", n)] = n;
+			}
 			aliases = aliases.rehash;
 		}
 
 		static int getAlias(string aliasName) {
-			assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
+			assert((aliasName in aliases) !is null, std.string.format("Unknown register alias '%s'", aliasName));
 			return aliases[aliasName];
 		}
 	}

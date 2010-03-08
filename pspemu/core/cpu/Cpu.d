@@ -198,6 +198,7 @@ class Cpu {
 				traceStep = true;
 				breakpointStep = *bp;
 				breakpointRegisters.R[0..32] = registers.R[0..32];
+				breakpointRegisters.F[0..32] = registers.F[0..32];
 			}
 			trace(*bp, PC, false);
 			return true;
@@ -206,18 +207,49 @@ class Cpu {
 			if (traceOnlyIfChanged && bp.traceRegisters.length) {
 				bool cancel = true;
 				foreach (reg; bp.traceRegisters) {
-					if (breakpointRegisters[reg] != registers[reg]) {
-						breakpointRegisters[reg] = registers[reg];
-						//writefln("changed %s", reg);
-						cancel = false;
-						//break;
+					// Float
+					if (reg[0] == 'f') {
+						uint regIndex = Registers.FP.getAlias(reg);
+						if (breakpointRegisters.F[regIndex] != registers.F[regIndex]) {
+							breakpointRegisters.F[regIndex] = registers.F[regIndex];
+							//writefln("changed %s", reg);
+							cancel = false;
+							//break;
+						}
+					}
+					// Integer
+					else {
+						if (breakpointRegisters[reg] != registers[reg]) {
+							breakpointRegisters[reg] = registers[reg];
+							//writefln("changed %s", reg);
+							cancel = false;
+							//break;
+						}
 					}
 				}
 				if (cancel) return;
 			}
-			foreach (k, reg; bp.traceRegisters) {
-				if (k != 0) writef(",");
-				writef("%s=%08X", reg, registers[reg]);
+			if (bp.traceRegisters.length) {
+				foreach (k, reg; bp.traceRegisters) {
+					if (k != 0) writef(",");
+					if (reg[0] == 'f') {
+						writef("%s=%f", reg, registers.F[Registers.FP.getAlias(reg)]);
+					} else {
+						writef("%s=%08X", reg, registers[reg]);
+					}
+				}
+			} else {
+				/*
+				foreach (k, reg; ["f0", "f1", "f12"]) {
+					if (k != 0) writef(",");
+					if (reg[0] == 'f') {
+						int regIndex = Registers.FP.getAlias(reg);
+						writef("%s(%d)=%f", reg, regIndex, registers.F[regIndex]);
+					} else {
+						writef("%s=%08X", reg, registers[reg]);
+					}
+				}
+				*/
 			}
 			writef(" :: ");
 			AllegrexDisassembler dissasembler;

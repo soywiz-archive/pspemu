@@ -365,4 +365,24 @@ unittest {
 		assertTrue(cpu.registers.RF[4] == cpu.memory.read32(assembler.segments["data"] + 8), "SWC1");
 		assertTrue(cpu.registers.RF[1] == 2, "CEIL.W.S");
 	});
+
+	testGroup("FLOAT CVT_S_W", {
+		assembler.assembleBlock(r"
+		.data
+			values: .word 7
+		.text
+			la $1, values
+			lw $1, 0($1)
+			mtc1 $1, $f0
+			cvt.s.w $f1, $f0
+
+			halt
+		");
+
+		gotoText();
+		cpu.executeUntilHalt();
+		//cpu.execute(5);
+		assertTrue(cpu.registers.RF[0] == 7, "MTC1");
+		assertTrue(cpu.registers.F[1] == 7.0, "CVT_S_W");
+	});
 }
