@@ -68,10 +68,7 @@ class PSF {
 
 	Stream stream;
 	Header header;
-	// Bug 2.039. Can't use AA when included std.variadic.
-	// http://d.puremagic.com/issues/show_bug.cgi?id=3692
-	//Pair[string] pairs;
-	Pair[] pairs;
+	Pair[string] pairs;
 
 	this(Stream _stream) {
 		stream = new SliceStream(_stream, 0);
@@ -81,16 +78,12 @@ class PSF {
 
 		foreach (n; 0 .. header.count) {
 			auto pair = new Pair(stream);
-			//pairs[pair.key] = pair;
-			pairs ~= pair;
+			pairs[pair.key] = pair;
 		}
 	}
 
 	Variant opIndex(string key) {
-		foreach (pair; pairs) {
-			if (pair.key == key) return pair.value;
-		}
-		assert(0);
+		return pairs[key].value;
 	}
 
 	int opApply(int delegate(ref string, ref Variant) callback) {

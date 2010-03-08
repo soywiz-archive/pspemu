@@ -20,6 +20,8 @@ import pspemu.core.gpu.Gpu;
 import pspemu.hle.Loader;
 import pspemu.hle.Syscall;
 
+import std.file;
+
 static do_unittest = false;
 
 unittest { do_unittest = true; }
@@ -81,7 +83,7 @@ void testExtended(string name) {
 	})).start();
 
 	// Start CPU.
-	try { cpu.execute(); } catch (Object o) { }
+	try { cpu.execute(); } catch (Object o) { writefln("%s", o); }
 	gpu.stop();
 	cpu.stop();
 
@@ -105,7 +107,7 @@ void testExtended(string name) {
 			check!(int)();
 		}
 		*/
-		auto emited   = Syscall.emits[emitPosition];
+		auto emited   = (emitPosition < Syscall.emits.length) ? Syscall.emits[emitPosition] : "<not emited>";
 		auto expected = line;
 		assertTrue(emited == expected, std.string.format("emit(emited(%s) == expected(%s))", emited, expected));
 		emitPosition++;
@@ -115,8 +117,6 @@ void testExtended(string name) {
 }
 
 unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-
 	void reset() {
 	}
 
@@ -126,9 +126,14 @@ unittest {
 		callback();
 	}
 
-	testGroup("tests/test1", {
-		testExtended("tests/test1");
-	});
+	foreach (DirEntry entry; dirEntries("tests", SpanMode.shallow)) {
+		string name = entry.name;
+		if (name.length >= 4 && name[$ - 4..$] != ".elf") continue;
+		string full = name[0..$ - 4];
+		testGroup(full, {
+			testExtended(full);
+		});
+	}
 }
 
 void main() {

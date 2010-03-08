@@ -68,9 +68,19 @@ void testIntegerSum() {
 
 void testPrintf() {
 	char buffer[32];
-	sprintf(buffer, "%.2f", 240.0f);
-	emitString(buffer);
+	int var = 240;
+	sprintf(buffer, "%f"  , (float)var); emitString(buffer);
+	sprintf(buffer, "%.2f", 240.0f); emitString(buffer);
 	assert(strcmp(buffer, "240.00") == 0);
+}
+
+void testMalloc() {
+	char *data = malloc(16);
+	assert(data);
+	strcpy(data, "This is a test");
+	emitString(data);
+	assert(data[0] == 'T');
+	free(data);
 }
 
 int main(int argc, char* argv[]) {
@@ -82,16 +92,19 @@ int main(int argc, char* argv[]) {
 
 	testIntegerSum();
 	testCrc32();
-	testPrintf();
+	testMalloc();
 	emitFloat(0.1);
 	emitFloat(f);
 
-	for (n = 0; n < 10; n++) {
+	for (n = 0; n < 2; n++) {
 		sceDisplayWaitVblankStart();
 		pspDebugScreenSetXY(0, 1);
 		pspDebugScreenPrintf("Hola %f!", f);
 		f += 0.1;
+		emitInt(chksum_crc32((unsigned char *)0x04000000, 4 * 512 * 16));
 	}
+
+	testPrintf();
 
 	assert(0);
 

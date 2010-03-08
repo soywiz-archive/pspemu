@@ -57,9 +57,9 @@ int main(string[] args) {
 	//executableFile = "demos/mytest.pbp";
 	//executableFile = "demos/text.pbp";
 	//executableFile = "demos/lines.pbp";
-	//executableFile = "tests/test1.elf";
+	executableFile = "tests/test1.elf";
 	//executableFile = "demos/cube.pbp";
-	executableFile = "demos/ortho.pbp";
+	//executableFile = "demos/ortho.pbp";
 
 	if (args.length >= 2) {
 		executableFile = args[1];
@@ -81,27 +81,10 @@ int main(string[] args) {
 	cpu.registers["a1"] = loader.PC; // argumentsPointer
 	cpu.registers["a2"] = 0; // argumentsPointer
 
-	//0x089007C4
-	//dissasembler.dump(0x08906590, -6, 6);
-
 	version (TRACE_FROM_BEGINING) {
 		cpu.checkBreakpoints = true;
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
-
-	/*
-	cpu.checkBreakpoints = true;
-	cpu.addBreakpoint(cpu.BreakPoint(0x089006D8, ["a0", "a1", "a2", "a3", "t0"]));
-	*/
-
-	/*if (0) {
-		cpu.checkBreakpoints = true;
-		cpu.addBreakpoint(cpu.BreakPoint(0x0890013C, ["t0", "t1", "t2", "v0"]));
-		cpu.addBreakpoint(cpu.BreakPoint(0x08900140, ["t0", "t1", "t2", "v0"]));
-		cpu.addBreakpoint(cpu.BreakPoint(0x08900144, ["t0"], true));
-	} else {
-		//cpu.addBreakpoint(cpu.BreakPoint(0x08900284, ["v1"]));
-	}*/
 
 	// Start GPU.
 	gpu.start();
@@ -120,6 +103,9 @@ int main(string[] args) {
 			writefln("CPU Error: %s", o.toString());
 		} finally {
 			.writefln("End CPU executing.");
+			cpu.stop();
+			gpu.stop();
+			Application.exit();
 		}
 	})).start();
 

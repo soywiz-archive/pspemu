@@ -120,6 +120,22 @@ class Elf {
 	SectionHeader[] sectionHeaders;
 	string[] sectionHeaderNames;
 	SectionHeader[string] sectionHeadersNamed;
+	char[] stringTable;
+
+	void dumpSections() {
+		writefln("SectionHeader(%d):", sectionHeaders.length);
+		foreach (n, sectionHeader; sectionHeaders) {
+			writefln(
+				"  SectionHeader(type=%08X, flags=%08X, mem=0x%08X, file=0x%06X, size=0x%05X) : '%s'",
+				sectionHeader.type,
+				sectionHeader.flags,
+				sectionHeader.address,
+				sectionHeader.offset,
+				sectionHeader.size,
+				sectionHeaderNames[n]
+			);
+		}
+	}
 
 	bool needsRelocation() { return (header.entryPoint < 0x08000000) || (header.type == Header.Type.Prx); }
 	Stream SectionStream(SectionHeader sectionHeader) {
@@ -128,10 +144,12 @@ class Elf {
 		switch (sectionHeader.type) {
 			case SectionHeader.Type.PROGBITS:
 			case SectionHeader.Type.STRTAB:
+				//writefln("sectionHeader.offset:%08X", sectionHeader.offset);
 				return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
 			break;
 			default:
-				return new SliceStream(stream, sectionHeader.address, sectionHeader.address + sectionHeader.size);
+				return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
+				//return new SliceStream(stream, sectionHeader.address, sectionHeader.address + sectionHeader.size);
 			break;
 		}
 	}
@@ -156,20 +174,16 @@ class Elf {
 	}
 
 	void extractSectionHeaderNames() {
+		auto stringTableStream = SectionStream(sectionHeaderStringTable);
+		stringTable = cast(char[])stringTableStream.readString(cast(uint)stringTableStream.size);
 		sectionHeaderNames = [];
-		try {
-			//writefln("lalala");
-			auto stringTableStream = SectionStream(sectionHeaderStringTable);
-			while (!stringTableStream.eof) {
-				auto name = readStringz(stringTableStream);
-				sectionHeadersNamed[name] = sectionHeaders[sectionHeaderNames.length];
-				sectionHeaderNames ~= name;
-				//writefln("%s", name);
-			}
-		} catch (Object e) {
-			writefln("extractSectionHeaderNames.Error: (%08X) %s", sectionHeaderStringTable.offset, e);
+		string szToString(char *str) { return cast(string)str[0..std.c.string.strlen(str)]; }
+		foreach (sectionHeader; sectionHeaders) {
+			auto name = szToString(stringTable.ptr + sectionHeader.name);
+			//writefln("---'%s'", sectionHeader.name);
+			sectionHeaderNames ~= name;
+			sectionHeadersNamed[name] = sectionHeader;
 		}
-		while (sectionHeaderNames.length < sectionHeaders.length) sectionHeaderNames ~= "";
 	}
 
 	ref SectionHeader sectionHeaderStringTable() {

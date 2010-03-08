@@ -109,7 +109,15 @@ class Loader {
 
 		this.elf    = new Elf(stream);
 		this.memory = memory;
-		load();
+		version (DEBUG_LOADER) {
+			elf.dumpSections();
+		}
+		try {
+			load();
+		} catch (Object o) {
+			writefln("Loader.load Exception: %s", o);
+			throw(o);
+		}
 		version (DEBUG_LOADER) {
 			count();
 			Module.dumpKnownModules();
@@ -132,9 +140,9 @@ class Loader {
 		
 		auto importsStream = new SliceStream(memory, moduleInfo.importsStart, moduleInfo.importsEnd);
 		auto exportsStream = new SliceStream(memory, moduleInfo.exportsStart, moduleInfo.exportsEnd);
-
+		
 		// Load Imports.
-		version (DEBUG_LOADER) writefln("Imports:");
+		version (DEBUG_LOADER) writefln("Imports (0x%08X-0x%08X):", moduleInfo.importsStart, moduleInfo.importsEnd);
 		auto assembler = new AllegrexAssembler(memory);
 		while (!importsStream.eof) {
 			auto moduleImport = read!(ModuleImport)(importsStream);
@@ -163,7 +171,7 @@ class Loader {
 			}
 		}
 		// Load Exports.
-		version (DEBUG_LOADER) writefln("Exports:");
+		version (DEBUG_LOADER) writefln("Exports (0x%08X-0x%08X):", moduleInfo.exportsStart, moduleInfo.exportsEnd);
 		while (!exportsStream.eof) {
 			auto moduleExport = read!(ModuleExport)(exportsStream);
 			auto moduleExportName = moduleExport.name ? readStringz(memory, moduleExport.name) : "<null>";
