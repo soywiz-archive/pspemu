@@ -21,6 +21,7 @@ template TemplateCpu_FPU() {
 	auto OP_BC1TL() { mixin(BRANCH_S(Likely.YES, "registers.CC")); }
 	
 	// Unary operations.
+	auto OP_MOV_S()  { mixin(CE("$fd = $fs;")); }
 	auto OP_ABS_S()  { mixin(CE("$fd = fabs($fs);")); }
 	auto OP_NEG_S()  { mixin(CE("$fd = -($fs);")); }
 	auto OP_SQRT_S() { mixin(CE("$fd = sqrt($fs);")); }
@@ -30,7 +31,6 @@ template TemplateCpu_FPU() {
 	auto OP_SUB_S() { mixin(CE("$fd = $fs - $ft;")); }
 	auto OP_MUL_S() { mixin(CE("$fd = $fs * $ft;")); }
 	auto OP_DIV_S() { mixin(CE("$fd = $fs / $ft;")); }
-	auto OP_MOV_S() { mixin(CE("$fd = $fs;")); }
 
 	// CC ops
 	static const QNAN = "isnan($fs) || isnan($ft)";
@@ -77,12 +77,7 @@ template TemplateCpu_FPU() {
 		}
 	}
 
-	auto OP_CVT_S_W() {
-		// From: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
-		mixin(CE("$Fd = reinterpret!(int)($fs);"));
-		//registers.pcAdvance(4);
-		//assert(0);
-	}
+	auto OP_CVT_S_W() { mixin(CE("$Fd = reinterpret!(int)($fs);")); }
 
 	// Memory transfer.
 	auto OP_LWC1() { mixin(CE("$Ft = memory.read32($rs + #im);")); }

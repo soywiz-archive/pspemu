@@ -21,6 +21,7 @@ import pspemu.core.gpu.ops.Special;
 import pspemu.core.gpu.ops.Flow;
 import pspemu.core.gpu.ops.Colors;
 import pspemu.core.gpu.ops.Draw;
+import pspemu.core.gpu.ops.Matrix;
 
 extern (Windows) {
 	bool  SetPixelFormat(HDC, int, PIXELFORMATDESCRIPTOR*);
@@ -81,11 +82,51 @@ class Gpu {
 		void* pointer() { return memory.getPointer(_address); }
 	}
 
-	struct Colorf {
+	static struct Colorf {
 		union {
 			struct { float[4] components; }
 			struct { float r, g, b, a; }
 			struct { float red, green, blue, alpha; }
+		}
+		static assert(this.sizeof == float.sizeof * 4);
+	}
+
+	static struct Matrix {
+		union {
+			struct { float[4 * 4] cells; }
+			struct { float[4][4]  rows; }
+		}
+		float* pointer() { return cells.ptr; }
+		enum WriteMode { M4x4, M4x3 }
+		const indexesM4x4 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+		const indexesM4x3 = [0, 1, 2,  4, 5, 6,  8, 9, 10,  12, 13, 14];
+		uint index;
+		WriteMode mode;
+		void reset(WriteMode mode = WriteMode.M4x4) {
+			index = 0;
+			this.mode = mode;
+			if (mode == WriteMode.M4x3) {
+				cells[11] = cells[7] = cells[3] = 0.0;
+				cells[15] = 1.0;
+			}
+		}
+		void next() { index++; index &= 0xF; }
+		void write(float cell) {
+			auto indexes = (mode == WriteMode.M4x4) ? indexesM4x4 : indexesM4x3;
+			cells[indexes[index++ % indexes.length]] = cell;
+		}
+		//static assert(this.sizeof == float.sizeof * 16 + uint.sizeof);
+		string toString() {
+			return std.string.format(
+				"(%f, %f, %f, %f)\n"
+				"(%f, %f, %f, %f)\n"
+				"(%f, %f, %f, %f)\n"
+				"(%f, %f, %f, %f)",
+				cells[0], cells[1], cells[2], cells[3],
+				cells[4], cells[5], cells[6], cells[7],
+				cells[8], cells[9], cells[10], cells[11],
+				cells[12], cells[13], cells[14], cells[15]
+			);
 		}
 	}
 
@@ -97,6 +138,7 @@ class Gpu {
 		int  clearFlags;
 		VertexType vertexType;
 		Colorf ambientModelColor, diffuseModelColor, specularModelColor;
+		Matrix projectionMatrix, worldMatrix, viewMatrix;
 
 		void *vertexPointer() { return memory.getPointer(vertexAddress); }
 		void *indexPointer () { return memory.getPointer(indexAddress); }
@@ -138,6 +180,7 @@ class Gpu {
 		mixin Gpu_Flow;
 		mixin Gpu_Colors;
 		mixin Gpu_Draw;
+		mixin Gpu_Matrix;
 
 		mixin({
 			string s;
@@ -244,11 +287,15 @@ class Gpu {
 	}
 
 	void loadFrameBuffer() {
+		//glFlush();
 		bitmapData[0..512 * 272] = (cast(uint *)memory.getPointer(info.drawBuffer.address))[0..512 * 272];
+		//glFlush();
 	}
 
 	void storeFrameBuffer() {
+		//glFlush();
 		(cast(uint *)memory.getPointer(info.drawBuffer.address))[0..512 * 272] = bitmapData[0..512 * 272];
+		//glFlush();
 	}
 
 	template ExternalInterface() {

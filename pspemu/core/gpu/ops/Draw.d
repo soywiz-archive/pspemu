@@ -113,18 +113,25 @@ template Gpu_Draw() {
 			glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
 			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 		} else {
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			//glMultMatrixf(cast(float*)matrix_Projection);
+			glMatrixMode(GL_PROJECTION); glLoadIdentity();
+			glMultMatrixf(cast(float*)gpu.info.projectionMatrix.pointer);
 
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-			/*
-			glMultMatrixf(cast(float*)matrix_Model);
-			glMultMatrixf(cast(float*)matrix_World);
-			*/
+			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+			glMultMatrixf(gpu.info.viewMatrix.pointer);
+			glMultMatrixf(gpu.info.worldMatrix.pointer);
+			
 		}
-		
+		/*
+			glMatrixMode(GL_PROJECTION); glLoadIdentity();
+			glMultMatrixf(cast(float*)gpu.info.projectionMatrix.pointer);
+
+			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+			glMultMatrixf(gpu.info.viewMatrix.pointer);
+
+			writefln("Projection:\n%s", gpu.info.projectionMatrix);
+			writefln("View:\n%s", gpu.info.viewMatrix);
+			writefln("World:\n%s", gpu.info.worldMatrix);
+		*/
 		/*
 		glActiveTexture(GL_TEXTURE0);
 		glMatrixMode(GL_TEXTURE);

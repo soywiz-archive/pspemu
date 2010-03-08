@@ -14,8 +14,8 @@ template Gpu_Special() {
 	auto OP_VTYPE() { gpu.info.vertexType.v = command.param24; }
 
 	// Frame Buffer Pointer
-	auto OP_FBP() { gpu.info.drawBuffer.address = command.param24; }
+	auto OP_FBP() { gpu.info.drawBuffer.address = command.param24; gpu.loadFrameBuffer(); }
 
 	// Frame Buffer Width
-	auto OP_FBW() { gpu.info.drawBuffer.width   = command.param16; gpu.loadFrameBuffer(); }
+	auto OP_FBW() { gpu.info.drawBuffer.width   = command.param16; }
 }

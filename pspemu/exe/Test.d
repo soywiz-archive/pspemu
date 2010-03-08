@@ -1,6 +1,6 @@
 module pspemu.exe.Test;
 
-import std.stream, std.stdio, core.thread;
+import std.stream, std.stdio, core.thread, std.variant;
 
 import std.c.windows.windows;
 
@@ -89,12 +89,11 @@ void testExtended(string name) {
 
 	auto lines = std.string.splitlines(cast(char[])std.file.read(name ~ ".expected"));
 
-	assertTrue(Syscall.emits.length == lines.length, std.string.format("emits.length(emited(%d) == expected(%d))", Syscall.emits.length, lines.length));
-
 	foreach (line; lines) {
+		/*
 		void check(T)() {
-			auto expected = std.conv.to!(T)(line);
-			auto emited   = reinterpret!(T)(Syscall.emits[emitPosition]);
+			auto expected = Variant(std.conv.to!(T)(line));
+			auto emited   = Syscall.emits[emitPosition]; // Variant
 			assertTrue(emited == expected, std.string.format("emit!(%s)(emited(%s) == expected(%s))", typeid(T), emited, expected));
 		}
 		//auto line = cast(string)line_c;
@@ -105,8 +104,14 @@ void testExtended(string name) {
 		else {
 			check!(int)();
 		}
+		*/
+		auto emited   = Syscall.emits[emitPosition];
+		auto expected = line;
+		assertTrue(emited == expected, std.string.format("emit(emited(%s) == expected(%s))", emited, expected));
 		emitPosition++;
 	}
+
+	assertTrue(Syscall.emits.length == lines.length, std.string.format("emits.length(emited(%d) == expected(%d))", Syscall.emits.length, lines.length));
 }
 
 unittest {

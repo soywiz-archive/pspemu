@@ -15,8 +15,9 @@ PSP_MODULE_INFO("Test1", 0, 1, 1);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 
 #define assert(v) { if (!(v)) { asm("break"); } }
-void emitInt  (int   v) { asm("syscall 0x2308"); }
-void emitFloat(float v) { asm("syscall 0x2309"); }
+void emitInt   (int   v) { asm("syscall 0x2308"); }
+void emitFloat (float v) { asm("syscall 0x2309"); }
+void emitString(char *v) { asm("syscall 0x230A"); }
 
 unsigned int crc_tab[256];
 
@@ -65,6 +66,13 @@ void testIntegerSum() {
 	emitInt(n);
 }
 
+void testPrintf() {
+	char buffer[32];
+	sprintf(buffer, "%.2f", 240.0f);
+	emitString(buffer);
+	assert(strcmp(buffer, "240.00") == 0);
+}
+
 int main(int argc, char* argv[]) {
 	float f = 1.0;
 	int n;
@@ -74,6 +82,7 @@ int main(int argc, char* argv[]) {
 
 	testIntegerSum();
 	testCrc32();
+	testPrintf();
 	emitFloat(0.1);
 	emitFloat(f);
 

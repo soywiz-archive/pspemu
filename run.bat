@@ -7,7 +7,7 @@ SET SOURCES=%SOURCES% pspemu/gui/GLControl.d
 SET SOURCES=%SOURCES% pspemu/gui/DisplayForm.d
 
 del /q pspemu.exe 2> NUL
-%DMD% %SOURCES% %RELEASE% -g pspemu/exe/pspemu.d -ofpspemu
+%DMD% %SOURCES% %RELEASE% -version=DEBUG_LOADER -g pspemu/exe/pspemu.d -ofpspemu
 del /q pspemu.map 2> NUL
 del /q pspemu.obj 2> NUL
 if EXIST "pspemu.exe" (

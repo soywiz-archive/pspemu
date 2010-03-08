@@ -40,7 +40,7 @@ class PspDisplay : BasePspDisplay {
 	bool vblank() { return _vblank; }
 }
 
-int main() {
+int main(string[] args) {
 	auto memory  = new Memory;
 	auto display = new PspDisplay(memory);
 	auto gpu     = new Gpu(memory);
@@ -56,8 +56,14 @@ int main() {
 	//executableFile = "demos/counter.pbp";
 	//executableFile = "demos/mytest.pbp";
 	//executableFile = "demos/text.pbp";
-	executableFile = "demos/lines.pbp";
+	//executableFile = "demos/lines.pbp";
 	//executableFile = "tests/test1.elf";
+	//executableFile = "demos/cube.pbp";
+	executableFile = "demos/ortho.pbp";
+
+	if (args.length >= 2) {
+		executableFile = args[1];
+	}
 	
 	auto loader  = new Loader(executableFile, memory);
 	writefln("PC: %08X", loader.PC);

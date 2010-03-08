@@ -1,6 +1,6 @@
 module pspemu.hle.Syscall;
 
-//debug = DEBUG_EMIT;
+debug = DEBUG_EMIT;
 
 import pspemu.utils.Utils;
 import pspemu.core.cpu.Cpu;
@@ -8,8 +8,12 @@ import pspemu.core.cpu.Instruction;
 
 import pspemu.hle.Module;
 
+//import std.variant;
+
+string szToString(char *s) { return cast(string)s[0..std.c.string.strlen(s)]; }
+
 class Syscall {
-	static uint[] emits;
+	static string[] emits;
 
 	static void opCall(Cpu cpu, Instruction instruction) {
 		uint   param   (int n) { return cpu.registers[4 + n]; }
@@ -43,12 +47,20 @@ class Syscall {
 				return;
 			} break;
 			case 0x2308: { // void emitInt(int v)
-				debug (DEBUG_EMIT) writefln("emitInt(%d)", cpu.registers["a0"]);
-				emits ~= cpu.registers["a0"];
+				auto vv = cpu.registers["a0"];
+				debug (DEBUG_EMIT) writefln("emitInt(%d)", vv);
+				emits ~= std.string.format("%d", vv);
 			} break;
 			case 0x2309: { // void emitFloat(float v)
-				debug (DEBUG_EMIT) writefln("emitFloat(%f)", cpu.registers.F[12]);
-				emits ~= reinterpret!(uint)(cpu.registers.F[12]);
+				auto vv = cpu.registers.F[12];
+				debug (DEBUG_EMIT) writefln("emitFloat(%f)", vv);
+				emits ~= std.string.format("%f", vv);
+			} break;
+			case 0x230A: { // void emitString(char *v)
+				auto vv = szToString(cast(char *)cpu.memory.getPointer(cpu.registers["a0"]));
+				debug (DEBUG_EMIT) writefln("emitString(\"%s\")", vv);
+				emits ~= std.string.format("\"%s\"", vv);
+				//emits ~= cast(char *)cpu.memory.getPointer(cast(uint *)reinterpret!(char *)(cpu.registers.F[12]));
 			} break;
 			default:
 				.writefln("Unimplemented SYSCALL (%08X)", instruction.CODE);

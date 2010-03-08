@@ -66,6 +66,8 @@ SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Flow.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Colors.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Draw.d
 
+SET SOURCES=%SOURCES% gdi32.lib
+
 REM SET RELEASE=-noboundscheck -inline -O -release
 SET RELEASE=-noboundscheck -O -release
 
