@@ -14,12 +14,18 @@
 PSP_MODULE_INFO("Test2", 0, 1, 1);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 
+typedef struct {
+	unsigned mantissa : 23;
+	unsigned exponent : 8;
+	unsigned sign     : 1;
+} FLOAT;
+
 #define assert(v) { if (!(v)) { asm("break"); } }
 void emitInt   (int   v) { asm("syscall 0x2308"); }
 void emitFloat (float v) { asm("syscall 0x2309"); }
 void emitString(char *v) { asm("syscall 0x230A"); }
 
-int main(int argc, char* argv[]) {
+void testIntToFloat() {
 	int table[] = {8, 10, 12};
 	int n;
 	float x = 0;
@@ -29,6 +35,40 @@ int main(int argc, char* argv[]) {
 		x += table[n];
 		emitFloat(x);
 	}
+}
+
+void testFloatManip() {
+	float f1 = -8.4;
+	float f2 = +4.8;
+	FLOAT ff;
+
+	ff = *(FLOAT *)&f1;
+	emitInt(ff.sign);
+	emitInt(ff.exponent);
+	emitInt(ff.mantissa);
+
+	ff = *(FLOAT *)&f2;
+	emitInt(ff.sign);
+	emitInt(ff.exponent);
+	emitInt(ff.mantissa);
+}
+
+void testFloatExtra() {
+	float y = 0.;
+	float x = 16.4;
+	int n = 0;
+
+	y = (float)frexp(x, &n );
+	emitFloat(y);
+	emitInt(n);
+	//assert(y == 0.512500);
+	//assert(n == 5);
+}
+
+int main(int argc, char* argv[]) {
+	testIntToFloat();
+	testFloatExtra();
+	testFloatManip();
 
 	return 0;
 }
