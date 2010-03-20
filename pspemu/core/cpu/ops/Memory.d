@@ -9,33 +9,7 @@ import pspemu.utils.Utils;
 import std.stdio;
 
 template TemplateCpu_MEMORY() {
-	enum { Unsigned, Signed }
-
-	// FIXME: This should be moved to another place.
-	alias byte   s8;
-	alias ubyte  u8;
-	alias short  s16;
-	alias ushort u16;
-	alias int    s32;
-	alias uint   u32;
-	alias long   s64;
-	alias ulong  u64;
-
-	static pure nothrow {
-		string LOAD(uint size, bool signed) {
-			return (
-				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ tos(size) ~ ")memory.read" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET);" ~
-				"registers.pcAdvance(4);"
-			);
-		}
-
-		string STORE(uint size) {
-			return (
-				"memory.write" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET, cast(u" ~ tos(size) ~ ")registers[instruction.RT]);" ~
-				"registers.pcAdvance(4);"
-			);
-		}
-	}
+	mixin TemplateCpu_MEMORY_Utils;
 
 	// LB(U) -- Load byte (unsigned)
 	// LH(U) -- Load half (unsigned)
@@ -85,6 +59,36 @@ template TemplateCpu_MEMORY() {
 	auto OP_CACHE() {
 		.writefln("Unimplemented CACHE");
 		registers.pcAdvance(4);
+	}
+}
+
+template TemplateCpu_MEMORY_Utils() {
+	enum { Unsigned, Signed }
+
+	// FIXME: This should be moved to another place.
+	alias byte   s8;
+	alias ubyte  u8;
+	alias short  s16;
+	alias ushort u16;
+	alias int    s32;
+	alias uint   u32;
+	alias long   s64;
+	alias ulong  u64;
+
+	static pure nothrow {
+		string LOAD(uint size, bool signed) {
+			return (
+				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ tos(size) ~ ")memory.read" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET);" ~
+				"registers.pcAdvance(4);"
+			);
+		}
+
+		string STORE(uint size) {
+			return (
+				"memory.write" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET, cast(u" ~ tos(size) ~ ")registers[instruction.RT]);" ~
+				"registers.pcAdvance(4);"
+			);
+		}
 	}
 }
 

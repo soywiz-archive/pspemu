@@ -28,11 +28,11 @@ template Gpu_Draw() {
 		enum Type { GU_POINTS = 0, GU_LINES = 1, GU_LINE_STRIP = 2, GU_TRIANGLES = 3, GU_TRIANGLE_STRIP = 4, GU_TRIANGLE_FAN = 5, GU_SPRITES = 6 };
 
 		struct VertexState {
-			float u, v;
-			float r, g, b, a;
-			float nx, ny, nz;
-			float px, py, pz;
-			float weights[8];
+			float u, v;        // Texture coordinates.
+			float r, g, b, a;  // Color components.
+			float nx, ny, nz;  // Normal vector.
+			float px, py, pz;  // Position vector.
+			float weights[8];  // Weights for skinning and morphing.
 		}
 
 		static const uint[] pspTypeSize = [0, byte.sizeof, short.sizeof, float.sizeof];
@@ -66,15 +66,15 @@ template Gpu_Draw() {
 		auto extractTable = [null, &extractArray!(byte), &extractArray!(short), &extractArray!(float)];
 		auto extractColorTable = [null, &extractColor8bits, &extractColor8bits, &extractColor8bits, &extractColor16bits, &extractColor16bits, &extractColor16bits, &extractColor8888];
 
-		auto extracteWeights = extractTable[vertexType.texture ];
+		auto extractWeights  = vertexType.skinningWeightCount ? &extractArray!(float) : null;
 		auto extractTexture  = extractTable[vertexType.texture ];
 		auto extractPosition = extractTable[vertexType.position];
 		auto extractNormal   = extractTable[vertexType.normal  ];
 		auto extractColor    = extractColorTable[vertexType.color];
 
 		void extractVertex(ref VertexState vertex) {
-			if (extracteWeights) {
-				extracteWeights(vertex.weights[0..vertexType.skinningWeightCount]);
+			if (extractWeights) {
+				extractWeights(vertex.weights[0..vertexType.skinningWeightCount]);
 				debug (EXTRACT_PRIM) writef("| weights(...) ");
 			}
 
@@ -153,8 +153,8 @@ template Gpu_Draw() {
 			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 			glMultMatrixf(gpu.info.viewMatrix.pointer);
 			glMultMatrixf(gpu.info.worldMatrix.pointer);
-			
 		}
+		glColor4f(1, 1, 1, 1);
 		/*
 			glMatrixMode(GL_PROJECTION); glLoadIdentity();
 			glMultMatrixf(cast(float*)gpu.info.projectionMatrix.pointer);

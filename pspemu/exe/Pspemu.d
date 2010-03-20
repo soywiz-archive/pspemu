@@ -33,6 +33,7 @@ class PspDisplay : BasePspDisplay {
 
 	void* frameBufferPointer() {
 		//return memory.getPointer(Memory.frameBufferAddress);
+		//writefln("%08X", memory.displayMemory);
 		return memory.getPointer(memory.displayMemory);
 	}
 

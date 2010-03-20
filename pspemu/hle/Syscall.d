@@ -62,6 +62,15 @@ class Syscall {
 				emits ~= std.string.format("\"%s\"", vv);
 				//emits ~= cast(char *)cpu.memory.getPointer(cast(uint *)reinterpret!(char *)(cpu.registers.F[12]));
 			} break;
+			case 0x230B: { // void startTracing()
+				cpu.checkBreakpoints = true;
+				cpu.addBreakpoint(cpu.BreakPoint(cpu.registers.PC, [], true));
+			} break;
+			case 0x230C: { // void stopTracing()
+				cpu.checkBreakpoints = false;
+				cpu.instructionCounter.dump();
+				//cpu.addBreakpoint(cpu.BreakPoint(cpu.registers.PC, [], true));
+			} break;
 			default:
 				.writefln("Unimplemented SYSCALL (%08X)", instruction.CODE);
 				assert(0);

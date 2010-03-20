@@ -71,7 +71,7 @@ template TemplateCpu_BRANCH() {
 	// Branches if the two registers are not equal
 	// if $s != $t advance_pc (offset << 2)); else advance_pc (4);
 	auto OP_BNE () { mixin(BRANCH(Likely.NO , Link.NO , "registers[instruction.RS] != registers[instruction.RT]")); }
-	auto OP_BNEL() { mixin(BRANCH(Likely.NO , Link.NO , "registers[instruction.RS] != registers[instruction.RT]")); }
+	auto OP_BNEL() { mixin(BRANCH(Likely.YES, Link.NO , "registers[instruction.RS] != registers[instruction.RT]")); }
 }
 
 unittest {

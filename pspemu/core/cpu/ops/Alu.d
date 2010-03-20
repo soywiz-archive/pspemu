@@ -13,6 +13,9 @@ private import std.stdio;
 template TemplateCpu_ALU() {
 	mixin TemplateCpu_ALU_Utils;
 
+	// $ = unsigned
+	// # = signed
+
 	// ADD(U) -- Add (Unsigned)
 	// Adds two registers and stores the result in a register
 	// $d = $s + $t; advance_pc (4);

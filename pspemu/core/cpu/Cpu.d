@@ -33,6 +33,10 @@ import pspemu.core.cpu.Disassembler;
 
 import std.stdio, std.string, std.math;
 
+version (ENABLE_BREAKPOINTS) {
+	import pspemu.core.cpu.InstructionCounter;
+}
+
 /**
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
@@ -203,7 +207,17 @@ class Cpu {
 			trace(*bp, PC, false);
 			return true;
 		}
+
+		version (ENABLE_BREAKPOINTS) {
+			InstructionCounter instructionCounter;
+		}
+		
 		void trace(BreakPoint bp, uint PC, bool traceOnlyIfChanged = false) {
+			version (ENABLE_BREAKPOINTS) {
+				if (instructionCounter is null) instructionCounter = new InstructionCounter();
+				Instruction instruction = void; instruction.v = memory.read32(PC);
+				instructionCounter.count(instruction);
+			}
 			if (traceOnlyIfChanged && bp.traceRegisters.length) {
 				bool cancel = true;
 				foreach (reg; bp.traceRegisters) {

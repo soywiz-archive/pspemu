@@ -21,9 +21,11 @@ typedef struct {
 } FLOAT;
 
 #define assert(v) { if (!(v)) { asm("break"); } }
-void emitInt   (int   v) { asm("syscall 0x2308"); }
-void emitFloat (float v) { asm("syscall 0x2309"); }
-void emitString(char *v) { asm("syscall 0x230A"); }
+void emitInt     (int   v) { asm("syscall 0x2308"); }
+void emitFloat   (float v) { asm("syscall 0x2309"); }
+void emitString  (char *v) { asm("syscall 0x230A"); }
+void startTracing()        { asm("syscall 0x230B"); }
+void stopTracing()         { asm("syscall 0x230C"); }
 
 void testIntToFloat() {
 	int table[] = {8, 10, 12};
@@ -65,10 +67,60 @@ void testFloatExtra() {
 	//assert(n == 5);
 }
 
+void testBitOps() {
+	unsigned int value = 0x73A4C5F0;
+	unsigned int v1 = 1;
+	unsigned int v2 = 1;
+	v2 += 2;
+	emitInt((value >> 7) & 0x7);
+	emitInt(v1 ^ v2);
+}
+
+typedef struct {
+	float x, y, z;
+} Vector;
+
+void testString() {
+	Vector pos;
+	char temp[64];
+	float value = 2.6112;
+	sprintf(temp, "x: %.2f, y: %.2f, z: %.2f", 2.6112, 240.0, 220.0);
+	//sprintf(temp, "x: %.2f y: %.2f z: %.2f", pos.x, pos.y, pos.z);
+	//pspDebugScreenPrintf("x: %.2f y: %.2f z: %.2f",pos.x,pos.y,pos.z);
+	emitString(temp);
+}
+
+void testSimpleString() {
+	char temp[64];
+	startTracing();
+	sprintf(temp, "%f", 240.0);
+	stopTracing();
+	emitString(temp);
+	assert(0);
+}
+
+void testBitExtract() {
+	unsigned int value = 0xC493A10F;
+	int n;
+	emitString("normal");
+	for (n = 0; n < 32; n++) {
+		emitInt((value >> n) & 1);
+	}
+	emitString("reversed");
+	for (n = 31; n >= 0; n--) {
+		emitInt(((value << n) & 0x80000000) >> 31);
+	}
+	assert(0);
+}
+
 int main(int argc, char* argv[]) {
+	//testBitExtract();
+	testSimpleString();
 	testIntToFloat();
 	testFloatExtra();
-	testFloatManip();
+	//testFloatManip();
+	testBitOps();
+	testString();
 
 	return 0;
 }

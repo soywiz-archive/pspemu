@@ -53,14 +53,13 @@ class Gpu {
 					uint, "weight",   2,
 					uint, "index",    2,
 					uint, "__0",      1,
-					uint, "skinningWeightCountM1", 3,
+					uint, "skinningWeightCount", 3,
 					uint, "__1",      1,
 					uint, "morphingVertexCount",   2,
 					uint, "__2",      3,
 					uint, "transform2D",           1,
 					uint, "__3",      8
 				));
-				uint skinningWeightCount() { return skinningWeightCountM1 + 1; }
 			}
 		}
 	}
