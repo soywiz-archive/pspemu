@@ -9,31 +9,50 @@ import pspemu.hle.Module;
 
 class sceDisplay_driver : Module { // Flags: 0x00010000
 	this() {
-		mixin(register(0x0E20F177, "sceDisplaySetMode"));
-		mixin(register(0x289D82FE, "sceDisplaySetFrameBuf"));
-		mixin(register(0x984C27E7, "sceDisplayWaitVblankStart"));
+		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
+		mixin(registerd!(0x289D82FE, sceDisplaySetFrameBuf));
+		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
 	}
 
-	void sceDisplayWaitVblankStart() {
-		cpu.registers.V0 = 0;
-		//while ( cpu.display.vblank && cpu.running) Thread.sleep(0_1000);
-		//while (!cpu.display.vblank && cpu.running) Thread.sleep(0_1000);
-		while ( cpu.display.vblank && cpu.running) Sleep(1);
-		while (!cpu.display.vblank && cpu.running) Sleep(1);
-		debug (DEBUG_SYSCALL) .writefln("_sceDisplayWaitVblankStart()");
+	/**
+	 * Wait for vertical blank start
+	 */
+	int sceDisplayWaitVblankStart() {
+		while ( cpu.display.vblank && cpu.running) Sleep(1); // Wait vblank start
+		while (!cpu.display.vblank && cpu.running) Sleep(1); // Wait vblank end
+		return 0;
 	}
 
-	void sceDisplaySetFrameBuf() {
-		// int 	sceDisplaySetFrameBuf (void *topaddr, int bufferwidth, int pixelformat, int sync)
-		cpu.memory.displayMemory = param(0);
-		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("_sceDisplaySetFrameBuf (0x%08X, %d, %d, 0x%08X)", param(0), param(1), param(2), param(3));
+	/**
+	 * Display set framebuf
+	 *
+	 * @param topaddr - address of start of framebuffer
+	 * @param bufferwidth - buffer width (must be power of 2)
+	 * @param pixelformat - One of ::PspDisplayPixelFormats.
+	 * @param sync - One of ::PspDisplaySetBufSync
+	 *
+	 * @return 0 on success
+	 */
+	int sceDisplaySetFrameBuf(uint topaddr, int bufferwidth, int pixelformat, int sync) {
+		cpu.memory.displayMemory = topaddr;
+		return 0;
 	}
 
-	void sceDisplaySetMode() {
-		// int 	sceDisplaySetMode (int mode, int width, int height)
-		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("_sceDisplaySetMode (mode=%d, width=%d, height=%d)", param(0), param(1), param(2));
+	/**
+	 * Set display mode
+	 *
+	 * @par Example1:
+	 * @code
+	 * @endcode
+	 *
+	 * @param mode - Display mode, normally 0.
+	 * @param width - Width of screen in pixels.
+	 * @param height - Height of screen in pixels.
+	 *
+	 * @return ???
+	 */
+	int sceDisplaySetMode(int mode, int width, int height) {
+		return 0;
 	}
 }
 

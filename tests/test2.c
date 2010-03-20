@@ -114,6 +114,12 @@ void testBitExtract() {
 }
 
 int main(int argc, char* argv[]) {
+	/*
+	char temp[16];
+	//asm("break");
+	sprintf(temp, "%f", 240.0);
+	asm("break");
+	*/
 	//testBitExtract();
 	testSimpleString();
 	testIntToFloat();

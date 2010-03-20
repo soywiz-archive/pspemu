@@ -6,75 +6,114 @@ import pspemu.hle.Module;
 
 class sceGe_driver : Module {
 	this() {
-		mixin(register(0xE47E40E4, "sceGeEdramGetAddr"));
-		mixin(register(0xAB49E76A, "sceGeListEnQueue"));
-		mixin(register(0xE0D68148, "sceGeListUpdateStallAddr"));
-		mixin(register(0x03444EB4, "sceGeListSync"));
-		mixin(register(0xB287BD61, "sceGeDrawSync"));
-		mixin(register(0xA4FC06A4, "sceGeSetCallback"));
+		mixin(registerd!(0xE47E40E4, sceGeEdramGetAddr));
+		mixin(registerd!(0xAB49E76A, sceGeListEnQueue));
+		mixin(registerd!(0xE0D68148, sceGeListUpdateStallAddr));
+		mixin(registerd!(0x03444EB4, sceGeListSync));
+		mixin(registerd!(0xB287BD61, sceGeDrawSync));
+		mixin(registerd!(0xA4FC06A4, sceGeSetCallback));
 	}
 
-	void sceGeListSync() {
-		// int sceGeListSync (int qid, int syncType)
-		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("sceGeListSync(qid=%d, syncType=%d)", param(0), param(1));
+	/**
+	 * Wait for syncronisation of a list.
+	 *
+	 * @param qid - The queue ID of the list to sync.
+	 * @param syncType - Specifies the condition to wait on.  One of ::PspGeSyncType.
+	 * 
+	 * @return ???
+	 */
+	int sceGeListSync(int qid, int syncType) {
 		cpu.gpu.synchronizeGpu();
+		return 0;
 	}
 
-	void sceGeEdramGetAddr() {
-		// void* sceGeEdramGetAddr ( void )
-		cpu.registers.V0 = cpu.memory.frameBufferAddress;
-		debug (DEBUG_SYSCALL) .writefln("sceGeEdramGetAddr()");
+	/**
+	 * Get the address of VRAM.
+	 *
+	 * @return A pointer to the base of VRAM.
+	 */
+	uint sceGeEdramGetAddr() {
+		return cpu.memory.frameBufferAddress;
 	}
 
-	void sceGeSetCallback() {
-		// int sceGeSetCallback ( PspGeCallbackData *cb )
-		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("sceGeSetCallback(0x%08X)", param(0));
+	/**
+	 * Register callback handlers for the the Ge 
+	 *
+	 * @param cb - Configured callback data structure
+	 * @return The callback ID, < 0 on error
+	 */
+	int sceGeSetCallback(PspGeCallbackData *cb) {
+		return 0;
 	}
 
-	/*
-	uint last_list, last_stall;
-	uint* last_list_ptr;
-	*/
-
-	void sceGeListEnQueue() {
-		// int sceGeListEnQueue ( const void *list, void *stall, int cbid, PspGeListArgs *arg )
-		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("sceGeListEnQueue(list=0x%08X, stall=0x%08X, cbid=%d, arg=0x%08X)", param(0), param(1), param(2), param(3));
-
-		/*
-		last_list  = param(0);
-		last_stall = param(1);
-		last_list_ptr = cast(uint *)param_p(0);
-		*/
-
-		cpu.gpu.setInstructionList(param_p(0), param_p(1));
+	/** 
+	 * Enqueue a display list at the tail of the GE display list queue.
+	 *
+	 * @param list - The head of the list to queue.
+	 * @param stall - The stall address.
+	 * If NULL then no stall address set and the list is transferred immediately.
+	 * @param cbid - ID of the callback set by calling sceGeSetCallback
+	 * @param arg - Structure containing GE context buffer address
+	 *
+	 * @return The ID of the queue.
+	 */
+	int sceGeListEnQueue(/*const*/ void *list, void *stall, int cbid, PspGeListArgs *arg) {
+		cpu.gpu.setInstructionList(list, stall);
+		return 0;
 	}
 
-	void sceGeListUpdateStallAddr() {
-		// TODO
-		cpu.registers.V0 = 0;
-
-		/*
-		last_stall = param(1);
-		writefln("%08X:%08X:%08X", cpu.memory.read32(last_list), *last_list_ptr, cast(uint)cast(void *)last_list_ptr);
-		*/
-
-		cpu.gpu.setInstructionStall(param_p(1));
-
-		debug (DEBUG_SYSCALL) .writefln("sceGeListUpdateStallAddr(qid=%d, stall=0x%08X)", param(0), param(1));
+	/**
+	 * Update the stall address for the specified queue.
+	 * 
+	 * @param qid - The ID of the queue.
+	 * @param stall - The stall address to update
+	 *
+	 * @return Unknown. Probably 0 if successful.
+	 */
+	int sceGeListUpdateStallAddr(int qid, void *stall) {
+		cpu.gpu.setInstructionStall(stall);
+		return 0;
 	}
 
-	void sceGeDrawSync() {
-		// TODO
-		cpu.registers.V0 = 0;
-		debug (DEBUG_SYSCALL) .writefln("sceGeDrawSync(syncType=%d)", param(0));
+	/**
+	 * Wait for drawing to complete.
+	 * 
+	 * @param syncType - Specifies the condition to wait on.  One of ::PspGeSyncType.
+	 * 
+	 * @return ???
+	 */
+	int sceGeDrawSync(int syncType) {
 		cpu.gpu.synchronizeGpu();
+		return 0;
 	}
 }
 
 class sceGe_user : sceGe_driver {
+}
+
+/** Stores the state of the GE. */
+struct PspGeContext {
+	uint context[512];
+}
+
+/** Typedef for a GE callback */
+alias void function(int id, void *arg) PspGeCallback;
+
+/** Structure to hold the callback data */
+struct PspGeCallbackData {
+	/** GE callback for the signal interrupt */
+	PspGeCallback signal_func;
+	/** GE callback argument for signal interrupt */
+	void *signal_arg;
+	/** GE callback for the finish interrupt */
+	PspGeCallback finish_func;
+	/** GE callback argument for finish interrupt */
+	void *finish_arg;
+}
+
+struct PspGeListArgs {
+	uint	size;
+	PspGeContext*	context;
 }
 
 static this() {

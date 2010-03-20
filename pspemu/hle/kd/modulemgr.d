@@ -4,11 +4,21 @@ import pspemu.hle.Module;
 
 class ModuleMgrForUser : Module {
 	this() {
-		mixin(register(0xD675EBB8, "sceKernelSelfStopUnloadModule"));
+		mixin(registerd!(0xD675EBB8, sceKernelSelfStopUnloadModule));
 	}
 
-	void sceKernelSelfStopUnloadModule() {
+	/**
+	 * Stop and unload the current module.
+	 *
+	 * @param unknown - Unknown (I've seen 1 passed).
+	 * @param argsize - Size (in bytes) of the arguments that will be passed to module_stop().
+	 * @param argp - Pointer to arguments that will be passed to module_stop().
+	 *
+	 * @return ??? on success, otherwise one of ::PspKernelErrorCodes.
+	 */
+	int sceKernelSelfStopUnloadModule(int unknown, SceSize argsize, void *argp) {
 		throw(new Exception("sceKernelSelfStopUnloadModule"));
+		return 0;
 	}
 }
 

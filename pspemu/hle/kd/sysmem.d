@@ -6,29 +6,48 @@ import pspemu.hle.Module;
 
 class SysMemUserForUser : Module {
 	this() {
-		mixin(register(0xA291F107, "sceKernelMaxFreeMemSize"));
+		mixin(registerd!(0xA291F107, sceKernelMaxFreeMemSize));
+		mixin(registerd!(0x237DBD4F, sceKernelAllocPartitionMemory));
+		mixin(registerd!(0x9D9A5BA1, sceKernelGetBlockHeadAddr));
+
 		mixin(register(0xF919F628, "sceKernelTotalFreeMemSize"));
-		mixin(register(0x237DBD4F, "sceKernelAllocPartitionMemory"));
 		mixin(register(0xB6D61D02, "sceKernelFreePartitionMemory"));
-		mixin(register(0x9D9A5BA1, "sceKernelGetBlockHeadAddr"));
 		mixin(register(0x3FC9AE6A, "sceKernelDevkitVersion"));
 	}
 
-	void sceKernelMaxFreeMemSize() {
-		cpu.registers.V0 = 8 * 1024 * 1024; // 8 MB
-		debug (DEBUG_SYSCALL) .writefln("sceKernelMaxFreeMemSize() == %d", cpu.registers.V0);
+	/**
+	 * Get the size of the largest free memory block.
+	 *
+	 * @return The size of the largest free memory block, in bytes.
+	 */
+	SceSize sceKernelMaxFreeMemSize() {
+		return 8 * 1024 * 1024; // 8 MB
 	}
 
-	void sceKernelAllocPartitionMemory() {
-		// SceUID 	sceKernelAllocPartitionMemory (SceUID partitionid, const char *name, int type, SceSize size, void *addr)
-		cpu.registers.V0 = 1; // blockid = 1
-		debug (DEBUG_SYSCALL) .writefln("sceKernelAllocPartitionMemory(partitionid=%d, name='%s', type=%d, size=%d, addr=0x%08X) : blockid=%d", param(0), param_p(1), param(2), param(3), param(4), cpu.registers.V0);
+	/**
+	 * Allocate a memory block from a memory partition.
+	 *
+	 * @param partitionid - The UID of the partition to allocate from.
+	 * @param name - Name assigned to the new block.
+	 * @param type - Specifies how the block is allocated within the partition.  One of ::PspSysMemBlockTypes.
+	 * @param size - Size of the memory block, in bytes.
+	 * @param addr - If type is PSP_SMEM_Addr, then addr specifies the lowest address allocate the block from.
+	 *
+	 * @return The UID of the new block, or if less than 0 an error.
+	 */
+	SceUID sceKernelAllocPartitionMemory(SceUID partitionid, const char* name, int type, SceSize size, void* addr) {
+		return 1;
 	}
 
-	void sceKernelGetBlockHeadAddr() {
-		cpu.registers.V0 = 0x08_000000;
-		// void * 	sceKernelGetBlockHeadAddr (SceUID blockid)
-		debug (DEBUG_SYSCALL) .writefln("sceKernelGetBlockHeadAddr(blockid=%d) : address=0x%08X", param(0), cpu.registers.V0);
+	/**
+	 * Get the address of a memory block.
+	 *
+	 * @param blockid - UID of the memory block.
+	 *
+	 * @return The lowest address belonging to the memory block.
+	 */
+	uint sceKernelGetBlockHeadAddr(SceUID blockid) {
+		return 0x08_000000;
 	}
 }
 

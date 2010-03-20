@@ -65,16 +65,6 @@ template TemplateCpu_MEMORY() {
 template TemplateCpu_MEMORY_Utils() {
 	enum { Unsigned, Signed }
 
-	// FIXME: This should be moved to another place.
-	alias byte   s8;
-	alias ubyte  u8;
-	alias short  s16;
-	alias ushort u16;
-	alias int    s32;
-	alias uint   u32;
-	alias long   s64;
-	alias ulong  u64;
-
 	static pure nothrow {
 		string LOAD(uint size, bool signed) {
 			return (

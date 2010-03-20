@@ -11,6 +11,8 @@ module pspemu.core.Memory;
 
 import std.stdio, std.stream, std.string, std.ctype, std.metastrings;
 
+import pspemu.utils.Utils;
+
 version = VERSION_CHECK_MEMORY;    /// Check more memory positions.
 version = VERSION_CHECK_ALIGNMENT; /// Check that read and writes are aligned.
 
@@ -167,6 +169,28 @@ class Memory : Stream {
 	}
 
 	/**
+	 * Obtains a guest address from a physical memory address.
+	 *
+	 * @param  ptr  A physical PC pointer.
+	 *
+	 * @return Psp memory address.
+	 */
+	public Pointer getPointerReverse(void *_ptr) {
+		auto ptr = cast(ubyte *)_ptr;
+
+		bool between(ubyte[] buffer) { return (ptr >= &buffer[0]) && (ptr < &buffer[$]); }
+
+		string checkMap(string name, uint mapStart) {
+			return "if (between(" ~ name ~ ")) return (ptr - " ~ name ~ ".ptr) + " ~ tos(mapStart) ~ ";";
+		}
+		
+		mixin(checkMap("scratchPad",  0x00010000));
+		mixin(checkMap("frameBuffer", 0x04000000));
+		mixin(checkMap("mainMemory",  0x08000000));
+		assert(0);
+	}
+
+	/**
 	 * Implementation of the read/write functions with several memory sizes.
 	 */
 	template ReadWriteTemplate() {
@@ -195,12 +219,6 @@ class Memory : Stream {
 			}
 			return r;
 		}
-
-		// Aliases to ease code generation.
-		alias ulong  u64;
-		alias uint   u32;
-		alias ushort u16;
-		alias ubyte  u8;
 
 		/// Write functions.
 		mixin(writeGen("8" ));
@@ -368,6 +386,22 @@ class Memory : Stream {
 	mixin StreamTemplate;
 	mixin ArrayTemplate;
 }
+
+/+
+// http://hitmen.c02.at/files/yapspd/psp_doc/chap4.html#sec4.10
+class Cache {
+	struct Row {
+		ubyte data[64];
+	}
+
+	union {
+		Row rows[512];
+		ubyte data[0x8000]; // 32 KB
+	}
+
+	short cached[0x80000]; // 32MB of memory in 64byte segments.
+}
++/
 
 /*
 struct MemorySegment { enum Type { PHY, DMA } Type type; uint addressStart, addressMask; string name; }

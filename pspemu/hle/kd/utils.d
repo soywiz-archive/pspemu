@@ -5,33 +5,57 @@ module pspemu.hle.kd.utils; // kd/utils.prx (sceKernelUtils)
 import pspemu.hle.Module;
 
 import std.random;
+import std.c.time;
+
+// BUG: Can't aliase directly std.random.Mt19937 because it's a template struct and currently it doesn't work with cast.
+alias void SceKernelUtilsMt19937Context;
 
 class UtilsForUser : Module {
 	this() {
-		mixin(register(0xE860E75E, "sceKernelUtilsMt19937Init"));
-		mixin(register(0x06FB8A63, "sceKernelUtilsMt19937UInt"));
-		mixin(register(0x27CC57F0, "sceKernelLibcTime"));
+		mixin(registerd!(0x27CC57F0, sceKernelUtilsMt19937Init));
+		mixin(registerd!(0x06FB8A63, sceKernelUtilsMt19937UInt));
+		mixin(registerd!(0x27CC57F0, sceKernelLibcTime));
 	}
 
-	void sceKernelUtilsMt19937Init() {
-		// int 	sceKernelUtilsMt19937Init (SceKernelUtilsMt19937Context *ctx, u32 seed)
-		auto mt = cast(std.random.Mt19937 *)param_p(0);
-		mt.seed(param(1));
-		debug (DEBUG_SYSCALL) .writefln("_sceKernelUtilsMt19937Init(ctx=0x%08X, seed=0x%08X)", param(0), param(1));
-		cpu.registers.V0 = 0;
+	/** 
+	 * Function to initialise a mersenne twister context.
+	 *
+	 * @param ctx - Pointer to a context
+	 * @param seed - A seed for the random function.
+	 *
+	 * @par Example:
+	 * @code
+	 * SceKernelUtilsMt19937Context ctx;
+	 * sceKernelUtilsMt19937Init(&ctx, time(NULL));
+	 * u23 rand_val = sceKernelUtilsMt19937UInt(&ctx);
+	 * @endcode
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelUtilsMt19937Init(SceKernelUtilsMt19937Context* ctx, uint seed) {
+		if (ctx is null) return -1;
+		(cast(std.random.Mt19937 *)ctx).seed(seed);
+		return 0;
 	}
 
-	void sceKernelUtilsMt19937UInt() {
-		auto mt = cast(std.random.Mt19937 *)param_p(0);
-		// u32 	sceKernelUtilsMt19937UInt (SceKernelUtilsMt19937Context *ctx)
-		cpu.registers.V0 = mt.front;
-		mt.popFront();
-		debug (DEBUG_SYSCALL) .writefln("_sceKernelUtilsMt19937UInt(ctx=0x%08X) == 0x%08X", param(0), cpu.registers.V0);
+	/**
+	 * Function to return a new psuedo random number.
+	 *
+	 * @param ctx - Pointer to a pre-initialised context.
+	 * @return A pseudo random number (between 0 and MAX_INT).
+	 */
+	u32 sceKernelUtilsMt19937UInt(SceKernelUtilsMt19937Context *ctx) {
+		auto mt = cast(std.random.Mt19937 *)ctx;
+		scope (exit) mt.popFront();
+		return mt.front;
 	}
 
-	void sceKernelLibcTime() {
-		cpu.registers.V0 = std.c.time.time(cast(int*)param_p(0));
-		debug (DEBUG_SYSCALL) .writefln("sceKernelLibcTime(time=0x%08X) == %d", param(0), cpu.registers.V0);
+	/**
+	 * Get the time in seconds since the epoc (1st Jan 1970)
+	 *
+	 */
+	time_t sceKernelLibcTime(time_t* t) { 
+		return time(t);
 	}
 }
 

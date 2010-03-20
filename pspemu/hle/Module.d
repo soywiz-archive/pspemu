@@ -4,6 +4,58 @@ public import std.stdio, std.string, std.stream;
 public import pspemu.utils.Utils;
 public import pspemu.core.cpu.Cpu;
 
+public import pspemu.hle.kd.types;
+
+import std.traits;
+
+//debug = DEBUG_MODULE_DELEGATE;
+
+string FunctionName(alias f)() { return (&f).stringof[2 .. $]; }
+bool isArrayType(alias T)() { return is(typeof(T[0])) && is(typeof(T.sort)); }
+bool isPointerType(alias T)() { return is(typeof(*T)) && !isArrayType!(T); }
+
+string FunctionName(T)() { return T.stringof[2 .. $]; }
+bool isArrayType(T)() { return is(typeof(T[0])) && is(typeof(T.sort)); }
+bool isPointerType(T)() {
+	if (is(T == void*)) return true;
+	return is(typeof(*T)) && !isArrayType!(T);
+}
+
+string stringOf(T)() {
+	return T.stringof;
+}
+string getModuleMethodDelegate(alias func)() {
+	string functionName = FunctionName!(func);
+	string r = "";
+	//alias ReturnType!(func) return_type;
+	bool return_value = !is(ReturnType!(func) == void);
+	r ~= "delegate void() { ";
+	{
+		r ~= "debug (DEBUG_SYSCALL) .writefln(\"" ~ functionName ~ "()\"); ";
+		if (return_value) r ~= "auto retval = ";
+		r ~= "this." ~ functionName ~ "(";
+		foreach (k, param; ParameterTypeTuple!(func)) {
+			if (k > 0) r ~= ", ";
+			if (isPointerType!(param)) {
+				r ~= "cast(" ~ param.stringof ~ ")param_p(" ~ tos(k) ~ ")";
+				//r ~= "param_p(" ~ tos(k) ~ ")";
+			} else {
+				r ~= "cast(" ~ param.stringof ~ ")param(" ~ tos(k) ~ ")";
+			}
+		}
+		r ~= ");";
+		if (return_value) {
+			if (isPointerType!(ReturnType!(func))) {
+				r ~= "cpu.registers.V0 = cpu.memory.getPointerReverse(cast(void *)retval);";
+			} else {
+				r ~= "cpu.registers.V0 = *cast(uint *)&retval;";
+			}
+		}
+	}
+	r ~= " }";
+	return r;
+}
+
 abstract class Module {
 	static struct Function {
 		Module pspModule;
@@ -37,8 +89,24 @@ abstract class Module {
 	static string register(uint id, string name) {
 		return "names[\"" ~ name ~ "\"] = nids[" ~ tos(id) ~ "] = Function(this, " ~ tos(id) ~ ", \"" ~ name ~ "\", &this." ~ name ~ ");";
 	}
+	static string registerd(uint id, alias func)() {
+		debug (DEBUG_MODULE_DELEGATE) {
+			pragma(msg, "{{{{");
+			pragma(msg, "");
+			pragma(msg, getModuleMethodDelegate!(func)());
+			pragma(msg, "");
+			pragma(msg, "}}}}");
+		}
+
+		return "names[\"" ~ FunctionName!(func) ~ "\"] = nids[" ~ tos(id) ~ "] = Function(this, " ~ tos(id) ~ ", \"" ~ FunctionName!(func) ~ "\", " ~ getModuleMethodDelegate!(func) ~ ");";
+	}
 	static string registerModule(string moduleName) {
 		return "Module.knownModules ~= " ~ moduleName ~ ".classinfo;";
+	}
+	static string registerModule(TypeInfo_Class moduleClass) {
+		//writefln("%s", moduleClass);
+		assert(0);
+		return "";
 	}
 	string baseName() {
 		return classInfoBaseName(typeid(this));
