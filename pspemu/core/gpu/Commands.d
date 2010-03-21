@@ -274,9 +274,9 @@ struct Command {
 	
 	uint     param16() { return v & 0xFFFF; }
 	uint     param24() { return v & 0xFFFFFF; }
-	float[4] float4() { return [cast(float)V[0] / 255.0, cast(float)V[1] / 255.0, cast(float)V[2] / 255.0, 1.0]; }
-	float    float1() { return reinterpret!(float)(v << 8); }
-	bool     bool1 () { return (v << 8) != 0; }
+	float[4] float4 () { return [cast(float)V[0] / 255.0, cast(float)V[1] / 255.0, cast(float)V[2] / 255.0, 1.0]; }
+	float    float1 () { return reinterpret!(float)(v << 8); }
+	bool     bool1  () { return (v << 8) != 0; }
 
 	string toString() {
 		return std.string.format("Command[%08X](%02X:%s)", v, opcode, enumToString(opcode));

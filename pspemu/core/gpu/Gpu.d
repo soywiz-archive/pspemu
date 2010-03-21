@@ -190,7 +190,7 @@ class Gpu {
 				{
 					string opname = enumToString(cast(Opcode)n);
 					string func = "OP_" ~ opname;
-					debug (DEBUG_GPU_SHOW_COMMAND) s ~= "writefln(\"%08X:%s\", memory.getPointerReverse(&command), \"" ~ opname ~ "\");";
+					debug (DEBUG_GPU_SHOW_COMMAND) s ~= "writefln(\"%08X:%s: %06X\", memory.getPointerReverse(&command), \"" ~ opname ~ "\", command.param24);";
 					s ~= "mixin(\"static if (__traits(compiles, " ~ func ~ ")) { " ~ func ~ "(); } else { unimplemented(); }\");";
 				}
 				s ~= "break;";

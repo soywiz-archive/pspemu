@@ -20,6 +20,9 @@ bool isPointerType(T)() {
 	if (is(T == void*)) return true;
 	return is(typeof(*T)) && !isArrayType!(T);
 }
+bool isString(T)() {
+	return is(T == string);
+}
 
 string stringOf(T)() {
 	return T.stringof;
@@ -34,21 +37,32 @@ string getModuleMethodDelegate(alias func)() {
 		r ~= "debug (DEBUG_SYSCALL) .writefln(\"" ~ functionName ~ "()\"); ";
 		if (return_value) r ~= "auto retval = ";
 		r ~= "this." ~ functionName ~ "(";
-		foreach (k, param; ParameterTypeTuple!(func)) {
-			if (k > 0) r ~= ", ";
-			if (isPointerType!(param)) {
-				r ~= "cast(" ~ param.stringof ~ ")param_p(" ~ tos(k) ~ ")";
-				//r ~= "param_p(" ~ tos(k) ~ ")";
+		int paramIndex = 0;
+		foreach (param; ParameterTypeTuple!(func)) {
+			if (paramIndex > 0) r ~= ", ";
+			if (isString!(param)) {
+				r ~= "paramsz(" ~ tos(paramIndex) ~ ")";
+			} else if (isPointerType!(param)) {
+				r ~= "cast(" ~ param.stringof ~ ")param_p(" ~ tos(paramIndex) ~ ")";
+			} else if (param.sizeof == 8) {
+				// TODO. FIXME!
+				if (paramIndex % 2) paramIndex++; // PADDING
+				r ~= "cast(" ~ param.stringof ~ ")param64(" ~ tos(paramIndex) ~ ")";
+				paramIndex++; // extra incremnt
 			} else {
-				r ~= "cast(" ~ param.stringof ~ ")param(" ~ tos(k) ~ ")";
+				r ~= "cast(" ~ param.stringof ~ ")param(" ~ tos(paramIndex) ~ ")";
 			}
+			paramIndex++;
 		}
 		r ~= ");";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func))) {
 				r ~= "cpu.registers.V0 = cpu.memory.getPointerReverse(cast(void *)retval);";
 			} else {
-				r ~= "cpu.registers.V0 = *cast(uint *)&retval;";
+				r ~= "cpu.registers.V0 = (cast(uint *)&retval)[0];";
+				if (ReturnType!(func).sizeof == 8) {
+					r ~= "cpu.registers.V1 = (cast(uint *)&retval)[1];";
+				}
 			}
 		}
 	}
@@ -74,6 +88,7 @@ abstract class Module {
 	static ClassInfo[] knownModules;
 	static Module[string] knownModulesByName;
 
+	ulong param64(int n) { return cpu.registers[4 + n + 0] | (cpu.registers[4 + n + 1] << 32); }
 	uint param(int n) { return cpu.registers[4 + n]; }
 	void* param_p(int n) {
 		uint v = cpu.registers[4 + n];
@@ -84,7 +99,7 @@ abstract class Module {
 		}
 	}
 	char* paramszp(int n) { return cast(char *)param_p(n); }
-	char[] paramsz(int n) { auto ptr = paramszp(n); return ptr[0..std.c.string.strlen(ptr)]; }
+	string paramsz(int n) { auto ptr = paramszp(n); return cast(string)ptr[0..std.c.string.strlen(ptr)]; }
 
 	static string register(uint id, string name) {
 		return "names[\"" ~ name ~ "\"] = nids[" ~ tos(id) ~ "] = Function(this, " ~ tos(id) ~ ", \"" ~ name ~ "\", &this." ~ name ~ ");";

@@ -5,6 +5,7 @@ SET LIBS=-lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpspdisplay -lpspge -lpspctrl
 REM SET FLAGS=-G0 -Wall -O2 -g -gstabs
 SET FLAGS=-Wall -g
 
+CALL :BUILD test_file
 CALL :BUILD test_sprintf
 CALL :BUILD test1
 CALL :BUILD test2
