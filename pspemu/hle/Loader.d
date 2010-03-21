@@ -7,6 +7,7 @@ import std.stream, std.stdio, std.string;
 import pspemu.utils.Utils;
 
 import pspemu.formats.Elf;
+import pspemu.formats.ElfDwarf;
 import pspemu.formats.Pbp;
 
 import pspemu.hle.Module;
@@ -16,13 +17,15 @@ import pspemu.core.cpu.Assembler;
 import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.InstructionCounter;
 
+import pspemu.models.IDebugSource;
+
 import std.xml;
 
 version (unittest) {
 	import pspemu.utils.SparseMemory;
 }
 
-class Loader {
+class Loader : IDebugSource {
 	enum ModuleFlags : ushort {
 		User   = 0x0000,
 		Kernel = 0x1000,
@@ -75,6 +78,7 @@ class Loader {
 	}
 
 	Elf elf;
+	ElfDwarf dwarf;
 	Stream memory;
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
@@ -122,6 +126,32 @@ class Loader {
 			count();
 			Module.dumpKnownModules();
 		}
+		checkDebug();
+		//(new std.stream.File("debug_str", FileMode.OutNew)).copyFrom(elf.SectionStream(".debug_str"));
+	}
+	
+	void checkDebug() {
+		try {
+			dwarf = new ElfDwarf;
+			dwarf.parseDebugLine(elf.SectionStream(".debug_line"));
+			dwarf.find(0x089004C8);
+		} catch (Object o) {
+			writefln("Can't find debug information: '%s'", o.toString);
+		}
+	}
+
+	bool lookupDebugSourceLine(ref DebugSourceLine debugSourceLine, uint address) {
+		if (dwarf is null) return false;
+		auto state = dwarf.find(address);
+		if (state is null) return false;
+		debugSourceLine.file    = state.file_full_path;
+		debugSourceLine.address = state.address;
+		debugSourceLine.line    = state.line;
+		return true;
+	}
+
+	bool lookupDebugSymbol(ref DebugSymbol debugSymbol, uint address) {
+		return false;
 	}
 
 	void count() {

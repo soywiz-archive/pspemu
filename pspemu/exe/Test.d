@@ -52,6 +52,8 @@ void testExtended(string name) {
 
 	auto loader  = new Loader(name ~ ".elf", memory);
 	
+	cpu.debugSource = loader;
+	
 	cpu.registers.pcSet = loader.PC;
 	cpu.registers["gp"] = loader.GP;
 	//cpu.registers["sp"] = 0x08800000;
@@ -135,10 +137,15 @@ unittest {
 		string name = entry.name;
 		if (name.length >= 4 && name[$ - 4..$] != ".elf") continue;
 		string full = name[0..$ - 4];
-		assert(std.file.exists(full ~ ".expected"));
-		testGroup(full, {
-			testExtended(full);
-		});
+		if (std.file.exists(full ~ ".expected")) {
+			testGroup(full, {
+				testExtended(full);
+			});
+		} else {
+			testGroup(full, {
+				writefln("  Omited because .expected file doesn't exist.");
+			});
+		}
 	}
 }
 

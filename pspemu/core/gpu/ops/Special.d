@@ -11,7 +11,11 @@ template Gpu_Special() {
 	auto OP_IADDR() { gpu.info.indexAddress = gpu.info.baseAddress + command.param24; }
 
 	// Vertex Type
-	auto OP_VTYPE() { gpu.info.vertexType.v = command.param24; }
+	auto OP_VTYPE() {
+		gpu.info.vertexType.v = command.param24;
+		//writefln("VTYPE:%032b", command.param24);
+		//writefln("     :%d", gpu.info.vertexType.position);
+	}
 
 	// Frame Buffer Pointer
 	auto OP_FBP() { gpu.info.drawBuffer.address = command.param24; gpu.loadFrameBuffer(); }

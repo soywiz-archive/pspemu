@@ -50,7 +50,23 @@ template Gpu_Draw() {
 		vertexSize += 3 * pspTypeSize[vertexType.position];
 		vertexSize += 3 * pspTypeSize[vertexType.normal  ];
 
-		debug (EXTRACT_PRIM) writefln("Prim(%d) Type(%d) Size(%d)", vertexCount, primitiveType, vertexSize);
+		debug (EXTRACT_PRIM) writefln(
+			"Prim(%d) Type(%d) Size(%d)"
+			" skinningWeightCount(%d)"
+			" weight(%d)"
+			" color(%d)"
+			" texture(%d)"
+			" position(%d)"
+			" normal(%d)"
+			,
+			vertexCount, primitiveType, vertexSize,
+			vertexType.skinningWeightCount,
+			vertexType.weight,
+			vertexType.color,
+			vertexType.texture,
+			vertexType.position,
+			vertexType.normal
+		);
 
 		void extractArray(T)(float[] array) {
 			foreach (ref value; array) {

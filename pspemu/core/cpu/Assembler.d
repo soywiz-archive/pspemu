@@ -2,6 +2,7 @@ module pspemu.core.cpu.Assembler;
 
 import pspemu.utils.SparseMemory;
 import pspemu.utils.Expression;
+import pspemu.utils.Utils;
 
 import pspemu.core.Memory;
 import pspemu.core.cpu.Instruction;
@@ -253,11 +254,14 @@ class AllegrexAssembler : ISymbolResolver {
 					case "%S" : instruction.FS     = getFPRegister; break; // Fs
 					case "%D" : instruction.FD     = getFPRegister; break; // Fd
 					case "%T" : instruction.FT     = getFPRegister; break; // Ft
-					case "%i" : instruction.IMM    = getImmediate(true); break; // 16bit signed immediate
-					case "%I" : instruction.IMMU   = getImmediate(false); break; // 16bit unsigned immediate (always printed in hex)
+					case "%i" : instruction.IMM    = getImmediate(Sign.Signed); break; // 16bit signed immediate
+					case "%I" : instruction.IMMU   = getImmediate(Sign.Unsigned); break; // 16bit unsigned immediate (always printed in hex)
 					case "%O" : instruction.OFFSET = getOffset;    break; // 16bit signed offset (PC relative)
 					case "%j" : instruction.JUMP   = getAbsoluteOffset; break; // 26bit absolute offset
 					case "%J" : instruction.RS     = getRegister;  break; // register jump
+					case "%a" : instruction.POS    = getImmediate(Sign.Unsigned); break;
+					case "%ne": instruction.SIZE_E = getImmediate(Sign.Unsigned); break;
+					case "%ni": instruction.SIZE_I = getImmediate(Sign.Unsigned); break;
 					case "%o" : {
 						scope results = RegExp(r"^(\-?\d+)\(([\$\d\w\-\+\_]+)\)$", "").match(paramValue);
 						assert(results.length == 3);
@@ -265,6 +269,9 @@ class AllegrexAssembler : ISymbolResolver {
 						instruction.RS     = cast(uint)Registers.getAlias(results[2]);
 						//writefln("%s", results[1]);
 					} break;
+					default:
+						assert(0, std.string.format("Assembler.assembleInternal doesn't know how to process '%s'", paramType));
+					break;
  				}
 			}
 

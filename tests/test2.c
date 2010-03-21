@@ -76,29 +76,6 @@ void testBitOps() {
 	emitInt(v1 ^ v2);
 }
 
-typedef struct {
-	float x, y, z;
-} Vector;
-
-void testString() {
-	Vector pos;
-	char temp[64];
-	float value = 2.6112;
-	sprintf(temp, "x: %.2f, y: %.2f, z: %.2f", 2.6112, 240.0, 220.0);
-	//sprintf(temp, "x: %.2f y: %.2f z: %.2f", pos.x, pos.y, pos.z);
-	//pspDebugScreenPrintf("x: %.2f y: %.2f z: %.2f",pos.x,pos.y,pos.z);
-	emitString(temp);
-}
-
-void testSimpleString() {
-	char temp[64];
-	startTracing();
-	sprintf(temp, "%f", 240.0);
-	stopTracing();
-	emitString(temp);
-	assert(0);
-}
-
 void testBitExtract() {
 	unsigned int value = 0xC493A10F;
 	int n;
@@ -114,19 +91,11 @@ void testBitExtract() {
 }
 
 int main(int argc, char* argv[]) {
-	/*
-	char temp[16];
-	//asm("break");
-	sprintf(temp, "%f", 240.0);
-	asm("break");
-	*/
-	//testBitExtract();
-	testSimpleString();
 	testIntToFloat();
+	testFloatManip();
 	testFloatExtra();
-	//testFloatManip();
 	testBitOps();
-	testString();
+	testBitExtract();
 
 	return 0;
 }

@@ -81,6 +81,12 @@ class AllegrexDisassembler {
 								case 'a':
 									line ~= std.string.format("%d", instruction.POS);
 								break;
+								case 'n':
+									switch (fmt[n++ + 2]) {
+										case 'e': line ~= std.string.format("%d", instruction.SIZE_E); break;
+										case 'i': line ~= std.string.format("%d", instruction.SIZE_I); break;
+									}
+								break;
 								default: {
 									writefln("Notice: Unknown format '%s%s' on %s.%s", "%", fmt[n + 1], typeid(typeof(this)), "dissasm");
 									line[$ - 1] ~= fmt[n];
@@ -139,8 +145,14 @@ class AllegrexDisassembler {
 	void dumpSimple(uint PC, int min = 0, int max = 0, Memory memory = null) {
 		assert((PC & 0b11) == 0, "Address not aligned");
 		for (uint pos = PC + min * 4; pos <= PC + max * 4; pos += 4) {
-			writefln("%s%08X: %s", ((pos == PC) ? "->" : "  "), pos, dissasmSimple(pos, memory));
+			writef("%s", ((pos == PC) ? "->" : "  "));
+			dumpPC(pos, memory);
+			writefln("");
 		}
+	}
+
+	void dumpPC(uint PC, Memory memory = null) {
+		writef("%08X: %s", PC, dissasmSimple(PC, memory));
 	}
 }
 

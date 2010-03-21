@@ -52,8 +52,8 @@ template TemplateCpu_MEMORY() {
 
 	// SWL -- Store Word Left
 	// SWR -- Store Word Right
-	auto OP_SWL() { memory.write16(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); }
-	auto OP_SWR() { memory.write16(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); }
+	auto OP_SWL() { memory.write16(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); registers.pcAdvance(4); }
+	auto OP_SWR() { memory.write16(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); registers.pcAdvance(4); }
 
 	// CACHE
 	auto OP_CACHE() {
@@ -63,8 +63,6 @@ template TemplateCpu_MEMORY() {
 }
 
 template TemplateCpu_MEMORY_Utils() {
-	enum { Unsigned, Signed }
-
 	static pure nothrow {
 		string LOAD(uint size, bool signed) {
 			return (

@@ -2,7 +2,9 @@ module pspemu.core.gpu.ops.Flow;
 
 template Gpu_Flow() {
 	auto OP_JUMP() {
-		gpu.list = cast(Command *)gpu.memory.getPointer((gpu.info.baseAddress | command.param24) & (~0b_11));
+		auto address = (gpu.info.baseAddress | command.param24) & (~0b_11);
+		gpu.list = cast(Command *)gpu.memory.getPointer(address);
+		writefln("   %08X", address);
 	}
 
 	/*

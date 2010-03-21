@@ -2,6 +2,7 @@ module pspemu.core.gpu.Gpu;
 
 debug = GPU_UNKNOWN_COMMANDS;
 //debug = GPU_UNKNOWN_COMMANDS_STOP;
+debug = DEBUG_GPU_SHOW_COMMAND;
 
 import core.thread;
 
@@ -189,6 +190,7 @@ class Gpu {
 				{
 					string opname = enumToString(cast(Opcode)n);
 					string func = "OP_" ~ opname;
+					debug (DEBUG_GPU_SHOW_COMMAND) s ~= "writefln(\"%08X:%s\", memory.getPointerReverse(&command), \"" ~ opname ~ "\");";
 					s ~= "mixin(\"static if (__traits(compiles, " ~ func ~ ")) { " ~ func ~ "(); } else { unimplemented(); }\");";
 				}
 				s ~= "break;";

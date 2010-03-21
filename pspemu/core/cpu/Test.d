@@ -20,6 +20,10 @@ unittest {
 	void reset() { cpu.resetFast(); assembler.reset(); }
 	void dump() { cpu.registers.dump(); assembler.symbolDump(); }
 	void gotoText() { cpu.registers.pcSet(assembler.segments["text"]); }
+	void gotoTextAndExecuteUntilHalt() {
+		gotoText();
+		cpu.executeUntilHalt();
+	}
 	assertOnFail({
 		// If an assert failed, we will dump registers.
 		dump();
@@ -39,8 +43,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers["v0"] == 13, "(v0 = (7 + 11 - 5)) == 13");
 	});
 
@@ -52,8 +55,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers["a0"] == 999, "a0 = 1000; a0--; (a0 == 999);");
 	});
 
@@ -127,8 +129,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers["r1"] == 0, "Simple branch likely: No branch");
 		assertTrue(cpu.registers["r2"] == 1, "Simple branch likely: Branch");
 		//dump();
@@ -146,8 +147,7 @@ unittest {
 
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 
 		assertTrue(cpu.registers["a0"] == 1, "BEQL");
 	});
@@ -164,8 +164,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers["a0"] == 0x_8000_1111, "LUI + ORI");
 		assertTrue(cpu.registers["a1"] == 0x_8888_0001, "BITREV");
 		assertTrue(cpu.registers["a2"] == cpu.registers["a0"], "LI MACRO");
@@ -184,9 +183,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[11] == +5, "MAX");
 		assertTrue(cpu.registers[12] == -5, "MIN");
 		assertTrue(cpu.registers[13] ==  0, "MIN 0");
@@ -197,7 +194,7 @@ unittest {
 		.text
 
 			addi r1, zero, 2
-			addi r2, zero, 3
+			addi r2, zero, -3
 			mult r1, r2
 			mflo r3
 			mfhi r4
@@ -205,15 +202,31 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
-
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[1] == 2, "ADDI Check 1");
-		assertTrue(cpu.registers[2] == 3, "ADDI Check 2");
-		assertTrue(cpu.registers[3] == 2 * 3, "MULT R->LO");
-		assertTrue(cpu.registers[4] == 0, "MULT R->HI");
+		assertTrue(cpu.registers[2] == -3, "ADDI Check 2");
+		assertTrue(cpu.registers[3] == 2 * -3, "MULT R->LO");
+		assertTrue(cpu.registers[4] == 0xFFFFFFFF, "MULT R->HI");
 		assertTrue(cpu.registers.LO == cpu.registers[3], "MULT LO");
 		assertTrue(cpu.registers.HI == cpu.registers[4], "MULT HI");
+	});
+
+	testGroup("MULTU", {
+		assembler.assembleBlock(r"
+		.text
+
+			addi r1, zero, 2
+			addi r2, zero, -3
+			multu r1, r2
+			mflo r3
+			mfhi r4
+
+			halt
+		");
+
+		gotoTextAndExecuteUntilHalt();
+		assertTrue(cpu.registers[3] == (2 * -3), "MULTU R->LO");
+		assertTrue(cpu.registers[4] == 0x00000001, "MULT R->HI");
 	});
 
 	testGroup("MADD/MTHI/MTLO", {
@@ -264,9 +277,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
-		//dump();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[11] == 2, "MOVZ 0");
 		assertTrue(cpu.registers[12] == 0, "MOVZ 1");
 		assertTrue(cpu.registers[21] == 0, "MOVN 0");
@@ -284,8 +295,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[2] == 0x_F33F_F33F, "LI 32 bits value");
 		assertTrue(cpu.registers[3] == -2, "LI negative number");
 		assertTrue(cpu.registers[4] == 0x_FEEF_0000, "LI upper value");
@@ -301,9 +311,7 @@ unittest {
 			values:
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
-
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[2] == assembler.getSymbolAddress("values"), "LA");
 	});
 
@@ -317,8 +325,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[1] != 0x_11111111, "LI should have used register r1");
 	});
 
@@ -334,9 +341,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
-		//cpu.execute(5);
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers[2] == 0x_000FF000, "NOR CHECK 1");
 		assertTrue(cpu.registers[3] == 0x_F33FF33F, "NOR CHECK 2");
 		assertTrue(cpu.registers[4] == 0x_0CC00CC0, "NOR");
@@ -357,8 +362,7 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		assertTrue(cpu.registers.F[2] == 1.5f, "LWC1 1");
 		assertTrue(cpu.registers.F[3] == 1.6f, "LWC1 2");
 		assertTrue(cpu.registers.F[4] == 1.5f + 1.6f, "ADD.S");
@@ -379,10 +383,100 @@ unittest {
 			halt
 		");
 
-		gotoText();
-		cpu.executeUntilHalt();
+		gotoTextAndExecuteUntilHalt();
 		//cpu.execute(5);
 		assertTrue(cpu.registers.RF[0] == 7, "MTC1");
 		assertTrue(cpu.registers.F[1] == 7.0, "CVT_S_W");
 	});
+
+	testGroup("SHIFT", {
+		assembler.assembleBlock(r"
+		.text
+			li s0, 0x_80_00_00_00
+			li s1, 0x_70_00_00_00
+
+			sra a0, s0, 30
+			sra a1, s1, 27
+			srl a2, s0, 30
+			srl a3, s1, 27
+
+			li s0, 0x_17_39_A5_CD
+			rotr t0, s0, 0
+			rotr t1, s0, 4
+			rotr t2, s0, 16
+			rotr t3, s0, 24
+			
+			halt
+		");
+
+		gotoTextAndExecuteUntilHalt();
+
+		// Arithmetic. Carries last bit. (two's complement)
+		assertTrue(cpu.registers["a0"] == 0xFFFFFFFE, "SRA -");
+		assertTrue(cpu.registers["a1"] == 0x0000000E, "SRA +");
+		
+		// Logic.
+		assertTrue(cpu.registers["a2"] == 0x00000002, "SRL -");
+		assertTrue(cpu.registers["a3"] == 0x0000000E, "SRL +");
+		
+		assertTrue(cpu.registers["t0"] == 0x_1739A5CD, "ROTR 0");
+		assertTrue(cpu.registers["t1"] == 0x_D1739A5C, "ROTR 4");
+		assertTrue(cpu.registers["t2"] == 0x_A5CD1739, "ROTR 16");
+		assertTrue(cpu.registers["t3"] == 0x_39A5CD17, "ROTR 24");
+	});
+
+	testGroup("SIGN EXTEND", {
+		assembler.assembleBlock(r"
+		.text
+			li a0, 0xFF
+			seb a0, a0
+
+			li a1, 0x7F
+			seb a1, a1
+			
+			li a2, 0xFFF8
+			seh a2, a2
+
+			li a3, 0x7FF8
+			seh a3, a3
+
+			halt
+		");
+
+		gotoTextAndExecuteUntilHalt();
+
+		assertTrue(cpu.registers["a0"] == 0xFFFFFFFF, "SEB -");
+		assertTrue(cpu.registers["a1"] == 0x0000007F, "SEB +");
+		assertTrue(cpu.registers["a2"] == 0xFFFFFFF8, "SEH -");
+		assertTrue(cpu.registers["a3"] == 0x00007FF8, "SEH +");
+	});
+
+	testGroup("EXT/INS", {
+		assembler.assembleBlock(r"
+		.text
+			li a0, 0x_73_48_5C_20
+			
+			ext s0, a0, 0, 4
+			ext s1, a0, 4, 4
+			ext s2, a0, 12, 20
+			
+			li a1, 0x34
+			li s3, 0x_F7_72_5A_43
+			ins s3, a1, 16, 8
+		
+			halt
+		");
+
+		gotoTextAndExecuteUntilHalt();
+		
+		assertTrue(cpu.registers["s0"] == 0x_0, "EXT 0,4");
+		assertTrue(cpu.registers["s1"] == 0x_2, "EXT 4,4");
+		assertTrue(cpu.registers["s2"] == 0x_73485, "EXT 12,20");
+		assertTrue(cpu.registers["s3"] == 0x_F7_34_5A_43, "INS 16,8");
+	});
+	
+	//WSBW
+	//WSBH
+	//CLO
+	//CLZ
 }

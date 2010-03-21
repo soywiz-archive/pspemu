@@ -18,10 +18,13 @@ SET SOURCES=%SOURCES% pspemu/utils/OpenGL.d
 SET SOURCES=%SOURCES% pspemu/utils/Utils.d
 
 SET SOURCES=%SOURCES% pspemu/models/IDisplay.d
+SET SOURCES=%SOURCES% pspemu/models/IDebugSource.d
+REM SET SOURCES=%SOURCES% pspemu/models/IEmulatorState.d
 
 SET SOURCES=%SOURCES% pspemu/formats/Pbp.d
 SET SOURCES=%SOURCES% pspemu/formats/Psf.d
 SET SOURCES=%SOURCES% pspemu/formats/Elf.d
+SET SOURCES=%SOURCES% pspemu/formats/ElfDwarf.d
 
 SET SOURCES=%SOURCES% pspemu/hle/Loader.d
 SET SOURCES=%SOURCES% pspemu/hle/Module.d

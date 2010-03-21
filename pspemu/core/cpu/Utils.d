@@ -30,9 +30,11 @@ static pure nothrow {
 					case "rt": add ~= "registers.R[instruction.RT]"; break;
 					case "im": add ~= signed ? "instruction.IMM" : "instruction.IMMU"; break;
 					case "ps": add ~= "instruction.POS"; break;
-					case "sz": add ~= "instruction.SIZE"; break;
+					case "ne": add ~= "instruction.SIZE_E"; break;
+					case "ni": add ~= "instruction.SIZE_I"; break;
 					case "hi": add ~= "registers.HI"; break;
 					case "lo": add ~= "registers.LO"; break;
+					case "hl": add ~= "registers.HILO"; break;
 					case "cc": add ~= "registers.CC"; break;
 					default:
 						replace = false;

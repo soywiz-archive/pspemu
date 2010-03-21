@@ -7,6 +7,8 @@ version = ENABLE_BREAKPOINTS;
 import pspemu.core.gpu.Gpu;
 import pspemu.models.IDisplay;
 
+import pspemu.models.IDebugSource;
+
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Table;
 import pspemu.core.cpu.Switch;
@@ -40,7 +42,7 @@ version (ENABLE_BREAKPOINTS) {
 /**
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
-class Cpu {
+class Cpu : IDebugSource {
 	/**
 	 * Registers.
 	 */
@@ -57,6 +59,8 @@ class Cpu {
 	Gpu    gpu;
 
 	IDisplay display;
+	
+	mixin DebugSourceProxy;
 
 	bool running = true;
 
@@ -269,7 +273,23 @@ class Cpu {
 			AllegrexDisassembler dissasembler;
 			if (dissasembler is null) dissasembler = new AllegrexDisassembler(memory);
 			dissasembler.registersType = bp.registersType;
-			dissasembler.dumpSimple(PC);
+			string dis = dissasembler.dissasmSimple(PC);
+			
+			writef("%08X: ", PC);
+			writef("%s", dis);
+			int count = 30 - dis.length;
+			for (int n = 0; n < count; n++) writef(" ");
+			
+			writef(" | ");
+			
+			DebugSourceLine debugSourceLine = void;
+			if (lookupDebugSourceLine(debugSourceLine, PC)) {
+				writef(" %s", debugSourceLine);
+			} else {
+				writef(" --");
+			}
+			
+			writefln("");
 		}
 	}
 	mixin BreakPointStuff;

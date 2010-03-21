@@ -67,6 +67,9 @@ int main(string[] args) {
 	}
 	
 	auto loader  = new Loader(executableFile, memory);
+	
+	cpu.debugSource = loader;
+	
 	writefln("PC: %08X", loader.PC);
 	writefln("GP: %08X", loader.GP);
 	

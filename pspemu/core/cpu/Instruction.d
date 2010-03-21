@@ -49,35 +49,44 @@ struct Instruction {
 
 		// Type Immediate.
 		struct { mixin(bitfields!(
-			int, "IMM" , 16,
-			int, "IMM_", 16
+			int, "IMM", 16,
+			int, "__0",  16
 		)); }
 
 		// Type Immediate Unsigned.
 		struct { mixin(bitfields!(
 			uint, "IMMU" , 16,
-			uint, "IMMU_", 16
+			uint, "__1", 16
 		)); }
 
 		// JUMP 26 bits.
 		struct { mixin(bitfields!(
 			uint, "JUMP", 26,
-			uint, "JUMP_", 6
+			uint, "__2",  6
 		)); }
 
-		// POS
+		// LSB/MSB
 		struct { mixin(bitfields!(
-			uint, "POS_0", 6,
-			uint, "POS",   5,
-			uint, "SIZE",  5,
-			uint, "POS_1", 16
+			uint, "",      6,
+			uint, "LSB",   5,
+			uint, "MSB",  5,
+			uint, "",      16
 		)); }
+
+		// EXT/INS (POS/SIZE_E/SIZE_I)
+		alias LSB POS;
+
+		uint SIZE_E() { return MSB + 1; }
+		uint SIZE_E(uint size) { MSB = size - 1; return size; }
+
+		uint SIZE_I() { return MSB - LSB + 1; }
+		uint SIZE_I(uint size) { MSB = LSB + size - 1; return size; }
 
 		// CODE
 		struct { mixin(bitfields!(
-			uint, "__0",   6,
+			uint, "__5",   6,
 			uint, "CODE",  20,
-			uint, "__1",   6
+			uint, "__6",   6
 		)); }
 
 		alias IMM OFFSET;

@@ -2,6 +2,10 @@ module pspemu.utils.Utils;
 
 import std.stream, std.stdio;
 
+// Signed?
+enum : bool { Unsigned, Signed }	
+enum Sign : bool { Unsigned, Signed }	
+
 alias ulong  u64;
 alias uint   u32;
 alias ushort u16;
@@ -58,6 +62,18 @@ string readStringz(Stream stream, long position = -1) {
 		s ~= c;
 	} 
 	return s;
+}
+
+ulong readVarInt(Stream stream) {
+	ulong v;
+	ubyte b;
+	while (!stream.eof) {
+		stream.read(b);
+		v <<= 7;
+		v |= (b & 0x7F);
+		if (!(b & 0x80)) break;
+	}
+	return v;
 }
 
 T min(T)(T l, T r) { return (l < r) ? l : r; }

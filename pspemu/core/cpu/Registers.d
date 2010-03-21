@@ -15,12 +15,15 @@ final class Registers {
 	enum Fcsr { Rint = 0, Cast, Ceil, Floor }
 
 	uint PC, nPC;    // Program Counter
-	uint HI, LO;     // HIgh, LOw for multiplications and divisions.
+	union {
+		struct { uint LO, HI; }  // HIgh, LOw for multiplications and divisions.
+		ulong HILO;
+	}
 	uint IC;         // Interrupt controller
 	Fcsr FCSR;       // Floating point Control / Status register
 	bool CC;         // Control Word (Floating point? C1)
 	union {
-		uint[32] R;      // General Purpose Registers
+		uint[32] R;      // GPR | General Purpose Registers
 		struct {
 			uint _ZR, AT, V0, V1, A0, A1, A2, A3;
 			uint T0, T1, T2, T3, T4, T5, T6, T7;
