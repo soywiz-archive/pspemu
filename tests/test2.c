@@ -90,7 +90,26 @@ void testBitExtract() {
 	assert(0);
 }
 
+void testDouble() {
+	float f = 240.0f;
+	double d;
+	d = (double)f;
+	emitFloat((float)d);
+}
+
+/*void testDtoa() {
+	char data[16];
+	int dsgn;
+	int decpt = 2;
+	char *rve;
+	char *digits = _dtoa_r((void *)data, 240.0, 3, 6, &decpt, &dsgn, &rve);
+	emitString("testDtoa");
+	emitString(digits);
+}*/
+
 int main(int argc, char* argv[]) {
+	//testDtoa();
+	testDouble();
 	testIntToFloat();
 	testFloatManip();
 	testFloatExtra();

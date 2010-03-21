@@ -6,9 +6,9 @@ REM SET FLAGS=-G0 -Wall -O2 -g -gstabs
 SET FLAGS=-Wall -g
 
 CALL :BUILD test_sprintf
-REM CALL :BUILD test1
-REM CALL :BUILD test2
-REM CALL :BUILD ortho "common/callbacks.o common/vram.o"
+CALL :BUILD test1
+CALL :BUILD test2
+CALL :BUILD ortho "common/callbacks.o common/vram.o"
 
 EXIT /B
 

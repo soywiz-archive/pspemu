@@ -31,7 +31,7 @@ final class Registers {
 			uint T8, T9, K0, K1, GP, SP, _FP, RA;
 		}
 	}
-	union { uint[32] RF; float[32] F; double[16] D; } // Floating point registers.
+	union { uint[32] RF; float[32] F; } // Floating point registers.
 
 	static class FP {
 		protected static int[string] aliases;
@@ -48,6 +48,17 @@ final class Registers {
 			assert((aliasName in aliases) !is null, std.string.format("Unknown register alias '%s'", aliasName));
 			return aliases[aliasName];
 		}
+	}
+
+	void copyFrom(Registers that) {
+		this.PC   = that.PC;
+		this.nPC  = that.nPC;
+		this.HILO = that.HILO;
+		this.IC   = that.IC;
+		this.FCSR = that.FCSR;
+		this.CC   = that.CC;
+		this.R [] = that.R [];
+		this.RF[] = that.RF[];
 	}
 
 	static this() {

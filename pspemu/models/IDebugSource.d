@@ -7,7 +7,7 @@ struct DebugSourceLine {
 	uint address;
 	uint line;
 	string toString() {
-		return std.string.format("%08X '%s':%d", address, file, line);
+		return std.string.format("'%s':%d", file, line);
 	}
 }
 

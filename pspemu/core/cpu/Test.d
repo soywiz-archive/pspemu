@@ -474,9 +474,24 @@ unittest {
 		assertTrue(cpu.registers["s2"] == 0x_73485, "EXT 12,20");
 		assertTrue(cpu.registers["s3"] == 0x_F7_34_5A_43, "INS 16,8");
 	});
+
+	testGroup("SLTIU", {
+		assembler.assembleBlock(r"
+		.text
+			li r2, 0xFFFFFFFE
+			sltiu r1, r2, -1
+		
+			halt
+		");
+
+		gotoTextAndExecuteUntilHalt();
+		
+		assertTrue(cpu.registers["r1"] == 1, "SLTIU YES");
+	});
 	
 	//WSBW
 	//WSBH
 	//CLO
 	//CLZ
+	//SLLV
 }

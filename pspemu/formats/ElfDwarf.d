@@ -98,6 +98,7 @@ class ElfDwarf {
 		}
 	}
 
+	FileEntry[] allFileEntries = [FileEntry()];
 	State[uint] pcToState;
 	uint[] pcs;
 	
@@ -196,7 +197,7 @@ class ElfDwarf {
 		//writefln("%s", *header);
 		
 		string[] directories = [""];
-		FileEntry[] files = [FileEntry()];
+		FileEntry*[] files = [&allFileEntries[0]];
 		ulong[] opcode_lengths = [0];
 		State state;
 		
@@ -224,7 +225,8 @@ class ElfDwarf {
 			file.directory       = directories[file.directory_index];
 			file.time_mod        = cast(uint)readUleb128(info);
 			file.size            = cast(uint)readUleb128(info);
-			files ~= file;
+			allFileEntries ~= file;
+			files ~= &allFileEntries[$ - 1];
 			if (!file.name.length) break;
 		}
 
@@ -236,7 +238,7 @@ class ElfDwarf {
 		void copy() {
 			debug (DEBUG_ELF_DWARF_OPCODES) writefln("DWARF-2: Copy");
 			if (state.address % 4) return; // Invalid address
-			state.file_entry = &files[state.file];
+			state.file_entry = files[state.file];
 			pcToState[state.address] = state;
 		}
 		

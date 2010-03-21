@@ -12,10 +12,7 @@ enum Link   { NO, YES }
 static pure nothrow string BRANCH(Likely likely, Link link, string condition) {
 	string r;
 	r ~= "if (" ~ condition ~ ") {";
-		if (link) {
-			//r ~= "	registers[31] = registers.PC + 8;";
-			r ~= "	registers[31] = registers.nPC + 4;";
-		}
+		if (link) r ~= "	registers[31] = registers.nPC + 4;";
 	r ~= "	registers.pcAdvance(instruction.OFFSET << 2);";
 	r ~= "} else {";
 		if (likely) {

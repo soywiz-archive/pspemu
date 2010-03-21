@@ -133,6 +133,10 @@ class Cpu : IDebugSource {
 			version (ENABLE_BREAKPOINTS) {
 				if (checkBreakpoints) {
 					breakPointPrevPC = registers.PC;
+					if (traceStep) {
+						if (breakpointRegisters) breakpointRegisters.copyFrom(registers);
+						//breakpointStep.registers.
+					}
 				}
 			}
 			
@@ -205,8 +209,7 @@ class Cpu : IDebugSource {
 			if (bp.traceStep) {
 				traceStep = true;
 				breakpointStep = *bp;
-				breakpointRegisters.R[0..32] = registers.R[0..32];
-				breakpointRegisters.F[0..32] = registers.F[0..32];
+				breakpointRegisters.copyFrom(registers);
 			}
 			trace(*bp, PC, false);
 			return true;
@@ -287,6 +290,18 @@ class Cpu : IDebugSource {
 				writef(" %s", debugSourceLine);
 			} else {
 				writef(" --");
+			}
+
+			writef(" | ");
+			
+			if (breakpointRegisters) {
+				if (0) {
+					foreach (k; 0..32) if (breakpointRegisters.R [k] != registers.R [k]) writef(" r%d = 0x%08X, ", k, registers.R[k]);
+				} else {
+					foreach (k; 0..32) if (breakpointRegisters.R [k] != registers.R [k]) writef(" %s = 0x%08X, ", Registers.aliasesInv[k], registers.R[k]);
+				}
+				foreach (k; 0..32) if (breakpointRegisters.RF[k] != registers.RF[k]) writef(" f%d = $f, ", k, registers.F[k]);
+				if (breakpointRegisters.HILO != registers.HILO) writef(" hilo = 0x%016X, ",registers.HILO);
 			}
 			
 			writefln("");
