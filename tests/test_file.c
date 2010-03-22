@@ -26,5 +26,7 @@ int main() {
 		fclose(f);
 	}
 	
+	fclose(fopen("ms0:/tmp.bin", "wb"));
+	
 	return 0;
 }

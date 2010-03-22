@@ -1,6 +1,6 @@
 module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 
-//debug = DEBUG_SYSCALL;
+debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 
@@ -30,7 +30,7 @@ class ThreadManForUser : Module {
 	  * evid = sceKernelCreateEventFlag("wait_event", 0, 0, 0);
 	  * @endcode
 	  */
-	SceUID sceKernelCreateEventFlag(/*const*/ char *name, int attr, int bits, SceKernelEventFlagOptParam *opt) {
+	SceUID sceKernelCreateEventFlag(string name, int attr, int bits, SceKernelEventFlagOptParam *opt) {
 		return 0;
 	}
 
@@ -74,7 +74,7 @@ class ThreadManForUser : Module {
 
 	 * @return UID of the created thread, or an error code.
 	 */
-	SceUID sceKernelCreateThread(/*const*/ char *name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
+	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
 		return param(1);
 	}
 
@@ -107,7 +107,7 @@ class ThreadManForUser : Module {
 	 *
 	 * @return >= 0 A callback id which can be used in subsequent functions, < 0 an error.
 	 */
-	int sceKernelCreateCallback(const char *name, SceKernelCallbackFunction func, void *arg) {
+	int sceKernelCreateCallback(string name, SceKernelCallbackFunction func, void *arg) {
 		return 0;
 	}
 }
@@ -130,6 +130,47 @@ struct SceKernelEventFlagInfo {
 	SceUInt 	currentPattern;
 	int 		numWaitThreads;
 }
+
+/+
+struct SceKernelThreadInfo {
+	/** Size of the structure */
+	SceSize     size;
+	/** Nul terminated name of the thread */
+	char    	name[32];
+	/** Thread attributes */
+	SceUInt     attr;
+	/** Thread status */
+	int     	status;
+	/** Thread entry point */
+	SceKernelThreadEntry    entry;
+	/** Thread stack pointer */
+	void *  	stack;
+	/** Thread stack size */
+	int     	stackSize;
+	/** Pointer to the gp */
+	void *  	gpReg;
+	/** Initial priority */
+	int     	initPriority;
+	/** Current priority */
+	int     	currentPriority;
+	/** Wait type */
+	int     	waitType;
+	/** Wait id */
+	SceUID  	waitId;
+	/** Wakeup count */
+	int     	wakeupCount;
+	/** Exit status of the thread */
+	int     	exitStatus;
+	/** Number of clock cycles run */
+	SceKernelSysClock   runClocks;
+	/** Interrupt preemption count */
+	SceUInt     intrPreemptCount;
+	/** Thread preemption count */
+	SceUInt     threadPreemptCount;
+	/** Release count */
+	SceUInt     releaseCount;
+}
++/
 
 struct SceKernelEventFlagOptParam {
 	SceSize 	size;

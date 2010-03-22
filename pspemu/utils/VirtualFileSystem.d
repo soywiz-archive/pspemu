@@ -50,7 +50,7 @@ class VFS {
 	}
 
 	VFS opIndex(string index) {
-		auto separatorIndex = index.indexOf("/");
+		auto separatorIndex = std.string.indexOf(index, "/");
 		if (separatorIndex == -1) separatorIndex = index.length;
 
 		string singleComponent = index[0..separatorIndex];

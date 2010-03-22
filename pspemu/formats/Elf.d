@@ -227,6 +227,34 @@ class Elf {
 		assert(0, "Not implemented relocation yet.");
 	}
 
+	void allocateBlockBound(ref uint low, ref uint high) {
+		low  = 0xFFFFFFFF;
+		high = 0x00000000;
+		foreach (sectionHeader; sectionHeaders) {
+			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
+				switch (sectionHeader.type) {
+					case SectionHeader.Type.PROGBITS, SectionHeader.Type.NOBITS:
+						low  = min(low , sectionHeader.address);
+						high = max(high, sectionHeader.address + sectionHeader.size);
+					break;
+					default: break;
+				}
+			}
+		}
+	}
+
+	uint requiredBlockSize() {
+		uint low, high;
+		allocateBlockBound(low, high);
+		return high - low;
+	}
+
+	uint suggestedBlockAddress() {
+		uint low, high;
+		allocateBlockBound(low, high);
+		return high;
+	}
+
 	void writeToMemory(Stream stream, uint baseAddress = 0) {
 		if (needsRelocation) baseAddress += 0x08900000;
 		foreach (k, sectionHeader; sectionHeaders) {			

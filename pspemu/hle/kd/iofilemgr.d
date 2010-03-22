@@ -6,24 +6,28 @@ import pspemu.hle.Module;
 
 import pspemu.utils.VirtualFileSystem;
 
-__gshared static {
-	VFS fsroot;
-	string fscurdir = "ms0:/PSP/GAME/virtual";
-}
-
-static this() {
-	fsroot = new VFS();
-
-	//fsroot["/ms0/PSP/GAME"].addChild(new VFS_Proxy("virtual", new VFS()));
-
-	fsroot.addChild(new FileSystem("pspfs/ms0"), "ms0:");
-	fsroot.addChild(new FileSystem("pspfs/flash0"), "flash0:");
-
-	// Aliases.
-	fsroot.addChild(fsroot["ms0:"], "ms:");
-}
-
 class IoFileMgrForKernel : Module {
+	VFS fsroot;
+	string fscurdir;
+
+	void initFS() {
+		fsroot = new VFS();
+
+		//fsroot["/ms0/PSP/GAME"].addChild(new VFS_Proxy("virtual", new VFS()));
+
+		fsroot.addChild(new FileSystem("pspfs/ms0"), "ms0:");
+		fsroot.addChild(new FileSystem("pspfs/flash0"), "flash0:");
+
+		// Aliases.
+		fsroot.addChild(fsroot["ms0:"], "ms:");
+
+		fscurdir = "ms0:/PSP/GAME/virtual";
+	}
+
+	void setVirtualDir(string path) {
+		fsroot["ms0:/PSP/GAME"].addChild(new FileSystem(path), "virtual");
+	}
+
 	this() {
 		mixin(register(0xB29DDF9C, "sceIoDopen"));
 		mixin(register(0xEB092469, "sceIoDclose"));
@@ -34,6 +38,7 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x42EC03AC, sceIoWrite));
 		mixin(registerd!(0x27EB27B8, sceIoLseek));
 		mixin(registerd!(0xACE946E8, sceIoGetstat));
+		initFS();
 	}
 
 	Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
@@ -83,8 +88,19 @@ class IoFileMgrForKernel : Module {
 			if (mode & PSP_O_WRONLY) fmode |= FileMode.Out;
 			if (mode & PSP_O_APPEND) fmode |= FileMode.Append;
 			if (mode & PSP_O_CREAT ) fmode |= FileMode.OutNew;
+			
+			VFS vfs = fsroot;
 
-			auto stream = fsroot[fscurdir].open(file, fmode, 0777);
+			// Full path.
+			if (file.indexOf(":") == -1) {
+				vfs = fsroot[fscurdir];
+			}
+			/*
+			if (file.length && file[0] == '/') {
+			}
+			*/
+
+			auto stream = vfs.open(file, fmode, 0777);
 			return cast(SceUID)cast(void *)stream;
 		} catch (Object o) {
 			writefln("sceIoOpen exception: %s", o);

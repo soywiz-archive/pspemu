@@ -32,6 +32,7 @@ SET SOURCES=%SOURCES% pspemu/hle/Module.d
 SET SOURCES=%SOURCES% pspemu/hle/Syscall.d
 
 SET SOURCES=%SOURCES% pspemu/hle/kd/types.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/audio.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/display.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/ge.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/ctrl.d

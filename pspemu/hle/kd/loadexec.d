@@ -1,6 +1,6 @@
 module pspemu.hle.kd.loadexec; // kd/loadexec.prx (sceLoadExec)
 
-//debug = DEBUG_SYSCALL;
+debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 
@@ -40,7 +40,7 @@ class LoadExecForUser : Module {
 	 * @return < 0 on error
 	 */
 	int sceKernelRegisterExitCallback(int cbid) {
-		return -1;
+		return 0;
 	}
 }
 

@@ -59,6 +59,7 @@ int main(string[] args) {
 	//executableFile = "demos/text.pbp";
 	//executableFile = "demos/lines.pbp";
 	executableFile = "tests/test1.elf";
+	//
 	//executableFile = "demos/cube.pbp";
 	//executableFile = "demos/ortho.pbp";
 
@@ -66,24 +67,8 @@ int main(string[] args) {
 		executableFile = args[1];
 	}
 	
-	auto loader  = new Loader(executableFile, memory);
-	
-	cpu.debugSource = loader;
-	
-	writefln("PC: %08X", loader.PC);
-	writefln("GP: %08X", loader.GP);
-	
-	cpu.registers.pcSet = loader.PC;
-	cpu.registers["gp"] = loader.GP;
-	//cpu.registers["sp"] = 0x08800000;
-	cpu.registers["sp"] = 0x09F00000;
-	cpu.registers["k0"] = 0x09F00000;
-	//cpu.registers["ra"] = 0x08900004;
-	cpu.registers["ra"] = 0;
-	//cpu.registers["ra"] = 0x089065A8;
-	cpu.registers["a0"] = 0; // argumentsLength.
-	cpu.registers["a1"] = loader.PC; // argumentsPointer
-	cpu.registers["a2"] = 0; // argumentsPointer
+	auto loader  = new Loader(executableFile, cpu);
+	loader.setRegisters();
 
 	version (TRACE_FROM_BEGINING) {
 		cpu.checkBreakpoints = true;

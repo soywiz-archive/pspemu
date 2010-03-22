@@ -32,11 +32,8 @@ string getModuleMethodDelegate(alias func)() {
 	string r = "";
 	//alias ReturnType!(func) return_type;
 	bool return_value = !is(ReturnType!(func) == void);
-	r ~= "delegate void() { ";
-	{
-		r ~= "debug (DEBUG_SYSCALL) .writefln(\"" ~ functionName ~ "()\"); ";
-		if (return_value) r ~= "auto retval = ";
-		r ~= "this." ~ functionName ~ "(";
+	string _parametersString() {
+		string r = "";
 		int paramIndex = 0;
 		foreach (param; ParameterTypeTuple!(func)) {
 			if (paramIndex > 0) r ~= ", ";
@@ -54,7 +51,33 @@ string getModuleMethodDelegate(alias func)() {
 			}
 			paramIndex++;
 		}
-		r ~= ");";
+		return r;
+	}
+	string _parametersPrototypeString() {
+		string r = "";
+		int paramIndex = 0;
+		foreach (param; ParameterTypeTuple!(func)) {
+			if (paramIndex > 0) r ~= ", ";
+			if (isString!(param)) {
+				r ~= "\\\"%s\\\"";
+			} else {
+				r ~= "%s";
+			}
+			paramIndex++;
+		}
+		return r;
+	}
+	r ~= "delegate void() { ";
+	{
+		string parametersString = _parametersString;
+		string parametersPrototypeString = _parametersPrototypeString;
+		if (parametersPrototypeString.length) {
+			r ~= "debug (DEBUG_SYSCALL) .writef(\"" ~ functionName ~ "(" ~ _parametersPrototypeString ~ ")\", " ~ parametersString ~ "); ";
+		} else {
+			r ~= "debug (DEBUG_SYSCALL) .writef(\"" ~ functionName ~ "()\"); ";
+		}
+		if (return_value) r ~= "auto retval = ";
+		r ~= "this." ~ functionName ~ "(" ~ parametersString ~ ");";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func))) {
 				r ~= "cpu.registers.V0 = cpu.memory.getPointerReverse(cast(void *)retval);";
@@ -64,6 +87,15 @@ string getModuleMethodDelegate(alias func)() {
 					r ~= "cpu.registers.V1 = (cast(uint *)&retval)[1];";
 				}
 			}
+		}
+		if (return_value) {
+			if (isPointerType!(ReturnType!(func))) {
+				r ~= "debug (DEBUG_SYSCALL) .writefln(\" = 0x%08X\", cpu.registers.V0); ";
+			} else {
+				r ~= "debug (DEBUG_SYSCALL) .writefln(\" = %s\", retval); ";
+			}
+		} else {
+			r ~= "debug (DEBUG_SYSCALL) .writefln(\" = <void>\"); ";
 		}
 	}
 	r ~= " }";
@@ -146,7 +178,7 @@ abstract class Module {
 				return knownModule;
 			}
 		}
-		assert(0, std.string.format("Can't find module '%s'", moduleName));
+		throw(new Exception(std.string.format("Can't find module '%s'", moduleName)));
 	}
 	static Module loadModule(string moduleName) {
 		if ((moduleName in knownModulesByName) is null) {
@@ -154,12 +186,15 @@ abstract class Module {
 		}
 		return knownModulesByName[moduleName];
 	}
+	static Type loadModuleEx(alias Type)() {
+		return cast(Type)loadModule(Type.stringof);
+	}
 	static Module opIndex(string moduleName) {
 		return loadModule(moduleName);
 	}
 
 	void opDispatch(string s)() {
 		writefln("Module.opDispatch('%s.%s')", this.baseName, s);
-		assert(0, std.string.format("Not implemented %s.%s", this.baseName, s));
+		throw(new Exception(std.string.format("Not implemented %s.%s", this.baseName, s)));
 	}
 }

@@ -11,8 +11,11 @@ import pspemu.formats.ElfDwarf;
 import pspemu.formats.Pbp;
 
 import pspemu.hle.Module;
+import pspemu.hle.kd.iofilemgr;
+import pspemu.hle.kd.sysmem;
 
 import pspemu.core.Memory;
+import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Assembler;
 import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.InstructionCounter;
@@ -79,40 +82,43 @@ class Loader : IDebugSource {
 
 	Elf elf;
 	ElfDwarf dwarf;
-	Stream memory;
+	Cpu cpu;
+	Memory memory() { return cpu.memory; }
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
 	ModuleExport[] moduleExports;
 	
-	uint PC() { return elf.header.entryPoint; }
-	uint GP() { return moduleInfo.gp; }
-
-	this(string file, Stream memory) {
-		this(new BufferedFile(file, FileMode.In), memory);
+	this(string file, Cpu cpu) {
+		file = file.replace("\\", "/");
+		string path = ".";
+		int index = file.lastIndexOf("/");
+		if (index != -1) path = file[0..index];
+		Module.loadModuleEx!(IoFileMgrForUser).setVirtualDir(path);
+		this(new BufferedFile(file, FileMode.In), cpu);
 	}
 
-	this(Stream stream, Stream memory) {
+	this(Stream stream, Cpu cpu) {
 		while (true) {
 			auto magics = new SliceStream(stream, 0, 4);
 			switch (magics.readString(4)) {
 				case "\x7FELF":
 				break;
 				case "~PSP":
-					assert(0, "Not support compressed elf files");
+					throw(new Exception("Not support compressed elf files"));
 				break;
 				case "\0PBP":
 					stream = (new Pbp(stream))["psp.data"];
 					continue;
 				break;
 				default:
-					assert(0, "Unknown file");
+					throw(new Exception("Unknown file type"));
 				break;
 			}
 			break;
 		}
 
-		this.elf    = new Elf(stream);
-		this.memory = memory;
+		this.elf = new Elf(stream);
+		this.cpu = cpu;
 		version (DEBUG_LOADER) {
 			elf.dumpSections();
 		}
@@ -135,6 +141,7 @@ class Loader : IDebugSource {
 			dwarf = new ElfDwarf;
 			dwarf.parseDebugLine(elf.SectionStream(".debug_line"));
 			dwarf.find(0x089004C8);
+			cpu.debugSource = this;
 		} catch (Object o) {
 			writefln("Can't find debug information: '%s'", o.toString);
 		}
@@ -164,7 +171,27 @@ class Loader : IDebugSource {
 		}
 	}
 
+	void allocatePartitionBlock() {
+		Memory memory = cast(Memory)this.memory;
+
+		// Not a Memory supplied.
+		if (memory is null) {
+			return;
+		}
+
+		auto sysMemUserForUser = Module.loadModuleEx!(SysMemUserForUser);
+		//writefln("%08X", memory.getPointer(this.elf.suggestedBlockAddress));
+		auto blockid = sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Program", PspSysMemBlockTypes.PSP_SMEM_Addr, this.elf.requiredBlockSize, this.elf.suggestedBlockAddress);
+		uint blockaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(blockid);
+
+		writefln("suggestedBlockAddress:%08X", this.elf.suggestedBlockAddress);
+		writefln("requiredBlockSize:%08X", this.elf.requiredBlockSize);
+		writefln("allocatedIn:%08X", blockaddress);
+	}
+
 	void load() {
+		allocatePartitionBlock();
+
 		this.elf.writeToMemory(memory);
 		readInplace(moduleInfo, elf.SectionStream(".rodata.sceModuleInfo"));
 		
@@ -209,8 +236,33 @@ class Loader : IDebugSource {
 			moduleExports ~= moduleExport;
 		}
 	}
+
+	void setRegisters() {
+		uint PC() { return elf.header.entryPoint; }
+		uint GP() { return moduleInfo.gp; }
+
+		auto sysMemUserForUser = Module.loadModuleEx!(SysMemUserForUser);
+		//writefln("%08X", memory.getPointer(this.elf.suggestedBlockAddress));
+		//uint stacksize = 0x8000; // 32 KB
+		uint stacksize = 0x40000; // 256 KB
+		uint stackaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Stack", PspSysMemBlockTypes.PSP_SMEM_High, stacksize, 0));
+		//uint stackaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Stack", PspSysMemBlockTypes.PSP_SMEM_Addr, stacksize, 0x09F00000));
+
+		cpu.registers.pcSet = PC;
+		cpu.registers["gp"] = GP;
+		cpu.registers["sp"] = stackaddress + stacksize - 0x10;
+		cpu.registers["k0"] = cpu.registers["sp"];
+		cpu.registers["ra"] = 0;
+		cpu.registers["a0"] = 0; // argumentsLength.
+		cpu.registers["a1"] = 0; // argumentsPointer
+
+		writefln("PC: %08X", cpu.registers.PC);
+		writefln("GP: %08X", cpu.registers["gp"]);
+		writefln("SP: %08X", cpu.registers["sp"]);
+	}
 }
 
+/*
 unittest {
 	const testPath = "demos";
 	auto memory = new SparseMemoryStream;
@@ -225,3 +277,4 @@ unittest {
 
 	//assert(0);
 }
+*/
