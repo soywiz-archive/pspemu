@@ -5,11 +5,22 @@ module pspemu.models.IDisplay;
  */
 interface IDisplay {
 	static struct Size { int x, y; alias x width; alias y height; }
+	static struct Info {
+		uint topaddr = /*Memory.frameBufferAddress*/0x04_000000;
+		int bufferwidth = 512;
+		int pixelformat = 3;
+		int sync = 0;
+	}
+
+	Info info(Info info);
+	Info info();
 
 	/**
 	 * Returns a pointer to the begin of the frameBuffer.
 	 */
 	void* frameBufferPointer();
+
+	int frameBufferPixelFormat();
 
 	/**
 	 * Returns the size of the frameBuffer Size(512, 272).
@@ -38,6 +49,12 @@ interface IDisplay {
 }
 
 abstract class BasePspDisplay : IDisplay {
+	Info _info;
+	Info info(Info info) { return _info = info; }
+	Info info() { return _info; }
+	
+	int frameBufferPixelFormat() { return _info.pixelformat; }
+
 	Size frameBufferSize() { return Size(512, 272); }
 	Size displaySize() { return Size(480, 272); }
 	int verticalRefreshRate() { return 60; }

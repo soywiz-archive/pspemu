@@ -70,10 +70,6 @@ class Memory : Stream {
 	/// Currently it only supports fat 16MB.
 	ubyte[] mainMemory ; static const int mainMemoryAddress  = 0x08_000000, mainMemoryMask  = 0x01FFFFFF;
 
-	// Temporal HACK.
-	// Used to simplify the way HLE changes the pointer for the display.
-	uint displayMemory = frameBufferAddress;
-
 	/**
 	 * Constructor.
 	 * It allocates all the physical memory segments and set the stream properties of the memory.

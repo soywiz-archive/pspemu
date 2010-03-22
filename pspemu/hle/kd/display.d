@@ -7,6 +7,8 @@ import std.c.windows.windows;
 
 import pspemu.hle.Module;
 
+import pspemu.models.IDisplay;
+
 class sceDisplay_driver : Module { // Flags: 0x00010000
 	this() {
 		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
@@ -34,7 +36,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * @return 0 on success
 	 */
 	int sceDisplaySetFrameBuf(uint topaddr, int bufferwidth, int pixelformat, int sync) {
-		cpu.memory.displayMemory = topaddr;
+		cpu.display.info = IDisplay.Info(topaddr, bufferwidth, pixelformat, sync);
 		return 0;
 	}
 
