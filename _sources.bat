@@ -67,15 +67,20 @@ SET SOURCES=%SOURCES% pspemu/core/cpu/ops/Unimplemented.d
 
 SET SOURCES=%SOURCES% pspemu/core/gpu/Gpu.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/Commands.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/Types.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/DisplayList.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Special.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Flow.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Colors.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Draw.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Matrix.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/impl/GpuOpengl.d
 
 SET SOURCES=%SOURCES% gdi32.lib
 
 REM SET RELEASE=-noboundscheck -inline -O -release
 SET RELEASE=-noboundscheck -O -release
+REM SET RELEASE=-O
 
 SET EXTRA=-quiet -deps=deps.lst
 

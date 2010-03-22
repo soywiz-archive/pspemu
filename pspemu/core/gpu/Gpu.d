@@ -7,17 +7,14 @@ module pspemu.core.gpu.Gpu;
 
 import core.thread;
 
-import std.c.windows.windows;
-import std.windows.syserror;
-import std.stdio, std.bitmanip;
-
-import std.contracts;
+import std.stdio;
 
 import pspemu.utils.Utils;
-import pspemu.utils.OpenGL;
 
 import pspemu.core.Memory;
 import pspemu.core.gpu.Commands;
+import pspemu.core.gpu.Types;
+import pspemu.core.gpu.DisplayList;
 
 import pspemu.core.gpu.ops.Special;
 import pspemu.core.gpu.ops.Flow;
@@ -25,193 +22,25 @@ import pspemu.core.gpu.ops.Colors;
 import pspemu.core.gpu.ops.Draw;
 import pspemu.core.gpu.ops.Matrix;
 
-extern (Windows) {
-	bool  SetPixelFormat(HDC, int, PIXELFORMATDESCRIPTOR*);
-	bool  SwapBuffers(HDC);
-	int   ChoosePixelFormat(HDC, PIXELFORMATDESCRIPTOR*);
-	HBITMAP CreateDIBSection(HDC hdc, const BITMAPINFO *pbmi, UINT iUsage, VOID **ppvBits, HANDLE hSection, DWORD dwOffset);
-	const uint BI_RGB = 0;
-	const uint DIB_RGB_COLORS = 0;
-}
-
 class Gpu {
-	Memory memory;
+	mixin PspHardwareComponent;
 
-	bool _running;
-
-	static struct DisplayList {
-		Command* base, pointer, stall;
-
-		string toString() {
-			return std.string.format("DisplayList(%08X-%08X):%08X", cast(uint)base, cast(uint)stall, cast(uint)(pointer - base));
-		}
-
-		void set(void* base, void* stall) {
-			this.base  = cast(Command*)base;
-			this.stall = cast(Command*)stall;
-			this.pointer = this.base;
-		}
-
-		void jump(void* pointer) {
-			this.pointer = cast(Command*)pointer;
-		}
-
-		void end() {
-			base = pointer = stall = null;
-		}
-
-		bool stalled() {
-			if (stall is null) return false;
-			return pointer >= stall;
-		}
-
-		bool more() {
-			return (pointer !is null);
-		}
-
-		ref Command read() {
-			return *pointer++;
-		}
-
-		static DisplayList opCall(void* base, void* stall) {
-			DisplayList dl = void;
-			dl.set(base, stall);
-			return dl;
-		}
-	}
-	
-	alias Queue!(DisplayList) DisplayLists;
+	Memory   memory;
+	GpuImpl  impl;
+	GpuState state;
 
 	DisplayList* currentDisplayList;
 	DisplayLists displayLists;
+
+	TaskQueue externalActions;
 	
-	Info info;
-	Thread thread;
-
-	struct VertexType {
-		union {
-			uint v;
-			struct {
-				mixin(bitfields!(
-					uint, "texture",  2,
-					uint, "color",    3,
-					uint, "normal",   2,
-					uint, "position", 2,
-					uint, "weight",   2,
-					uint, "index",    2,
-					uint, "__0",      1,
-					uint, "skinningWeightCount", 3,
-					uint, "__1",      1,
-					uint, "morphingVertexCount",   2,
-					uint, "__2",      3,
-					uint, "transform2D",           1,
-					uint, "__3",      8
-				));
-			}
-		}
+	this(GpuImpl impl, Memory memory) {
+		this.impl            = impl;
+		this.memory          = memory;
+		this.displayLists    = new DisplayLists(1024);
+		this.externalActions = new TaskQueue;
+		impl.setState(&state);
 	}
-
-	class ScreenBuffer {
-		public int width  = 512;
-		public int format = 3;
-
-		//int _address = 0;
-		int _address = 0x04_000000;
-
-		int address(int value) { return _address = 0x04_000000 | value; }
-		int address() { return _address; }
-		/*
-		int formatGl() { return PIXELF_T[format].opengl; }
-		float psize() { return PIXELF_T[format].size; }
-		*/
-
-		void* pointer() { return memory.getPointer(_address); }
-	}
-
-	static struct Colorf {
-		union {
-			struct { float[4] rgba = [0.0, 0.0, 0.0, 1.0]; }
-			struct { float[3] rgb; }
-			struct { float r, g, b, a; }
-			struct { float red, green, blue, alpha; }
-		}
-		float* ptr() { return rgba.ptr; }
-		static assert(this.sizeof == float.sizeof * 4);
-	}
-
-	static struct Matrix {
-		union {
-			struct { float[4 * 4] cells; }
-			struct { float[4][4]  rows; }
-		}
-		float* pointer() { return cells.ptr; }
-		enum WriteMode { M4x4, M4x3 }
-		const indexesM4x4 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-		const indexesM4x3 = [0, 1, 2,  4, 5, 6,  8, 9, 10,  12, 13, 14];
-		uint index;
-		WriteMode mode;
-		void reset(WriteMode mode = WriteMode.M4x4) {
-			index = 0;
-			this.mode = mode;
-			if (mode == WriteMode.M4x3) {
-				cells[11] = cells[7] = cells[3] = 0.0;
-				cells[15] = 1.0;
-			}
-		}
-		void next() { index++; index &= 0xF; }
-		void write(float cell) {
-			auto indexes = (mode == WriteMode.M4x4) ? indexesM4x4 : indexesM4x3;
-			cells[indexes[index++ % indexes.length]] = cell;
-		}
-		//static assert(this.sizeof == float.sizeof * 16 + uint.sizeof);
-		string toString() {
-			return std.string.format(
-				"(%f, %f, %f, %f)\n"
-				"(%f, %f, %f, %f)\n"
-				"(%f, %f, %f, %f)\n"
-				"(%f, %f, %f, %f)",
-				cells[0], cells[1], cells[2], cells[3],
-				cells[4], cells[5], cells[6], cells[7],
-				cells[8], cells[9], cells[10], cells[11],
-				cells[12], cells[13], cells[14], cells[15]
-			);
-		}
-	}
-
-	class Info {
-		ScreenBuffer drawBuffer, displayBuffer;
-		uint baseAddress;
-		uint vertexAddress;
-		uint indexAddress;
-		int  clearFlags;
-		VertexType vertexType;
-		Colorf ambientModelColor, diffuseModelColor, specularModelColor;
-		Colorf materialColor;
-		Matrix projectionMatrix, worldMatrix, viewMatrix;
-
-		void *vertexPointer() { return memory.getPointer(vertexAddress); }
-		void *indexPointer () { return memory.getPointer(indexAddress); }
-	}
-
-	this(Memory memory) {
-		this.memory = memory;
-		info = new Info;
-		info.drawBuffer    = new ScreenBuffer;
-		info.displayBuffer = new ScreenBuffer;
-		displayLists = new DisplayLists();
-	}
-
-	void start() {
-		if (running) return;
-		thread = new Thread(&run);
-		thread.start();
-	}
-
-	void stop() {
-		_running = false;
-	}
-
-	bool running() { return _running && (thread && thread.isRunning); }
 
 	/**
 	 * Executes a DisplayList.
@@ -256,53 +85,51 @@ class Gpu {
 		}
 
 		// Execute commands while has more.
+		
 		currentDisplayList = &displayList;
 		debug (DEBUG_GPU_VERBOSE) writefln("<executeList> (%s)", displayList);
-		{
-			while (displayList.more) {
-				while (displayList.stalled) {
-					if (!running) goto end;
-					//writefln("stalled");
-					Sleep(1);
+		try {
+			while (displayList.hasMore) {
+				while (displayList.isStalled) {
+					debug (DEBUG_GPU_VERBOSE) writefln("  stalled() : %s", displayList);
+					WaitAndCheck;
 				}
-				if (!running) goto end;
+				WaitAndCheck(0);
 				executeCommand(displayList.read);
 			}
-			end:;
+		} finally {
+			debug (DEBUG_GPU_VERBOSE) writefln("</executeList>");
 			displayList.end();
+			currentDisplayList = null;
 		}
-		debug (DEBUG_GPU_VERBOSE) writefln("</executeList>");
-		currentDisplayList = null;
 	}
 
 	bool executingDisplayList() { return (currentDisplayList !is null); }
 
 	private void run() {
 		try {
-			//Sleep(5000);
-			initializeOpenGL();
+			impl.init();
 			_running = true;
 			while (true) {
-				// Check running.
-				if (!running) break;
-
-				//writefln("displayLists.readAvailable:%d", displayLists.readAvailable);
-
 				while (displayLists.readAvailable) {
 					executeList(displayLists.consume);
 				}
 
-				//Thread.sleep(0_5000);
-
-				Sleep(1);
+				WaitAndCheck;
 			}
 		} catch (Object o) {
+			writefln("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 			writefln("Gpu.run exception: %s", o);
+			writefln("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		} finally {
+			writefln("Gpu.shutdown");
 		}
 	}
 
 	template ExternalInterface() {
 		DisplayList* sceGeListEnQueue(void* list, void* stall = null) {
+			//while (!displayLists.readAvailable) WaitAndCheck();
+			while (!displayLists.writeAvailable) sleep(1);
 			DisplayList* ret = &displayLists.queue(DisplayList(list, stall));
 			//writefln("%s", *ret);
 			return ret;
@@ -320,14 +147,12 @@ class Gpu {
 		 */
 		void sceGeListSync(DisplayList* displayList, int syncType) {
 			// While this displayList has more items to read.
-			while (displayList.more) {
-				// Check running.
-				if (!running) break;
-
-				Sleep(1);
+			try {
+				while (displayList.hasMore) WaitAndCheck;
+			} catch {
 			}
 
-			storeFrameBuffer();
+			checkStoreFrameBuffer();
 		}
 		
 		/**
@@ -336,117 +161,68 @@ class Gpu {
 		void sceGeDrawSync(int syncType) {
 			// While we have display lists queued
 			// Or if we are currently executing a displayList
-			while (displayLists.readAvailable || executingDisplayList) {
-				// Check running.
-				if (!running) break;
-
-				Sleep(1);
+			try {
+				while (displayLists.readAvailable || executingDisplayList) WaitAndCheck;
+			} catch {
 			}
 			
-			storeFrameBuffer();
+			checkStoreFrameBuffer();
 		}
 	}
 
-	template Gpu_Opengl() {
-		HDC hdc;
-		HGLRC hglrc;
-		uint *bitmapData;
+	bool inDrawingThread() { return Thread.getThis == thread; }
 
-		void initializeOpenGL() {
-			// http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=41
-			// http://msdn.microsoft.com/en-us/library/ms970768.aspx
-			// http://www.codeguru.com/cpp/g-m/opengl/article.php/c5587
-			// PFD_DRAW_TO_BITMAP
-			HBITMAP hbmpTemp;
-			PIXELFORMATDESCRIPTOR pfd;
-			BITMAPINFO bi;
-			
-			hdc = CreateCompatibleDC(GetDC(null));
-
-			bi.bmiHeader.biSize			= BITMAPINFOHEADER.sizeof;
-			bi.bmiHeader.biBitCount		= 32;
-			bi.bmiHeader.biWidth		= 512;
-			bi.bmiHeader.biHeight		= 272;
-			bi.bmiHeader.biCompression	= BI_RGB;
-			bi.bmiHeader.biPlanes		= 1;
-
-			hbmpTemp = enforce(CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, cast(void **)&bitmapData, null, 0));
-			enforce(SelectObject(hdc, hbmpTemp));
-			
-			pfd.nSize = pfd.sizeof;
-			pfd.nVersion = 1;
-			pfd.dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI;
-			pfd.iPixelType = PFD_TYPE_RGBA;
-			pfd.cColorBits = 32;
-			pfd.cRedBits = 0;
-			pfd.cRedShift = 0;
-			pfd.cGreenBits = 0;
-			pfd.cGreenShift = 0;
-			pfd.cBlueBits = 0;
-			pfd.cBlueShift = 0;
-			pfd.cAlphaBits = 0;
-			pfd.cAlphaShift = 0;
-			pfd.cAccumBits = 0;
-			pfd.cAccumRedBits = 0;
-			pfd.cAccumGreenBits = 0;
-			pfd.cAccumBlueBits = 0;
-			pfd.cAccumAlphaBits = 0;
-			pfd.cDepthBits = 32;
-			pfd.cStencilBits = 0;
-			pfd.cAuxBuffers = 0;
-			pfd.iLayerType = PFD_MAIN_PLANE;
-			pfd.bReserved = 0;
-			pfd.dwLayerMask = 0;
-			pfd.dwVisibleMask = 0;
-			pfd.dwDamageMask = 0;
-
-			enforce(SetPixelFormat(
-				hdc,
-				enforce(ChoosePixelFormat(hdc, &pfd)),
-				&pfd
-			));
-
-			hglrc = enforce(wglCreateContext(hdc));
-			openglMakeCurrent();
-			
-			openglPostInit();
-		}
-		
-		void openglPostInit() {
-			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-			glMatrixMode(GL_PROJECTION); glLoadIdentity();
-			glPixelZoom(1, 1);
-			glRasterPos2f(-1, 1);
-		}
-
-		void openglMakeCurrent() {
-			wglMakeCurrent(null, null);
-			wglMakeCurrent(hdc, hglrc);
-			assert(wglGetCurrentDC() == hdc);
-			assert(wglGetCurrentContext() == hglrc);
-		}
-
-		void loadFrameBuffer() {
-			//glFlush();
-			bitmapData[0..512 * 272] = (cast(uint *)memory.getPointer(info.drawBuffer.address))[0..512 * 272];
-			//glFlush();
-		}
-
-		void storeFrameBuffer() {
-			//glFlush();
-			(cast(uint *)memory.getPointer(info.drawBuffer.address))[0..512 * 272] = bitmapData[0..512 * 272];
-			//glFlush();
-		}
-
-		bool mustLoadFrameBuffer;
-		void checkLoadFrameBuffer() {
-			if (!mustLoadFrameBuffer) return;
-			loadFrameBuffer();
-			mustLoadFrameBuffer = false;
-		}
+	void WaitAndCheck(uint count = 1) {
+		if (!running) throw(new Exception("Gpu Stopping Execution"));
+		if (inDrawingThread) externalActions();
+		if (count > 0) sleep(count);
 	}
 
-	mixin Gpu_Opengl;
+	void* drawBufferAddress() {
+		//writefln("%s", state.drawBuffer);
+		if (state.drawBuffer.address == 0) return null;
+		return memory.getPointer(state.drawBuffer.address);
+	}
+
+	void externalActionAdd(TaskQueue.Task task) {
+		externalActions.add(task);
+		if (inDrawingThread) externalActions(); else externalActions.waitEmpty();
+	}
+
+	void loadFrameBuffer () { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameLoad (drawBufferAddress); }); }
+	void storeFrameBuffer() { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameStore(drawBufferAddress); }); }
+
+	//void loadFrameBufferActually() { impl.frameLoad(drawBufferAddress); }
+	//void storeFrameBufferActually() { impl.frameStore(drawBufferAddress); }
+
+	bool mustLoadFrameBuffer;
+	void checkLoadFrameBuffer() {
+		if (!mustLoadFrameBuffer) return; else mustLoadFrameBuffer = false;
+		loadFrameBuffer();
+	}
+
+	bool mustStoreFrameBuffer;
+	void checkStoreFrameBuffer() {
+		if (!mustStoreFrameBuffer) return; else mustStoreFrameBuffer = false;
+		storeFrameBuffer();
+	}
+
 	mixin ExternalInterface;
 }
 
+template PspHardwareComponent() {
+	Thread thread;
+	bool _running;
+
+	void start() {
+		if (running) return;
+		thread = new Thread(&run);
+		thread.start();
+	}
+
+	void stop() {
+		_running = false;
+	}
+
+	bool running() { return _running && (thread && thread.isRunning); }
+}

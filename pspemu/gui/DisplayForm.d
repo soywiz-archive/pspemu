@@ -7,6 +7,8 @@ import core.thread, core.memory;
 import std.stdio, std.c.time;
 import std.typetuple;
 
+import pspemu.core.gpu.impl.GpuOpengl;
+
 import pspemu.gui.GLControl;
 import pspemu.models.IDisplay;
 
@@ -89,36 +91,11 @@ class GLControlDisplay : GLControl {
 					if (update || updateOnce) {
 						updateOnce = false;
 
-						static const auto formatList = [
-							GL_UNSIGNED_SHORT_5_6_5_REV,   // PSP_DISPLAY_PIXEL_FORMAT_565    16-bit RGB 5:6:5.
-							GL_UNSIGNED_SHORT_1_5_5_5_REV, // PSP_DISPLAY_PIXEL_FORMAT_5551   16-bit RGBA 5:5:5:1.
-							GL_UNSIGNED_SHORT_4_4_4_4_REV, // PSP_DISPLAY_PIXEL_FORMAT_4444 	
-							GL_UNSIGNED_INT_8_8_8_8_REV,   // PSP_DISPLAY_PIXEL_FORMAT_8888
-						];
-						
-						/*
-							// pspemu_old/src/core/gpu.d
-
-							static PixelFormat[] PIXELF_T = [
-								PixelFormat(  2, 3, GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV),
-								PixelFormat(  2, 4, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV),
-								PixelFormat(  2, 4, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV),
-								PixelFormat(  4, 4, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV),
-								PixelFormat(0.5, 1, GL_RED,  GL_UNSIGNED_BYTE),
-								PixelFormat(  1, 1, GL_RED,  GL_UNSIGNED_BYTE),
-								PixelFormat(  2, 4, GL_RGBA, GL_UNSIGNED_SHORT),
-								PixelFormat(  4, 4, GL_RGBA, GL_UNSIGNED_INT),
-								PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT),
-								PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT),
-								PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT),
-							];
-						*/
-
 						glDrawPixels(
 							display.frameBufferSize.width,
 							display.frameBufferSize.height,
 							GL_RGBA,
-							formatList[display.frameBufferPixelFormat & 3],
+							GpuOpengl.PixelFormats[display.frameBufferPixelFormat & 3].opengl,
 							display.frameBufferPointer
 						);
 

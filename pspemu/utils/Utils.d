@@ -2,6 +2,9 @@ module pspemu.utils.Utils;
 
 import std.stream, std.stdio;
 
+private import std.c.windows.windows;
+private import std.windows.syserror;
+
 // Signed?
 enum : bool { Unsigned, Signed }	
 enum Sign : bool { Unsigned, Signed }	
@@ -153,6 +156,25 @@ class CircularList(Type) {
 		tailPosition__Inc(-1);
 		return list[tailPosition];
 	}
+}
+
+void sleep(uint ms) {
+	Sleep(ms);
+}
+
+class TaskQueue {
+	alias void delegate() Task;
+	Task[] tasks;
+	Object lock;
+	
+	this() {
+		lock = new Object;
+	}
+	
+	void add(Task task) { synchronized (lock) { tasks ~= task; } }
+	void executeAll() { synchronized (lock) { foreach (task; tasks) task(); tasks.length = 0; } }
+	void waitEmpty() { while (tasks.length) sleep(1); }
+	alias executeAll opCall;
 }
 
 alias CircularList Queue;

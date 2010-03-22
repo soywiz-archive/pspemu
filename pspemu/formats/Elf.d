@@ -154,7 +154,7 @@ class Elf {
 		}
 	}
 	Stream SectionStream(string name) {
-		assert ((name in sectionHeadersNamed) !is null, std.string.format("SectionHeader('%s') not found.", name));
+		if (name !in sectionHeadersNamed) throw(new Exception(std.string.format("SectionHeader('%s') not found.", name)));
 		return SectionStream(sectionHeadersNamed[name]);
 	}
 
@@ -165,8 +165,8 @@ class Elf {
 		stream.readExact(&header, header.sizeof);
 
 		// Checks that it's an ELF file and that it's a PSP ELF file.
-		assert(header.magic   == Header.init.magic  );
-		assert(header.machine == Header.init.machine);
+		if (header.magic   != Header.init.magic  ) throw(new Exception(std.string.format("Magic '%s' != '%s'", header.magic, Header.init.magic)));
+		if (header.machine != Header.init.machine) throw(new Exception(std.string.format("Machine %d != %d", header.machine, Header.init.machine)));
 
 		// Section Headers
 		extractSectionHeaders();
@@ -201,7 +201,7 @@ class Elf {
 				return sectionHeader;
 			}
 		}
-		assert(0, "Can't find SectionHeaderStringTable.");
+		throw(new Exception("Can't find SectionHeaderStringTable."));
 	}
 
 	void extractSectionHeaders() {
@@ -224,7 +224,7 @@ class Elf {
 
 	void performRelocation() {
 		// TODO.
-		assert(0, "Not implemented relocation yet.");
+		throw(new Exception("Not implemented relocation yet."));
 	}
 
 	void allocateBlockBound(ref uint low, ref uint high) {

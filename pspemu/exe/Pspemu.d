@@ -20,6 +20,7 @@ import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
+import pspemu.core.gpu.impl.GpuOpengl;
 
 import pspemu.hle.Loader;
 
@@ -44,7 +45,7 @@ class PspDisplay : BasePspDisplay {
 int main(string[] args) {
 	auto memory  = new Memory;
 	auto display = new PspDisplay(memory);
-	auto gpu     = new Gpu(memory);
+	auto gpu     = new Gpu(new GpuOpengl, memory);
 	auto cpu     = new Cpu(memory, gpu, display);
 	auto dissasembler = new AllegrexDisassembler(memory);
 

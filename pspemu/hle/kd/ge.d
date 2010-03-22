@@ -4,6 +4,7 @@ module pspemu.hle.kd.ge; // kd/ge.prx (sceGE_Manager)
 
 import pspemu.hle.Module;
 import pspemu.core.gpu.Gpu;
+import pspemu.core.gpu.DisplayList;
 
 class sceGe_driver : Module {
 	this() {
@@ -24,7 +25,7 @@ class sceGe_driver : Module {
 	 * @return ???
 	 */
 	int sceGeListSync(int qid, int syncType) {
-		cpu.gpu.sceGeListSync(cast(Gpu.DisplayList*)qid, syncType);
+		cpu.gpu.sceGeListSync(cast(DisplayList*)qid, syncType);
 		return 0;
 	}
 
@@ -71,7 +72,7 @@ class sceGe_driver : Module {
 	 * @return Unknown. Probably 0 if successful.
 	 */
 	int sceGeListUpdateStallAddr(int qid, void *stall) {
-		cpu.gpu.sceGeListUpdateStallAddr(cast(Gpu.DisplayList*)qid, stall);
+		cpu.gpu.sceGeListUpdateStallAddr(cast(DisplayList*)qid, stall);
 		return 0;
 	}
 
