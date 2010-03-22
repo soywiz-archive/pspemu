@@ -14,6 +14,7 @@ template Gpu_Draw() {
 		}
 		// Clear actually.
 		else {
+			gpu.checkLoadFrameBuffer();
 			glClear(gpu.info.clearFlags);
 		}
 	}
@@ -158,19 +159,25 @@ template Gpu_Draw() {
 	}
 
 	void prepareDrawing() {
+		gpu.checkLoadFrameBuffer();
+
 		if (gpu.info.vertexType.transform2D) {
+		//if (1) {
 			glMatrixMode(GL_PROJECTION); glLoadIdentity();
 			glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
 			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 		} else {
 			glMatrixMode(GL_PROJECTION); glLoadIdentity();
-			glMultMatrixf(cast(float*)gpu.info.projectionMatrix.pointer);
+			glMultMatrixf(gpu.info.projectionMatrix.pointer);
 
 			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 			glMultMatrixf(gpu.info.viewMatrix.pointer);
 			glMultMatrixf(gpu.info.worldMatrix.pointer);
 		}
-		glColor4f(1, 1, 1, 1);
+
+		//glColor4fv(gpu.info.materialColor.ptr);
+		glColor4fv(gpu.info.ambientModelColor.ptr);
+
 		/*
 			glMatrixMode(GL_PROJECTION); glLoadIdentity();
 			glMultMatrixf(cast(float*)gpu.info.projectionMatrix.pointer);

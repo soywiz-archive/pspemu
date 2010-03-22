@@ -3,6 +3,7 @@ module pspemu.hle.kd.ge; // kd/ge.prx (sceGE_Manager)
 //debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
+import pspemu.core.gpu.Gpu;
 
 class sceGe_driver : Module {
 	this() {
@@ -23,7 +24,7 @@ class sceGe_driver : Module {
 	 * @return ???
 	 */
 	int sceGeListSync(int qid, int syncType) {
-		cpu.gpu.synchronizeGpu();
+		cpu.gpu.sceGeListSync(cast(Gpu.DisplayList*)qid, syncType);
 		return 0;
 	}
 
@@ -57,9 +58,8 @@ class sceGe_driver : Module {
 	 *
 	 * @return The ID of the queue.
 	 */
-	int sceGeListEnQueue(/*const*/ void *list, void *stall, int cbid, PspGeListArgs *arg) {
-		cpu.gpu.setInstructionList(list, stall);
-		return 0;
+	int sceGeListEnQueue(void* list, void* stall, int cbid, PspGeListArgs *arg) {
+		return cast(int)cast(void*)cpu.gpu.sceGeListEnQueue(list, stall);
 	}
 
 	/**
@@ -71,7 +71,7 @@ class sceGe_driver : Module {
 	 * @return Unknown. Probably 0 if successful.
 	 */
 	int sceGeListUpdateStallAddr(int qid, void *stall) {
-		cpu.gpu.setInstructionStall(stall);
+		cpu.gpu.sceGeListUpdateStallAddr(cast(Gpu.DisplayList*)qid, stall);
 		return 0;
 	}
 
@@ -83,7 +83,7 @@ class sceGe_driver : Module {
 	 * @return ???
 	 */
 	int sceGeDrawSync(int syncType) {
-		cpu.gpu.synchronizeGpu();
+		cpu.gpu.sceGeDrawSync(syncType);
 		return 0;
 	}
 }

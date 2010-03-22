@@ -125,19 +125,19 @@ class GLControlDisplay : GLControl {
 						swapBuffers();
 					}
 					
-					display.vblank = true;
-					
-					//GC.minimize();
+					GC.minimize();
 					//GC.collect();
 					
 					while (true) {
 						QueryPerformanceCounter(&counter);
 						//Thread.sleep(0_5000);
-						if (counter - bcounter >= delay) break;
+						if (counter - bcounter >= delay - 4) break;
 						//Thread.sleep(0_5000);
 						Sleep(1);
 					}
-
+					
+					display.vblank = true;
+					Sleep(4);
 					display.vblank = false;
 				}
 			} catch (Object e) {

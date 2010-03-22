@@ -1,6 +1,6 @@
 module pspemu.hle.kd.display; // kd/display.prx (sceDisplay_Service)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 import core.thread;
 import std.c.windows.windows;

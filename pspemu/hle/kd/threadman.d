@@ -12,7 +12,30 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xF475845D, sceKernelStartThread));
 		mixin(registerd!(0xAA73C935, sceKernelExitThread));
 		mixin(registerd!(0x55C20A00, sceKernelCreateEventFlag));
-		mixin(register(0x1FB15A32, "sceKernelSetEventFlag"));
+		mixin(registerd!(0x809CE29B, sceKernelExitDeleteThread));
+		mixin(registerd!(0x1FB15A32, sceKernelSetEventFlag));
+	}
+
+	/** 
+	  * Set an event flag bit pattern.
+	  *
+	  * @param evid - The event id returned by sceKernelCreateEventFlag.
+	  * @param bits - The bit pattern to set.
+	  *
+	  * @return < 0 On error
+	  */
+	int sceKernelSetEventFlag(SceUID evid, u32 bits) {
+		return 0;
+	}
+
+	/** 
+	  * Exit a thread and delete itself.
+	  *
+	  * @param status - Exit status
+	  */
+	int sceKernelExitDeleteThread(int status) {
+		// TODO
+		return 0;
 	}
 
 	/** 

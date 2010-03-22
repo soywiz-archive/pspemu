@@ -18,7 +18,7 @@ template Gpu_Special() {
 	}
 
 	// Frame Buffer Pointer
-	auto OP_FBP() { gpu.info.drawBuffer.address = command.param24; gpu.loadFrameBuffer(); }
+	auto OP_FBP() { gpu.info.drawBuffer.address = command.param24; gpu.mustLoadFrameBuffer = true; }
 
 	// Frame Buffer Width
 	auto OP_FBW() { gpu.info.drawBuffer.width   = command.param16; }
