@@ -127,7 +127,7 @@ static struct GpuState {
 	int mipMapLevel;
 	bool textureSwizzled;
 	int textureFormat;
-	TextureBuffer[8] textureBufferList;
+	TextureBuffer[8] textures;
 	int textureFilterMin, textureFilterMag;
 	int textureWrapS, textureWrapT;
 	int textureEnvMode;
@@ -136,6 +136,19 @@ static struct GpuState {
 	Rect scissor;
 	int faceCullingOrder;
 	int shadeModel;
+
+	bool clipPlaneEnabled;        // Clip Plane Enable (GL_CLIP_PLANE0)
+	bool backfaceCullingEnabled;  // Backface Culling Enable (GL_CULL_FACE)
+	bool alphaBlendEnabled;       // Alpha Blend Enable (GL_BLEND)
+	bool depthTestEnabled;        // depth (Z) Test Enable (GL_DEPTH_TEST)
+	bool stencilTestEnabled;      // Stencil Test Enable (GL_STENCIL_TEST)
+	bool logicalOperationEnabled; // Logical Operation Enable (GL_COLOR_LOGIC_OP)
+	bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
+	bool alphaTestEnabled;        // Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
+	
+	int blendEquation;
+	int blendFuncSrc;
+	int blendFuncDst;
 }
 
 interface GpuImpl {

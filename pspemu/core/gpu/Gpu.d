@@ -22,6 +22,7 @@ import pspemu.core.gpu.ops.Colors;
 import pspemu.core.gpu.ops.Draw;
 import pspemu.core.gpu.ops.Matrix;
 import pspemu.core.gpu.ops.Texture;
+import pspemu.core.gpu.ops.Enable;
 
 class Gpu {
 	mixin PspHardwareComponent;
@@ -40,6 +41,7 @@ class Gpu {
 		this.memory          = memory;
 		this.displayLists    = new DisplayLists(1024);
 		this.externalActions = new TaskQueue;
+		state.memory = memory;
 		impl.setState(&state);
 	}
 
@@ -58,6 +60,7 @@ class Gpu {
 			debug (GPU_UNKNOWN_COMMANDS_STOP) doassert(0);
 		}
 
+		mixin Gpu_Enable;
 		mixin Gpu_Special;
 		mixin Gpu_Flow;
 		mixin Gpu_Colors;

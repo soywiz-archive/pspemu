@@ -14,6 +14,7 @@ class sceGe_driver : Module {
 		mixin(registerd!(0x03444EB4, sceGeListSync));
 		mixin(registerd!(0xB287BD61, sceGeDrawSync));
 		mixin(registerd!(0xA4FC06A4, sceGeSetCallback));
+		mixin(registerd!(0x05DB22CE, sceGeUnsetCallback));
 	}
 
 	/**
@@ -45,6 +46,16 @@ class sceGe_driver : Module {
 	 * @return The callback ID, < 0 on error
 	 */
 	int sceGeSetCallback(PspGeCallbackData *cb) {
+		return 0;
+	}
+
+	/**
+	 * Unregister the callback handlers
+	 *
+	 * @param cbid - The ID of the callbacks from sceGeSetCallback
+	 * @return < 0 on error
+	 */
+	int sceGeUnsetCallback(int cbid) {
 		return 0;
 	}
 

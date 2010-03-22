@@ -17,7 +17,7 @@ template Gpu_Texture() {
 	alias OP_TBP_n OP_TBP0, OP_TBP1, OP_TBP2, OP_TBP3, OP_TBP4, OP_TBP5, OP_TBP6, OP_TBP7;
 	auto OP_TBP_n() {
 		uint N = command.opcode - Opcode.TBP0;
-		with (gpu.state.textureBufferList[N]) {
+		with (gpu.state.textures[N]) {
 			address &= 0xFF000000;
 			address |= command.param24;
 		}
@@ -26,7 +26,7 @@ template Gpu_Texture() {
 	alias OP_TBW_n OP_TBW0, OP_TBW1, OP_TBW2, OP_TBW3, OP_TBW4, OP_TBW5, OP_TBW6, OP_TBW7;
 	auto OP_TBW_n() {
 		int N = command.opcode - Opcode.TBW0;
-		with (gpu.state.textureBufferList[N]) {
+		with (gpu.state.textures[N]) {
 			//width    = param16; // ???
 			address &= 0x00FFFFFF;
 			address |= (command.param24 << 8) & 0xFF000000;
@@ -36,7 +36,7 @@ template Gpu_Texture() {
 	alias OP_TSIZE_n OP_TSIZE0, OP_TSIZE1, OP_TSIZE2, OP_TSIZE3, OP_TSIZE4, OP_TSIZE5, OP_TSIZE6, OP_TSIZE7;
 	auto OP_TSIZE_n() {
 		int N = command.opcode - Opcode.TSIZE0;
-		with (gpu.state.textureBufferList[N]) {
+		with (gpu.state.textures[N]) {
 			width  = 1 << ((command.param24 >> 0) & 0xFF);
 			height = 1 << ((command.param24 >> 8) & 0xFF);
 			format = gpu.state.textureFormat;
@@ -73,11 +73,4 @@ template Gpu_Texture() {
 	auto OP_VSCALE () { gpu.state.textureScale.v = command.float1; }
 	auto OP_UOFFSET() { gpu.state.textureOffset.u = command.float1; }
 	auto OP_VOFFSET() { gpu.state.textureOffset.v = command.float1; }
-
-/*
-	case VC.USCALE : textureScale.u  = paramf; break;
-	case VC.VSCALE : textureScale.v  = paramf; break;
-	case VC.UOFFSET: textureOffset.u = paramf; break;
-	case VC.VOFFSET: textureOffset.v = paramf; break;
-*/
 }

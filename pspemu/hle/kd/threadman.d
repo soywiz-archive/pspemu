@@ -12,6 +12,7 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xF475845D, sceKernelStartThread));
 		mixin(registerd!(0xAA73C935, sceKernelExitThread));
 		mixin(registerd!(0x55C20A00, sceKernelCreateEventFlag));
+		mixin(registerd!(0xEF9E4C70, sceKernelDeleteEventFlag));
 		mixin(registerd!(0x809CE29B, sceKernelExitDeleteThread));
 		mixin(registerd!(0x1FB15A32, sceKernelSetEventFlag));
 	}
@@ -54,6 +55,17 @@ class ThreadManForUser : Module {
 	  * @endcode
 	  */
 	SceUID sceKernelCreateEventFlag(string name, int attr, int bits, SceKernelEventFlagOptParam *opt) {
+		return 0;
+	}
+
+	/** 
+	 * Delete an event flag
+	 *
+	 * @param evid - The event id returned by sceKernelCreateEventFlag.
+	 *
+	 * @return < 0 On error
+	 */
+	int sceKernelDeleteEventFlag(int evid) {
 		return 0;
 	}
 

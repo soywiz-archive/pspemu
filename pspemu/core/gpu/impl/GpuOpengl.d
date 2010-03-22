@@ -12,6 +12,7 @@ import std.contracts;
 
 import pspemu.utils.OpenGL;
 
+import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
 
 class Texture {
@@ -20,12 +21,41 @@ class Texture {
 	this() {
 		glGenTextures(1, &gltex);
 	}
-	
+
 	~this() {
 		glDeleteTextures(1, &gltex);
 	}
 
+	void update(Memory memory, TextureBuffer tbuffer) {
+		ubyte* data = cast(ubyte*)memory.getPointer(tbuffer.address);
+		auto pformat = GpuOpengl.PixelFormats[tbuffer.format];
+
+		glActiveTexture(GL_TEXTURE0);
+		bind();
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pformat.size);
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			pformat.internal,
+			tbuffer.width,
+			tbuffer.height,
+			0,
+			pformat.external,
+			pformat.opengl,
+			data
+		);
+		//glCheckError();
+		
+		//std.file.write("demodemo", data[0..(tbuffer.width * tbuffer.height) * cast(uint)pformat.size]);
+		
+		//writefln("%d, %d, %d");
+		writefln("update(%d):%08X,%s, %d", gltex, data, tbuffer, (tbuffer.width * tbuffer.height) * cast(uint)pformat.size);
+	}
+
 	void bind() {
+		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, gltex);
 	}
 }
@@ -53,6 +83,7 @@ class GpuOpengl : GpuImplAbstract {
 			if (flags.hasColor   ) glColor4f(vertex.r, vertex.g, vertex.b, vertex.a);
 			if (flags.hasNormal  ) glNormal3f(vertex.nx, vertex.ny, vertex.nz);
 			if (flags.hasPosition) glVertex3f(vertex.px, vertex.py, vertex.pz);
+			//writefln("UV(%f, %f)", vertex.u, vertex.v);
 		}
 
 		drawBegin();
@@ -61,18 +92,29 @@ class GpuOpengl : GpuImplAbstract {
 				// Special primitive that doesn't have equivalent in OpenGL.
 				// With two points specify a GL_QUAD.
 				case PrimitiveType.GU_SPRITES:
+					glPushAttrib(GL_CULL_FACE);
+					glDisable(GL_CULL_FACE);
 					glBegin(GL_QUADS);
 					{
 						for (int n = 0; n < vertexList.length; n += 2) {
 							VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
 							vertex = v1;
+							
+							static string test(string vx, string vy) {
+								string s;
+								s ~= "vertex.px = " ~ vx ~ ".px; vertex.py = " ~ vy ~ ".py;";
+								s ~= "vertex.nx = " ~ vx ~ ".px; vertex.ny = " ~ vy ~ ".py;";
+								s ~= "vertex.u  = " ~ vx ~ ".u ; vertex.v  = " ~ vy ~ ".v;";
+								return s;
+							}
 
-							vertex.px = v1.px; vertex.py = v1.py; putVertex(vertex);
-							vertex.px = v2.px; vertex.py = v1.py; putVertex(vertex);
-							vertex.px = v2.px; vertex.py = v2.py; putVertex(vertex);
-							vertex.px = v1.px; vertex.py = v2.py; putVertex(vertex);
+							mixin(test("v1", "v1")); putVertex(vertex);
+							mixin(test("v2", "v1")); putVertex(vertex);
+							mixin(test("v2", "v2")); putVertex(vertex);
+							mixin(test("v1", "v2")); putVertex(vertex);
 						}
 					}
+					glPopAttrib();
 					glEnd();
 				break;
 				// Normal primitives that have equivalent in OpenGL.
@@ -125,6 +167,20 @@ class GpuOpengl : GpuImplAbstract {
 }
 
 template OpenglUtils() {
+	Texture[uint] textureCache;
+	
+	void glEnableDisable(int type, bool enable) {
+		if (enable) glEnable(type); else glDisable(type);
+	}
+
+	Texture getTexture(TextureBuffer tbuffer) {
+		if ((tbuffer.address in textureCache) is null) {
+			Texture texture = new Texture();
+			texture.update(state.memory, tbuffer);
+			textureCache[tbuffer.address] = texture;
+		}
+		return textureCache[tbuffer.address];
+	}
 	void drawBegin() {
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
@@ -154,12 +210,30 @@ template OpenglUtils() {
 			glLoadIdentity();
 			
 			if (state.vertexType.transform2D && (state.textureScale.u == 1 && state.textureScale.v == 1)) {
-				glScalef(1.0f / state.textureBufferList[0].width, 1.0f / state.textureBufferList[0].height, 1);
+				glScalef(1.0f / state.textures[0].width, 1.0f / state.textures[0].height, 1);
 			} else {
 				glScalef(state.textureScale.u, state.textureScale.v, 1);
 			}
 			glTranslatef(state.textureOffset.u, state.textureOffset.v, 0);
 			
+			if (state.textureMappingEnabled) {
+				glEnable(GL_TEXTURE_2D);
+				getTexture(state.textures[0]).bind();
+				//writefln("tex0:%s", state.textures[0]);
+
+				glEnable(GL_CLAMP_TO_EDGE);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state.textureFilterMin ? GL_LINEAR : GL_NEAREST);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state.textureFilterMag ? GL_LINEAR : GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapS);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapT);
+
+				static const uint[] TextureEnvModeTranslate = [GL_MODULATE, GL_DECAL, GL_BLEND, GL_REPLACE, GL_ADD];	
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEnvMode]);
+
+			} else {
+				glDisable(GL_TEXTURE_2D);
+			}
+
 			/*
 			if (textureEnabled) setTexture(0); else unsetTexture();
 			
@@ -168,6 +242,22 @@ template OpenglUtils() {
 			}
 			*/
 		}
+
+		glEnableDisable(GL_CLIP_PLANE0,    state.clipPlaneEnabled);
+		glEnableDisable(GL_CULL_FACE,      state.backfaceCullingEnabled);
+		glEnableDisable(GL_BLEND,          state.alphaBlendEnabled);
+		glEnableDisable(GL_DEPTH_TEST,     state.depthTestEnabled);
+		glEnableDisable(GL_STENCIL_TEST,   state.stencilTestEnabled);
+		glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
+		glEnableDisable(GL_TEXTURE_2D,     state.textureMappingEnabled);
+		glEnableDisable(GL_ALPHA_TEST,     state.alphaTestEnabled);
+	
+		static const uint[] BlendEquationTranslate = [GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX, GL_FUNC_ADD ];
+		glBlendEquation(BlendEquationTranslate[state.blendEquation]);
+
+		static const uint[] BlendFuncSrcTranslate = [GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA ];
+		static const uint[] BlendFuncDstTranslate = [GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA ];	
+		glBlendFunc(BlendFuncSrcTranslate[state.blendFuncSrc], BlendFuncDstTranslate[state.blendFuncDst]);
 
 		glColor4fv(state.ambientModelColor.ptr);
 		

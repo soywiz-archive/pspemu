@@ -2498,6 +2498,20 @@ static const int GL_COMPRESSED_RGBA_S3TC_DXT1_EXT = 0x83F1;
 static const int GL_COMPRESSED_RGBA_S3TC_DXT3_EXT = 0x83F2;
 static const int GL_COMPRESSED_RGBA_S3TC_DXT5_EXT = 0x83F3;
 
+void glCheckError() {
+	void throwError(string s) { throw(new Exception(s)); }
+	switch (glGetError()) {
+		case GL_NO_ERROR:          return;
+		case GL_INVALID_ENUM:      throwError("Invalid enum");
+		case GL_INVALID_VALUE:     throwError("Invalid value");
+		case GL_INVALID_OPERATION: throwError("Invalid operation");
+		case GL_STACK_OVERFLOW:    throwError("Stack Overflow");
+		case GL_STACK_UNDERFLOW:   throwError("Stack Underflow");
+		case GL_OUT_OF_MEMORY:     throwError("Out of memory");
+		default:                   throwError("Unknown error");
+	}
+}
+
 static this() {
 	glInitSystem();
 }

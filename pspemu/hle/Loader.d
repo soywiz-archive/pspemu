@@ -201,6 +201,9 @@ class Loader : IDebugSource {
 		// Load Imports.
 		version (DEBUG_LOADER) writefln("Imports (0x%08X-0x%08X):", moduleInfo.importsStart, moduleInfo.importsEnd);
 		auto assembler = new AllegrexAssembler(memory);
+
+		uint unimplementedNids = 0;
+
 		while (!importsStream.eof) {
 			auto moduleImport = read!(ModuleImport)(importsStream);
 			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
@@ -222,10 +225,15 @@ class Loader : IDebugSource {
 					version (DEBUG_LOADER) writefln("    0x%08X", nid);
 					callStream.write(cast(uint)(0x70000000));
 					callStream.write(cast(uint)0);
+					unimplementedNids++;
 				}
 				//writefln("++");
 				//writefln("--");
 			}
+		}
+		
+		if (unimplementedNids > 0) {
+			throw(new Exception(std.string.format("Several unimplemented NIds. (%d)", unimplementedNids)));
 		}
 		// Load Exports.
 		version (DEBUG_LOADER) writefln("Exports (0x%08X-0x%08X):", moduleInfo.exportsStart, moduleInfo.exportsEnd);

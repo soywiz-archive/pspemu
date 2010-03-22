@@ -6,6 +6,9 @@ import pspemu.hle.Module;
 
 import std.random;
 import std.c.time;
+import std.c.stdio;
+import std.c.stdlib;
+import std.c.time;
 
 // BUG: Can't aliase directly std.random.Mt19937 because it's a template struct and currently it doesn't work with cast.
 alias void SceKernelUtilsMt19937Context;
@@ -15,6 +18,27 @@ class UtilsForUser : Module {
 		mixin(registerd!(0x27CC57F0, sceKernelUtilsMt19937Init));
 		mixin(registerd!(0x06FB8A63, sceKernelUtilsMt19937UInt));
 		mixin(registerd!(0x27CC57F0, sceKernelLibcTime));
+		mixin(registerd!(0x71EC4271, sceKernelLibcGettimeofday));
+		mixin(registerd!(0x79D1C3FA, sceKernelDcacheWritebackAll));
+	}
+
+	/** 
+	 * Write back the data cache to memory
+	 */
+	void sceKernelDcacheWritebackAll() {
+		// http://hitmen.c02.at/files/yapspd/psp_doc/chap4.html#sec4.10
+		// Unimplemented cache.
+	}
+
+	/** 
+	 * Get the current time of time and time zone information
+	 */
+	int sceKernelLibcGettimeofday(timeval* tp, timezone* tzp) {
+		tp.tv_sec  = 0;
+		tp.tv_usec = 0;
+		tzp.tz_minuteswest = 0;
+		tzp.tz_dsttime = 0;
+		return 0; 
 	}
 
 	/** 
@@ -60,6 +84,16 @@ class UtilsForUser : Module {
 }
 
 class UtilsForKernel : UtilsForUser {
+}
+
+struct timeval {
+	uint tv_sec;
+	uint tv_usec;
+}
+
+struct timezone {
+	int tz_minuteswest;
+	int tz_dsttime;
 }
 
 static this() {
