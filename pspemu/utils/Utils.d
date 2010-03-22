@@ -5,6 +5,8 @@ import std.stream, std.stdio;
 private import std.c.windows.windows;
 private import std.windows.syserror;
 
+private import core.thread;
+
 // Signed?
 enum : bool { Unsigned, Signed }	
 enum Sign : bool { Unsigned, Signed }	
@@ -98,6 +100,11 @@ static pure nothrow string tos(T)(T v, int base = 10) {
 	return r;
 }
 
+unittest {
+	assert(tos(100) == "100");
+	assert(tos(-99) == "-99");
+}
+
 class CircularList(Type) {
 	/*
 	struct Node {
@@ -179,7 +186,24 @@ class TaskQueue {
 
 alias CircularList Queue;
 
-unittest {
-	assert(tos(100) == "100");
-	assert(tos(-99) == "-99");
+template PspHardwareComponent() {
+	Thread thread;
+	bool _running;
+
+	void start() {
+		if (running) return;
+		thread = new Thread(&run);
+		thread.start();
+		waitStart();
+	}
+
+	void stop() {
+		_running = false;
+	}
+
+	bool running() { return _running && (thread && thread.isRunning); }
+
+	void waitStart() {
+		while (!_running) sleep(1);
+	}
 }

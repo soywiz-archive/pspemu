@@ -1,7 +1,7 @@
 module pspemu.core.gpu.Gpu;
 
 //debug = DEBUG_GPU_VERBOSE;
-//debug = GPU_UNKNOWN_COMMANDS;
+debug = GPU_UNKNOWN_COMMANDS;
 //debug = GPU_UNKNOWN_COMMANDS_STOP;
 //debug = DEBUG_GPU_SHOW_COMMAND;
 
@@ -21,6 +21,7 @@ import pspemu.core.gpu.ops.Flow;
 import pspemu.core.gpu.ops.Colors;
 import pspemu.core.gpu.ops.Draw;
 import pspemu.core.gpu.ops.Matrix;
+import pspemu.core.gpu.ops.Texture;
 
 class Gpu {
 	mixin PspHardwareComponent;
@@ -42,52 +43,61 @@ class Gpu {
 		impl.setState(&state);
 	}
 
+	void executeSingleCommand(ref DisplayList displayList) {
+		//debug (DEBUG_GPU_VERBOSE) writefln("  executeCommand");
+		auto commandPointer = displayList.pointer;
+		Command command = displayList.read;
+		Gpu gpu = this;
+
+		void doassert() {
+			writefln("0x%08X: Stop %s", reinterpret!(uint)(&command), command);
+			throw(new Exception("Unimplemented"));
+		}
+		void unimplemented() {
+			debug (GPU_UNKNOWN_COMMANDS) writefln("0x%08X: Unimplemented %s", reinterpret!(uint)(&command), command);
+			debug (GPU_UNKNOWN_COMMANDS_STOP) doassert(0);
+		}
+
+		mixin Gpu_Special;
+		mixin Gpu_Flow;
+		mixin Gpu_Colors;
+		mixin Gpu_Draw;
+		mixin Gpu_Matrix;
+		mixin Gpu_Texture;
+
+		mixin({
+			string s;
+			s ~= "switch (command.opcode) {";
+			for (int n = 0; n < 0x100; n++) {
+				s ~= "case " ~ tos(n) ~ ":";
+				{
+					string opname = enumToString(cast(Opcode)n);
+					string func = "OP_" ~ opname;
+					debug (DEBUG_GPU_SHOW_COMMAND) s ~= "writefln(\"%08X:%s: %06X\", memory.getPointerReverse(commandPointer), \"" ~ opname ~ "\", command.param24);";
+					s ~= "mixin(\"static if (__traits(compiles, " ~ func ~ ")) { " ~ func ~ "(); } else { unimplemented(); }\");";
+				}
+				s ~= "break;";
+			}
+			/*
+			s ~= "default:";
+			s ~= "	writefln(\"default!!\");";
+			s ~= "	unimplemented();";
+			s ~= "	break;";
+			*/
+			s ~= "}";
+			return s;
+		}());
+	}
+
 	/**
 	 * Executes a DisplayList.
 	 */
 	void executeList(ref DisplayList displayList) {
-		void executeCommand(ref Command command) {
-			//debug (DEBUG_GPU_VERBOSE) writefln("  executeCommand");
-			Gpu gpu = this;
-
-			void doassert() {
-				writefln("0x%08X: Stop %s", reinterpret!(uint)(&command), command);
-				assert(0);
-			}
-			void unimplemented() {
-				debug (GPU_UNKNOWN_COMMANDS) writefln("0x%08X: Unimplemented %s", reinterpret!(uint)(&command), command);
-				debug (GPU_UNKNOWN_COMMANDS_STOP) doassert(0);
-			}
-
-			mixin Gpu_Special;
-			mixin Gpu_Flow;
-			mixin Gpu_Colors;
-			mixin Gpu_Draw;
-			mixin Gpu_Matrix;
-
-			mixin({
-				string s;
-				s ~= "switch (command.opcode) {";
-				for (int n = 0; n < 0x100; n++) {
-					s ~= "case " ~ tos(n) ~ ":";
-					{
-						string opname = enumToString(cast(Opcode)n);
-						string func = "OP_" ~ opname;
-						debug (DEBUG_GPU_SHOW_COMMAND) s ~= "writefln(\"%08X:%s: %06X\", memory.getPointerReverse(&command), \"" ~ opname ~ "\", command.param24);";
-						s ~= "mixin(\"static if (__traits(compiles, " ~ func ~ ")) { " ~ func ~ "(); } else { unimplemented(); }\");";
-					}
-					s ~= "break;";
-				}
-				s ~= "default: unimplemented(); break;";
-				s ~= "}";
-				return s;
-			}());
-		}
-
-		// Execute commands while has more.
-		
+		// Execute commands while has more.	
 		currentDisplayList = &displayList;
+
 		debug (DEBUG_GPU_VERBOSE) writefln("<executeList> (%s)", displayList);
+		Command* lastCommandPointer;
 		try {
 			while (displayList.hasMore) {
 				while (displayList.isStalled) {
@@ -95,8 +105,12 @@ class Gpu {
 					WaitAndCheck;
 				}
 				WaitAndCheck(0);
-				executeCommand(displayList.read);
+				lastCommandPointer = displayList.pointer;
+				executeSingleCommand(displayList);
 			}
+		} catch (Object o) {
+			writefln("Last command: %s", *lastCommandPointer);
+			throw(o);
 		} finally {
 			debug (DEBUG_GPU_VERBOSE) writefln("</executeList>");
 			displayList.end();
@@ -105,6 +119,8 @@ class Gpu {
 	}
 
 	bool executingDisplayList() { return (currentDisplayList !is null); }
+	
+	Object initLock;
 
 	private void run() {
 		try {
@@ -208,21 +224,4 @@ class Gpu {
 	}
 
 	mixin ExternalInterface;
-}
-
-template PspHardwareComponent() {
-	Thread thread;
-	bool _running;
-
-	void start() {
-		if (running) return;
-		thread = new Thread(&run);
-		thread.start();
-	}
-
-	void stop() {
-		_running = false;
-	}
-
-	bool running() { return _running && (thread && thread.isRunning); }
 }

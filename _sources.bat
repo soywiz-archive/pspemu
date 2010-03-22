@@ -74,7 +74,9 @@ SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Flow.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Colors.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Draw.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Matrix.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/ops/Texture.d
 SET SOURCES=%SOURCES% pspemu/core/gpu/impl/GpuOpengl.d
+SET SOURCES=%SOURCES% pspemu/core/gpu/impl/GpuSoftware.d
 
 SET SOURCES=%SOURCES% gdi32.lib
 

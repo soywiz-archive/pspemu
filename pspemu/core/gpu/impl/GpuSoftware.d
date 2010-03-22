@@ -1,5 +1,7 @@
 module pspemu.core.gpu.impl.GpuSoftware;
 
+import pspemu.core.gpu.Types;
+
 class GpuSoftware : GpuImplAbstract {
 	void init() {
 		assert(0);

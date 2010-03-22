@@ -13,6 +13,9 @@ template Gpu_Colors() {
 	auto OP_SMC() { gpu.state.specularModelColor.rgb[] = command.float3[]; }
 	auto OP_SMA() { gpu.state.specularModelColor.alpha = command.float4[0]; }
 
+	// Texture Environment Color
+	auto OP_TEC() { gpu.state.textureEnviromentColor.rgb[] = command.float3[]; }
+
 	// Material Color
 	auto OP_CMAT() { gpu.state.materialColor.rgb[] = command.float3[]; }
 }

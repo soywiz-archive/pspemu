@@ -17,6 +17,7 @@ import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.Utils;
 import pspemu.core.Memory;
 
+import core.thread;
 import pspemu.utils.Utils;
 
 // OPS.
@@ -43,6 +44,8 @@ version (ENABLE_BREAKPOINTS) {
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
 class Cpu : IDebugSource {
+	mixin PspHardwareComponent;
+
 	/**
 	 * Registers.
 	 */
@@ -308,6 +311,30 @@ class Cpu : IDebugSource {
 		}
 	}
 	mixin BreakPointStuff;
+	
+	void run() {
+		//Thread.sleep(2000_0000);
+		//Sleep(2000);
+		try {
+			_running = true;
+			execute();
+		} catch (Object o) {
+			writefln("CPU Error: %s", o.toString());
+			registers.dump();
+			auto dissasembler = new AllegrexDisassembler(memory);
+			dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
+			dissasembler.dump(registers.PC, -6, 6);
+			writefln("CPU Error: %s", o.toString());
+		} finally {
+			.writefln("End CPU executing.");
+			stop();
+			gpu.stop();
+			/*
+			cpu.stop();
+			Application.exit();
+			*/
+		}
+	}
 }
 
 // Shows the generated switch.

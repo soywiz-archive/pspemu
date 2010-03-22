@@ -183,7 +183,7 @@ class Memory : Stream {
 		mixin(checkMap("scratchPad",  0x00010000));
 		mixin(checkMap("frameBuffer", 0x04000000));
 		mixin(checkMap("mainMemory",  0x08000000));
-		assert(0);
+		throw(new Exception(std.string.format("Can't find original pointer of address 0x%08X", cast(uint)_ptr)));
 	}
 
 	/**

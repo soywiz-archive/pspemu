@@ -1,7 +1,12 @@
 module pspemu.core.gpu.impl.GpuOpengl;
 
+// http://www.opengl.org/resources/code/samples/win32_tutorial/wglinfo.c
+
+//version = VERSION_GL_BITMAP_RENDERING;
+
 import std.c.windows.windows;
 import std.windows.syserror;
+import std.stdio;
 
 import std.contracts;
 
@@ -9,12 +14,27 @@ import pspemu.utils.OpenGL;
 
 import pspemu.core.gpu.Types;
 
+class Texture {
+	GLuint gltex;
+	
+	this() {
+		glGenTextures(1, &gltex);
+	}
+	
+	~this() {
+		glDeleteTextures(1, &gltex);
+	}
+
+	void bind() {
+		glBindTexture(GL_TEXTURE_2D, gltex);
+	}
+}
+
 class GpuOpengl : GpuImplAbstract {
 	mixin OpenglBase;
 	mixin OpenglUtils;
 
 	void init() {
-		glInit();
 		openglInit();
 		openglPostInit();
 	}
@@ -82,70 +102,93 @@ class GpuOpengl : GpuImplAbstract {
 			buffer
 		);
 	}
+	
+	version (VERSION_GL_BITMAP_RENDERING) {
+	} else {
+		ubyte[4 * 512 * 272] buffer_temp;
+	}
 
 	void frameStore(void* buffer) {
 		//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
-		for (int n = 271, m = 0; n >= 0; n--, m++) {
-			glReadPixels(
-				0, n, // x, y
-				state.drawBuffer.width, 1, // w, h
-				PixelFormats[state.drawBuffer.format].external,
-				GL_UNSIGNED_BYTE,
-				state.drawBuffer.row(buffer, m).ptr
-			);
+		glReadPixels(
+			0, 0, // x, y
+			state.drawBuffer.width, 272, // w, h
+			PixelFormats[state.drawBuffer.format].external,
+			GL_UNSIGNED_BYTE,
+			&buffer_temp
+		);
+		for (int n = 0; n < 272; n++) {
+			int m = 271 - n;
+			state.drawBuffer.row(buffer, n)[] = state.drawBuffer.row(&buffer_temp, m)[];
 		}
 	}
 }
 
 template OpenglUtils() {
 	void drawBegin() {
-		if (state.vertexType.transform2D) {
-		//if (1) {
-			glMatrixMode(GL_PROJECTION); glLoadIdentity();
-			glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
-			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-		} else {
-			glMatrixMode(GL_PROJECTION); glLoadIdentity();
-			glMultMatrixf(state.projectionMatrix.pointer);
+		void prepareMatrix() {
+			if (state.vertexType.transform2D) {
+				glMatrixMode(GL_PROJECTION); glLoadIdentity();
+				glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+			} else {
+				glMatrixMode(GL_PROJECTION); glLoadIdentity();
+				glMultMatrixf(state.projectionMatrix.pointer);
 
-			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-			glMultMatrixf(state.viewMatrix.pointer);
-			glMultMatrixf(state.worldMatrix.pointer);
-		}
-
-		//glColor4fv(state.materialColor.ptr);
-		glColor4fv(state.ambientModelColor.ptr);
-
-		/*
-			glMatrixMode(GL_PROJECTION); glLoadIdentity();
-			glMultMatrixf(cast(float*)state.projectionMatrix.pointer);
-
-			glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-			glMultMatrixf(state.viewMatrix.pointer);
-
+				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+				glMultMatrixf(state.viewMatrix.pointer);
+				glMultMatrixf(state.worldMatrix.pointer);
+			}
+			/*
 			writefln("Projection:\n%s", state.projectionMatrix);
 			writefln("View:\n%s", state.viewMatrix);
 			writefln("World:\n%s", state.worldMatrix);
-		*/
+			*/
+		}
+
+		void prepareTexture() {
+			if (glActiveTexture is null) return;
+
+			glActiveTexture(GL_TEXTURE0);
+			glMatrixMode(GL_TEXTURE);
+			glLoadIdentity();
+			
+			if (state.vertexType.transform2D && (state.textureScale.u == 1 && state.textureScale.v == 1)) {
+				glScalef(1.0f / state.textureBufferList[0].width, 1.0f / state.textureBufferList[0].height, 1);
+			} else {
+				glScalef(state.textureScale.u, state.textureScale.v, 1);
+			}
+			glTranslatef(state.textureOffset.u, state.textureOffset.v, 0);
+			
+			/*
+			if (textureEnabled) setTexture(0); else unsetTexture();
+			
+			version (gpu_use_shaders) {
+				gla_textureUse.set(textureEnabled);
+			}
+			*/
+		}
+
+		glColor4fv(state.ambientModelColor.ptr);
+		
+		prepareMatrix();
+		prepareTexture();
+		glFrontFace (state.faceCullingOrder ? GL_CW : GL_CCW);
+		glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
+
+		// Scissor
+		//if (scissor.isFull) { glDisable(GL_SCISSOR_TEST); break; }
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(
+			state.scissor.x1,
+			272 - state.scissor.y2,
+			state.scissor.x2 - state.scissor.x1,
+			state.scissor.y2 - state.scissor.y1
+		);
+
+
+		
 		/*
-		glActiveTexture(GL_TEXTURE0);
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-		
-		if (info.vertexType.transform2D && (textureScale.u == 1 && textureScale.v == 1)) {
-			glScalef(1.0f / textures[0].width, 1.0f / textures[0].height, 1);
-		} else {
-			glScalef(textureScale.u, textureScale.v, 1);
-		}
-		
-		glTranslatef(textureOffset.u, textureOffset.v, 0);
-		
-		if (textureEnabled) setTexture(0); else unsetTexture();
-		
-		version (gpu_use_shaders) {
-			gla_textureUse.set(textureEnabled);
-		}
-		
 		glEnableDisable(GL_COLOR_ARRAY, vinfo.color);
 		
 		glColor4fv(AmbientMaterial.ptr);
@@ -217,53 +260,72 @@ template OpenglUtils() {
 }
 
 template OpenglBase() {
+	HWND hwnd;
 	HDC hdc;
-	HGLRC hglrc;
+	HGLRC hrc;
 	uint *bitmapData;
 
-	void openglInit() {
-		// http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=41
-		// http://msdn.microsoft.com/en-us/library/ms970768.aspx
-		// http://www.codeguru.com/cpp/g-m/opengl/article.php/c5587
-		// PFD_DRAW_TO_BITMAP
-		HBITMAP hbmpTemp;
-		PIXELFORMATDESCRIPTOR pfd;
-		BITMAPINFO bi;
-		
-		hdc = CreateCompatibleDC(GetDC(null));
+	version (VERSION_GL_BITMAP_RENDERING) {
+		void openglInit() {
+			// http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=41
+			// http://msdn.microsoft.com/en-us/library/ms970768.aspx
+			// http://www.codeguru.com/cpp/g-m/opengl/article.php/c5587
+			// PFD_DRAW_TO_BITMAP
+			HBITMAP hbmpTemp;
+			PIXELFORMATDESCRIPTOR pfd;
+			BITMAPINFO bi;
+			
+			hdc = CreateCompatibleDC(GetDC(null));
 
-		with (bi.bmiHeader) {
-			biSize        = BITMAPINFOHEADER.sizeof;
-			biBitCount    = 32;
-			biWidth       = 512;
-			biHeight      = 272;
-			biCompression = BI_RGB;
-			biPlanes      = 1;
+			with (bi.bmiHeader) {
+				biSize        = BITMAPINFOHEADER.sizeof;
+				biBitCount    = 32;
+				biWidth       = 512;
+				biHeight      = 272;
+				biCompression = BI_RGB;
+				biPlanes      = 1;
+			}
+
+			hbmpTemp = enforce(CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, cast(void **)&bitmapData, null, 0));
+			enforce(SelectObject(hdc, hbmpTemp));
+
+			with (pfd) {
+				nSize      = pfd.sizeof;
+				nVersion   = 1;
+				dwFlags    = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI;
+				iPixelType = PFD_TYPE_RGBA;
+				cDepthBits = pfd.cColorBits = 32;
+				iLayerType = PFD_MAIN_PLANE;
+			}
+
+			enforce(SetPixelFormat(hdc, enforce(ChoosePixelFormat(hdc, &pfd)), &pfd));
+
+			hrc = enforce(wglCreateContext(hdc));
+			openglMakeCurrent();
+			glInit();
 		}
+	} else {
+		void openglInit() {
+			hwnd = CreateOpenGLWindow(512, 272, PFD_TYPE_RGBA, 0);
+			if (hwnd == null) throw(new Exception("Invalid window handle"));
 
-		hbmpTemp = enforce(CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, cast(void **)&bitmapData, null, 0));
-		enforce(SelectObject(hdc, hbmpTemp));
+			hdc = GetDC(hwnd);
+			hrc = wglCreateContext(hdc);
+			openglMakeCurrent();
 
-		with (pfd) {
-			nSize      = pfd.sizeof;
-			nVersion   = 1;
-			dwFlags    = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI;
-			iPixelType = PFD_TYPE_RGBA;
-			cDepthBits = pfd.cColorBits = 32;
-			iLayerType = PFD_MAIN_PLANE;
+			glInit();
+			//assert(glActiveTexture !is null);
+
+			ShowWindow(hwnd, SW_HIDE);
+			//ShowWindow(hwnd, SW_SHOW);
 		}
-
-		enforce(SetPixelFormat(hdc, enforce(ChoosePixelFormat(hdc, &pfd)), &pfd));
-
-		hglrc = enforce(wglCreateContext(hdc));
-		openglMakeCurrent();
 	}
 
 	void openglMakeCurrent() {
 		wglMakeCurrent(null, null);
-		wglMakeCurrent(hdc, hglrc);
+		wglMakeCurrent(hdc, hrc);
 		assert(wglGetCurrentDC() == hdc);
-		assert(wglGetCurrentContext() == hglrc);
+		assert(wglGetCurrentContext() == hrc);
 	}
 
 	void openglPostInit() {
@@ -271,6 +333,90 @@ template OpenglBase() {
 		glMatrixMode(GL_PROJECTION); glLoadIdentity();
 		glPixelZoom(1, 1);
 		glRasterPos2f(-1, 1);
+	}
+
+	static HWND CreateOpenGLWindow(int width, int height, BYTE type, DWORD flags) {
+		int         pf;
+		HDC         hDC;
+		HWND        hWnd;
+		WNDCLASS    wc;
+		PIXELFORMATDESCRIPTOR pfd;
+		static HINSTANCE hInstance = null;
+
+		if (!hInstance) {
+			hInstance        = GetModuleHandleA(null);
+			wc.style         = CS_OWNDC;
+			//wc.lpfnWndProc   = cast(WNDPROC)&DefWindowProcA;
+			wc.lpfnWndProc   = cast(WNDPROC)&WindowProc;
+			wc.cbClsExtra    = 0;
+			wc.cbWndExtra    = 0;
+			wc.hInstance     = hInstance;
+			wc.hIcon         = LoadIconA(null, cast(char*)32517);
+			wc.hCursor       = LoadCursorA(null, cast(char*)0);
+			wc.hbrBackground = null;
+			wc.lpszMenuName  = null;
+			wc.lpszClassName = "PSPGE";
+
+			if (!RegisterClassA(&wc)) throw(new Exception("RegisterClass() failed:  Cannot register window class."));
+		}
+
+		int dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+		RECT rc;
+		rc.top = rc.left = 0;
+		rc.right = width;
+		rc.bottom = height;
+		AdjustWindowRect( &rc, dwStyle, FALSE );  
+		hWnd = CreateWindowA("PSPGE", null, dwStyle, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, null, null, hInstance, null);
+		if (hWnd is null) throw(new Exception("CreateWindow() failed:  Cannot create a window. : " ~ sysErrorString(GetLastError())));
+
+		hDC = GetDC(hWnd);
+
+		pfd.nSize        = pfd.sizeof;
+		pfd.nVersion     = 1;
+		pfd.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | flags;
+		pfd.iPixelType   = type;
+		pfd.cColorBits   = 32;
+
+		pf = ChoosePixelFormat(hDC, &pfd);
+
+		if (pf == 0) throw(new Exception("ChoosePixelFormat() failed:  Cannot find a suitable pixel format."));
+
+		if (SetPixelFormat(hDC, pf, &pfd) == FALSE) throw(new Exception("SetPixelFormat() failed:  Cannot set format specified."));
+
+		DescribePixelFormat(hDC, pf, PIXELFORMATDESCRIPTOR.sizeof, &pfd);
+		ReleaseDC(hDC, hWnd);
+
+		return hWnd;
+	}
+
+	static extern(Windows) LONG WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) { 
+		static PAINTSTRUCT ps;
+
+		switch (uMsg) {
+			case WM_PAINT:
+				BeginPaint(hWnd, &ps);
+				EndPaint(hWnd, &ps);
+				return 0;
+			case WM_SIZE:
+				//glViewport(0, 0, LOWORD(lParam), HIWORD(lParam));
+				PostMessageA(hWnd, WM_PAINT, 0, 0);
+				return 0;
+			case WM_CHAR:
+				/*
+				switch (wParam) {
+					case 27:
+						PostQuitMessage(0);
+						break;
+				}
+				*/
+				return 0;
+			case WM_CLOSE:
+				PostQuitMessage(0);
+				return 0;
+			default:
+		}
+
+		return DefWindowProcA(hWnd, uMsg, wParam, lParam); 
 	}
 }
 
@@ -281,4 +427,22 @@ extern (Windows) {
 	HBITMAP CreateDIBSection(HDC hdc, const BITMAPINFO *pbmi, UINT iUsage, VOID **ppvBits, HANDLE hSection, DWORD dwOffset);
 	const uint BI_RGB = 0;
 	const uint DIB_RGB_COLORS = 0;
+	int DescribePixelFormat(HDC hdc, int iPixelFormat, UINT nBytes, LPPIXELFORMATDESCRIPTOR ppfd);
+	LRESULT DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+	BOOL PostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 }
+
+pragma(lib, "gdi32.lib");
+
+version (unittest) {
+	import core.thread;
+}
+
+// cls && dmd ..\..\..\utils\opengl.d ..\types.d -version=TEST_GPUOPENGL -unittest -run GpuOpengl.d
+unittest {
+	auto gpuImpl = new GpuOpengl;
+	(new Thread({
+		gpuImpl.init();
+	})).start();
+}
+version (TEST_GPUOPENGL) static void main() {}

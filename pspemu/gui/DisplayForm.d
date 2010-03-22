@@ -67,16 +67,23 @@ class GLControlDisplay : GLControl {
 		delay = frequency / display.verticalRefreshRate;
 
 		//Thread.sleep(100_0000);
-		Sleep(100);
+		while (true) {
+			try {
+				// Check OpenGL.
+				makeCurrent();
+				//Sleep(2000);
+				writefln("GLControlDisplay.glInit");
+				glInit(); assert(glMatrixMode !is null);
+				break;
+			} catch (Object o) {
+				writefln("GLControlDisplay.threadRun: %s", o);
+				Sleep(100);
+			}
+		}
 
 		while (running) {
 			writefln("threadRun.loop started");
 			try {
-				// Check OpenGL.
-				glInit(); assert(glMatrixMode !is null);
-
-				makeCurrent();
-
 				glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
 				glPixelZoom(1, -1); glRasterPos2f(-1, 1);

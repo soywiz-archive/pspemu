@@ -36,7 +36,7 @@ static struct DisplayList {
 		return (pointer !is null);
 	}
 
-	ref Command read() {
+	Command read() {
 		return *pointer++;
 	}
 

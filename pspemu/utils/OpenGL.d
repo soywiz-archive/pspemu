@@ -2,7 +2,7 @@ module pspemu.utils.OpenGL;
 
 private import std.string, std.stdio, std.stream;
 
-//debug = debug_gl_ver;
+debug = DEBUG_GL_VER;
 
 static __gshared:
 private bool glInitializated = false;
@@ -31,6 +31,7 @@ alias ptrdiff_t GLsizeiptr;
 
 version (Windows) {
 	private import std.c.windows.windows;
+	private import std.windows.syserror;
 
 	enum : uint {
 		PFD_TYPE_RGBA = 0,
@@ -124,7 +125,7 @@ version (Windows) {
 	// Used for API >= 1.2
 	void glBindFunc(void** ptr, string funcName) {
 		void* func = wglGetProcAddress(toStringz(funcName));
-		if (!func) throw(new Exception(std.string.format("Can't bind '%s'", funcName)));
+		if (!func) throw(new Exception(std.string.format("Can't bind '%s' : '%s'", funcName, sysErrorString(GetLastError()))));
 		*ptr = func;
 	}	
 	
@@ -169,21 +170,21 @@ version (Windows) {
 
 string glBindFuncBaseMix(string t) { return "glBindFuncBase(cast(void**)&" ~ t ~ ", \"" ~ t ~ "\");"; }
 string glBindFuncMix(string t) { return "glBindFunc(cast(void**)&" ~ t ~ ", \"" ~ t ~ "\");"; }
-bool   glCatch(void function() glUsingVer) { try { glUsingVer(); return true; } catch (Exception e) { debug (debug_gl_ver) writefln("%s", e); return false; } }
+bool   glCatch(void function() glUsingVer) { try { glUsingVer(); return true; } catch (Exception e) { debug (DEBUG_GL_VER) writefln("%s", e); return false; } }
 
-void glUsing(double ver = 2.1) {
-	auto v = [1.1, 1.2, 1.3, 1.4, 1.5, 2.0, 2.1];
-	auto f = [&glUsing11, &glUsing12, &glUsing13, &glUsing14, &glUsing15, &glUsing20, &glUsing21];
+void glUsing(double ver = 4.0) {
+	auto v = [1.1, 1.2, 1.3, 1.4, 1.5, 2.0, 2.1, 3.0, 3.1, 3.2, 3.3, 4.0];
+	auto f = [&glUsing11, &glUsing12, &glUsing13, &glUsing14, &glUsing15, &glUsing20, &glUsing21, &glUsing30, &glUsing31, &glUsing32, &glUsing33, &glUsing40];
 	
-	debug (debug_gl_ver) writefln("OpenGL init (requested ver: %.1f) {", ver);
+	debug (DEBUG_GL_VER) writefln("OpenGL init (requested ver: %.1f) {", ver);
 	
 	for (int n = 0; n < v.length; n++) {
 		if (ver < v[n]) continue;
 		bool r = glCatch(f[n]);
-		debug (debug_gl_ver) writefln("  Version: %.1f : %s", v[n], r);
+		debug (DEBUG_GL_VER) writefln("  Version: %.1f : %s", v[n], r);
 	}
 	
-	debug (debug_gl_ver) writefln("}");
+	debug (DEBUG_GL_VER) writefln("}");
 }
 
 void glInitSystem() {
@@ -193,7 +194,7 @@ void glInitSystem() {
 }
 
 
-void glInit(double ver = 2.1) {
+void glInit(double ver = 4.0) {
 	if (glInitializated) return;
 	glInitSystem();
 	glUsing(ver);
@@ -2330,6 +2331,21 @@ void glUsing21() {
 	mixin(glBindFuncMix("glUniformMatrix4x2fv"));
 	mixin(glBindFuncMix("glUniformMatrix3x4fv"));
 	mixin(glBindFuncMix("glUniformMatrix4x3fv"));
+}
+
+void glUsing30() {
+}
+
+void glUsing31() {
+}
+
+void glUsing32() {
+}
+
+void glUsing33() {
+}
+
+void glUsing40() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////

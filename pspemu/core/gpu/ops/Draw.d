@@ -107,18 +107,23 @@ template Gpu_Draw() {
 		for (int n = 0; n < vertexCount; n++) extractVertex(vertexListBuffer[n]);
 
 		gpu.checkLoadFrameBuffer();
-		gpu.impl.draw(
-			vertexListBuffer[0..vertexCount],
-			primitiveType,
-			PrimitiveFlags(
-				extractWeights  !is null,
-				extractTexture  !is null,
-				extractColor    !is null,
-				extractNormal   !is null,
-				extractPosition !is null,
-				vertexType.skinningWeightCount
-			)
-		);
+		try {
+			gpu.impl.draw(
+				vertexListBuffer[0..vertexCount],
+				primitiveType,
+				PrimitiveFlags(
+					extractWeights  !is null,
+					extractTexture  !is null,
+					extractColor    !is null,
+					extractNormal   !is null,
+					extractPosition !is null,
+					vertexType.skinningWeightCount
+				)
+			);
+		} catch (Object o) {
+			writefln("gpu.impl.draw Error");
+			throw(o);
+		}
 		gpu.mustStoreFrameBuffer = true;
 	}
 }

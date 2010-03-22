@@ -36,8 +36,8 @@ class GLControl : Control {
         setupPixelFormat();
 		
         _context = new GLContext(this,_context);
-		glInit();
         makeCurrent();
+		glInit();
 
         initGL();
 

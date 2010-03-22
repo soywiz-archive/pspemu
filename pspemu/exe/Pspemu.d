@@ -8,6 +8,8 @@ import dfl.all;
 
 import std.c.windows.windows;
 
+import pspemu.utils.Utils;
+
 import pspemu.gui.MainForm;
 import pspemu.gui.DisplayForm;
 
@@ -47,22 +49,12 @@ int main(string[] args) {
 	auto display = new PspDisplay(memory);
 	auto gpu     = new Gpu(new GpuOpengl, memory);
 	auto cpu     = new Cpu(memory, gpu, display);
-	auto dissasembler = new AllegrexDisassembler(memory);
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 
 	string executableFile;
 
-	//executableFile = "demos/minifire.elf";
-	//executableFile = "demos/controller.pbp";
-	//executableFile = "demos/counter.pbp";
-	//executableFile = "demos/mytest.pbp";
-	//executableFile = "demos/text.pbp";
-	//executableFile = "demos/lines.pbp";
 	executableFile = "tests/test1.elf";
-	//
-	//executableFile = "demos/cube.pbp";
-	//executableFile = "demos/ortho.pbp";
 
 	if (args.length >= 2) {
 		executableFile = args[1];
@@ -76,33 +68,12 @@ int main(string[] args) {
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
 
-	/*
-	cpu.checkBreakpoints = true;
-	cpu.addBreakpoint(cpu.BreakPoint(0x890042C, ["f0", "f1", "f12"], true));
-	*/
-
 	// Start GPU.
 	gpu.start();
 
 	// Start CPU.
-	(new Thread({
-		//Thread.sleep(2000_0000);
-		//Sleep(2000);
-		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-		try {
-			cpu.execute();
-		} catch (Object o) {
-			writefln("CPU Error: %s", o.toString());
-			cpu.registers.dump();
-			dissasembler.dump(cpu.registers.PC, -6, 6);
-			writefln("CPU Error: %s", o.toString());
-		} finally {
-			.writefln("End CPU executing.");
-			cpu.stop();
-			gpu.stop();
-			Application.exit();
-		}
-	})).start();
+	cpu.start();
+
 
 	int retval = 0;
 	try {

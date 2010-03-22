@@ -3,6 +3,8 @@ module pspemu.core.gpu.Types;
 import std.string;
 import std.bitmanip;
 
+import pspemu.core.Memory;
+
 struct ScreenBuffer {
 	uint _address = 0;
 	uint width = 512;
@@ -20,6 +22,13 @@ struct ScreenBuffer {
 		int rowsize = width * pixelSize;
 		return ((cast(ubyte *)ptr) + rowsize * row)[0..rowsize];
 	}
+}
+
+struct TextureBuffer {
+	uint address;
+	uint width, height;
+	uint size;
+	uint format;
 }
 
 struct Colorf {
@@ -95,7 +104,16 @@ struct VertexType {
 	}
 }
 
+struct UV {
+	float u, v;
+}
+
+struct Rect {
+	uint x1, y1, x2, y2;
+}
+
 static struct GpuState {
+	Memory memory;
 	ScreenBuffer drawBuffer;
 	uint baseAddress;
 	uint vertexAddress;
@@ -104,7 +122,20 @@ static struct GpuState {
 	VertexType vertexType;
 	Colorf ambientModelColor, diffuseModelColor, specularModelColor;
 	Colorf materialColor;
+	Colorf textureEnviromentColor;
 	Matrix projectionMatrix, worldMatrix, viewMatrix;
+	int mipMapLevel;
+	bool textureSwizzled;
+	int textureFormat;
+	TextureBuffer[8] textureBufferList;
+	int textureFilterMin, textureFilterMag;
+	int textureWrapS, textureWrapT;
+	int textureEnvMode;
+	UV textureScale;
+	UV textureOffset;
+	Rect scissor;
+	int faceCullingOrder;
+	int shadeModel;
 }
 
 interface GpuImpl {
