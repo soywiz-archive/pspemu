@@ -493,8 +493,7 @@ template OpenglBase() {
 		if (!hInstance) {
 			hInstance        = GetModuleHandleA(null);
 			wc.style         = CS_OWNDC;
-			//wc.lpfnWndProc   = cast(WNDPROC)&DefWindowProcA;
-			wc.lpfnWndProc   = cast(WNDPROC)&WindowProc;
+			wc.lpfnWndProc   = cast(WNDPROC)&DefWindowProcA;
 			wc.cbClsExtra    = 0;
 			wc.cbWndExtra    = 0;
 			wc.hInstance     = hInstance;
@@ -534,36 +533,6 @@ template OpenglBase() {
 		ReleaseDC(hDC, hWnd);
 
 		return hWnd;
-	}
-
-	static extern(Windows) LONG WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) { 
-		static PAINTSTRUCT ps;
-
-		switch (uMsg) {
-			case WM_PAINT:
-				BeginPaint(hWnd, &ps);
-				EndPaint(hWnd, &ps);
-				return 0;
-			case WM_SIZE:
-				//glViewport(0, 0, LOWORD(lParam), HIWORD(lParam));
-				PostMessageA(hWnd, WM_PAINT, 0, 0);
-				return 0;
-			case WM_CHAR:
-				/*
-				switch (wParam) {
-					case 27:
-						PostQuitMessage(0);
-						break;
-				}
-				*/
-				return 0;
-			case WM_CLOSE:
-				PostQuitMessage(0);
-				return 0;
-			default:
-		}
-
-		return DefWindowProcA(hWnd, uMsg, wParam, lParam); 
 	}
 }
 

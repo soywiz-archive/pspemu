@@ -306,6 +306,9 @@ unittest {
 }
 //void main() {}
 
+static const uint[] pspTypeSize = [0, byte.sizeof, short.sizeof, float.sizeof];
+static const uint[] pspTypeColorSize = [0, 1, 1, 1, 2, 2, 2, 4];
+
 struct VertexType {
 	union {
 		uint v;
@@ -326,6 +329,16 @@ struct VertexType {
 				uint, "__3",      8
 			));
 		}
+	}
+
+	uint vertexSize() {
+		uint size = 0;
+		size += skinningWeightCount * pspTypeSize[weight];
+		size += 1 * pspTypeColorSize[color];
+		size += 2 * pspTypeSize[texture ];
+		size += 3 * pspTypeSize[position];
+		size += 3 * pspTypeSize[normal  ];
+		return size;
 	}
 }
 
