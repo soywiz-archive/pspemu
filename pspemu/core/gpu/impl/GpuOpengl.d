@@ -92,30 +92,67 @@ class GpuOpengl : GpuImplAbstract {
 				// Special primitive that doesn't have equivalent in OpenGL.
 				// With two points specify a GL_QUAD.
 				case PrimitiveType.GU_SPRITES:
+					static string spriteVertexInterpolate(string vx, string vy) {
+						string s;
+						s ~= "vertex.px = " ~ vx ~ ".px; vertex.py = " ~ vy ~ ".py;";
+						s ~= "vertex.nx = " ~ vx ~ ".px; vertex.ny = " ~ vy ~ ".py;";
+						s ~= "vertex.u  = " ~ vx ~ ".u ; vertex.v  = " ~ vy ~ ".v;";
+						return s;
+					}
+
 					glPushAttrib(GL_CULL_FACE);
 					glDisable(GL_CULL_FACE);
-					glBegin(GL_QUADS);
-					{
+					//if (!state.vertexType.transform2D) {
+					if (0) {
+						// TEST.
+						glMatrixMode(GL_PROJECTION); glLoadIdentity();
+						glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+						glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+
+						auto matrix = state.projectionMatrix * state.worldMatrix * state.viewMatrix;
 						for (int n = 0; n < vertexList.length; n += 2) {
 							VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
 							vertex = v1;
 							
-							static string test(string vx, string vy) {
-								string s;
-								s ~= "vertex.px = " ~ vx ~ ".px; vertex.py = " ~ vy ~ ".py;";
-								s ~= "vertex.nx = " ~ vx ~ ".px; vertex.ny = " ~ vy ~ ".py;";
-								s ~= "vertex.u  = " ~ vx ~ ".u ; vertex.v  = " ~ vy ~ ".v;";
-								return s;
-							}
+							auto vv1 = Vector(v1.px, v1.py, v1.pz, 0);
+							auto vv2 = Vector(v2.px, v2.py, v2.pz, 0);
+							
+							//auto vertexProjected1 = matrix * [v1.px, v1.py, v1.pz, 1];
+							//auto vertexProjected2 = matrix * [v2.px, v2.py, v2.pz, 1];
+							auto vertexProjectedm = matrix * ((vv1 + vv2) / 2);
+							vertexProjectedm.x *= 480;
+							vertexProjectedm.y *= 272;
+							float width  = std.math.fabs(vv2.x - vv1.x) * 480;
+							float height = std.math.fabs(vv2.y - vv1.y) * 272;
+							
+							mixin(spriteVertexInterpolate("v1", "v1")); vertex.px = vertexProjectedm.x - width; vertex.py = vertexProjectedm.y - height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
+							mixin(spriteVertexInterpolate("v2", "v1")); vertex.px = vertexProjectedm.x + width; vertex.py = vertexProjectedm.y - height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
+							mixin(spriteVertexInterpolate("v2", "v2")); vertex.px = vertexProjectedm.x + width; vertex.py = vertexProjectedm.y + height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
+							mixin(spriteVertexInterpolate("v1", "v2")); vertex.px = vertexProjectedm.x - width; vertex.py = vertexProjectedm.y + height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
+							writefln("");
 
-							mixin(test("v1", "v1")); putVertex(vertex);
-							mixin(test("v2", "v1")); putVertex(vertex);
-							mixin(test("v2", "v2")); putVertex(vertex);
-							mixin(test("v1", "v2")); putVertex(vertex);
+							//vertexProjected1
+							//writefln("%s | %s", v2.px - v1.px, v2.py - v1.py);
+							// gl_Position = gl_ModelViewProjectionMatrix
+							//state.viewMatrix * state.worldMatrix * state.projectionMatrix
 						}
 					}
+					else {
+						glBegin(GL_QUADS);
+						{
+							for (int n = 0; n < vertexList.length; n += 2) {
+								VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
+								vertex = v1;
+								
+								mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
+								mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
+								mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
+								mixin(spriteVertexInterpolate("v1", "v2")); putVertex(vertex);
+							}
+						}
+						glEnd();
+					}
 					glPopAttrib();
-					glEnd();
 				break;
 				// Normal primitives that have equivalent in OpenGL.
 				default: {
@@ -187,7 +224,9 @@ template OpenglUtils() {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
 				glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
 				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+				//writefln("transform");
 			} else {
+				//writefln("no transform");
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
 				glMultMatrixf(state.projectionMatrix.pointer);
 
