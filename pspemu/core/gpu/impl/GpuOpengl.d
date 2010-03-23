@@ -64,6 +64,9 @@ class GpuOpengl : GpuImplAbstract {
 	mixin OpenglBase;
 	mixin OpenglUtils;
 
+	/// Previous state to check changes in the new state and perform new operations.
+	GpuState prevState;
+
 	void init() {
 		openglInit();
 		openglPostInit();
@@ -91,6 +94,8 @@ class GpuOpengl : GpuImplAbstract {
 			switch (type) {
 				// Special primitive that doesn't have equivalent in OpenGL.
 				// With two points specify a GL_QUAD.
+				// http://www.opengl.org/registry/specs/ARB/point_sprite.txt
+				// http://cirl.missouri.edu/gpu/glsl_lessons/glsl_geometry_shader/index.html
 				case PrimitiveType.GU_SPRITES:
 					static string spriteVertexInterpolate(string vx, string vy) {
 						string s;
@@ -114,16 +119,16 @@ class GpuOpengl : GpuImplAbstract {
 							VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
 							vertex = v1;
 							
-							auto vv1 = Vector(v1.px, v1.py, v1.pz, 0);
-							auto vv2 = Vector(v2.px, v2.py, v2.pz, 0);
+							//auto vv1 = Vector(v1.px, v1.py, v1.pz, 0);
+							//auto vv2 = Vector(v2.px, v2.py, v2.pz, 0);
 							
 							//auto vertexProjected1 = matrix * [v1.px, v1.py, v1.pz, 1];
 							//auto vertexProjected2 = matrix * [v2.px, v2.py, v2.pz, 1];
-							auto vertexProjectedm = matrix * ((vv1 + vv2) / 2);
+							auto vertexProjectedm = matrix * ((v1.p + v2.p) / 2);
 							vertexProjectedm.x *= 480;
 							vertexProjectedm.y *= 272;
-							float width  = std.math.fabs(vv2.x - vv1.x) * 480;
-							float height = std.math.fabs(vv2.y - vv1.y) * 272;
+							float width  = std.math.fabs(v2.p.x - v1.p.x) * 480;
+							float height = std.math.fabs(v2.p.y - v1.p.y) * 272;
 							
 							mixin(spriteVertexInterpolate("v1", "v1")); vertex.px = vertexProjectedm.x - width; vertex.py = vertexProjectedm.y - height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
 							mixin(spriteVertexInterpolate("v2", "v1")); vertex.px = vertexProjectedm.x + width; vertex.py = vertexProjectedm.y - height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
@@ -138,25 +143,45 @@ class GpuOpengl : GpuImplAbstract {
 						}
 					}
 					else {
-						glBegin(GL_QUADS);
-						{
-							for (int n = 0; n < vertexList.length; n += 2) {
-								VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
-								vertex = v1;
-								
-								mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
-								mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
-								mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
-								mixin(spriteVertexInterpolate("v1", "v2")); putVertex(vertex);
+						if (1) {
+							glBegin(GL_QUADS);
+							{
+								for (int n = 0; n < vertexList.length; n += 2) {
+									VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
+									vertex = v1;
+									
+									mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
+									mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
+									mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
+									mixin(spriteVertexInterpolate("v1", "v2")); putVertex(vertex);
+								}
 							}
+							glEnd();
+						} else {
+							glEnable(GL_POINT_SPRITE);
+							//glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);  
+							//glEnable(GL_COORD_REPLACE);
+							glBegin(GL_POINTS);
+							{
+								for (int n = 0; n < vertexList.length; n += 2) {
+									VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
+									vertex = v1;
+									vertex.position = (v1.position + v2.position) / 2;
+									putVertex(vertex);
+									//Vector(v1.px, v1.py, v1.pz) + Vector(v2.px, v2.py, v3.pz)
+								}
+								//foreach (ref vertex; vertexList) putVertex(vertex);
+							}
+							glEnd();
+							glDisable(GL_POINT_SPRITE);
+							//glDisable(GL_COORD_REPLACE);
 						}
-						glEnd();
 					}
 					glPopAttrib();
 				break;
 				// Normal primitives that have equivalent in OpenGL.
 				default: {
-					glBegin(pspToOpenglPrimitiveType[type]);
+					glBegin(PrimitiveTypeTranslate[type]);
 					{
 						foreach (ref vertex; vertexList) putVertex(vertex);
 					}
@@ -204,6 +229,14 @@ class GpuOpengl : GpuImplAbstract {
 }
 
 template OpenglUtils() {
+	static const uint[] PrimitiveTypeTranslate = [GL_POINTS, GL_LINES, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_QUADS/*GU_SPRITE*/];
+	static const uint[] TextureEnvModeTranslate = [GL_MODULATE, GL_DECAL, GL_BLEND, GL_REPLACE, GL_ADD];	
+	static const uint[] TestTranslate = [GL_NEVER, GL_ALWAYS, GL_EQUAL, GL_NOTEQUAL, GL_LESS, GL_LEQUAL, GL_GREATER, GL_GEQUAL];
+	static const uint[] StencilOperationTranslate = [GL_KEEP, GL_ZERO, GL_REPLACE, GL_INVERT, GL_INCR, GL_DECR];
+	static const uint[] BlendEquationTranslate = [GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX, GL_FUNC_ADD ];
+	static const uint[] BlendFuncSrcTranslate = [GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA ];
+	static const uint[] BlendFuncDstTranslate = [GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA ];	
+
 	Texture[uint] textureCache;
 	
 	void glEnableDisable(int type, bool enable) {
@@ -218,7 +251,19 @@ template OpenglUtils() {
 		}
 		return textureCache[tbuffer.address];
 	}
+
 	void drawBegin() {
+		void prepareEnables() {
+			glEnableDisable(GL_CLIP_PLANE0,    state.clipPlaneEnabled);
+			glEnableDisable(GL_CULL_FACE,      state.backfaceCullingEnabled);
+			glEnableDisable(GL_BLEND,          state.alphaBlendEnabled);
+			glEnableDisable(GL_DEPTH_TEST,     state.depthTestEnabled);
+			glEnableDisable(GL_STENCIL_TEST,   state.stencilTestEnabled);
+			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
+			glEnableDisable(GL_TEXTURE_2D,     state.textureMappingEnabled);
+			glEnableDisable(GL_ALPHA_TEST,     state.alphaTestEnabled);
+		}
+
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
@@ -242,7 +287,7 @@ template OpenglUtils() {
 		}
 
 		void prepareTexture() {
-			if (glActiveTexture is null) return;
+			if (!state.textureMappingEnabled) return;
 
 			glActiveTexture(GL_TEXTURE0);
 			glMatrixMode(GL_TEXTURE);
@@ -266,99 +311,73 @@ template OpenglUtils() {
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapS);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapT);
 
-				static const uint[] TextureEnvModeTranslate = [GL_MODULATE, GL_DECAL, GL_BLEND, GL_REPLACE, GL_ADD];	
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEnvMode]);
 
 			} else {
 				glDisable(GL_TEXTURE_2D);
 			}
+		}
+		
+		void prepareStencil() {
+			if (!state.stencilTestEnabled) return;
 
-			/*
-			if (textureEnabled) setTexture(0); else unsetTexture();
-			
-			version (gpu_use_shaders) {
-				gla_textureUse.set(textureEnabled);
-			}
-			*/
+			//writefln("%d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask);
+			glStencilFunc(
+				TestTranslate[state.stencilFuncFunc],
+				state.stencilFuncRef,
+				state.stencilFuncMask
+			);
+			//glCheckError();
+
+			glStencilOp(
+				StencilOperationTranslate[state.stencilOperationSfail ],
+				StencilOperationTranslate[state.stencilOperationDpfail],
+				StencilOperationTranslate[state.stencilOperationDppass]
+			);
+			//glCheckError();
 		}
 
-		glEnableDisable(GL_CLIP_PLANE0,    state.clipPlaneEnabled);
-		glEnableDisable(GL_CULL_FACE,      state.backfaceCullingEnabled);
-		glEnableDisable(GL_BLEND,          state.alphaBlendEnabled);
-		glEnableDisable(GL_DEPTH_TEST,     state.depthTestEnabled);
-		glEnableDisable(GL_STENCIL_TEST,   state.stencilTestEnabled);
-		glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
-		glEnableDisable(GL_TEXTURE_2D,     state.textureMappingEnabled);
-		glEnableDisable(GL_ALPHA_TEST,     state.alphaTestEnabled);
-	
-		static const uint[] BlendEquationTranslate = [GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX, GL_FUNC_ADD ];
-		glBlendEquation(BlendEquationTranslate[state.blendEquation]);
+		void prepareBlend() {
+			if (!state.alphaBlendEnabled) return;
 
-		static const uint[] BlendFuncSrcTranslate = [GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA ];
-		static const uint[] BlendFuncDstTranslate = [GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA ];	
-		glBlendFunc(BlendFuncSrcTranslate[state.blendFuncSrc], BlendFuncDstTranslate[state.blendFuncDst]);
+			glBlendEquation(BlendEquationTranslate[state.blendEquation]);
+			glBlendFunc(BlendFuncSrcTranslate[state.blendFuncSrc], BlendFuncDstTranslate[state.blendFuncDst]);
+			glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
+		}
 
-		glColor4fv(state.ambientModelColor.ptr);
-		
+		void prepareColors() {
+			glColor4fv(state.ambientModelColor.ptr);
+		}
+
+		void prepareCulling() {
+			if (!state.backfaceCullingEnabled) return;
+
+			glFrontFace(state.faceCullingOrder ? GL_CW : GL_CCW);
+		}
+
+		void prepareScissor() {
+			if ((state.scissor.x1 <= 0 && state.scissor.y1 <= 0) && (state.scissor.x2 >= 480 && state.scissor.y2 >= 272)) {
+				glDisable(GL_SCISSOR_TEST);
+				return;
+			}
+
+			glEnable(GL_SCISSOR_TEST);
+			glScissor(
+				state.scissor.x1,
+				272 - state.scissor.y2,
+				state.scissor.x2 - state.scissor.x1,
+				state.scissor.y2 - state.scissor.y1
+			);
+		}
+
+		prepareEnables();
 		prepareMatrix();
+		prepareStencil();
+		prepareScissor();
+		prepareBlend();
+		prepareCulling();
+		prepareColors();
 		prepareTexture();
-		glFrontFace (state.faceCullingOrder ? GL_CW : GL_CCW);
-		glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
-
-		// Scissor
-		//if (scissor.isFull) { glDisable(GL_SCISSOR_TEST); break; }
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(
-			state.scissor.x1,
-			272 - state.scissor.y2,
-			state.scissor.x2 - state.scissor.x1,
-			state.scissor.y2 - state.scissor.y1
-		);
-
-
-		
-		/*
-		glEnableDisable(GL_COLOR_ARRAY, vinfo.color);
-		
-		glColor4fv(AmbientMaterial.ptr);
-		
-		version (gpu_no_lighting) LightsEnabled = false;
-		
-		if (LightsEnabled) {
-			//writefln("lights");
-		
-			// Ambient Material Color
-			//glEnable(GL_COLOR_MATERIAL);
-			//ColorMaterial
-			
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, AmbientMaterial.ptr);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, DiffuseMaterial.ptr);
-			//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, SpecularMaterial.ptr);
-			//writefln("--------------------------- %f", light_specular_power);
-			
-			foreach (k, light; lights) {
-				if (!light.enabled) continue;
-				int lgl = GL_LIGHT0 + k;
-				
-				light.dir[3] = light.pos[3] = 0.0f;
-
-				//writefln("Light%d", k);
-				
-				glLightfv(lgl, GL_POSITION, light.pos.ptr);
-				glLightfv(lgl, GL_SPOT_DIRECTION, light.dir.ptr);
-				
-				glLightf (lgl, GL_CONSTANT_ATTENUATION, light.constant);
-				glLightf (lgl, GL_LINEAR_ATTENUATION, light.linear);
-				glLightf (lgl, GL_QUADRATIC_ATTENUATION, light.quadratic);
-
-				glLightf (lgl, GL_SPOT_EXPONENT, light.exponent);
-				glLightf (lgl, GL_SPOT_CUTOFF, light.cutoff);
-				
-				glLightfv(lgl, GL_SPECULAR, light.specular.ptr);
-				glLightfv(lgl, GL_DIFFUSE, light.diffuse.ptr);
-			}
-		}
-		*/
 	}
 	
 	void drawEnd() {
@@ -384,8 +403,6 @@ template OpenglUtils() {
 		PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT),
 		PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT),
 	];
-
-	static const uint[] pspToOpenglPrimitiveType = [GL_POINTS, GL_LINES, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_QUADS/*GU_SPRITE*/];
 }
 
 template OpenglBase() {
@@ -434,6 +451,7 @@ template OpenglBase() {
 			glInit();
 		}
 	} else {
+		// http://www.opengl.org/resources/code/samples/win32_tutorial/wglinfo.c
 		void openglInit() {
 			hwnd = CreateOpenGLWindow(512, 272, PFD_TYPE_RGBA, 0);
 			if (hwnd == null) throw(new Exception("Invalid window handle"));

@@ -1,5 +1,7 @@
 module pspemu.core.gpu.Types;
 
+version = VERSION_SSE_OPS;
+
 import std.string;
 import std.bitmanip;
 
@@ -63,6 +65,9 @@ struct TVector(Type, int Size = 4) {
 			mixin(__generateNamedFields());
 		}
 	}
+
+	static assert(this.sizeof == Size * Type.sizeof);
+	
 	alias TVector!(Type, Size) CTVector;
 
 	static CTVector opCall(Type[] list) {
@@ -75,7 +80,7 @@ struct TVector(Type, int Size = 4) {
 		string r = "static CTVector opCall(";
 		for (int n = 0; n < Size; n++) {
 			if (n != 0) r ~= ",";
-			r ~= "Type v" ~ tos(n);
+			r ~= "Type v" ~ tos(n) ~ " = 0";
 		}
 		r ~= ") {";
 		r ~= "return CTVector([";
@@ -91,24 +96,108 @@ struct TVector(Type, int Size = 4) {
 	//pragma(msg, __generateConstructor());
 	mixin(__generateConstructor());
 
-	CTVector opAdd(CTVector that) {
-		Type[Size] v; for (int n = 0; n < v.length; n++) v[n] = this.v[n] + that.v[n];
-		return CTVector(v);
+	static if (is(Type == float) && (Size == 4)) {
+		version (VERSION_SSE_OPS) {
+			alias bool ACTUALLY_VERSION_SSE_OPS;
+		}
 	}
 
-	CTVector opSub(CTVector that) {
-		Type[Size] v; for (int n = 0; n < v.length; n++) v[n] = this.v[n] - that.v[n];
-		return CTVector(v);
-	}
+	// Optimized SSE (for float[4]).
+	static if (is(ACTUALLY_VERSION_SSE_OPS)) {
+		// http://www.cortstratton.org/articles/HugiCode.html
+		// http://softpixel.com/~cwright/programming/simd/sse.php
 
-	CTVector opMul(Type that) {
-		Type[Size] v; for (int n = 0; n < v.length; n++) v[n] = this.v[n] * that;
-		return CTVector(v);
-	}
+		// STACK:
+		//    +00 - PTR retaddr (ret)
+		//    +04 - PTR this
+		//    +08 - PTR retval
+		//    +12 - that.v[0]
+		//    +16 - that.v[1]
+		//    +20 - that.v[2]
+		//    +24 - that.v[3]
+		static string genSimpleVectorInternalOp(string middleOp) {
+			return r"
+			asm {
+				naked;
 
-	CTVector opDiv(Type that) {
-		Type[Size] v; for (int n = 0; n < v.length; n++) v[n] = this.v[n] / that;
-		return CTVector(v);
+				// Load 128bits (4 float) from this and that.
+				mov ECX, [ESP + 4];
+				movups XMM0, [ECX     ]; // this
+				movups XMM1, [ESP + 12]; // that
+
+				" ~ middleOp ~ r" XMM0, XMM1;
+
+				// Stores 4 floats into result.
+				mov ECX, [ESP + 8]; // ret
+				movups [ECX], XMM0;
+				
+				ret;
+			}
+			";
+		}
+
+		// STACK:
+		//    +00 - PTR retaddr (ret)
+		//    +04 - PTR this
+		//    +08 - PTR retval
+		//    +12 - that
+		static string genSimpleVectorExternalOp(string middleOp) {
+			return r"
+			asm {
+				naked;
+
+				// Load 128bits (4 float) from this and that.
+				mov ECX, [ESP + 4];
+				movups XMM0, [ECX     ]; // this
+				mov ECX, [ESP + 12]; // that
+				push ECX; push ECX; push ECX; push ECX;
+				movups XMM1, [ESP]; // that*4
+				pop ECX; pop ECX; pop ECX; pop ECX;
+
+				" ~ middleOp ~ r" XMM0, XMM1; // that
+
+				// Stores 4 floats into result.
+				mov ECX, [ESP + 8]; // ret
+				movups [ECX], XMM0;
+				
+				ret;
+			}
+			";
+		}
+
+		extern (C) {
+			// Internal operations.
+			CTVector opAdd(CTVector that) { mixin(genSimpleVectorInternalOp("addps")); }
+			CTVector opSub(CTVector that) { mixin(genSimpleVectorInternalOp("subps")); }
+			CTVector opMul(CTVector that) { mixin(genSimpleVectorInternalOp("mulps")); }
+			CTVector opDiv(CTVector that) { mixin(genSimpleVectorInternalOp("divps")); }
+			
+			// External operations.
+			CTVector opAdd(Type that) { mixin(genSimpleVectorExternalOp("addps")); }
+			CTVector opSub(Type that) { mixin(genSimpleVectorExternalOp("subps")); }
+			CTVector opMul(Type that) { mixin(genSimpleVectorExternalOp("mulps")); }
+			CTVector opDiv(Type that) { mixin(genSimpleVectorExternalOp("divps")); }
+		}
+	} else {
+		static string genSimpleVectorInternalOp(string op) {
+			return "Type[Size] rv = void; for (int n = 0; n < rv.length; n++) rv[n] = this.v[n] " ~ op ~ " that.v[n]; return CTVector(rv);";
+		}
+
+		static string genSimpleVectorExternalOp(string op) {
+			return "Type[Size] v = void; for (int n = 0; n < v.length; n++) v[n] = this.v[n] " ~ op ~ " that; return CTVector(v);";
+		}
+
+		// Internal operations.
+		CTVector opAdd(CTVector that) { mixin(genSimpleVectorInternalOp("+")); }
+		CTVector opSub(CTVector that) { mixin(genSimpleVectorInternalOp("-")); }
+		CTVector opMul(CTVector that) { mixin(genSimpleVectorInternalOp("*")); }
+		CTVector opDiv(CTVector that) { mixin(genSimpleVectorInternalOp("/")); }
+
+		// External operations.
+		CTVector opAdd(Type that) { mixin(genSimpleVectorExternalOp("+")); }
+		CTVector opSub(Type that) { mixin(genSimpleVectorExternalOp("-")); }
+		CTVector opMul(Type that) { mixin(genSimpleVectorExternalOp("*")); }
+		CTVector opDiv(Type that) { mixin(genSimpleVectorExternalOp("/")); }
 	}
 
 	Type[] opSlice() { return v; }
@@ -285,6 +374,17 @@ static struct GpuState {
 	int blendEquation;
 	int blendFuncSrc;
 	int blendFuncDst;
+
+	int  stencilFuncFunc;
+	int  stencilFuncRef;
+	uint stencilFuncMask;
+
+	uint stencilOperationSfail;
+	uint stencilOperationDpfail;
+	uint stencilOperationDppass;
+
+	uint fixSrc;
+	uint fixDst;
 }
 
 interface GpuImpl {
@@ -319,4 +419,18 @@ struct VertexState {
 	float nx, ny, nz;  // Normal vector.
 	float px, py, pz;  // Position vector.
 	float weights[8];  // Weights for skinning and morphing.
+
+	// Getters
+	Vector p () { return Vector(px, py, pz); }
+	Vector n () { return Vector(nx, ny, nz); }
+	Vector uv() { return Vector(u, v); }
+
+	// Setters
+	Vector p (Vector vec) { px = vec.x; py = vec.y; pz = vec.z; return vec; }
+	Vector n (Vector vec) { nx = vec.x; ny = vec.y; nz = vec.z; return vec; }
+	Vector uv(Vector vec) { u  = vec.x; v  = vec.y; return vec; }
+
+	// Aliases
+	alias p position;
+	alias n normal;
 }

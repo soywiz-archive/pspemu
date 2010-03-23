@@ -48,4 +48,29 @@ template Gpu_Special() {
 	auto OP_FFACE() { gpu.state.faceCullingOrder = command.param24; }
 	
 	auto OP_SHADE() { gpu.state.shadeModel = command.param24; }
+
+	// Stencil Test
+	auto OP_STST() {
+		with (gpu.state) {
+			stencilFuncFunc = (command.param24 >>  0) & 0xFF;
+			stencilFuncRef  = (command.param24 >>  8) & 0xFF;
+			stencilFuncMask = (command.param24 >> 16) & 0xFF;
+		}
+	}
+
+	// Stencil OPeration
+	auto OP_SOP() {
+		with (gpu.state) {
+			stencilOperationSfail  = (command.param24 >>  0) & 0xFF;
+			stencilOperationDpfail = (command.param24 >>  8) & 0xFF;
+			stencilOperationDppass = (command.param24 >> 16) & 0xFF;
+		}
+	}
+
+	// source fix color
+	auto OP_SFIX() { gpu.state.fixSrc = command.param24; }
+
+	// destination fix color
+	auto OP_DFIX() { gpu.state.fixDst = command.param24; }
+
 }
