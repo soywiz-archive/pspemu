@@ -1,0 +1,104 @@
+// NOT WORKING!! WIP.
+// http://cirl.missouri.edu/gpu/glsl_lessons/glsl_geometry_shader/index.html
+// http://graphics.cs.uiuc.edu/agora.php/Geometry+Shader+Hello+World
+
+#version 120 
+#extension GL_EXT_geometry_shader4 : enable
+
+#define ATTR_INTERPOLATION 1
+
+// GU_SPRITES
+attribute bool isSprite;
+
+#ifdef ATTR_INTERPOLATION
+	#define INTERPOLATE_ARRAY(NAME, A, B) mix(NAME[A], NAME[B], 0.5)
+	#define INTERPOLATE_ARRAY_XY(NAME) INTERPOLATE_ARRAY(NAME, ix, iy)
+#else
+	#define INTERPOLATE_ARRAY(NAME, A, B) NAME[A]
+	#define INTERPOLATE_ARRAY_XY(NAME) INTERPOLATE_ARRAY(NAME, ix, iy)
+#endif
+
+#define INTERPOLATE_COORD_ARRAY(NAME, A, B, C, D) vec4(NAME[A].x, NAME[B].y, NAME[C].z, NAME[D].t)
+#define INTERPOLATE_COORD_ARRAY_XY(NAME) INTERPOLATE_COORD_ARRAY(NAME, ix, iy, ix, ix)
+
+void EmitInterpolateXY(int ix, int iy) {
+	// Mandatory coordinates interpolation.
+	gl_Position = INTERPOLATE_COORD_ARRAY_XY(gl_PositionIn);
+	//gl_TexCoord[0] = INTERPOLATE_COORD_ARRAY_XY(gl_TexCoordIn[0]);
+
+	// Non coordinate-related attributes.
+	gl_FrontColor   = INTERPOLATE_ARRAY_XY(gl_FrontColorIn  );
+	gl_BackColor    = INTERPOLATE_ARRAY_XY(gl_BackColorIn   );
+	gl_FogFragCoord = INTERPOLATE_ARRAY_XY(gl_FogFragCoordIn);
+	gl_ClipVertex   = INTERPOLATE_ARRAY_XY(gl_ClipVertexIn  );
+
+	EmitVertex();
+}
+
+void main(void) {
+	int n, m;
+
+	if (isSprite) {
+		for (n = 0; n < gl_VerticesIn; n += 2){
+			#define v1 (n + 0)
+			#define v2 (n + 1)
+			EmitInterpolateXY(v1, v1);
+			EmitInterpolateXY(v2, v1);
+			EmitInterpolateXY(v2, v2);
+			EmitInterpolateXY(v1, v2);
+		}
+		EndPrimitive();
+	} else {
+		//Pass-thru
+		for (n = 0; n < gl_VerticesIn; n++){
+			gl_Position   = gl_PositionIn[n];
+			gl_FrontColor = gl_FrontColorIn[n];
+			gl_BackColor  = gl_BackColorIn[n];
+			//gl_FrontSecondaryColor  = gl_FrontSecondaryColorIn[n];
+			//gl_BackSecondaryColorIn = gl_BackSecondaryColorIn[n];
+			//gl_TexCoord[0] = gl_TexCoordIn[n][0];
+			gl_FogFragCoord = gl_FogFragCoordIn[n];
+			//gl_PointSize = gl_PointSizeIn[n];
+			gl_ClipVertex = gl_ClipVertexIn[n];
+			EmitVertex();
+		}
+		EndPrimitive();
+	}
+}
+
+/*
+GEOMETRY SHADER DOCUMENTATION
+
+Geometry language built-in outputs:
+	varying out vec4 gl_FrontColor;
+	varying out vec4 gl_BackColor;
+	varying out vec4 gl_FrontSecondaryColor;
+	varying out vec4 gl_BackSecondaryColor;
+	varying out vec4 gl_TexCoord[]; 	// at most gl_MaxTextureCoords
+	varying out float gl_FogFragCoord; 
+
+Geometry language input varying variables:
+	varying in vec4 gl_FrontColorIn[gl_VerticesIn];
+	varying in vec4 gl_BackColorIn[gl_VerticesIn];
+	varying in vec4 gl_FrontSecondaryColorIn[gl_VerticesIn];
+	varying in vec4 gl_BackSecondaryColorIn[gl_VerticesIn];
+	varying in vec4 gl_TexCoordIn[gl_VerticesIn][]; 	// at most will be// gl_MaxTextureCoords
+	varying in float gl_FogFragCoordIn[gl_VerticesIn];
+	varying in vec4 gl_PositionIn[gl_VerticesIn];
+	varying in float gl_PointSizeIn[gl_VerticesIn];
+	varying in vec4 gl_ClipVertexIn[gl_VerticesIn];
+
+Geometry Shader Function 
+	
+	This section contains functions that are geometry language specific.
+	
+	Syntax:
+	 void EmitVertex(); 
+	 void EndPrimitive(); 
+	
+	Description:
+	
+	 The function EmitVertex() specifies that a vertex is completed. A vertex is added to the current output primitive using the current values of the varying output variables and the current values of the special built-in output variables gl_PointSize, gl_ClipVertex, gl_Layer, gl_Position and gl_PrimitiveID. The values of any unwritten output variables are undefined. The values of all varying output variables and the special built-in output variables are undefined after a call to EmitVertex(). If a geometry shader, in one invocation, emits more vertices than the valueGEOMETRY_VERTICES_OUT_EXT, these emits may have no effect. 
+ 
+	The function EndPrimitive() specifies that the current output primitive is completed and a new output primitive (of the same type) should be started. This function does not emit a vertex. The effect of EndPrimitive() is roughly equivalent to calling End followed by a new Begin, where the primitive mode is taken from the program object parameter GEOMETRY_OUTPUT_TYPE_EXT. If the output primitive type is POINTS, calling EndPrimitive() is optional.
+*/
