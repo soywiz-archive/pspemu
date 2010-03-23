@@ -19,6 +19,7 @@ SET SOURCES=%SOURCES% pspemu/utils/Utils.d
 SET SOURCES=%SOURCES% pspemu/utils/VirtualFileSystem.d
 
 SET SOURCES=%SOURCES% pspemu/models/IDisplay.d
+SET SOURCES=%SOURCES% pspemu/models/IController.d
 SET SOURCES=%SOURCES% pspemu/models/IDebugSource.d
 REM SET SOURCES=%SOURCES% pspemu/models/IEmulatorState.d
 

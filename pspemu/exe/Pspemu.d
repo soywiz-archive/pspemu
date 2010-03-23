@@ -14,6 +14,7 @@ import pspemu.gui.MainForm;
 import pspemu.gui.DisplayForm;
 
 import pspemu.models.IDisplay;
+import pspemu.models.IController;
 
 import pspemu.formats.Pbp;
 
@@ -32,6 +33,7 @@ class PspDisplay : BasePspDisplay {
 
 	this(Memory memory) {
 		this.memory = memory;
+		super();
 	}
 
 	void* frameBufferPointer() {
@@ -45,10 +47,11 @@ class PspDisplay : BasePspDisplay {
 }
 
 int main(string[] args) {
-	auto memory  = new Memory;
-	auto display = new PspDisplay(memory);
-	auto gpu     = new Gpu(new GpuOpengl, memory);
-	auto cpu     = new Cpu(memory, gpu, display);
+	auto memory     = new Memory;
+	auto controller = new Controller();
+	auto display    = new PspDisplay(memory);
+	auto gpu        = new Gpu(new GpuOpengl, memory);
+	auto cpu        = new Cpu(memory, gpu, display, controller);
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 
@@ -77,7 +80,7 @@ int main(string[] args) {
 
 	int retval = 0;
 	try {
-		Application.run(new DisplayForm(display));
+		Application.run(new DisplayForm(display, controller));
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
 		retval = -1;

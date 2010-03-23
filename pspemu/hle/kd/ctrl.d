@@ -12,15 +12,13 @@ class sceCtrl_driver : Module {
 		mixin(registerd!(0x3A622550, sceCtrlPeekBufferPositive));
 	}
 
-	void readBufferedFrames(ref SceCtrlData sceCtrlData, int count = 1, bool positive = true) {
-		static uint frame = 0;
-		sceCtrlData.TimeStamp = frame++;
-		sceCtrlData.Buttons = 0;
-		sceCtrlData.x = 0;
-		sceCtrlData.y = 0;
-		sceCtrlData.Rsrv[] = 0;
-		// Negate.
-		if (!positive) sceCtrlData.Buttons = ~sceCtrlData.Buttons;
+	void readBufferedFrames(SceCtrlData* pad_data, int count = 1, bool positive = true) {
+		for (int n = 0; n < count; n++) {
+			pad_data[n] = reinterpret!(SceCtrlData)(cpu.controller.frameRead(n));
+
+			// Negate.
+			if (!positive) pad_data[n].Buttons = ~pad_data[n].Buttons;
+		}
 	}
 
 	/**
@@ -40,12 +38,12 @@ class sceCtrl_driver : Module {
 	 * @param count - Number of ::SceCtrlData buffers to read.
 	 */
 	int sceCtrlReadBufferPositive(SceCtrlData* pad_data, int count) {
-		readBufferedFrames(*pad_data, count, true);
+		readBufferedFrames(pad_data, count, true);
 		return 0;
 	}
 
 	int sceCtrlPeekBufferPositive(SceCtrlData* pad_data, int count) {
-		readBufferedFrames(*pad_data, count, true);
+		readBufferedFrames(pad_data, count, true);
 		return 0;
 	}
 
@@ -148,11 +146,7 @@ struct SceCtrlData {
 	/** Reserved. */
 	ubyte 	Rsrv[6];
 
-	// D additions.
-	float x() { return (cast(float)Lx / 255.0) - 0.5; }
-	float y() { return (cast(float)Ly / 255.0) - 0.5; }
-	float x(float x) { Lx = cast(ubyte)((x + 0.5) * 255.0); return x; }
-	float y(float y) { Ly = cast(ubyte)((y + 0.5) * 255.0); return y; }
+	static assert(this.sizeof == 16);
 }
 
 static this() {

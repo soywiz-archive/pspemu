@@ -92,7 +92,7 @@ class IoFileMgrForKernel : Module {
 			VFS vfs = fsroot;
 
 			// Full path.
-			if (file.indexOf(":") == -1) {
+			if (file.findIndex(":") == -1) {
 				vfs = fsroot[fscurdir];
 			}
 			/*

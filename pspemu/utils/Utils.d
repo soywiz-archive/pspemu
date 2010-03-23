@@ -105,7 +105,7 @@ unittest {
 	assert(tos(-99) == "-99");
 }
 
-class CircularList(Type) {
+class CircularList(Type, bool CheckAvailable = true) {
 	/*
 	struct Node {
 		Type value;
@@ -128,10 +128,12 @@ class CircularList(Type) {
 
 	uint headPosition;
 	void headPosition__Inc(int count = 1) {
-		if (count > 0) {
-			assert(readAvailable  >= +count);
-		} else {
-			assert(writeAvailable >= -count);
+		static if (CheckAvailable) {
+			if (count > 0) {
+				assert(readAvailable  >= +count);
+			} else {
+				assert(writeAvailable >= -count);
+			}
 		}
 		headPosition = (headPosition + 1) % list.length;
 		readAvailable -= count;
@@ -139,10 +141,12 @@ class CircularList(Type) {
 
 	uint tailPosition;
 	void tailPosition__Inc(int count = 1) {
-		if (count > 0) {
-			assert(writeAvailable >= +count);
-		} else {
-			assert(readAvailable  >= -count);
+		static if (CheckAvailable) {
+			if (count > 0) {
+				assert(writeAvailable >= +count);
+			} else {
+				assert(readAvailable  >= -count);
+			}
 		}
 		tailPosition = (tailPosition + count) % list.length;
 		readAvailable += count;
@@ -163,7 +167,15 @@ class CircularList(Type) {
 		tailPosition__Inc(-1);
 		return list[tailPosition];
 	}
+
+	ref Type readFromTail(int pos = -1) {
+		return list[(tailPosition + pos) % list.length];
+	}
+
+	alias consume consumeHead;
 }
+
+alias CircularList Queue;
 
 void sleep(uint ms) {
 	Sleep(ms);
@@ -183,8 +195,6 @@ class TaskQueue {
 	void waitEmpty() { while (tasks.length) sleep(1); }
 	alias executeAll opCall;
 }
-
-alias CircularList Queue;
 
 template PspHardwareComponent() {
 	Thread thread;
@@ -206,4 +216,18 @@ template PspHardwareComponent() {
 	void waitStart() {
 		while (!_running) sleep(1);
 	}
+}
+
+int findIndex(string s, string r) {
+	for (int n = 0; n < s.length - r.length; n++) {
+		if (s[n..n + r.length] == r) return n;
+	}
+	return -1;
+}
+
+int findLastIndex(string s, string r) {
+	for (int n = s.length - r.length - 1; n >= 0; n--) {
+		if (s[n..n + r.length] == r) return n;
+	}
+	return -1;
 }

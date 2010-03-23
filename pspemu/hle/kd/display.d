@@ -20,8 +20,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * Wait for vertical blank start
 	 */
 	int sceDisplayWaitVblankStart() {
-		while ( cpu.display.vblank && cpu.running) Sleep(1); // Wait vblank start
-		while (!cpu.display.vblank && cpu.running) Sleep(1); // Wait vblank end
+		cpu.display.waitVblank();
 		return 0;
 	}
 

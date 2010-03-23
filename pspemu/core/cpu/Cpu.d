@@ -4,8 +4,10 @@ module pspemu.core.cpu.Cpu;
 version = ENABLE_BREAKPOINTS;
 
 // Hack. It shoudln't be here.
+// Create a PspHardwareComponents class with all the components there.
 import pspemu.core.gpu.Gpu;
 import pspemu.models.IDisplay;
+import pspemu.models.IController;
 
 import pspemu.models.IDebugSource;
 
@@ -54,14 +56,16 @@ class Cpu : IDebugSource {
 	/**
 	 * Memory.
 	 */
-	Memory    memory;
+	Memory memory;
 
 	/**
 	 * Gpu.
 	 */
-	Gpu    gpu;
+	Gpu gpu;
 
 	IDisplay display;
+	
+	IController controller;
 	
 	mixin DebugSourceProxy;
 
@@ -76,11 +80,12 @@ class Cpu : IDebugSource {
 	 *
 	 * @param  memory  Optional. A Memory object.
 	 */
-	this(Memory memory = null, Gpu gpu = null, IDisplay display = null) {
-		this.registers = new Registers();
-		this.memory    = (memory !is null) ? memory : (new Memory());
-		this.gpu       = gpu;
-		this.display   = display;
+	this(Memory memory = null, Gpu gpu = null, IDisplay display = null, IController controller = null) {
+		this.registers  = new Registers();
+		this.memory     = (memory !is null) ? memory : (new Memory());
+		this.gpu        = gpu;
+		this.display    = display;
+		this.controller = controller;
 	}
 
 	/**

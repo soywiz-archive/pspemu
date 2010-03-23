@@ -1,6 +1,7 @@
 module pspemu.utils.VirtualFileSystem;
 
 import std.stream, std.string, std.stdio, std.file, std.date;
+import pspemu.utils.Utils;
 
 class VFS {
 	enum Type {
@@ -50,7 +51,7 @@ class VFS {
 	}
 
 	VFS opIndex(string index) {
-		auto separatorIndex = std.string.indexOf(index, "/");
+		auto separatorIndex = findIndex(index, "/");
 		if (separatorIndex == -1) separatorIndex = index.length;
 
 		string singleComponent = index[0..separatorIndex];
@@ -169,7 +170,7 @@ public final:
 	}
 
 	Stream open(string path, FileMode mode = FileMode.In, int attr = 0777) {
-		int index = std.string.lastIndexOf(path, "/");
+		int index = findLastIndex(path, "/");
 		if (index != -1) return this[path[0..index]].open(path[index + 1..$], mode, attr);
 		//assert(!isDir, "Can't open a directory");
 		scope (exit) flush();
@@ -180,7 +181,7 @@ public final:
 	bool isDir () { return stats.isdir; }
 
 	VFS mkdir(string path, int mode = 0777) {
-		int index = std.string.lastIndexOf(path, "/");
+		int index = findLastIndex(path, "/");
 		if (index != -1) return this[path[0..index]].mkdir(path[index + 1..$], mode);
 		//assert(!isDir, "Can't open a directory");
 		implMkdir(path, mode);

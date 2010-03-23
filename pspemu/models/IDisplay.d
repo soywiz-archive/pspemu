@@ -1,5 +1,7 @@
 module pspemu.models.IDisplay;
 
+import std.c.windows.windows;
+
 /**
  * Interface for the Display.
  */
@@ -46,6 +48,16 @@ interface IDisplay {
 	 * Obtains the status of the vblank.
 	 */
 	bool vblank();
+
+	/**
+	 * Mutex.
+	 */
+	Object displayingkMutex();
+
+	/**
+	 * Wait vblank.
+	 */
+	void waitVblank();
 }
 
 abstract class BasePspDisplay : IDisplay {
@@ -58,6 +70,16 @@ abstract class BasePspDisplay : IDisplay {
 	Size frameBufferSize() { return Size(512, 272); }
 	Size displaySize() { return Size(480, 272); }
 	int verticalRefreshRate() { return 60; }
+	
+	this() {
+		_displayingkMutex = new Object;
+	}
+	
+	Object _displayingkMutex;
+	Object displayingkMutex() { return _displayingkMutex; }
+	void waitVblank() {
+		synchronized (displayingkMutex) { }
+	}
 }
 
 class NullDisplay : BasePspDisplay {
@@ -74,6 +96,7 @@ class NullDisplay : BasePspDisplay {
 				}
 			}
 		}
+		super();
 	}
 	void* frameBufferPointer() { return data.ptr; }
 	bool vblank() { return false; }

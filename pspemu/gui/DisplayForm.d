@@ -11,14 +11,20 @@ import pspemu.core.gpu.impl.GpuOpengl;
 
 import pspemu.gui.GLControl;
 import pspemu.models.IDisplay;
+import pspemu.models.IController;
 
-class DisplayForm : Form/*, IMessageFilter*/ {
+class DisplayForm : Form, IMessageFilter {
 	GLControlDisplay glc;
-	IDisplay display;
+	IDisplay         display;
+	IController      controller;
 
-	this(IDisplay display = null) {
-		if (display is null) display = new NullDisplay;
-		this.display = display;
+	this(IDisplay display = null, IController controller = null) {
+		Application.addMessageFilter(this);
+
+		if (display    is null) display    = new NullDisplay;
+		if (controller is null) controller = new Controller();
+		this.display    = display;
+		this.controller = controller;
 		
 		auto displaySize = display.displaySize;
 
@@ -44,13 +50,82 @@ class DisplayForm : Form/*, IMessageFilter*/ {
 			parent  = this;
 			visible = false;
 		}
+
+		with (new Timer) {
+			interval = 20;
+			tick ~= (Timer sender, EventArgs ea) { controller.frameWrite(); };
+			start();
+		}
 	}
 	
 	override void onPaint  (PaintEventArgs ea  ) { glc.refresh(); }
 	override void onResize (EventArgs ea       ) { glc.refresh(); }
 	override void onClosing(CancelEventArgs cea) { glc.stop(); }
 	
-	override void onPaintBackground(PaintEventArgs pea) { }      
+	override void onPaintBackground(PaintEventArgs pea) { }
+
+	uint keyModifiers;
+
+	override bool preFilterMessage(ref Message m) {
+		switch (m.msg) {
+			case 256: // WM_KEYDOWN
+			case 257: // WM_KEYUP
+				bool pressed = (m.msg != 257);
+				uint key = m.wParam, mod = m.lParam;
+				uint mmask;
+				
+				if (key == Keys.CONTROL_KEY) mmask = Keys.CONTROL;
+				else if (key == Keys.SHIFT_KEY) mmask = Keys.SHIFT;
+				//else if (key == Keys.ALT_KEY) mmask = Keys.ALT;
+				
+				if (mmask) if (pressed) keyModifiers |= mmask; else keyModifiers &= ~mmask;
+				
+				KeyEventArgs kea = new KeyEventArgs(cast(Keys)(key | keyModifiers));
+				
+				if (pressed) {
+					onKeyDown(kea);
+				} else {
+					onKeyUp(kea);
+				}
+			break;
+			default: break;
+		}
+		
+		return false;
+	}
+
+	void onKeyDown(KeyEventArgs kea) {		
+		keyChange(kea.keyCode, true);
+	}
+
+	void onKeyUp(KeyEventArgs kea) {
+		keyChange(kea.keyCode, false);
+	}
+
+	void keyChange(Keys key, bool pressed) {
+		with (controller.currentFrame) {
+			void update_pressed(uint mask) { if (pressed) Buttons |= mask; else Buttons &= ~mask; }
+
+			switch (key) {
+				case Keys.DOWN : update_pressed(Controller.Buttons.DOWN    ); break;
+				case Keys.UP   : update_pressed(Controller.Buttons.UP      ); break;
+				case Keys.LEFT : update_pressed(Controller.Buttons.LEFT    ); break;
+				case Keys.RIGHT: update_pressed(Controller.Buttons.RIGHT   ); break;		
+				case Keys.Q    : update_pressed(Controller.Buttons.LTRIGGER); break;
+				case Keys.E    : update_pressed(Controller.Buttons.RTRIGGER); break;
+				case Keys.W    : update_pressed(Controller.Buttons.TRIANGLE); break;
+				case Keys.S    : update_pressed(Controller.Buttons.CROSS   ); break;
+				case Keys.A    : update_pressed(Controller.Buttons.SQUARE  ); break;
+				case Keys.D    : update_pressed(Controller.Buttons.CIRCLE  ); break;
+				case Keys.ENTER: update_pressed(Controller.Buttons.START   ); break;
+				case Keys.SPACE: update_pressed(Controller.Buttons.SELECT  ); break;
+				default: break;
+			}
+			
+			x = (Buttons & Controller.Buttons.LEFT) ? -1.0 : ((Buttons & Controller.Buttons.RIGHT) ? +1.0 : 0.0);
+			y = (Buttons & Controller.Buttons.UP  ) ? -1.0 : ((Buttons & Controller.Buttons.DOWN ) ? +1.0 : 0.0);
+		}
+	}
 }
 
 class GLControlDisplay : GLControl {
@@ -59,7 +134,7 @@ class GLControlDisplay : GLControl {
 	bool running = true;
 	bool ready = false;
 	//ubyte[] data;
-	
+
 	void threadRun() {
 		long bcounter, counter, frequency, delay;
 		QueryPerformanceFrequency(&frequency);
@@ -92,32 +167,34 @@ class GLControlDisplay : GLControl {
 
 				//while (!ready) Sleep(1);
 				while (running) {
-					QueryPerformanceCounter(&bcounter);
-					
-					//if ((update && !cpu.paused) || updateOnce) {
-					if (update || updateOnce) {
-						updateOnce = false;
+					synchronized (display.displayingkMutex) {
+						QueryPerformanceCounter(&bcounter);
+						
+						//if ((update && !cpu.paused) || updateOnce) {
+						if (update || updateOnce) {
+							updateOnce = false;
 
-						glDrawPixels(
-							display.frameBufferSize.width,
-							display.frameBufferSize.height,
-							GL_RGBA,
-							GpuOpengl.PixelFormats[display.frameBufferPixelFormat & 3].opengl,
-							display.frameBufferPointer
-						);
+							glDrawPixels(
+								display.frameBufferSize.width,
+								display.frameBufferSize.height,
+								GL_RGBA,
+								GpuOpengl.PixelFormats[display.frameBufferPixelFormat & 3].opengl,
+								display.frameBufferPointer
+							);
 
-						swapBuffers();
-					}
-					
-					GC.minimize();
-					//GC.collect();
-					
-					while (true) {
-						QueryPerformanceCounter(&counter);
-						//Thread.sleep(0_5000);
-						if (counter - bcounter >= delay - 4) break;
-						//Thread.sleep(0_5000);
-						Sleep(1);
+							swapBuffers();
+						}
+						
+						GC.minimize();
+						//GC.collect();
+						
+						while (true) {
+							QueryPerformanceCounter(&counter);
+							//Thread.sleep(0_5000);
+							if (counter - bcounter >= delay - 4) break;
+							//Thread.sleep(0_5000);
+							Sleep(1);
+						}
 					}
 					
 					display.vblank = true;
