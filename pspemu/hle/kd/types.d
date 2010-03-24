@@ -6,6 +6,10 @@ alias int   SceInt32;
 alias long  SceInt64;
 alias long  SceLong64;
 
+alias ushort SceUShort16;
+alias uint   SceUInt32;
+alias ulong  SceUInt64;
+
 /** UIDs are used to describe many different kernel objects. */
 alias uint SceUID;
 

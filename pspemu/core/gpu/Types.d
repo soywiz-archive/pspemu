@@ -398,6 +398,8 @@ static struct GpuState {
 
 	uint fixSrc;
 	uint fixDst;
+
+	uint logicalOperation = 3; // GL_COPY (default)
 }
 
 interface GpuImpl {

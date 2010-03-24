@@ -38,6 +38,7 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x42EC03AC, sceIoWrite));
 		mixin(registerd!(0x27EB27B8, sceIoLseek));
 		mixin(registerd!(0xACE946E8, sceIoGetstat));
+		mixin(registerd!(0x54F5FB11, sceIoDevctl));
 	}
 
 	Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
@@ -76,6 +77,26 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error.
 	 */
 	int sceIoChdir(string path) {
+		return -1;
+	}
+
+	/** 
+	 * Send a devctl command to a device.
+	 *
+	 * @par Example: Sending a simple command to a device (not a real devctl)
+	 * @code
+	 * sceIoDevctl("ms0:", 0x200000, indata, 4, NULL, NULL); 
+	 * @endcode
+	 *
+	 * @param dev - String for the device to send the devctl to (e.g. "ms0:")
+	 * @param cmd - The command to send to the device
+	 * @param indata - A data block to send to the device, if NULL sends no data
+	 * @param inlen - Length of indata, if 0 sends no data
+	 * @param outdata - A data block to receive the result of a command, if NULL receives no data
+	 * @param outlen - Length of outdata, if 0 receives no data
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceIoDevctl(string dev, int cmd, void* indata, int inlen, void* outdata, int outlen) {
 		return -1;
 	}
 

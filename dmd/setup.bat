@@ -32,6 +32,11 @@ GOTO START
 	:POST_SDK
 	EXIT /B
 
+	:POST_DDBG
+		DEL /Q /S windows\bin\ddbg.exe > NUL 2> NUL
+		MOVE ddbg.exe windows\bin
+	EXIT /B
+
 	:INSTALL_PAK
 		REM SET TEXT=%1
 		REM SET CHECK=%2
@@ -63,14 +68,14 @@ REM http://www.digitalmars.com/d/2.0/changelog.html
 SET NAME=DMD
 SET TEXT=Preparing DMD...
 SET CHECK=windows\bin\dmd.exe
-SET ZIP=dmd.2.041.zip
+SET ZIP=dmd.2.042.zip
 REM SET HTTP=http://pspemu.googlecode.com/files/dmd.2.040.zip
-SET HTTP=http://ftp.digitalmars.com/dmd.2.041.zip
+SET HTTP=http://ftp.digitalmars.com/dmd.2.042.zip
 SET POST=CALL :POST_DMD
 CALL :INSTALL_PAK
 
 REM ---------------------------------------------------------------------------
-
+REM http://www.dprogramming.com/dfl.php
 SET NAME=DFL
 SET TEXT=Preparing DFL...
 SET CHECK=windows\bin\dfl.exe
@@ -81,7 +86,7 @@ SET POST=CALL :POST_DFL
 CALL :INSTALL_PAK
 
 REM ---------------------------------------------------------------------------
-
+REM http://minpspw.sourceforge.net/
 SET NAME=SDK
 SET TEXT=Preparing PSPSDK...
 SET CHECK=pspsdk\bin\psp-gcc.exe
@@ -91,6 +96,15 @@ SET POST=CALL :POST_SDK
 CALL :INSTALL_PAK
 
 REM ---------------------------------------------------------------------------
+REM http://ddbg.mainia.de/releases.html
+SET NAME=DDBG
+SET TEXT=Preparing DDBG...
+SET CHECK=windows\bin\ddbg.exe
+SET ZIP=Ddbg-0.11.3-beta.zip
+SET HTTP=http://pspemu.googlecode.com/files/Ddbg-0.11.3-beta.zip
+SET POST=CALL :POST_DDBG
+CALL :INSTALL_PAK
+
+REM ---------------------------------------------------------------------------
 
 EXIT /B
-

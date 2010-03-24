@@ -1,8 +1,14 @@
 module pspemu.hle.kd.audio; // kd/audio.prx (sceAudio_Driver)
 
+debug = DEBUG_AUDIO;
 debug = DEBUG_SYSCALL;
 
+import std.c.windows.windows;
+
+import std.contracts;
+
 import pspemu.hle.Module;
+import pspemu.utils.Audio;
 
 enum PspAudioFormats : uint {
 	/** Channel is set to stereo output. */
@@ -16,14 +22,20 @@ class sceAudio_driver : Module {
 		bool reserved;
 		int  samplecount;
 		PspAudioFormats format;
+		int valuesPerSample() { return (format == PspAudioFormats.PSP_AUDIO_FORMAT_MONO) ? 1 : 2; }
 	}
 	
 	Channel channels[8]; // PSP_AUDIO_CHANNEL_MAX
+	Audio audio;
 
 	void initNids() {
 		mixin(registerd!(0x13F592BC, sceAudioOutputPannedBlocking));
 		mixin(registerd!(0x5EC81C55, sceAudioChReserve));
 		mixin(registerd!(0x6FC46853, sceAudioChRelease));
+	}
+
+	void initModule() {
+		audio = new Audio;
 	}
 
 	int freeChannelIndex() {
@@ -49,10 +61,24 @@ class sceAudio_driver : Module {
 	  */
 	int sceAudioOutputPannedBlocking(int channel, int leftvol, int rightvol, void* buf) {
 		// Invalid channel.
-		if (!validChannelIndex(channel)) return -1;
+		if (!validChannelIndex(channel)) {
+			debug (DEBUG_AUDIO) {
+				writefln("  sceAudioOutputPannedBlocking.invalidChannel!");
+			}
+			return -1;
+		}
 
 		auto cchannel = channels[channel];
-		writefln("  samplecount: %d", cchannel.samplecount);
+		
+		auto samples = (cast(float*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample];
+		//writefln("  samplecount: %d", cchannel.samplecount);
+		//writefln("    %s", (cast(ubyte*)buf)[0..cchannel.samplecount*4]);
+		/*
+		foreach (sample; (cast(ushort*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample]) {
+			writefln("    %d", sample);
+		}
+		*/
+		audio.writeWait(samples);
 
 		return 0;
 	}
@@ -119,7 +145,6 @@ struct pspAudioInputParams {
 	int unknown4;
 	/** Unknown. Pass 0 */
 	int unknown5;
-	
 }
 
 /** The minimum number of samples that can be allocated to a channel. */

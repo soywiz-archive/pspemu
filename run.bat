@@ -15,8 +15,7 @@ del /q pspemu.map 2> NUL
 del /q pspemu.obj 2> NUL
 IF EXIST "pspemu.exe" (
 	IF %DEBUG% == 1 (
-		REM http://ddbg.mainia.de/releases.html
-		ddbg -cmd "r;us;q" pspemu.exe %*
+		dmd\windows\bin\ddbg -cmd "r;us;q" pspemu.exe %*
 	) ELSE (
 		pspemu.exe %*
 	)

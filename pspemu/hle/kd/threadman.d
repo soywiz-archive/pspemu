@@ -63,6 +63,8 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xEF9E4C70, sceKernelDeleteEventFlag));
 		mixin(registerd!(0x809CE29B, sceKernelExitDeleteThread));
 		mixin(registerd!(0x1FB15A32, sceKernelSetEventFlag));
+		mixin(registerd!(0x293B45B8, sceKernelGetThreadId));
+		mixin(registerd!(0x17C1684E, sceKernelReferThreadStatus));
 	}
 
 	void initModule() {
@@ -131,11 +133,14 @@ class ThreadManForUser : Module {
 				}
 				return;
 			}
+			
+			bool allThreadsWaiting = this.allThreadsWaiting;
 
 			if (allThreadsWaiting) {
 				dumpThreads();
-				//writefln("All threads waiting!"); return;
-				throw(new Exception("All threads waiting!"));
+				writefln("All threads waiting!");
+				sleep(1);
+				//throw(new Exception("All threads waiting!"));
 			}
 
 			int count = 0;
@@ -145,6 +150,7 @@ class ThreadManForUser : Module {
 				if (count++ > 1024) {
 					throw(new Exception("threadman stalled!"));
 				}
+				if (allThreadsWaiting) break;
 			} while (nextThread.waiting || !nextThread.alive);
 			
 			if (nextThread.nextId > 0x2000) {
@@ -164,6 +170,40 @@ class ThreadManForUser : Module {
 				currentThread = nextThread;
 			}
 		}
+	}
+
+	/** 
+	 * Get the status information for the specified thread.
+	 * 
+	 * @param thid - Id of the thread to get status
+	 * @param info - Pointer to the info structure to receive the data.
+	 * Note: The structures size field should be set to
+	 * sizeof(SceKernelThreadInfo) before calling this function.
+	 *
+	 * @par Example:
+	 * @code
+	 * SceKernelThreadInfo status;
+	 * status.size = sizeof(SceKernelThreadInfo);
+	 * if(sceKernelReferThreadStatus(thid, &status) == 0)
+	 * { Do something... }
+	 * @endcode 
+	 * @return 0 if successful, otherwise the error code.
+	 */
+	int sceKernelReferThreadStatus(SceUID thid, SceKernelThreadInfo* info) {
+		auto thread = cast(PspThread)cast(void *)thid;
+		if (thread is null) return -1;
+
+		*info = SceKernelThreadInfo(0);
+		return -1;
+	}
+
+	/** 
+	 * Get the current thread Id
+	 *
+	 * @return The thread id of the calling thread.
+	 */
+	SceUID sceKernelGetThreadId() {
+		return cast(SceUID)cast(void *)currentThread;
 	}
 
 	/** 
@@ -406,7 +446,12 @@ struct SceKernelEventFlagInfo {
 	int 		numWaitThreads;
 }
 
-/+
+/** 64-bit system clock type. */
+struct SceKernelSysClock {
+	SceUInt32   low;
+	SceUInt32   hi;
+}
+
 struct SceKernelThreadInfo {
 	/** Size of the structure */
 	SceSize     size;
@@ -445,7 +490,6 @@ struct SceKernelThreadInfo {
 	/** Release count */
 	SceUInt     releaseCount;
 }
-+/
 
 struct SceKernelEventFlagOptParam {
 	SceSize 	size;

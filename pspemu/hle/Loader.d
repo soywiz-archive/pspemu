@@ -246,7 +246,7 @@ class Loader : IDebugSource {
 					callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
 					callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
 				} else {
-					version (DEBUG_LOADER) writefln("    0x%08X", nid);
+					version (DEBUG_LOADER) writefln("    0x%08X:<unimplemented>", nid);
 					callStream.write(cast(uint)(0x70000000));
 					callStream.write(cast(uint)0);
 					unimplementedNids++;

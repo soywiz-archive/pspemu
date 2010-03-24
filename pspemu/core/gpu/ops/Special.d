@@ -73,4 +73,6 @@ template Gpu_Special() {
 	// destination fix color
 	auto OP_DFIX() { gpu.state.fixDst = command.param24; }
 
+	// Logical Operation
+	auto OP_LOP() { gpu.state.logicalOperation = command.param24; }
 }

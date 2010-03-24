@@ -34,11 +34,18 @@ class UtilsForUser : Module {
 	 * Get the current time of time and time zone information
 	 */
 	int sceKernelLibcGettimeofday(timeval* tp, timezone* tzp) {
-		tp.tv_sec  = 0;
-		tp.tv_usec = 0;
-		tzp.tz_minuteswest = 0;
-		tzp.tz_dsttime = 0;
-		return 0; 
+		uint ctime = time(null);
+
+		if (tp !is null) {
+			tp.tv_sec  = ctime;
+			tp.tv_usec = 0; // @TODO
+		}
+
+		if (tzp !is null) {
+			// @TODO
+		}
+
+		return ctime;
 	}
 
 	/** 
@@ -68,7 +75,7 @@ class UtilsForUser : Module {
 	 * @param ctx - Pointer to a pre-initialised context.
 	 * @return A pseudo random number (between 0 and MAX_INT).
 	 */
-	u32 sceKernelUtilsMt19937UInt(SceKernelUtilsMt19937Context *ctx) {
+	u32 sceKernelUtilsMt19937UInt(SceKernelUtilsMt19937Context* ctx) {
 		auto mt = cast(std.random.Mt19937 *)ctx;
 		scope (exit) mt.popFront();
 		return mt.front;
