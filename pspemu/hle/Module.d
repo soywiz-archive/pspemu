@@ -74,6 +74,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 	r ~= "delegate void() { ";
 	{
 		r ~= "currentExecutingNid = " ~ tos(nid) ~ ";";
+		r ~= "setReturnValue = true;";
 		string parametersString = _parametersString;
 		string parametersPrototypeString = _parametersPrototypeString;
 		if (parametersPrototypeString.length) {
@@ -83,6 +84,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		}
 		if (return_value) r ~= "auto retval = ";
 		r ~= "this." ~ functionName ~ "(" ~ parametersString ~ ");";
+		r ~= "if (setReturnValue) {";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func))) {
 				r ~= "cpu.registers.V0 = cpu.memory.getPointerReverseOrNull(cast(void *)retval);";
@@ -93,6 +95,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 				}
 			}
 		}
+		r ~= "}";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func)) || isClassType!(ReturnType!(func))) {
 				r ~= "debug (DEBUG_SYSCALL) .writefln(\" = 0x%08X\", cpu.registers.V0); ";
@@ -123,6 +126,7 @@ abstract class Module {
 	Function[string] names;
 	ModuleManager moduleManager;
 	Nid currentExecutingNid;
+	bool setReturnValue;
 	
 	this() {
 		initNids();

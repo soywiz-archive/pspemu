@@ -5,6 +5,7 @@ SET LIBS=-lpspaudiolib -lpspaudio -lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpsp
 REM SET FLAGS=-G0 -Wall -O2 -g -gstabs
 SET FLAGS=-Wall -g
 
+CALL :BUILD mytest "common/callbacks.c"
 CALL :BUILD test_zlib "-lz"
 CALL :BUILD test_malloc
 CALL :BUILD test_file

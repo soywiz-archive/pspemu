@@ -190,6 +190,9 @@ class AllegrexAssembler : ISymbolResolver {
 					
 					return ii;
 				} break;
+				case "nop": {
+					return assembleInternal(PC, "sll r0, r0, r0");
+				} break;
 				// Ignore.
 				default: break;
 			}

@@ -451,6 +451,10 @@ class Loader : IDebugSource {
 		assembler.assembleBlock(r"
 			.text 0x08000000
 			syscall 0x2015   ; ThreadManForUser.sceKernelSleepThreadCB
+			
+			.text 0x08000010
+			ininite_loop: j ininite_loop
+			nop
 		");
 
 		auto pspThread = reinterpret!(PspThread)(threadManForUser.sceKernelCreateThread("Main Thread", PC, 32, 0x8000, 0, null));
@@ -463,7 +467,7 @@ class Loader : IDebugSource {
 			registers.A1 = 0; // argumentsPointer
 		}
 		threadManForUser.sceKernelStartThread(reinterpret!(SceUID)(pspThread), 0, null);
-		pspThread.switchTo();
+		pspThread.switchToThisThread();
 
 		writefln("PC: %08X", cpu.registers.PC);
 		writefln("GP: %08X", cpu.registers.GP);

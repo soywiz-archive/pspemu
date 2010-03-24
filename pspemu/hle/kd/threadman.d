@@ -5,6 +5,7 @@ module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 //debug = DEBUG_SYSCALL;
 
 import std.algorithm;
+import core.thread;
 
 import pspemu.hle.Module;
 import pspemu.core.cpu.Registers;
@@ -44,6 +45,10 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xBC6FEBC5, sceKernelReferSemaStatus));
 		mixin(registerd!(0x383F7BCC, sceKernelTerminateDeleteThread));
 		mixin(registerd!(0x71BC9871, sceKernelChangeThreadPriority));
+	}
+
+	void processCallbacks() {
+		// @TODO
 	}
 
 	/**
@@ -120,8 +125,18 @@ class ThreadManForUser : Module {
 	 * @return < 0 on error.
 	 */
 	int sceKernelWaitSema(SceUID semaid, int signal, SceUInt* timeout) {
-		unimplemented();
-		return -1;
+		auto semaphore = reinterpret!(PspSemaphore)(semaid);
+		
+		// @TODO implement timeout!
+
+		currentThread.pause("sceKernelWaitSema", (PspThread pausedThread) {
+			if (semaphore.signal >= signal) {
+				pausedThread.resume();
+			}
+			//writefln("sceKernelSleepThread.entering!");
+		});
+
+		return 0;
 	}
 
 	/**
@@ -139,8 +154,10 @@ class ThreadManForUser : Module {
 	 * @return < 0 On error.
 	 */
 	int sceKernelSignalSema(SceUID semaid, int signal) {
-		unimplemented();
-		return -1;
+		auto semaphore = reinterpret!(PspSemaphore)(semaid);
+		if (semaphore is null) return -1;
+		semaphore.signal += signal;
+		return 0;
 	}
 
 	/**
@@ -190,6 +207,12 @@ class ThreadManForUser : Module {
 		return -1;
 	}
 
+	void changeAfter(T)(T* var, int microseconds, T value) {
+		(new Thread({ sleep(microseconds / 1000); *var = value; })).start();
+	}
+
+	static const timerPaused = "bool paused = true; changeAfter(&paused, delay, false);";
+
 	/**
 	 * Delay the current thread by a specified number of microseconds
 	 *
@@ -201,8 +224,13 @@ class ThreadManForUser : Module {
 	 * @endcode
 	 */
 	int sceKernelDelayThread(SceUInt delay) {
-		unimplemented();
-		return -1;
+		mixin(timerPaused);
+
+		currentThread.pause("sceKernelDelayThread", (PspThread pausedThread) {
+			if (!paused) pausedThread.resume();
+		});
+
+		return 0;
 	}
 
 	/**
@@ -216,8 +244,14 @@ class ThreadManForUser : Module {
 	 * @endcode
 	 */
 	int sceKernelDelayThreadCB(SceUInt delay) {
-		unimplemented();
-		return -1;
+		mixin(timerPaused);
+
+		currentThread.pause("sceKernelDelayThreadCB", (PspThread pausedThread) {
+			processCallbacks();
+			if (!paused) pausedThread.resume();
+		});
+
+		return 0;
 	}
 
 	void initModule() {
@@ -255,16 +289,6 @@ class ThreadManForUser : Module {
 		foreach (thread; threadRunningList) thread.nextId -= min;
 	}
 
-	PspThread[] threadsWaiting() {
-		PspThread[] list;
-		foreach (thread; threadRunningList) if (thread.waiting || !thread.alive) list ~= thread;
-		return list;
-	}
-
-	bool allThreadsWaiting() {
-		return threadsWaiting.length == threadRunningList.length;
-	}
-
 	void dumpThreads() {
 		writefln("Threads(%d) {", threadRunningList.length);
 		foreach (thread; threadRunningList) {
@@ -279,42 +303,15 @@ class ThreadManForUser : Module {
 				writefln("thread0InterruptHandler");
 			}
 		} else {
-			PspThread nextThread;
-			
-			if (threadRunningList.length <= 1) {
-				debug (DEBUG_THREADS) {
-					dumpThreads();
-				}
-				return;
-			}
-			
-			bool allThreadsWaiting = this.allThreadsWaiting;
-
-			if (allThreadsWaiting) {
-				dumpThreads();
-				writefln("All threads waiting!");
-				sleep(1);
-				//throw(new Exception("All threads waiting!"));
-			}
-
-			int count = 0;
-			do {
-				nextThread = threadMinNextId;
-				nextThread.updateNextId();
-				
-				// If we found a thread waiting, we will execute a HLE callback to try to resume it.
-				if (nextThread.waiting) nextThread.executeHlePausedEnterCallback();
-
-				if (count++ > 1024) {
-					throw(new Exception("threadman stalled!"));
-				}
-				if (allThreadsWaiting) break;
-			} while (nextThread.waiting || !nextThread.alive);
-			
-			if (nextThread.nextId > 0x2000) {
-				threadsNormalizeNextId();
-			}
+			threadsNormalizeNextId();
 			threadsRemoveDead();
+
+			if (threadRunningList.length == 0) {
+				throw(new Exception("No threads left!"));
+			}
+			
+			auto nextThread = threadMinNextId;
+			nextThread.updateNextId();
 
 			debug (DEBUG_THREADS) {
 				dumpThreads();
@@ -322,7 +319,7 @@ class ThreadManForUser : Module {
 				writefln("Next:    %s", nextThread);
 			}
 
-			nextThread.switchFromTo();
+			nextThread.switchToThisThread();
 		}
 	}
 
@@ -379,8 +376,7 @@ class ThreadManForUser : Module {
 	  * @param status - Exit status
 	  */
 	int sceKernelExitDeleteThread(int status) {
-		unimplemented();
-		return -1;
+		return sceKernelExitThread(status);
 	}
 
 	/** 
@@ -428,8 +424,8 @@ class ThreadManForUser : Module {
 			// Sets the position of the thread to the syscall again.
 			// Sets the thread as waiting.
 			// Switch to another thread immediately.
-			currentThread.stall({
-				//writefln("sceKernelSleepThread.entering!");
+			currentThread.pause("sceKernelSleepThread", (PspThread pausedThread) {
+				//writefln("sceKernelSleepThread");
 			});
 			return 0;
 		}
@@ -450,8 +446,8 @@ class ThreadManForUser : Module {
 			return 0;
 		} else {
 			// Ditto.
-			currentThread.stall({
-				//writefln("sceKernelSleepThreadCB.entering!");
+			currentThread.pause("sceKernelSleepThreadCB", (PspThread pausedThread) {
+				processCallbacks();
 			});
 			return 0;
 		}
@@ -462,11 +458,13 @@ class ThreadManForUser : Module {
 	 *
 	 * @param status - Exit status.
 	 */
-	void sceKernelExitThread(int status) {
+	int sceKernelExitThread(int status) {
 		version (FAKE_SINGLE_THREAD) {
 			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelExitThread"));
+			return 0;
 		} else {
 			currentThread.exit();
+			return 0;
 		}
 	}
 	
@@ -808,6 +806,7 @@ struct SceKernelSemaOptParam {
 class PspThread {
 	ThreadManForUser threadManager;
 	Registers registers;
+	Registers resumeRegisters;
 
 	string name;
 	MemorySegment stack;
@@ -817,52 +816,48 @@ class PspThread {
 	
 	uint priority  = 32;
 	uint stackSize = 0x1000;
-	bool waiting   = false;
+	bool paused   = false;
 	bool alive     = true;
 	
 	//uint EntryPoint;
 	//bool running;
 	
-	void delegate() pausedCallback;
+	string pausedName;
+	alias void delegate(PspThread) PausedCallback;
+	PausedCallback pausedCallback;
+
+	this(ThreadManForUser threadManager) {
+		this.threadManager   = threadManager;
+		this.registers       = new Registers;
+		this.resumeRegisters = new Registers;
+	}
 
 	void executeHlePausedEnterCallback() {
 		debug (DEBUG_THREADS) {
 			writefln("  PspThread.executeHlePausedEnterCallback = 0x%08X", reinterpret!(uint)(pausedCallback));
 		}
 		if (pausedCallback !is null) {
-			pausedCallback();
+			pausedCallback(this);
 		}
 	}
 	
-	this(ThreadManForUser threadManager) {
-		this.threadManager = threadManager;
-		this.registers     = new Registers;
-	}
-
-	void switchTo() {
+	protected void switchTo() {
 		threadManager.cpu.registers.copyFrom(registers);
 		threadManager.currentThread = this;
 	}
 
-	void switchFrom() {
+	protected void switchFrom() {
 		registers.copyFrom(threadManager.cpu.registers);
 	}
 	
-	void switchFromTo() {
-		if (threadManager.currentThread != this) {
-			if (threadManager.currentThread) threadManager.currentThread.switchFrom();
-			this.switchTo();
-		}
-	}
-
 	void updateNextId() {
 		nextId += (priority + 1);
 	}
 
 	string toString() {
 		return std.string.format(
-			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, waiting=%d, alive=%d)",
-			reinterpret!(uint)(this), registers.PC, registers.SP, nextId, priority, stackSize, waiting, alive
+			"Thread(Name='%s' ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, paused=%d, alive=%d, callback='%s':%08X) resume-PC:%08X, resume-RA:%08X",
+			name, reinterpret!(uint)(this), registers.PC, registers.SP, nextId, priority, stackSize, paused, alive, pausedName, reinterpret!(uint)(pausedCallback), resumeRegisters.PC, resumeRegisters.RA
 		);
 	}
 
@@ -874,28 +869,57 @@ class PspThread {
 		threadManager.thread0InterruptHandler();
 	}
 
-	void pause(void delegate() pausedCallback = null) {
+	void switchToThisThread() {
+		if (paused) {
+			executeHlePausedEnterCallback();
+		} else {
+			if (threadManager.currentThread != this) {
+				if (threadManager.currentThread) threadManager.currentThread.switchFrom();
+				this.switchTo();
+			}
+		}
+	}
+
+	void pause(string pausedName = null, PausedCallback pausedCallback = null) {
 		debug (DEBUG_THREADS) {
 			writefln("  PspThread.pause(); callback = %s", reinterpret!(uint)(pausedCallback));
 		}
-		this.pausedCallback = pausedCallback;
-		waiting = true;
-		switchToOtherThread();
-	}
+		
+		assert(!paused);
 
-	void stall(void delegate() pausedCallback = null) {
-		debug (DEBUG_THREADS) {
-			writefln("  PspThread.stall()");
-		}
-		threadManager.cpu.registers.pcSet(threadManager.cpu.registers.PC - 4);
-		pause(pausedCallback);
+		// Stalls at syscall.
+		resumeRegisters.copyFrom(threadManager.cpu.registers);
+		threadManager.cpu.registers.pcSet(0x08000010);
+		threadManager.setReturnValue = false;
+
+		this.pausedName     = pausedName;
+		this.pausedCallback = pausedCallback;
+		this.paused = true;
+		//this.switchToOtherThread();
 	}
 
 	void resume() {
 		debug (DEBUG_THREADS) {
 			writefln("  PspThread.resume()");
 		}
-		waiting = false;
+		assert(paused);
+		
+		//writefln("resumeRegisters.PC=%08X, resumeRegisters.nPC=%08X", resumeRegisters.PC, resumeRegisters.nPC);
+
+		if (paused) {
+			//this.registers.copyFrom(resumeRegisters);
+		}
+		paused = false;
+		switchToThisThread();
+		
+		this.registers.copyFrom(resumeRegisters);
+		threadManager.cpu.registers.copyFrom(resumeRegisters);
+		
+		//writefln("  -- cpu.registers.PC=0x%08X, cpu.registers.nPC=0x%08X", threadManager.cpu.registers.PC, threadManager.cpu.registers.nPC);
+		
+		//threadManager.dumpThreads();
+
+		//static int count; if (count++ >= 4) assert(0);
 	}
 
 	void exit() {
@@ -904,7 +928,7 @@ class PspThread {
 		}
 		alive = false;
 		stack.free();
-		stall();
+		pause();
 	}
 }
 
@@ -924,7 +948,7 @@ class PspSemaphore {
 	string name;
 	SceUInt attr;
 	int initVal;
-	int value;
+	int signal;
 	int maxVal;
 	SceKernelSemaOptParam* option;
 	bool alive = true;
