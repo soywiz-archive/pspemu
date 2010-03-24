@@ -2,6 +2,10 @@ module pspemu.models.IDisplay;
 
 import std.c.windows.windows;
 
+import std.stdio;
+
+import pspemu.utils.Utils;
+
 /**
  * Interface for the Display.
  */
@@ -53,11 +57,6 @@ interface IDisplay {
 	bool vblank();
 
 	/**
-	 * Mutex.
-	 */
-	Object displayingkMutex();
-
-	/**
 	 * Wait vblank.
 	 */
 	void waitVblank();
@@ -75,15 +74,18 @@ abstract class BasePspDisplay : IDisplay {
 	int verticalRefreshRate() { return 60; }
 	
 	this() {
-		_displayingkMutex = new Object;
 	}
 	
-	Object _displayingkMutex;
-	Object displayingkMutex() { return _displayingkMutex; }
 	void waitVblank() {
-		//synchronized (displayingkMutex) { }
-		while ( vblank) Sleep(1);
-		while (!vblank) Sleep(1);
+		InfiniteLoop!(512) loop;
+		while (vblank) {
+			Sleep(1);
+			loop.increment();
+		}
+		while (!vblank) {
+			Sleep(1);
+			loop.increment();
+		}
 	}
 }
 

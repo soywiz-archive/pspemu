@@ -89,7 +89,7 @@ int main(string[] args) {
 
 	int retval = 0;
 	try {
-		Application.run(new DisplayForm(display, controller));
+		Application.run(new DisplayForm(cpu, display, controller));
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
 		retval = -1;

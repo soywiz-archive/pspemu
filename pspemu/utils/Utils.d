@@ -26,6 +26,18 @@ int   F_I(float v) { return *cast(int   *)&v; }
 // int -> float
 float I_F(int   v) { return *cast(float *)&v; }
 
+struct InfiniteLoop(int maxCount = 512/*, string file = __FILE__, int line = __LINE__*/) {
+	uint count = maxCount;
+	void increment(void delegate() callback = null, string file = __FILE__, int line = __LINE__) {
+		count--;
+		if (count <= 0) {
+			count = maxCount;
+			writefln("Infinite loop at '%s':%d", file, line);
+			if (callback !is null) callback();
+		}
+	}
+}
+
 T onException(T)(lazy T t, T errorValue) { try { return t(); } catch { return errorValue; } }
 T nullOnException(T)(lazy T t) { return onException!(T)(t, null); }
 

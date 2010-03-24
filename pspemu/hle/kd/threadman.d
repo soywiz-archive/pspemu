@@ -190,7 +190,13 @@ class ThreadManForUser : Module {
 	 * @return A semaphore id
 	 */
 	SceUID sceKernelCreateSema(string name, SceUInt attr, int initVal, int maxVal, SceKernelSemaOptParam* option) {
-		return reinterpret!(SceUID)(new PspSemaphore(name, attr, initVal, maxVal, option));
+		auto semaphore = new PspSemaphore(this);
+		semaphore.name    = name;
+		semaphore.attr    = attr;
+		semaphore.initVal = initVal;
+		semaphore.maxVal  = maxVal;
+		semaphore.option  = option;
+		return reinterpret!(SceUID)(semaphore);
 	}
 
 
@@ -263,6 +269,8 @@ class ThreadManForUser : Module {
 
 	PspThread   currentThread;
 	PspThread[] threadRunningList;
+	bool[PspThread] createdThreads;
+	bool[PspSemaphore] createdSemaphores;
 
 	PspThread threadMinNextId() {
 		uint minNextId = -1;
@@ -830,6 +838,7 @@ class PspThread {
 		this.threadManager   = threadManager;
 		this.registers       = new Registers;
 		this.resumeRegisters = new Registers;
+		threadManager.createdThreads[this] = true;
 	}
 
 	void executeHlePausedEnterCallback() {
@@ -927,6 +936,7 @@ class PspThread {
 			writefln("  PspThread.exit()");
 		}
 		alive = false;
+		threadManager.createdThreads.remove(this);
 		stack.free();
 		pause();
 	}
@@ -945,6 +955,7 @@ class Callback {
 }
 
 class PspSemaphore {
+	ThreadManForUser threadManager;
 	string name;
 	SceUInt attr;
 	int initVal;
@@ -953,16 +964,14 @@ class PspSemaphore {
 	SceKernelSemaOptParam* option;
 	bool alive = true;
 
-	this(string name, SceUInt attr, int initVal, int maxVal, SceKernelSemaOptParam* option) {
-		this.name    = name;
-		this.attr    = attr;
-		this.initVal = initVal;
-		this.maxVal  = maxVal;
-		this.option  = option;
+	this(ThreadManForUser threadManager) {
+		this.threadManager = threadManager;
+		threadManager.createdSemaphores[this] = true;
 	}
 
 	void exit() {
 		alive = false;
+		threadManager.createdSemaphores.remove(this);
 	}
 }
 

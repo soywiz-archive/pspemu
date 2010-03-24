@@ -7,6 +7,8 @@ import core.thread, core.memory;
 import std.stdio, std.c.time;
 import std.typetuple;
 
+import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.impl.GpuOpengl;
 
 import pspemu.gui.GLControl;
@@ -15,12 +17,14 @@ import pspemu.models.IController;
 
 class DisplayForm : Form, IMessageFilter {
 	GLControlDisplay glc;
+	Cpu              cpu;
 	IDisplay         display;
 	IController      controller;
 
-	this(IDisplay display = null, IController controller = null) {
+	this(Cpu cpu = null, IDisplay display = null, IController controller = null) {
 		Application.addMessageFilter(this);
 
+		this.cpu = cpu;
 		if (display    is null) display    = new NullDisplay;
 		if (controller is null) controller = new Controller();
 		this.display    = display;
@@ -100,6 +104,15 @@ class DisplayForm : Form, IMessageFilter {
 
 	void onKeyUp(KeyEventArgs kea) {
 		keyChange(kea.keyCode, false);
+		switch (kea.keyCode) {
+			case Keys.F5:
+				cpu.registers.dump();
+				auto dissasembler = new AllegrexDisassembler(cpu.memory);
+				dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
+				dissasembler.dump(cpu.registers.PC, -6, 6);
+			break;
+			default:
+		}
 	}
 
 	void keyChange(Keys key, bool pressed) {
@@ -167,34 +180,32 @@ class GLControlDisplay : GLControl {
 
 				//while (!ready) Sleep(1);
 				while (running) {
-					synchronized (display.displayingkMutex) {
-						QueryPerformanceCounter(&bcounter);
-						
-						//if ((update && !cpu.paused) || updateOnce) {
-						if (update || updateOnce) {
-							updateOnce = false;
+					QueryPerformanceCounter(&bcounter);
+					
+					//if ((update && !cpu.paused) || updateOnce) {
+					if (update || updateOnce) {
+						updateOnce = false;
 
-							glDrawPixels(
-								display.frameBufferSize.width,
-								display.frameBufferSize.height,
-								GL_RGBA,
-								GpuOpengl.PixelFormats[display.frameBufferPixelFormat & 3].opengl,
-								display.frameBufferPointer
-							);
+						glDrawPixels(
+							display.frameBufferSize.width,
+							display.frameBufferSize.height,
+							GL_RGBA,
+							GpuOpengl.PixelFormats[display.frameBufferPixelFormat & 3].opengl,
+							display.frameBufferPointer
+						);
 
-							swapBuffers();
-						}
-						
-						//GC.minimize();
-						//GC.collect();
-						
-						while (true) {
-							QueryPerformanceCounter(&counter);
-							//Thread.sleep(0_5000);
-							if (counter - bcounter >= delay - 4) break;
-							//Thread.sleep(0_5000);
-							Sleep(1);
-						}
+						swapBuffers();
+					}
+					
+					//GC.minimize();
+					//GC.collect();
+					
+					while (true) {
+						QueryPerformanceCounter(&counter);
+						//Thread.sleep(0_5000);
+						if (counter - bcounter >= delay - 4) break;
+						//Thread.sleep(0_5000);
+						Sleep(1);
 					}
 					
 					display.vblank = true;

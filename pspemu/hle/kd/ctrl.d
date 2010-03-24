@@ -46,12 +46,12 @@ class sceCtrl_driver : Module {
 	 */
 	int sceCtrlReadBufferPositive(SceCtrlData* pad_data, int count) {
 		readBufferedFrames(pad_data, count, true);
-		return 0;
+		return count;
 	}
 
 	int sceCtrlPeekBufferPositive(SceCtrlData* pad_data, int count) {
 		readBufferedFrames(pad_data, count, true);
-		return 0;
+		return count;
 	}
 
 	/**

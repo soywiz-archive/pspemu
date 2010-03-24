@@ -123,16 +123,12 @@ class Gpu {
 
 	bool executingDisplayList() { return (currentDisplayList !is null); }
 	
-	Object initLock;
-
 	private void run() {
 		try {
 			impl.init();
 			_running = true;
 			while (true) {
-				while (displayLists.readAvailable) {
-					executeList(displayLists.consume);
-				}
+				while (displayLists.readAvailable) executeList(displayLists.consume);
 
 				WaitAndCheck;
 			}
@@ -147,8 +143,11 @@ class Gpu {
 
 	template ExternalInterface() {
 		DisplayList* sceGeListEnQueue(void* list, void* stall = null) {
-			//while (!displayLists.readAvailable) WaitAndCheck();
-			while (!displayLists.writeAvailable) sleep(1);
+			InfiniteLoop!(512) loop;
+			while (!displayLists.writeAvailable) {
+				loop.increment();
+				sleep(1);
+			}
 			DisplayList* ret = &displayLists.queue(DisplayList(list, stall));
 			//writefln("%s", *ret);
 			return ret;
@@ -156,10 +155,12 @@ class Gpu {
 
 		// @TODO!!!! @FIXME!! change queue for queueHead
 		DisplayList* sceGeListEnQueueHead(void* list, void* stall = null) {
-			//while (!displayLists.readAvailable) WaitAndCheck();
-			while (!displayLists.writeAvailable) sleep(1);
+			InfiniteLoop!(512) loop;
+			while (!displayLists.writeAvailable) {
+				loop.increment();
+				sleep(1);
+			}
 			DisplayList* ret = &displayLists.queue(DisplayList(list, stall));
-			//writefln("%s", *ret);
 			return ret;
 		}
 
@@ -176,7 +177,11 @@ class Gpu {
 		void sceGeListSync(DisplayList* displayList, int syncType) {
 			// While this displayList has more items to read.
 			try {
-				while (displayList.hasMore) WaitAndCheck;
+				InfiniteLoop!(512) loop;
+				while (displayList.hasMore) {
+					loop.increment();
+					WaitAndCheck;
+				}
 			} catch {
 			}
 
@@ -190,7 +195,14 @@ class Gpu {
 			// While we have display lists queued
 			// Or if we are currently executing a displayList
 			try {
-				while (displayLists.readAvailable || executingDisplayList) WaitAndCheck;
+				InfiniteLoop!(512) loop;
+				while (displayLists.readAvailable || executingDisplayList) {
+					loop.increment({
+						writefln("  executingDisplayList: %s", executingDisplayList);
+						writefln("  displayLists.readAvailable: %d", displayLists.readAvailable);
+					});
+					WaitAndCheck;
+				}
 			} catch {
 			}
 			
