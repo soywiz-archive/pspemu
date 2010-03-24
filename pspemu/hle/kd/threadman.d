@@ -10,46 +10,6 @@ import pspemu.core.cpu.Registers;
 
 import pspemu.hle.kd.sysmem; // kd/sysmem.prx (sceSystemMemoryManager)
 
-class PspThread {
-	Registers registers;
-
-	string name;
-
-	// Id used for sorting threads.
-	uint nextId = 0;
-	
-	uint priority = 32;
-	uint stackSize = 0x1000;
-	bool waiting = false;
-	bool alive = true;
-	
-	//uint EntryPoint;
-	//bool running;
-	
-	this() {
-		registers = new Registers;
-	}
-
-	void switchTo(Cpu cpu) {
-		cpu.registers.copyFrom(registers);
-	}
-
-	void switchFrom(Cpu cpu) {
-		registers.copyFrom(cpu.registers);
-	}
-
-	void updateNextId() {
-		nextId += (priority + 1);
-	}
-
-	string toString() {
-		return std.string.format(
-			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, waiting=%d, alive=%d)",
-			cast(uint)cast(void *)this, registers.PC, registers.SP, nextId, priority, stackSize, waiting, alive
-		);
-	}
-}
-
 class ThreadManForUser : Module {
 	void initNids() {
 		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
@@ -65,6 +25,13 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0x1FB15A32, sceKernelSetEventFlag));
 		mixin(registerd!(0x293B45B8, sceKernelGetThreadId));
 		mixin(registerd!(0x17C1684E, sceKernelReferThreadStatus));
+		mixin(registerd!(0x7C0DC2A0, sceKernelCreateMsgPipe));
+		mixin(registerd!(0xF0B7DA1C, sceKernelDeleteMsgPipe));
+		mixin(registerd!(0x876DBFAD, sceKernelSendMsgPipe));
+		mixin(registerd!(0x884C9F90, sceKernelTrySendMsgPipe));
+		mixin(registerd!(0x74829B76, sceKernelReceiveMsgPipe));
+		mixin(registerd!(0xDF52098F, sceKernelTryReceiveMsgPipe));
+		mixin(registerd!(0x33BE4024, sceKernelReferMsgPipeStatus));
 	}
 
 	void initModule() {
@@ -215,7 +182,8 @@ class ThreadManForUser : Module {
 	  * @return < 0 On error
 	  */
 	int sceKernelSetEventFlag(SceUID evid, u32 bits) {
-		return 0;
+		unimplemented();
+		return -1;
 	}
 
 	/** 
@@ -224,8 +192,8 @@ class ThreadManForUser : Module {
 	  * @param status - Exit status
 	  */
 	int sceKernelExitDeleteThread(int status) {
-		// TODO
-		return 0;
+		unimplemented();
+		return -1;
 	}
 
 	/** 
@@ -244,7 +212,8 @@ class ThreadManForUser : Module {
 	  * @endcode
 	  */
 	SceUID sceKernelCreateEventFlag(string name, int attr, int bits, SceKernelEventFlagOptParam *opt) {
-		return 0;
+		//unimplemented();
+		return -1;
 	}
 
 	/** 
@@ -255,7 +224,8 @@ class ThreadManForUser : Module {
 	 * @return < 0 On error
 	 */
 	int sceKernelDeleteEventFlag(int evid) {
-		return 0;
+		//unimplemented();
+		return -1;
 	}
 
 	/**
@@ -337,6 +307,7 @@ class ThreadManForUser : Module {
 			return -1;
 		}
 		pspThread.alive = false;
+		pspThread.stack.free();
 		return 0;
 	}
 
@@ -363,13 +334,10 @@ class ThreadManForUser : Module {
 		pspThread.name = name.idup;
 		pspThread.registers.copyFrom(cpu.registers);
 		pspThread.registers.pcSet(entry);
-		//
-		uint allocStack(uint stackSize) {
-			return moduleManager.get!(SysMemUserForUser).allocStack(stackSize);
-		}
-		writefln("stackCurrent: %08X", pspThread.registers.SP);
-		pspThread.registers.SP = allocStack(stackSize);
-		writefln("stackNew: %08X", pspThread.registers.SP);
+		debug (DEBUG_THREADS) writefln("stackCurrent: %08X", pspThread.registers.SP);
+		pspThread.stack = moduleManager.get!(SysMemUserForUser).allocStack(stackSize);
+		pspThread.registers.SP = pspThread.stack.block.high;
+		debug (DEBUG_THREADS) writefln("stackNew: %08X", pspThread.registers.SP);
 		pspThread.priority = initPriority;
 		pspThread.stackSize = stackSize;
 		return cast(SceUID)cast(void *)pspThread;
@@ -423,7 +391,113 @@ class ThreadManForUser : Module {
 	 * @return >= 0 A callback id which can be used in subsequent functions, < 0 an error.
 	 */
 	int sceKernelCreateCallback(string name, SceKernelCallbackFunction func, void *arg) {
-		return 0;
+		return cast(int)cast(void *)(new Callback(name, func, arg));
+	}
+	/**
+	 * Create a message pipe
+	 *
+	 * @param name - Name of the pipe
+	 * @param part - ID of the memory partition
+	 * @param attr - Set to 0?
+	 * @param unk1 - Unknown
+	 * @param opt  - Message pipe options (set to NULL)
+	 *
+	 * @return The UID of the created pipe, < 0 on error
+	 */
+	SceUID sceKernelCreateMsgPipe(string name, int part, int attr, void* unk1, void* opt) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Delete a message pipe
+	 *
+	 * @param uid - The UID of the pipe
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelDeleteMsgPipe(SceUID uid) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Send a message to a pipe
+	 *
+	 * @param uid - The UID of the pipe
+	 * @param message - Pointer to the message
+	 * @param size - Size of the message
+	 * @param unk1 - Unknown
+	 * @param unk2 - Unknown
+	 * @param timeout - Timeout for send
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelSendMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2, uint* timeout) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Try to send a message to a pipe
+	 *
+	 * @param uid - The UID of the pipe
+	 * @param message - Pointer to the message
+	 * @param size - Size of the message
+	 * @param unk1 - Unknown
+	 * @param unk2 - Unknown
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelTrySendMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Receive a message from a pipe
+	 *
+	 * @param uid - The UID of the pipe
+	 * @param message - Pointer to the message
+	 * @param size - Size of the message
+	 * @param unk1 - Unknown
+	 * @param unk2 - Unknown
+	 * @param timeout - Timeout for receive
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelReceiveMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2, uint* timeout) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Receive a message from a pipe
+	 *
+	 * @param uid - The UID of the pipe
+	 * @param message - Pointer to the message
+	 * @param size - Size of the message
+	 * @param unk1 - Unknown
+	 * @param unk2 - Unknown
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelTryReceiveMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get the status of a Message Pipe
+	 *
+	 * @param uid - The uid of the Message Pipe
+	 * @param info - Pointer to a ::SceKernelMppInfo structure
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelReferMsgPipeStatus(SceUID uid, SceKernelMppInfo* info) {
+		unimplemented();
+		return -1;
 	}
 }
 
@@ -520,7 +594,74 @@ enum PspThreadAttributes {
 	PSP_THREAD_ATTR_NO_FILLSTACK = 0x00100000,
 	/** Clear the stack when the thread is deleted */
 	PSP_THREAD_ATTR_CLEAR_STACK = 0x00200000,
-};
+}
+
+struct SceKernelMppInfo {
+	SceSize 	size;
+	char 	name[32];
+	SceUInt 	attr;
+	int 	bufSize;
+	int 	freeSize;
+	int 	numSendWaitThreads;
+	int 	numReceiveWaitThreads;
+}
+
+class PspThread {
+	Registers registers;
+
+	string name;
+	MemorySegment stack;
+
+	// Id used for sorting threads.
+	uint nextId = 0;
+	
+	uint priority  = 32;
+	uint stackSize = 0x1000;
+	bool waiting   = false;
+	bool alive     = true;
+	
+	//uint EntryPoint;
+	//bool running;
+	
+	this() {
+		registers = new Registers;
+	}
+
+	void switchTo(Cpu cpu) {
+		cpu.registers.copyFrom(registers);
+	}
+
+	void switchFrom(Cpu cpu) {
+		registers.copyFrom(cpu.registers);
+	}
+
+	void updateNextId() {
+		nextId += (priority + 1);
+	}
+
+	string toString() {
+		return std.string.format(
+			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, waiting=%d, alive=%d)",
+			cast(uint)cast(void *)this, registers.PC, registers.SP, nextId, priority, stackSize, waiting, alive
+		);
+	}
+}
+
+class Callback {
+	string name;
+	SceKernelCallbackFunction func;
+	void* arg;
+
+	this(string name, SceKernelCallbackFunction func, void* arg) {
+		this.name = name;
+		this.func = func;
+		this.arg  = arg;
+	}
+}
+
+// @TODO
+class ThreadManager {
+}
 
 static this() {
 	mixin(Module.registerModule("ThreadManForUser"));

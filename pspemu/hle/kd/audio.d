@@ -80,6 +80,7 @@ class sceAudio_driver : Module {
 		*/
 		audio.writeWait(samples);
 
+		unimplemented();
 		return 0;
 	}
 

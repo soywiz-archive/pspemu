@@ -5,6 +5,26 @@ import std.c.time;
 
 import pspemu.utils.Utils;
 
+static struct SceCtrlData {		
+	uint  TimeStamp; // The current read frame.
+	uint  Buttons;   // Bit mask containing zero or more of ::PspCtrlButtons.
+	ubyte Lx = 0x7F; // Analogue stick, X axis.
+	ubyte Ly = 0x7F; // Analogue stick, Y axis.
+	ubyte Rsrv[6];   // Reserved.
+
+	// D additions.
+	double x() { return ((cast(double)Lx / 255.0) - 0.5) * 2.0; }
+	double y() { return ((cast(double)Ly / 255.0) - 0.5) * 2.0; }
+	double x(double v) { Lx = cast(ubyte)(((v / 2.0) + 0.5) * 255.0); return v; }
+	double y(double v) { Ly = cast(ubyte)(((v / 2.0) + 0.5) * 255.0); return v; }
+
+	string toString() {
+		return std.string.format("Controller.SceCtrlData(TimeStamp=0x%08X, Buttons=0b%032b, Lx=%f, Ly=%f)", TimeStamp, Buttons, x, y);
+	}
+
+	static assert(this.sizeof == 16);
+}
+
 class Controller { // SceCtrl
 	enum Buttons {	
 		SELECT     = 0x000001 , // Select button.
@@ -36,21 +56,7 @@ class Controller { // SceCtrl
 		ANALOG  = 1, // Analog.
 	}
 
-	struct Frame {		
-		uint  TimeStamp; // The current read frame.
-		uint  Buttons;   // Bit mask containing zero or more of ::PspCtrlButtons.
-		ubyte Lx = 0x7F; // Analogue stick, X axis.
-		ubyte Ly = 0x7F; // Analogue stick, Y axis.
-		ubyte Rsrv[6];   // Reserved.
-
-		// D additions.
-		float x() { return (cast(float)Lx / 255.0) * 2.0 - 0.5; }
-		float y() { return (cast(float)Ly / 255.0) * 2.0 - 0.5; }
-		float x(float v) { Lx = cast(ubyte)(((v / 2.0) + 0.5) * 255.0); return v; }
-		float y(float v) { Ly = cast(ubyte)(((v / 2.0) + 0.5) * 255.0); return v; }
-
-		static assert(this.sizeof == 16);
-	}
+	alias SceCtrlData Frame;
 	alias CircularList!(Frame, false) Frames;
 
 	struct Latch {
@@ -60,10 +66,11 @@ class Controller { // SceCtrl
 		uint uiRelease;
 	}
 	
-	int  sampCycle = 0;
-	Mode sampMode = Mode.ANALOG;
+	int    samplingCycle = 0;
+	Mode   samplingMode  = Mode.ANALOG;
+
 	Frames frames;
-	Frame currentFrame;
+	Frame  currentFrame;
 
 	Frame frameRead(int index = 0) {
 		return frames.readFromTail(-(index + 1));

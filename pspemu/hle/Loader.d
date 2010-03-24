@@ -5,6 +5,7 @@ module pspemu.hle.Loader;
 import std.stream, std.stdio, std.string;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Expression;
 
 import pspemu.formats.Elf;
 import pspemu.formats.ElfDwarf;
@@ -28,6 +29,144 @@ import std.xml;
 
 version (unittest) {
 	import pspemu.utils.SparseMemory;
+}
+
+static const string psplibdoc_xml = import("psplibdoc.xml");
+
+template LazySingleton() {
+	static typeof(this) _singleton;
+	static typeof(this) singleton() {
+		if (_singleton is null) _singleton = new typeof(this);
+		return _singleton;
+	}
+}
+
+class PspLibdoc {
+	mixin LazySingleton;
+
+	protected this() {
+		this.parse();
+	}
+
+	class LibrarySymbol {
+		uint nid;
+		string name;
+		string comment;
+
+		string toString() {
+			return std.string.format(typeof(this).stringof ~ "(nid=0x%08X, name='%s' comment='%s')", nid, name, comment);
+		}
+	}
+
+	class Function : LibrarySymbol { }
+	class Variable : LibrarySymbol { }
+
+	class Library {
+		string name;
+		uint flags;
+		Function[uint] functions;
+		Variable[uint] variables;
+		LibrarySymbol[uint] symbols;
+
+		string toString() {
+			string s;
+			s ~= std.string.format("  <Library name='%s' flags='0x%08x'>\n", name, flags);
+			foreach (func; functions) s ~= std.string.format("    %s\n", func.toString);
+			foreach (var ; variables) s ~= std.string.format("    %s\n", var .toString);
+			s ~= std.string.format("  </Library>");
+			return s;
+		}
+	}
+
+	class Prx {
+		string moduleName, fileName;
+		Library[string] libraries;
+		
+		string toString() {
+			string s;
+			s ~= std.string.format("<Prx moduleName='%s' fileName='%s'>\n", moduleName, fileName);
+			foreach (library; libraries) s ~= std.string.format("%s\n", library.toString);
+			s ~= std.string.format("</Prx>");
+			return s;
+		}
+	}
+
+	Library[string] libraries;
+	Prx[] prxs;
+
+	LibrarySymbol locate(uint nid, string libraryName) {
+		if (libraryName is null) {
+			foreach (clibraryName; libraries.keys) if (auto symbol = locate(nid, clibraryName)) return symbol;
+			return null;
+		}
+		if (libraryName !in libraries) return null;
+		if (nid !in libraries[libraryName].symbols) return null;
+		return libraries[libraryName].symbols[nid];
+	}
+
+	void parse() {
+		auto xml = new Document(psplibdoc_xml);
+		Function func;
+		Variable var;
+		Library library;
+		Prx prx;
+
+		void parseFunction(Element xml) {
+			func = new Function();
+			foreach (node; xml.elements) {
+				switch (node.tag.name) {
+					case "NID" : func.nid  = cast(uint)parseString(node.text); break;
+					case "NAME": func.name = node.text; break;
+					case "COMMENT": func.comment = node.text; break;
+				}
+			}
+			library.functions[func.nid] = func;
+			library.symbols[func.nid] = func;
+		}
+
+		void parseVariable(Element xml) {
+			var = new Variable();
+			foreach (node; xml.elements) {
+				switch (node.tag.name) {
+					case "NID" : var.nid  = cast(uint)parseString(node.text); break;
+					case "NAME": var.name = node.text; break;
+					case "COMMENT": var.comment = node.text; break;
+				}
+			}
+			library.variables[var.nid] = var;
+			library.symbols[var.nid] = var;
+		}
+
+		void parseLibrary(Element xml) {
+			library = new Library();
+			foreach (node; xml.elements) {
+				switch (node.tag.name) {
+					case "NAME"     : library.name  = node.text; break;
+					case "FLAGS"    : library.flags = cast(uint)parseString(node.text); break;
+					case "FUNCTIONS": foreach (snode; node.elements) if (snode.tag.name == "FUNCTION") parseFunction(snode); break;
+					case "VARIABLES": foreach (snode; node.elements) if (snode.tag.name == "VARIABLE") parseVariable(snode); break;
+				}
+			}
+			prx.libraries[library.name] = library;
+		}
+
+		void parsePrxFile(Element xml) {
+			prx = new Prx();
+			foreach (node; xml.elements) {
+				switch (node.tag.name) {
+					case "PRX"    : prx.fileName   = node.text; break;
+					case "PRXNAME": prx.moduleName = node.text; break;
+					case "LIBRARIES": foreach (snode; node.elements) if (snode.tag.name == "LIBRARY") parseLibrary(snode); break;
+				}
+			}
+			foreach (library; prx.libraries) libraries[library.name] = library;
+			prxs ~= prx;
+		}
+
+		foreach (node; xml.elements) if (node.tag.name == "PRXFILES") foreach (snode; node.elements) if (snode.tag.name == "PRXFILE") parsePrxFile(snode);
+
+		//foreach (cprx; prxs) writefln("%s", cprx);
+	}
 }
 
 class Loader : IDebugSource {
@@ -126,7 +265,7 @@ class Loader : IDebugSource {
 			}
 			break;
 		}
-
+		
 		this.elf = new Elf(stream);
 
 		/*
@@ -226,8 +365,8 @@ class Loader : IDebugSource {
 		// Load Imports.
 		version (DEBUG_LOADER) writefln("Imports (0x%08X-0x%08X):", moduleInfo.importsStart, moduleInfo.importsEnd);
 
-		uint unimplementedNids = 0;
-
+		uint[][string] unimplementedNids;
+		
 		while (!importsStream.eof) {
 			auto moduleImport = read!(ModuleImport)(importsStream);
 			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
@@ -249,15 +388,29 @@ class Loader : IDebugSource {
 					version (DEBUG_LOADER) writefln("    0x%08X:<unimplemented>", nid);
 					callStream.write(cast(uint)(0x70000000));
 					callStream.write(cast(uint)0);
-					unimplementedNids++;
+					unimplementedNids[moduleImportName] ~= nid;
 				}
 				//writefln("++");
 				//writefln("--");
 			}
 		}
 		
-		if (unimplementedNids > 0) {
-			throw(new Exception(std.string.format("Several unimplemented NIds. (%d)", unimplementedNids)));
+		if (unimplementedNids.length > 0) {
+			int count = 0;
+			writefln("unimplementedNids:");
+			foreach (moduleName, nids; unimplementedNids) {
+				writefln("  %s:", moduleName);
+				foreach (nid; nids) {
+					if (auto symbol = PspLibdoc.singleton.locate(nid, moduleName)) {
+						writefln("    mixin(registerd!(0x%08X, %s));", symbol.nid, symbol.name);
+					} else {
+						writefln("    0x%08X:<Not found!>");
+					}
+				}
+				count += nids.length;
+			}
+			//writefln("%s", PspLibdoc.singleton.prxs);
+			throw(new Exception(std.string.format("Several unimplemented NIds. (%d)", count)));
 		}
 		// Load Exports.
 		version (DEBUG_LOADER) writefln("Exports (0x%08X-0x%08X):", moduleInfo.exportsStart, moduleInfo.exportsEnd);

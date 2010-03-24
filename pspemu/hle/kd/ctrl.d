@@ -1,8 +1,11 @@
 module pspemu.hle.kd.ctrl; // kd/ctrl.prx (sceController_Service)
 
 //debug = DEBUG_SYSCALL;
+debug = DEBUG_CONTROLLER;
 
 import pspemu.hle.Module;
+
+import pspemu.models.IController;
 
 class sceCtrl_driver : Module {
 	void initNids() {
@@ -14,7 +17,11 @@ class sceCtrl_driver : Module {
 
 	void readBufferedFrames(SceCtrlData* pad_data, int count = 1, bool positive = true) {
 		for (int n = 0; n < count; n++) {
-			pad_data[n] = reinterpret!(SceCtrlData)(cpu.controller.frameRead(n));
+			pad_data[n] = cpu.controller.frameRead(n);
+
+			debug (DEBUG_CONTROLLER) {
+				writefln("readBufferedFrames: %s", pad_data[n]);
+			}
 
 			// Negate.
 			if (!positive) pad_data[n].Buttons = ~pad_data[n].Buttons;
@@ -55,6 +62,7 @@ class sceCtrl_driver : Module {
 	 * @return The previous cycle setting.
 	 */
 	int sceCtrlSetSamplingCycle(int cycle) {
+		cpu.controller.samplingCycle = cycle;
 		return 0;
 	}
 
@@ -66,6 +74,7 @@ class sceCtrl_driver : Module {
 	 * @return The previous mode.
 	 */
 	int sceCtrlSetSamplingMode(int mode) {
+		cpu.controller.samplingMode = cast(Controller.Mode)mode;
 		return 0;
 	}
 }
@@ -133,6 +142,7 @@ enum PspCtrlMode {
 	PSP_CTRL_MODE_ANALOG
 }
 
+/+
 /** Returned controller data */
 struct SceCtrlData {
 	/** The current read frame. */
@@ -148,6 +158,7 @@ struct SceCtrlData {
 
 	static assert(this.sizeof == 16);
 }
++/
 
 static this() {
 	mixin(Module.registerModule("sceCtrl"));

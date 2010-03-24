@@ -18,6 +18,8 @@ class sceGe_driver : Module {
 		mixin(registerd!(0x05DB22CE, sceGeUnsetCallback));
 	}
 
+	PspGeCallbackData[] callbackDataList;
+
 	/**
 	 * Wait for syncronisation of a list.
 	 *
@@ -46,8 +48,23 @@ class sceGe_driver : Module {
 	 * @param cb - Configured callback data structure
 	 * @return The callback ID, < 0 on error
 	 */
-	int sceGeSetCallback(PspGeCallbackData *cb) {
-		return 0;
+	int sceGeSetCallback(PspGeCallbackData* cb) {
+		int n;
+		PspGeCallbackData* callbackDataPtr;
+		for (n = 0; n < callbackDataList.length; n++) {
+			callbackDataPtr = &callbackDataList[n];
+			if (*callbackDataPtr == PspGeCallbackData.init) {
+				*callbackDataPtr = *cb;
+				break;
+			}
+		}
+
+		if (n == callbackDataList.length) {
+			callbackDataList ~= *cb;
+			callbackDataPtr = &callbackDataList[$ - 1];
+		}
+		
+		return cast(int)cast(void *)callbackDataPtr;
 	}
 
 	/**
@@ -57,6 +74,9 @@ class sceGe_driver : Module {
 	 * @return < 0 on error
 	 */
 	int sceGeUnsetCallback(int cbid) {
+		auto callbackDataPtr = (cast(PspGeCallbackData*)cbid);
+		if (callbackDataPtr is null) return -1;
+		*callbackDataPtr = PspGeCallbackData.init;
 		return 0;
 	}
 

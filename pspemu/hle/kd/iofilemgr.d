@@ -2,6 +2,8 @@ module pspemu.hle.kd.iofilemgr; // kd/iofilemgr.prx (sceIOFileManager)
 
 debug = DEBUG_SYSCALL;
 
+import std.date;
+
 import pspemu.hle.Module;
 
 import pspemu.utils.VirtualFileSystem;
@@ -57,6 +59,7 @@ class IoFileMgrForKernel : Module {
 	 * @return If >= 0 then a valid file descriptor, otherwise a Sony error code.
 	 */
 	SceUID sceIoDopen(string dirname) {
+		unimplemented();
 		return -1;
 	}
 
@@ -67,6 +70,7 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error
 	 */
 	int sceIoDclose(SceUID fd) {
+		unimplemented();
 		return -1;
 	}
 
@@ -77,6 +81,7 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error.
 	 */
 	int sceIoChdir(string path) {
+		unimplemented();
 		return -1;
 	}
 
@@ -97,6 +102,7 @@ class IoFileMgrForKernel : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceIoDevctl(string dev, int cmd, void* indata, int inlen, void* outdata, int outlen) {
+		unimplemented();
 		return -1;
 	}
 
@@ -113,6 +119,20 @@ class IoFileMgrForKernel : Module {
 	int sceIoClose(SceUID fd) {
 		stream(fd).close();
 		return 0;
+	}
+
+	VFS locateParent(string file) {
+		VFS vfs = fsroot;
+
+		// Full path.
+		if (file.findIndex(":") == -1) {
+			vfs = fsroot[fscurdir];
+		}
+		/*
+		if (file.length && file[0] == '/') {
+		}
+		*/
+		return vfs;
 	}
 
 	/**
@@ -146,18 +166,7 @@ class IoFileMgrForKernel : Module {
 			if (mode & PSP_O_APPEND) fmode |= FileMode.Append;
 			if (mode & PSP_O_CREAT ) fmode |= FileMode.OutNew;
 			
-			VFS vfs = fsroot;
-
-			// Full path.
-			if (file.findIndex(":") == -1) {
-				vfs = fsroot[fscurdir];
-			}
-			/*
-			if (file.length && file[0] == '/') {
-			}
-			*/
-
-			auto stream = vfs.open(file, fmode, 0777);
+			auto stream = locateParent(file).open(file, fmode, 0777);
 			return cast(SceUID)cast(void *)stream;
 		} catch (Object o) {
 			writefln("sceIoOpen exception: %s", o);
@@ -233,8 +242,59 @@ class IoFileMgrForKernel : Module {
 	  * 
 	  * @return < 0 on error.
 	  */
-	int sceIoGetstat(const char *file, SceIoStat *stat) {
-		return 0;
+	int sceIoGetstat(string file, SceIoStat* stat) {
+		/*
+		struct SceIoStat {
+			SceMode         st_mode;
+			uint            st_attr;
+			SceOff          st_size;
+			ScePspDateTime  st_ctime;
+			ScePspDateTime  st_atime;
+			ScePspDateTime  st_mtime;
+			uint            st_private[6];
+		}
+		*/
+		/*
+		struct ScePspDateTime {
+			ushort	year;
+			ushort 	month;
+			ushort 	day;
+			ushort 	hour;
+			ushort 	minute;
+			ushort 	second;
+			uint 	microsecond;
+		}
+		*/
+		ScePspDateTime convertTime(d_time timeD) {
+			ScePspDateTime dateTimePsp;
+			std.date.Date dateTimeD;
+			dateTimeD.parse(toUTCString(timeD));
+			with (dateTimePsp) {
+				year   = cast(ushort)dateTimeD.year;
+				month  = cast(ushort)dateTimeD.month;
+				day    = cast(ushort)dateTimeD.day;
+				hour   = cast(ushort)dateTimeD.hour;
+				minute = cast(ushort)dateTimeD.minute;
+				second = cast(ushort)dateTimeD.second;
+				microsecond = dateTimeD.ms * 1000;
+			}
+			return dateTimePsp;
+		}
+		
+		try {
+			auto fentry   = locateParent(file)[file];
+			stat.st_mode  = fentry.stats.mode;
+			stat.st_attr  = fentry.stats.attr;
+			stat.st_size  = fentry.stats.size;
+			stat.st_ctime = convertTime(fentry.stats.time_c);
+			stat.st_atime = convertTime(fentry.stats.time_a);
+			stat.st_mtime = convertTime(fentry.stats.time_m);
+			writefln("STAT!! %s", *stat);
+			return 0;
+		} catch (Exception e) {
+			writefln("STAT!! FAILED: %s", e);
+			return -1;
+		}
 	}
 }
 

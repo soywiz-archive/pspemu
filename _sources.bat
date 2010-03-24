@@ -47,6 +47,7 @@ SET SOURCES=%SOURCES% pspemu/hle/kd/threadman.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/loadexec.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/utils.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/rtc.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/pspnet_inet.d
 
 SET SOURCES=%SOURCES% pspemu/core/Memory.d
 
@@ -87,7 +88,7 @@ SET SOURCES=%SOURCES% pspemu/core/gpu/impl/GpuSoftware.d
 SET SOURCES=%SOURCES% gdi32.lib
 
 REM SET RELEASE=-noboundscheck -inline -O -release
-SET RELEASE=-noboundscheck -O -release
+SET RELEASE=-noboundscheck -O -release -Jresources
 REM SET RELEASE=-O
 
 SET EXTRA=-quiet -deps=deps.lst

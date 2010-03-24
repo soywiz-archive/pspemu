@@ -26,6 +26,7 @@ class LoadExecForUser : Module {
 	  *
 	  */
 	int sceKernelLoadExec(string file, SceKernelLoadExecParam *param) {
+		unimplemented();
 		return -1;
 	}
 
@@ -57,6 +58,7 @@ class LoadExecForUser : Module {
 	 * @return < 0 on error
 	 */
 	int sceKernelRegisterExitCallback(int cbid) {
+		//unimplemented();
 		return 0;
 	}
 }

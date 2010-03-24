@@ -12,6 +12,9 @@ interface IDisplay {
 		int bufferwidth = 512;
 		int pixelformat = 3;
 		int sync = 0;
+		int mode = 0;
+		int width = 480;
+		int height = 272;
 	}
 
 	Info info(Info info);

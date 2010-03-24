@@ -7,187 +7,11 @@ import pspemu.hle.Module;
 import std.algorithm;
 
 class SysMemUserForUser : Module {
-	class MemorySegment {
-		static struct Block {
-			uint low, high;
-			uint size() in { assert(low <= high); } body { return high - low; }
-			bool overlap(Block that) {
-				return (this.high > that.low) && (that.high > this.low);
-			}
-			bool inside(Block that) {
-				return (this.low >= that.low) && (this.high <= that.high);
-			}
-		}
-		
-		unittest {
-			// overlap
-			assert(Block(10, 20).overlap(10, 20) == true );
-			assert(Block(10, 20).overlap( 5, 15) == true );
-			assert(Block(10, 20).overlap(15, 25) == true );
-			assert(Block(10, 20).overlap( 0,  9) == false);
-			assert(Block(10, 20).overlap(21, 22) == false);
-			assert(Block(10, 20).overlap( 0, 10) == false);
-			assert(Block(10, 20).overlap(20, 22) == false);
-
-			// inside
-			assert(Block( 0, 15).inside(10, 20) == false);
-			assert(Block(15, 25).inside(10, 20) == false);
-			assert(Block( 5, 20).inside(10, 20) == false);
-			assert(Block(10, 25).inside(10, 20) == false);
-			assert(Block(10, 20).inside(10, 20) == true );
-			assert(Block(10, 15).inside(10, 20) == true );
-			assert(Block(15, 20).inside(10, 20) == true );
-			assert(Block(11, 19).inside(10, 20) == true );
-		}
-
-		MemorySegment parent;
-		MemorySegment[] childs;
-
-		string name;
-		Block block;
-		
-		string nameFull() { return parent ? (parent.name ~ "/" ~ name) : name; }
-		
-		string toString() {
-			string ret = "";
-			if (parent) {
-				ret ~= parent.toString;
-				ret ~= " :: ";
-			}
-			ret ~= std.string.format("MemorySegment('%s', %08X-%08X)", name, block.low, block.high);
-			return ret;
-		}
-
-		this(uint low, uint high, string name = "<unknown>") {
-			block.low  = low;
-			block.high = high;
-			this.name  = name;
-		}
-
-		Block[] usedBlocks() {
-			Block[] blocks;
-			foreach (child; childs) blocks ~= child.block;
-			sort!((ref Block a, ref Block b){ return a.low < b.low; })(blocks);
-			return blocks;
-		}
-
-		Block[] availableBlocks() {
-			Block[] usedBlocks = this.usedBlocks;
-			Block[] blocks;
-
-			if (usedBlocks.length) {			
-				void emitBlock(ref Block block) { if (block.size > 0) blocks ~= block; }
-
-				// Before used blocks.
-				emitBlock(Block(block.low, usedBlocks[0].low));
-
-				// After used blocks.
-				emitBlock(Block(usedBlocks[$ - 1].high, block.high));
-
-				for (int n = 1; n < usedBlocks.length; n++) {
-					// Between blocks.
-					emitBlock(Block(usedBlocks[n - 1].high, usedBlocks[n - 0].low));
-				}
-			}
-			// No used blocks.
-			else {
-				blocks = [block];
-			}
-			
-			return blocks;
-		}
-
-		MemorySegment opAddAssign(MemorySegment child) {
-			childs ~= child;
-			child.parent = this;
-			writefln("ALLOC: %s", child.toString);
-			return child;
-		}
-
-		MemorySegment allocByHigh(uint size, string name = "<unknown>") {
-			foreach (block; availableBlocks.reverse) {
-				if (block.size >= size) return (this += new MemorySegment(block.high - size, block.high, name));
-			}
-			throw(new Exception(std.string.format("Can't alloc size=%d on %s", size, this)));
-		}
-
-		MemorySegment allocByLow(uint size, string name = "<unknown>", uint min = 0) {
-			foreach (block; availableBlocks) {
-				if (block.low < min) continue;
-				if (block.size >= size) return (this += new MemorySegment(block.low, block.low + size, name));
-			}
-
-			// Ok. We didn't find an available segment. But we will try without the min check.
-			if (min != 0) {
-				return allocByLow(size, name, 0);
-			}
-			// Too bad.
-			else {
-				throw(new Exception(std.string.format("Can't alloc size=%d on %s", size, this)));
-			}
-		}
-
-		MemorySegment allocByAddr(uint base, uint size, string name = "<unknown>") {
-			auto idealBlock = Block(base, base + size);
-
-			// Not even inside. Check other address.
-			if (!idealBlock.inside(this.block)) {
-				return allocByLow(size, name);
-			}
-
-			foreach (block; usedBlocks) {
-				// Overlaps with other segment. Can't use this address.
-				if (idealBlock.overlap(block)) {
-					return allocByLow(size, name, base);
-				}
-			}
-			// Ok. Doesn't overlap with any address.
-			return (this += new MemorySegment(idealBlock.low, idealBlock.high, name));
-		}
-
-		uint freeMemory() {
-			uint size;
-			foreach (block; availableBlocks) size += block.size;
-			return size;
-		}
-
-		uint maxAvailableMemoryBlock() {
-			uint size = 0;
-			foreach (block; availableBlocks) size = pspemu.utils.Utils.max(size, block.size);
-			return size;
-		}
-
-		MemorySegment opIndex(int index) {
-			return childs[index];
-		}
-
-		void release() {
-			foreach (index, child; parent.childs) {
-				if (child is this) {
-					parent.childs = parent.childs[0..index] ~ parent.childs[index + 1..$];
-					parent = null;
-					return;
-				}
-			}
-		}
-		
-		static MemorySegment opCall(SceUID blockid) {
-			assert(blockid > 0, std.string.format("Invalid blockid %d", blockid));
-			return cast(MemorySegment)cast(void *)blockid;
-		}
-	}
-
-	uint allocStack(uint stackSize) {
+	MemorySegment allocStack(uint stackSize) {
 		stackSize &= 0xF;
-		static if (0) {
-			auto segment = pspMemorySegmentStacks.allocByHigh(stackSize);
-			writefln("allocStack!!! %s", segment);
-			return segment.block.high;
-		} else {
-			__gshared static uint lastBlock = 0x083FFF00;
-			lastBlock -= stackSize;
-			return lastBlock;
-		}
+		auto segment = pspMemorySegmentStacks.allocByHigh(stackSize);
+		//writefln("allocStack!!! %s", segment);
+		return segment;
 	}
 
 	MemorySegment pspMemorySegment;
@@ -237,7 +61,7 @@ class SysMemUserForUser : Module {
 	 * @return ? on success, less than 0 on error.
 	 */
 	int sceKernelFreePartitionMemory(SceUID blockid) {
-		MemorySegment(blockid).release();
+		MemorySegment(blockid).free();
 		return 0;
 	}
 
@@ -247,7 +71,7 @@ class SysMemUserForUser : Module {
 	 * @return The total amount of free memory, in bytes.
 	 */
 	SceSize sceKernelTotalFreeMemSize() {
-		return pspMemorySegment[2].freeMemory;
+		return pspMemorySegment[2].getFreeMemory;
 	}
 
 	/**
@@ -256,7 +80,7 @@ class SysMemUserForUser : Module {
 	 * @return The size of the largest free memory block, in bytes.
 	 */
 	SceSize sceKernelMaxFreeMemSize() {
-		return pspMemorySegment[2].maxAvailableMemoryBlock;
+		return pspMemorySegment[2].getMaxAvailableMemoryBlock;
 	}
 
 	/**
@@ -306,6 +130,172 @@ class sceSuspendForUser : sceSuspendForKernel {
 }
 
 class KDebugForKernel : Module {
+}
+
+class MemorySegment {
+	static struct Block {
+		uint low, high;
+		uint size() in { assert(low <= high); } body { return high - low; }
+		bool overlap(Block that) { return (this.high > that.low) && (that.high > this.low); }
+		bool inside(Block that) { return (this.low >= that.low) && (this.high <= that.high); }
+	}
+	
+	unittest {
+		// overlap
+		assert(Block(10, 20).overlap(10, 20) == true );
+		assert(Block(10, 20).overlap( 5, 15) == true );
+		assert(Block(10, 20).overlap(15, 25) == true );
+		assert(Block(10, 20).overlap( 0,  9) == false);
+		assert(Block(10, 20).overlap(21, 22) == false);
+		assert(Block(10, 20).overlap( 0, 10) == false);
+		assert(Block(10, 20).overlap(20, 22) == false);
+
+		// inside
+		assert(Block( 0, 15).inside(10, 20) == false);
+		assert(Block(15, 25).inside(10, 20) == false);
+		assert(Block( 5, 20).inside(10, 20) == false);
+		assert(Block(10, 25).inside(10, 20) == false);
+		assert(Block(10, 20).inside(10, 20) == true );
+		assert(Block(10, 15).inside(10, 20) == true );
+		assert(Block(15, 20).inside(10, 20) == true );
+		assert(Block(11, 19).inside(10, 20) == true );
+	}
+
+	MemorySegment parent;
+	MemorySegment[] childs;
+
+	string name;
+	Block block;
+	
+	string nameFull() { return parent ? (parent.name ~ "/" ~ name) : name; }
+	
+	string toString() {
+		string ret = "";
+		if (parent) {
+			ret ~= parent.toString;
+			ret ~= " :: ";
+		}
+		ret ~= std.string.format("MemorySegment('%s', %08X-%08X)", name, block.low, block.high);
+		return ret;
+	}
+
+	this(uint low, uint high, string name = "<unknown>") {
+		block.low  = low;
+		block.high = high;
+		this.name  = name;
+	}
+
+	Block[] usedBlocks() {
+		Block[] blocks;
+		foreach (child; childs) blocks ~= child.block;
+		sort!((ref Block a, ref Block b){ return a.low < b.low; })(blocks);
+		return blocks;
+	}
+
+	Block[] availableBlocks() {
+		Block[] usedBlocks = this.usedBlocks;
+		Block[] blocks;
+
+		if (usedBlocks.length) {			
+			void emitBlock(ref Block block) { if (block.size > 0) blocks ~= block; }
+
+			// Before used blocks.
+			emitBlock(Block(block.low, usedBlocks[0].low));
+
+			// After used blocks.
+			emitBlock(Block(usedBlocks[$ - 1].high, block.high));
+
+			for (int n = 1; n < usedBlocks.length; n++) {
+				// Between blocks.
+				emitBlock(Block(usedBlocks[n - 1].high, usedBlocks[n - 0].low));
+			}
+		}
+		// No used blocks.
+		else {
+			blocks = [block];
+		}
+		
+		return blocks;
+	}
+
+	MemorySegment opAddAssign(MemorySegment child) {
+		childs ~= child;
+		child.parent = this;
+		writefln("ALLOC: %s", child.toString);
+		return child;
+	}
+
+	MemorySegment allocByHigh(uint size, string name = "<unknown>") {
+		foreach (block; availableBlocks.reverse) {
+			if (block.size >= size) return (this += new MemorySegment(block.high - size, block.high, name));
+		}
+		throw(new Exception(std.string.format("Can't alloc size=%d on %s", size, this)));
+	}
+
+	MemorySegment allocByLow(uint size, string name = "<unknown>", uint min = 0) {
+		foreach (block; availableBlocks) {
+			if (block.low < min) continue;
+			if (block.size >= size) return (this += new MemorySegment(block.low, block.low + size, name));
+		}
+
+		// Ok. We didn't find an available segment. But we will try without the min check.
+		if (min != 0) {
+			return allocByLow(size, name, 0);
+		}
+		// Too bad.
+		else {
+			throw(new Exception(std.string.format("Can't alloc size=%d on %s", size, this)));
+		}
+	}
+
+	MemorySegment allocByAddr(uint base, uint size, string name = "<unknown>") {
+		auto idealBlock = Block(base, base + size);
+
+		// Not even inside. Check other address.
+		if (!idealBlock.inside(this.block)) {
+			return allocByLow(size, name);
+		}
+
+		foreach (block; usedBlocks) {
+			// Overlaps with other segment. Can't use this address.
+			if (idealBlock.overlap(block)) {
+				return allocByLow(size, name, base);
+			}
+		}
+		// Ok. Doesn't overlap with any address.
+		return (this += new MemorySegment(idealBlock.low, idealBlock.high, name));
+	}
+
+	uint getFreeMemory() {
+		uint size;
+		foreach (block; availableBlocks) size += block.size;
+		return size;
+	}
+
+	uint getMaxAvailableMemoryBlock() {
+		uint size = 0;
+		foreach (block; availableBlocks) size = pspemu.utils.Utils.max(size, block.size);
+		return size;
+	}
+
+	MemorySegment opIndex(int index) {
+		return childs[index];
+	}
+
+	void free() {
+		foreach (index, child; parent.childs) {
+			if (child is this) {
+				parent.childs = parent.childs[0..index] ~ parent.childs[index + 1..$];
+				parent = null;
+				return;
+			}
+		}
+	}
+	
+	static MemorySegment opCall(SceUID blockid) {
+		assert(blockid > 0, std.string.format("Invalid blockid %d", blockid));
+		return cast(MemorySegment)cast(void *)blockid;
+	}
 }
 
 /** Specifies the type of allocation used for memory blocks. */

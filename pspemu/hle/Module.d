@@ -202,6 +202,10 @@ abstract class Module {
 	
 	string baseName() { return classInfoBaseName(typeid(this)); }
 	string toString() { return std.string.format("Module(%s)", baseName); }
+
+	void unimplemented(string file = __FILE__, int line = __LINE__)() {
+		throw(new Exception(std.string.format("Unimplemented '%s:%d'", file, line)));
+	}
 }
 
 class ModuleManager {

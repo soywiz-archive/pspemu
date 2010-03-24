@@ -53,6 +53,11 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * @return ???
 	 */
 	int sceDisplaySetMode(int mode, int width, int height) {
+		with (cpu.display) {
+			info.mode   = mode;
+			info.width  = width;
+			info.height = height;
+		}
 		return 0;
 	}
 }
