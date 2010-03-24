@@ -8,27 +8,39 @@ import pspemu.core.cpu.Instruction;
 
 import pspemu.hle.Module;
 
+import pspemu.models.ISyscall;
+
 //import std.variant;
 
 string szToString(char *s) { return cast(string)s[0..std.c.string.strlen(s)]; }
 
-class Syscall {
-	static string[] emits;
+class Syscall : ISyscall {
+	string[] emits;
 
-	static void opCall(Cpu cpu, Instruction instruction) {
+	Cpu cpu;
+	ModuleManager moduleManager;
+
+	this(Cpu cpu, ModuleManager moduleManager) {
+		this.cpu           = cpu;
+		this.cpu.syscall   = this;
+		this.moduleManager = moduleManager;
+	}
+
+	void opCall(int code) {
 		uint   param   (int n) { return cpu.registers[4 + n]; }
 		void*  param_p (int n) { return cpu.memory.getPointer(cpu.registers[4 + n]); }
 		char*  paramszp(int n) { return cast(char *)param_p(n); }
 		char[] paramsz (int n) { auto ptr = paramszp(n); return ptr[0..std.c.string.strlen(ptr)]; }
 
 		void callLibrary(string libraryName, string functionName) {
-			auto func = pspemu.hle.Module.Module.loadModule(libraryName).names[functionName];
+			auto func = moduleManager[libraryName].getFunctionByName(functionName);
 			func.pspModule.cpu = cpu;
 			func.func();
 		}
 
-		//writefln();
-		switch (instruction.CODE) {
+		switch (code) {
+			case 0x2014: callLibrary("ThreadManForUser", "sceKernelSleepThread"); break;
+			case 0x2015: callLibrary("ThreadManForUser", "sceKernelSleepThreadCB"); break;
 			case 0x2150: callLibrary("sceCtrl", "sceCtrlPeekBufferPositive"); break;
 			case 0x2147: callLibrary("sceDisplay", "sceDisplayWaitVblankStart"); break;
 			case 0x206d: callLibrary("ThreadManForUser", "sceKernelCreateThread"); break;
@@ -72,7 +84,7 @@ class Syscall {
 				//cpu.addBreakpoint(cpu.BreakPoint(cpu.registers.PC, [], true));
 			} break;
 			default:
-				.writefln("Unimplemented SYSCALL (%08X)", instruction.CODE);
+				.writefln("Unimplemented SYSCALL (%08X)", code);
 				assert(0);
 			break;
 		}

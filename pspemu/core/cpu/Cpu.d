@@ -8,6 +8,7 @@ version = ENABLE_BREAKPOINTS;
 import pspemu.core.gpu.Gpu;
 import pspemu.models.IDisplay;
 import pspemu.models.IController;
+import pspemu.models.ISyscall;
 
 import pspemu.models.IDebugSource;
 
@@ -24,6 +25,7 @@ import pspemu.utils.Utils;
 
 // OPS.
 import pspemu.core.cpu.Utils;
+import pspemu.core.cpu.Interrupts;
 import pspemu.core.cpu.ops.Alu;
 import pspemu.core.cpu.ops.Branch;
 import pspemu.core.cpu.ops.Jump;
@@ -67,6 +69,10 @@ class Cpu : IDebugSource {
 	
 	IController controller;
 	
+	ISyscall syscall;
+	
+	Interrupts interrupts;
+	
 	mixin DebugSourceProxy;
 
 	bool running = true;
@@ -80,9 +86,10 @@ class Cpu : IDebugSource {
 	 *
 	 * @param  memory  Optional. A Memory object.
 	 */
-	this(Memory memory = null, Gpu gpu = null, IDisplay display = null, IController controller = null) {
+	this(Memory memory, Gpu gpu, IDisplay display, IController controller) {
+		this.interrupts = new Interrupts();
 		this.registers  = new Registers();
-		this.memory     = (memory !is null) ? memory : (new Memory());
+		this.memory     = memory;
 		this.gpu        = gpu;
 		this.display    = display;
 		this.controller = controller;
@@ -137,7 +144,15 @@ class Cpu : IDebugSource {
 		// Will execute instructions until count reach zero or an exception is thrown.
 		//writefln("Execute: %08X", count);
 		while (count--) {
-			// TODO: Process IRQ (Interrupt ReQuest)
+			// Process IRQ (Interrupt ReQuest)
+
+			// Add a THREAD Interrupt (to switch threads)
+			if ((count & 0xFFFF) == 0) interrupts.queue(Interrupts.Type.THREAD0);
+			//if ((count & 0xFF) == 0) interrupts.queue(Interrupts.Type.THREAD0);
+
+			// Process interrupts if there are pending interrupts
+			if (interrupts.InterruptFlag) interrupts.process();
+
 			version (ENABLE_BREAKPOINTS) {
 				if (checkBreakpoints) {
 					breakPointPrevPC = registers.PC;

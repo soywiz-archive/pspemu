@@ -13,9 +13,11 @@ import pspemu.formats.Pbp;
 import pspemu.hle.Module;
 import pspemu.hle.kd.iofilemgr;
 import pspemu.hle.kd.sysmem;
+import pspemu.hle.kd.threadman;
 
 import pspemu.core.Memory;
 import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Interrupts;
 import pspemu.core.cpu.Assembler;
 import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.InstructionCounter;
@@ -83,21 +85,22 @@ class Loader : IDebugSource {
 	Elf elf;
 	ElfDwarf dwarf;
 	Cpu cpu;
+	ModuleManager moduleManager;
+	AllegrexAssembler assembler;
 	Memory memory() { return cpu.memory; }
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
 	ModuleExport[] moduleExports;
 	
-	this(string file, Cpu cpu) {
-		file = file.replace("\\", "/");
-		string path = ".";
-		int index = file.lastIndexOf("/");
-		if (index != -1) path = file[0..index];
-		Module.loadModuleEx!(IoFileMgrForUser).setVirtualDir(path);
-		this(new BufferedFile(file, FileMode.In), cpu);
+	this(Cpu cpu, ModuleManager moduleManager) {
+		this.cpu           = cpu;
+		this.moduleManager = moduleManager;
+		this.assembler     = new AllegrexAssembler(memory);
+
+		cpu.interrupts.callbacks[Interrupts.Type.THREAD0] ~= &moduleManager.get!(ThreadManForUser).thread0InterruptHandler;
 	}
 
-	this(Stream stream, Cpu cpu) {
+	void load(Stream stream) {
 		while (true) {
 			auto magics = new SliceStream(stream, 0, 4);
 			switch (magics.readString(4)) {
@@ -118,22 +121,37 @@ class Loader : IDebugSource {
 		}
 
 		this.elf = new Elf(stream);
-		this.cpu = cpu;
+
+		/*
 		version (DEBUG_LOADER) {
 			elf.dumpSections();
 		}
+		*/
+
 		try {
 			load();
 		} catch (Object o) {
 			writefln("Loader.load Exception: %s", o);
 			throw(o);
 		}
+
+		/*
 		version (DEBUG_LOADER) {
 			count();
-			Module.dumpKnownModules();
+			moduleManager.dumpLoadedModules();
 		}
-		checkDebug();
-		//(new std.stream.File("debug_str", FileMode.OutNew)).copyFrom(elf.SectionStream(".debug_str"));
+		*/
+
+		//checkDebug();
+	}
+
+	void load(string fileName) {
+		fileName = fileName.replace("\\", "/");
+		string path = ".";
+		int index = fileName.lastIndexOf("/");
+		if (index != -1) path = fileName[0..index];
+		moduleManager.get!(IoFileMgrForUser).setVirtualDir(path);
+		load(new BufferedFile(fileName, FileMode.In));
 	}
 	
 	void checkDebug() {
@@ -179,7 +197,7 @@ class Loader : IDebugSource {
 			return;
 		}
 
-		auto sysMemUserForUser = Module.loadModuleEx!(SysMemUserForUser);
+		auto sysMemUserForUser = moduleManager.get!(SysMemUserForUser);
 		//writefln("%08X", memory.getPointer(this.elf.suggestedBlockAddress));
 		auto blockid = sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Program", PspSysMemBlockTypes.PSP_SMEM_Addr, this.elf.requiredBlockSize, this.elf.suggestedBlockAddress);
 		uint blockaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(blockid);
@@ -200,7 +218,6 @@ class Loader : IDebugSource {
 		
 		// Load Imports.
 		version (DEBUG_LOADER) writefln("Imports (0x%08X-0x%08X):", moduleInfo.importsStart, moduleInfo.importsEnd);
-		auto assembler = new AllegrexAssembler(memory);
 
 		uint unimplementedNids = 0;
 
@@ -213,7 +230,7 @@ class Loader : IDebugSource {
 			auto nidStream  = new SliceStream(memory, moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
 			auto callStream = new SliceStream(memory, moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
 			//writefln("%08X", moduleImport.callAddress);
-			auto pspModule = Module.loadModule(moduleImportName);
+			auto pspModule = moduleManager[moduleImportName];
 			while (!nidStream.eof) {
 				uint nid = read!(uint)(nidStream);
 				
@@ -245,24 +262,34 @@ class Loader : IDebugSource {
 		}
 	}
 
-	void setRegisters() {
-		uint PC() { return elf.header.entryPoint; }
-		uint GP() { return moduleInfo.gp; }
+	uint PC() { return elf.header.entryPoint; }
+	uint GP() { return moduleInfo.gp; }
 
-		auto sysMemUserForUser = Module.loadModuleEx!(SysMemUserForUser);
+	void setRegisters() {
+		auto sysMemUserForUser = moduleManager.get!(SysMemUserForUser);
 		//writefln("%08X", memory.getPointer(this.elf.suggestedBlockAddress));
 		//uint stacksize = 0x8000; // 32 KB
 		uint stacksize = 0x40000; // 256 KB
 		uint stackaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Stack", PspSysMemBlockTypes.PSP_SMEM_High, stacksize, 0));
 		//uint stackaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Stack", PspSysMemBlockTypes.PSP_SMEM_Addr, stacksize, 0x09F00000));
 
-		cpu.registers.pcSet = PC;
-		cpu.registers["gp"] = GP;
-		cpu.registers["sp"] = stackaddress + stacksize - 0x10;
-		cpu.registers["k0"] = cpu.registers["sp"];
-		cpu.registers["ra"] = 0;
-		cpu.registers["a0"] = 0; // argumentsLength.
-		cpu.registers["a1"] = 0; // argumentsPointer
+		assembler.assembleBlock(r"
+			.text 0x08000000
+			syscall 0x2015
+		");
+
+		//Module.loadModuleEx!(ThreadManForUser)
+		auto pspThread = new PspThread();
+		with (pspThread) {
+			registers.pcSet = PC;
+			registers["gp"] = GP;
+			registers["sp"] = stackaddress + stacksize - 0x10;
+			registers["k0"] = registers["sp"];
+			registers["ra"] = 0x08000000;
+			registers["a0"] = 0; // argumentsLength.
+			registers["a1"] = 0; // argumentsPointer
+		}
+		pspThread.switchTo(cpu);
 
 		writefln("PC: %08X", cpu.registers.PC);
 		writefln("GP: %08X", cpu.registers["gp"]);

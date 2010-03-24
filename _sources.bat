@@ -21,6 +21,7 @@ SET SOURCES=%SOURCES% pspemu/utils/VirtualFileSystem.d
 SET SOURCES=%SOURCES% pspemu/models/IDisplay.d
 SET SOURCES=%SOURCES% pspemu/models/IController.d
 SET SOURCES=%SOURCES% pspemu/models/IDebugSource.d
+SET SOURCES=%SOURCES% pspemu/models/ISyscall.d
 REM SET SOURCES=%SOURCES% pspemu/models/IEmulatorState.d
 
 SET SOURCES=%SOURCES% pspemu/formats/Pbp.d
@@ -50,6 +51,7 @@ SET SOURCES=%SOURCES% pspemu/core/Memory.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Cpu.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Registers.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Instruction.d
+SET SOURCES=%SOURCES% pspemu/core/cpu/Interrupts.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Switch.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Utils.d
 SET SOURCES=%SOURCES% pspemu/core/cpu/Table.d

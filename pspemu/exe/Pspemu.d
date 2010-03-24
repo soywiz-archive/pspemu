@@ -15,6 +15,7 @@ import pspemu.gui.DisplayForm;
 
 import pspemu.models.IDisplay;
 import pspemu.models.IController;
+import pspemu.models.ISyscall;
 
 import pspemu.formats.Pbp;
 
@@ -25,7 +26,9 @@ import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
 import pspemu.core.gpu.impl.GpuOpengl;
 
+import pspemu.hle.Module;
 import pspemu.hle.Loader;
+import pspemu.hle.Syscall;
 
 class PspDisplay : BasePspDisplay {
 	Memory memory;
@@ -47,11 +50,16 @@ class PspDisplay : BasePspDisplay {
 }
 
 int main(string[] args) {
-	auto memory     = new Memory;
-	auto controller = new Controller();
-	auto display    = new PspDisplay(memory);
-	auto gpu        = new Gpu(new GpuOpengl, memory);
-	auto cpu        = new Cpu(memory, gpu, display, controller);
+	auto memory        = new Memory;
+	auto controller    = new Controller();
+	auto display       = new PspDisplay(memory);
+	auto gpu           = new Gpu(new GpuOpengl, memory);
+	auto cpu           = new Cpu(memory, gpu, display, controller);
+
+	// HLE.
+	auto moduleManager = new ModuleManager(cpu);
+	auto loader        = new Loader(cpu, moduleManager);
+	auto syscall       = new Syscall(cpu, moduleManager);
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 
@@ -62,8 +70,9 @@ int main(string[] args) {
 	if (args.length >= 2) {
 		executableFile = args[1];
 	}
-	
-	auto loader  = new Loader(executableFile, cpu);
+
+	// Load.
+	loader.load(executableFile);
 	loader.setRegisters();
 
 	version (TRACE_FROM_BEGINING) {

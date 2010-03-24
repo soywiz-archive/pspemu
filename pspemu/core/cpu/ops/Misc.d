@@ -43,7 +43,11 @@ template TemplateCpu_MISC() {
 
 	auto OP_SYSCALL() {
 		registers.pcAdvance(4);
-		pspemu.hle.Syscall.Syscall(cpu, instruction);
+		if (cpu.syscall is null) {
+			.writefln("Syscall handler not set");
+		} else {
+			cpu.syscall(instruction.CODE);
+		}
 	}
 
 	// Inlined.

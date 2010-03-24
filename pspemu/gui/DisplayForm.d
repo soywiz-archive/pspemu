@@ -185,7 +185,7 @@ class GLControlDisplay : GLControl {
 							swapBuffers();
 						}
 						
-						GC.minimize();
+						//GC.minimize();
 						//GC.collect();
 						
 						while (true) {

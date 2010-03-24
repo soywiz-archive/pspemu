@@ -269,8 +269,11 @@ class AllegrexAssembler : ISymbolResolver {
 						instruction.RS     = cast(uint)Registers.getAlias(results[2]);
 						//writefln("%s", results[1]);
 					} break;
+					case "%C": {
+						instruction.CODE = getImmediate(Sign.Unsigned);
+					} break;
 					default:
-						assert(0, std.string.format("Assembler.assembleInternal doesn't know how to process '%s'", paramType));
+						throw(new Exception(std.string.format("Assembler.assembleInternal doesn't know how to process '%s'", paramType)));
 					break;
  				}
 			}

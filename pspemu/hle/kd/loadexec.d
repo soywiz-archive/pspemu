@@ -5,11 +5,28 @@ debug = DEBUG_SYSCALL;
 import pspemu.hle.Module;
 
 class LoadExecForUser : Module {
-	this() {
-		mixin(register(0xBD2F1094, "sceKernelLoadExec"));
-		mixin(register(0x2AC9954B, "sceKernelExitGameWithStatus"));
+	void initNids() {
+		mixin(registerd!(0xBD2F1094, sceKernelLoadExec));
+		mixin(registerd!(0x2AC9954B, sceKernelExitGameWithStatus));
 		mixin(registerd!(0x05572A5F, sceKernelExitGame));
 		mixin(registerd!(0x4AC57943, sceKernelRegisterExitCallback));
+	}
+
+	void sceKernelExitGameWithStatus(int status) {
+		throw(new Exception("sceKernelExitGameWithStatus"));
+	}
+
+	/** 
+	  * Execute a new game executable, limited when not running in kernel mode.
+	  * 
+	  * @param file - The file to execute.
+	  * @param param - Pointer to a ::SceKernelLoadExecParam structure, or NULL.
+	  *
+	  * @return < 0 on error, probably.
+	  *
+	  */
+	int sceKernelLoadExec(string file, SceKernelLoadExecParam *param) {
+		return -1;
 	}
 
 	/**
@@ -45,6 +62,18 @@ class LoadExecForUser : Module {
 }
 
 class LoadExecForKernel : LoadExecForUser {
+}
+
+/** Structure to pass to loadexec */
+struct SceKernelLoadExecParam {
+	/** Size of the structure */
+	SceSize     size;
+	/** Size of the arg string */
+	SceSize     args;
+	/** Pointer to the arg string */
+	void *  argp;
+	/** Encryption key ? */
+	const char *    key;
 }
 
 static this() {

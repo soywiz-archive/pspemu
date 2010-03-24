@@ -172,6 +172,19 @@ class Memory : Stream {
 	 * @return Psp memory address.
 	 */
 	public Pointer getPointerReverse(void *_ptr) {
+		Pointer retval = getPointerReverseOrNull(_ptr);
+		if (retval == 0) throw(new Exception(std.string.format("Can't find original pointer of address 0x%08X", cast(uint)_ptr)));
+		return retval;
+	}
+
+	/**
+	 * Obtains a guest address from a physical memory address.
+	 *
+	 * @param  ptr  A physical PC pointer.
+	 *
+	 * @return Psp memory address.
+	 */
+	public Pointer getPointerReverseOrNull(void *_ptr) {
 		auto ptr = cast(ubyte *)_ptr;
 
 		bool between(ubyte[] buffer) { return (ptr >= &buffer[0]) && (ptr < &buffer[$]); }
@@ -183,7 +196,7 @@ class Memory : Stream {
 		mixin(checkMap("scratchPad",  0x00010000));
 		mixin(checkMap("frameBuffer", 0x04000000));
 		mixin(checkMap("mainMemory",  0x08000000));
-		throw(new Exception(std.string.format("Can't find original pointer of address 0x%08X", cast(uint)_ptr)));
+		return 0;
 	}
 
 	/**

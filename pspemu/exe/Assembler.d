@@ -8,7 +8,7 @@ import std.string;
 import std.getopt;
 
 int main(string[] args) {
-	auto memory = new SparseMemoryStream;
+	auto memory    = new SparseMemoryStream;
 	auto assembler = new AllegrexAssembler(memory);
 
 	void help() {

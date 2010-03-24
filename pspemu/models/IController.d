@@ -51,7 +51,7 @@ class Controller { // SceCtrl
 
 		static assert(this.sizeof == 16);
 	}
-	alias CircularList!(Frame, false) Frames ;
+	alias CircularList!(Frame, false) Frames;
 
 	struct Latch {
 		uint uiMake;

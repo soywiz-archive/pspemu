@@ -10,7 +10,7 @@ class IoFileMgrForKernel : Module {
 	VFS fsroot;
 	string fscurdir;
 
-	void initFS() {
+	void initModule() {
 		fsroot = new VFS();
 
 		//fsroot["/ms0/PSP/GAME"].addChild(new VFS_Proxy("virtual", new VFS()));
@@ -28,20 +28,56 @@ class IoFileMgrForKernel : Module {
 		fsroot["ms0:/PSP/GAME"].addChild(new FileSystem(path), "virtual");
 	}
 
-	this() {
-		mixin(register(0xB29DDF9C, "sceIoDopen"));
-		mixin(register(0xEB092469, "sceIoDclose"));
-		mixin(register(0x55F4717D, "sceIoChdir"));
+	void initNids() {
+		mixin(registerd!(0xB29DDF9C, sceIoDopen));
+		mixin(registerd!(0xEB092469, sceIoDclose));
+		mixin(registerd!(0x55F4717D, sceIoChdir));
 		mixin(registerd!(0x810C4BC3, sceIoClose));
 		mixin(registerd!(0x109F50BC, sceIoOpen));
 		mixin(registerd!(0x6A638D83, sceIoRead));
 		mixin(registerd!(0x42EC03AC, sceIoWrite));
 		mixin(registerd!(0x27EB27B8, sceIoLseek));
 		mixin(registerd!(0xACE946E8, sceIoGetstat));
-		initFS();
 	}
 
 	Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
+
+	/**
+	 * Open a directory
+	 * 
+	 * @par Example:
+	 * @code
+	 * int dfd;
+	 * dfd = sceIoDopen("device:/");
+	 * if(dfd >= 0)
+	 * { Do something with the file descriptor }
+	 * @endcode
+	 * @param dirname - The directory to open for reading.
+	 * @return If >= 0 then a valid file descriptor, otherwise a Sony error code.
+	 */
+	SceUID sceIoDopen(string dirname) {
+		return -1;
+	}
+
+	/**
+	 * Close an opened directory file descriptor
+	 *
+	 * @param fd - Already opened file descriptor (using sceIoDopen)
+	 * @return < 0 on error
+	 */
+	int sceIoDclose(SceUID fd) {
+		return -1;
+	}
+
+	/**
+	 * Change the current directory.
+	 *
+	 * @param path - The path to change to.
+	 * @return < 0 on error.
+	 */
+	int sceIoChdir(string path) {
+		return -1;
+	}
 
 	/**
 	 * Delete a descriptor

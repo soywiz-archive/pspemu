@@ -7,7 +7,7 @@ import pspemu.core.gpu.Gpu;
 import pspemu.core.gpu.DisplayList;
 
 class sceGe_driver : Module {
-	this() {
+	void initNids() {
 		mixin(registerd!(0xE47E40E4, sceGeEdramGetAddr));
 		mixin(registerd!(0xAB49E76A, sceGeListEnQueue));
 		mixin(registerd!(0xE0D68148, sceGeListUpdateStallAddr));

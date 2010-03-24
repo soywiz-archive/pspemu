@@ -1,11 +1,51 @@
 module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_THREADS;
+version = FAKE_SINGLE_THREAD;
+
+import std.algorithm;
 
 import pspemu.hle.Module;
+import pspemu.core.cpu.Registers;
+
+import pspemu.hle.kd.sysmem; // kd/sysmem.prx (sceSystemMemoryManager)
+
+class PspThread {
+	Registers registers;
+
+	// Id used for sorting threads.
+	uint nextId;
+	
+	uint priority = 32;
+	uint stackSize;
+	bool waiting;
+	
+	//uint EntryPoint;
+	//bool running;
+	
+	this() {
+		registers = new Registers;
+	}
+
+	void switchTo(Cpu cpu) {
+		cpu.registers.copyFrom(registers);
+	}
+
+	void switchFrom(Cpu cpu) {
+		registers.copyFrom(cpu.registers);
+	}
+
+	void updateNextId() {
+		nextId += (priority + 1);
+	}
+
+	string toString() {
+		return std.string.format("Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, waiting=%d)", cast(uint)cast(void *)this, registers.PC, registers.SP, nextId, priority, stackSize, waiting);
+	}
+}
 
 class ThreadManForUser : Module {
-	this() {
+	void initNids() {
 		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
 		mixin(registerd!(0x82826F70, sceKernelSleepThreadCB));
 		mixin(registerd!(0x446D8DE6, sceKernelCreateThread));
@@ -15,6 +55,90 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xEF9E4C70, sceKernelDeleteEventFlag));
 		mixin(registerd!(0x809CE29B, sceKernelExitDeleteThread));
 		mixin(registerd!(0x1FB15A32, sceKernelSetEventFlag));
+	}
+
+	void initModule() {
+		currentThread = new PspThread;
+		currentThread.stackSize = 0x10000;
+		threadRunningList ~= currentThread;
+	}
+
+	__gshared static {
+		PspThread currentThread;
+		PspThread[] threadRunningList;
+	}
+
+	PspThread threadMinNextId() {
+		uint minNextId = -1;
+		PspThread minThread;
+		foreach (thread; threadRunningList) {
+			if (thread.nextId < minNextId) {
+				minNextId = thread.nextId;
+				minThread = thread;
+			}
+		}
+		if (minThread is null) throw(new Exception("threadMinNextId: null: No threads?"));
+		return minThread;
+	}
+
+	void threadsNormalizeNextId() {
+		if (!threadRunningList.length) return;
+		uint min = threadMinNextId.nextId;
+		foreach (thread; threadRunningList) thread.nextId -= min;
+	}
+
+	PspThread[] threadsWaiting() {
+		PspThread[] list;
+		foreach (thread; threadRunningList) if (thread.waiting) list ~= thread;
+		return list;
+	}
+
+	bool allThreadsWaiting() {
+		return threadsWaiting.length == threadRunningList.length;
+	}
+
+	void dumpThreads() {
+		writefln("Threads(%d) {", threadRunningList.length);
+		foreach (thread; threadRunningList) {
+			writefln("  %s", thread);
+		}
+		writefln("}");
+	}
+
+	void thread0InterruptHandler() {
+		version (FAKE_SINGLE_THREAD) {
+			debug (DEBUG_THREADS) {
+				writefln("thread0InterruptHandler");
+			}
+		} else {
+			PspThread nextThread;
+
+			if (allThreadsWaiting) {
+				//writefln("All threads waiting!"); return;
+				throw(new Exception("All threads waiting!"));
+			}
+
+			do {
+				nextThread = threadMinNextId;
+				nextThread.updateNextId();
+			} while (nextThread.waiting);
+			
+			if (nextThread.nextId > 0x_10_00_00) {
+				threadsNormalizeNextId();
+			}
+
+			debug (DEBUG_THREADS) {
+				dumpThreads();
+				writefln("Current: %s", currentThread);
+				writefln("Next:    %s", nextThread);
+			}
+
+			if (nextThread != currentThread) {
+				currentThread.switchFrom(cpu);
+				nextThread.switchTo(cpu);
+				currentThread = nextThread;
+			}
+		}
 	}
 
 	/** 
@@ -79,7 +203,16 @@ class ThreadManForUser : Module {
 	 * @endcode
 	 */
 	int sceKernelSleepThreadCB() {
-		return 0;
+		version (FAKE_SINGLE_THREAD) {
+			return 0;
+		} else {
+			cpu.registers.pcSet(cpu.registers.PC - 4); // Forces loop execution.
+			currentThread.waiting = true;
+			debug (DEBUG_THREADS) {
+				writefln("WAITING! %s", currentThread);
+			}
+			return 0;
+		}
 	}
 	
 	/**
@@ -110,7 +243,19 @@ class ThreadManForUser : Module {
 	 * @return UID of the created thread, or an error code.
 	 */
 	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
-		return param(1);
+		auto pspThread = new PspThread;
+		pspThread.registers.copyFrom(cpu.registers);
+		pspThread.registers.pcSet(entry);
+		//
+		uint allocStack(uint stackSize) {
+			return moduleManager.get!(SysMemUserForUser).allocStack(stackSize);
+		}
+		writefln("stackCurrent: %08X", pspThread.registers.SP);
+		pspThread.registers.SP = allocStack(stackSize);
+		writefln("stackNew: %08X", pspThread.registers.SP);
+		pspThread.priority = initPriority;
+		pspThread.stackSize = stackSize;
+		return cast(SceUID)cast(void *)pspThread;
 	}
 
 	/**
@@ -120,11 +265,29 @@ class ThreadManForUser : Module {
 	 * @param arglen - Length of the data pointed to by argp, in bytes
 	 * @param argp - Pointer to the arguments.
 	 */
-	//int sceKernelStartThread(SceUID thid, SceSize arglen, void *argp) {
-	void sceKernelStartThread(SceUID thid, SceSize arglen, void *argp) {
-		cpu.registers.A0 = 0;
-		cpu.registers.A1 = 0;
-		cpu.registers.pcSet(thid);
+	//int sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
+	void sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
+		version (FAKE_SINGLE_THREAD) {
+			auto pspThread = cast(PspThread)cast(void *)thid;
+			if (pspThread is null) throw(new Exception("sceKernelStartThread: Null"));
+			cpu.registers.pcSet(pspThread.registers.PC);
+			cpu.registers.A0 = 0;
+			cpu.registers.A1 = 0;
+		} else {
+			auto pspThread = cast(PspThread)cast(void *)thid;
+			if (pspThread is null) {
+				//throw(new Exception("sceKernelStartThread: Null"));
+				writefln("sceKernelStartThread: Null");
+				cpu.registers.V0 = 0;
+				return;
+			}
+			pspThread.registers.A0 = arglen;
+			pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
+			pspThread.nextId = threadRunningList.length ? threadMinNextId.nextId : 0;
+			threadRunningList ~= pspThread;
+			cpu.registers.V0 = 0;
+			return;
+		}
 	}
 
 	/**
@@ -218,6 +381,25 @@ struct SceKernelThreadOptParam {
 	/** UID of the memory block (?) allocated for the thread's stack. */
 	SceUID 		stackMpid;
 }
+
+/** Attribute for threads. */
+enum PspThreadAttributes {
+	/** Enable VFPU access for the thread. */
+	PSP_THREAD_ATTR_VFPU = 0x00004000,
+	/** Start the thread in user mode (done automatically 
+	  if the thread creating it is in user mode). */
+	PSP_THREAD_ATTR_USER = 0x80000000,
+	/** Thread is part of the USB/WLAN API. */
+	PSP_THREAD_ATTR_USBWLAN = 0xa0000000,
+	/** Thread is part of the VSH API. */
+	PSP_THREAD_ATTR_VSH = 0xc0000000,
+	/** Allow using scratchpad memory for a thread, NOT USABLE ON V1.0 */
+	PSP_THREAD_ATTR_SCRATCH_SRAM = 0x00008000,
+	/** Disables filling the stack with 0xFF on creation */
+	PSP_THREAD_ATTR_NO_FILLSTACK = 0x00100000,
+	/** Clear the stack when the thread is deleted */
+	PSP_THREAD_ATTR_CLEAR_STACK = 0x00200000,
+};
 
 static this() {
 	mixin(Module.registerModule("ThreadManForUser"));

@@ -177,25 +177,38 @@ class SysMemUserForUser : Module {
 		}
 	}
 
-	MemorySegment pspMemorySegment;
+	uint allocStack(uint stackSize) {
+		stackSize &= 0xF;
+		static if (0) {
+			auto segment = pspMemorySegmentStacks.allocByHigh(stackSize);
+			writefln("allocStack!!! %s", segment);
+			return segment.block.high;
+		} else {
+			__gshared static uint lastBlock = 0x083FFF00;
+			lastBlock -= stackSize;
+			return lastBlock;
+		}
+	}
 
-	void initPartitions() {
-		pspMemorySegment = new MemorySegment(0x08000000, 0x0A000000, "PSP Memory");
+	MemorySegment pspMemorySegment;
+	MemorySegment pspMemorySegmentStacks;
+
+	void initModule() {
+		pspMemorySegment       = new MemorySegment(0x08000000, 0x0A000000, "PSP Memory");
+		pspMemorySegmentStacks = new MemorySegment(0x08000000, 0x08400000 - 0x100, "PSP Memory Stacks");
 		
 		pspMemorySegment.allocByAddr(0x08000000,  4 * 1024 * 1024, "Kernel Memory 1");
 		pspMemorySegment.allocByAddr(0x08400000,  4 * 1024 * 1024, "Kernel Memory 2");
 		pspMemorySegment.allocByAddr(0x08800000, 24 * 1024 * 1024, "User Memory");
 	}
 
-	this() {
+	void initNids() {
 		mixin(registerd!(0xA291F107, sceKernelMaxFreeMemSize));
 		mixin(registerd!(0x237DBD4F, sceKernelAllocPartitionMemory));
 		mixin(registerd!(0x9D9A5BA1, sceKernelGetBlockHeadAddr));
 		mixin(registerd!(0xF919F628, sceKernelTotalFreeMemSize));
 		mixin(registerd!(0xB6D61D02, sceKernelFreePartitionMemory));
 		mixin(registerd!(0x3FC9AE6A, sceKernelDevkitVersion));
-
-		initPartitions();
 	}
 
 	/**

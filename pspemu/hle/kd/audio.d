@@ -20,7 +20,7 @@ class sceAudio_driver : Module {
 	
 	Channel channels[8]; // PSP_AUDIO_CHANNEL_MAX
 
-	this() {
+	void initNids() {
 		mixin(registerd!(0x13F592BC, sceAudioOutputPannedBlocking));
 		mixin(registerd!(0x5EC81C55, sceAudioChReserve));
 		mixin(registerd!(0x6FC46853, sceAudioChRelease));

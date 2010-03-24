@@ -78,7 +78,9 @@ abstract class BasePspDisplay : IDisplay {
 	Object _displayingkMutex;
 	Object displayingkMutex() { return _displayingkMutex; }
 	void waitVblank() {
-		synchronized (displayingkMutex) { }
+		//synchronized (displayingkMutex) { }
+		while ( vblank) Sleep(1);
+		while (!vblank) Sleep(1);
 	}
 }
 

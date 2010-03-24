@@ -14,7 +14,7 @@ import std.c.time;
 alias void SceKernelUtilsMt19937Context;
 
 class UtilsForUser : Module {
-	this() {
+	void initNids() {
 		mixin(registerd!(0x27CC57F0, sceKernelUtilsMt19937Init));
 		mixin(registerd!(0x06FB8A63, sceKernelUtilsMt19937UInt));
 		mixin(registerd!(0x27CC57F0, sceKernelLibcTime));

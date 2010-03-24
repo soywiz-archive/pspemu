@@ -5,7 +5,7 @@ module pspemu.hle.kd.ctrl; // kd/ctrl.prx (sceController_Service)
 import pspemu.hle.Module;
 
 class sceCtrl_driver : Module {
-	this() {
+	void initNids() {
 		mixin(registerd!(0x6A2774F3, sceCtrlSetSamplingCycle));
 		mixin(registerd!(0x1F4011E6, sceCtrlSetSamplingMode));
 		mixin(registerd!(0x1F803938, sceCtrlReadBufferPositive));

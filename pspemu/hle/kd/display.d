@@ -10,7 +10,7 @@ import pspemu.hle.Module;
 import pspemu.models.IDisplay;
 
 class sceDisplay_driver : Module { // Flags: 0x00010000
-	this() {
+	void initNids() {
 		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
 		mixin(registerd!(0x289D82FE, sceDisplaySetFrameBuf));
 		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
