@@ -16,6 +16,7 @@ class sceGe_driver : Module {
 		mixin(registerd!(0xB287BD61, sceGeDrawSync));
 		mixin(registerd!(0xA4FC06A4, sceGeSetCallback));
 		mixin(registerd!(0x05DB22CE, sceGeUnsetCallback));
+		mixin(registerd!(0x1F6752AD, sceGeEdramGetSize));
 	}
 
 	PspGeCallbackData[] callbackDataList;
@@ -40,6 +41,15 @@ class sceGe_driver : Module {
 	 */
 	uint sceGeEdramGetAddr() {
 		return cpu.memory.frameBufferAddress;
+	}
+
+	/**
+	 * Get the size of VRAM.
+	 *
+	 * @return The size of VRAM (in bytes).
+	 */
+	uint sceGeEdramGetSize() {
+		return cpu.memory.frameBufferMask + 1;
 	}
 
 	/**

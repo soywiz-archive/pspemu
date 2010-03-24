@@ -1,4 +1,4 @@
-module pspemu.hle.kd.types;
+module pspemu.hle.Types;
 
 alias char  SceChar8;
 alias short SceShort16;

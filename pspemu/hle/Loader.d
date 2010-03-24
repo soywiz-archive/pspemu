@@ -52,6 +52,7 @@ class PspLibdoc {
 		uint nid;
 		string name;
 		string comment;
+		Library library;
 
 		string toString() {
 			return std.string.format(typeof(this).stringof ~ "(nid=0x%08X, name='%s' comment='%s')", nid, name, comment);
@@ -67,6 +68,7 @@ class PspLibdoc {
 		Function[uint] functions;
 		Variable[uint] variables;
 		LibrarySymbol[uint] symbols;
+		Prx prx;
 
 		string toString() {
 			string s;
@@ -104,6 +106,18 @@ class PspLibdoc {
 		return libraries[libraryName].symbols[nid];
 	}
 
+	string getPrxPath(string libraryName) {
+		return onException(libraries[libraryName].prx.fileName, "<unknown path>");
+	}
+	
+	string getPrxName(string libraryName) {
+		return onException(libraries[libraryName].prx.moduleName, "<unknown name>");
+	}
+	
+	string getPrxInfo(string libraryName) {
+		return std.string.format("%s (%s)", getPrxPath(libraryName), getPrxName(libraryName));
+	}
+
 	void parse() {
 		auto xml = new Document(psplibdoc_xml);
 		Function func;
@@ -120,6 +134,7 @@ class PspLibdoc {
 					case "COMMENT": func.comment = node.text; break;
 				}
 			}
+			func.library = library;
 			library.functions[func.nid] = func;
 			library.symbols[func.nid] = func;
 		}
@@ -133,6 +148,7 @@ class PspLibdoc {
 					case "COMMENT": var.comment = node.text; break;
 				}
 			}
+			var.library = library;
 			library.variables[var.nid] = var;
 			library.symbols[var.nid] = var;
 		}
@@ -147,6 +163,7 @@ class PspLibdoc {
 					case "VARIABLES": foreach (snode; node.elements) if (snode.tag.name == "VARIABLE") parseVariable(snode); break;
 				}
 			}
+			library.prx = prx;
 			prx.libraries[library.name] = library;
 		}
 
@@ -368,7 +385,7 @@ class Loader : IDebugSource {
 		uint[][string] unimplementedNids;
 		
 		while (!importsStream.eof) {
-			auto moduleImport = read!(ModuleImport)(importsStream);
+			auto moduleImport     = read!(ModuleImport)(importsStream);
 			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
 			//assert(moduleImport.entry_size == moduleImport.sizeof);
 			version (DEBUG_LOADER) writefln("  '%s'", moduleImportName);
@@ -376,11 +393,13 @@ class Loader : IDebugSource {
 			auto nidStream  = new SliceStream(memory, moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
 			auto callStream = new SliceStream(memory, moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
 			//writefln("%08X", moduleImport.callAddress);
-			auto pspModule = moduleManager[moduleImportName];
+			
+			auto pspModule = nullOnException(moduleManager[moduleImportName]);
+
 			while (!nidStream.eof) {
 				uint nid = read!(uint)(nidStream);
 				
-				if (nid in pspModule.nids) {
+				if ((pspModule !is null) && (nid in pspModule.nids)) {
 					version (DEBUG_LOADER) writefln("    %s", pspModule.nids[nid]);
 					callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
 					callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
@@ -399,7 +418,7 @@ class Loader : IDebugSource {
 			int count = 0;
 			writefln("unimplementedNids:");
 			foreach (moduleName, nids; unimplementedNids) {
-				writefln("  %s:", moduleName);
+				writefln("  %s // %s:", moduleName, PspLibdoc.singleton.getPrxInfo(moduleName));
 				foreach (nid; nids) {
 					if (auto symbol = PspLibdoc.singleton.locate(nid, moduleName)) {
 						writefln("    mixin(registerd!(0x%08X, %s));", symbol.nid, symbol.name);
@@ -426,34 +445,29 @@ class Loader : IDebugSource {
 	uint GP() { return moduleInfo.gp; }
 
 	void setRegisters() {
-		auto sysMemUserForUser = moduleManager.get!(SysMemUserForUser);
-		//writefln("%08X", memory.getPointer(this.elf.suggestedBlockAddress));
-		//uint stacksize = 0x8000; // 32 KB
-		uint stacksize = 0x40000; // 256 KB
-		uint stackaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Stack", PspSysMemBlockTypes.PSP_SMEM_High, stacksize, 0));
-		//uint stackaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Stack", PspSysMemBlockTypes.PSP_SMEM_Addr, stacksize, 0x09F00000));
+		auto threadManForUser = moduleManager.get!(ThreadManForUser);
 
+		
 		assembler.assembleBlock(r"
 			.text 0x08000000
-			syscall 0x2015
+			syscall 0x2015   ; ThreadManForUser.sceKernelSleepThreadCB
 		");
 
-		//Module.loadModuleEx!(ThreadManForUser)
-		auto pspThread = new PspThread();
+		auto pspThread = reinterpret!(PspThread)(threadManForUser.sceKernelCreateThread("Main Thread", PC, 32, 0x8000, 0, null));
 		with (pspThread) {
 			registers.pcSet = PC;
-			registers["gp"] = GP;
-			registers["sp"] = stackaddress + stacksize - 0x10;
-			registers["k0"] = registers["sp"];
-			registers["ra"] = 0x08000000;
-			registers["a0"] = 0; // argumentsLength.
-			registers["a1"] = 0; // argumentsPointer
+			registers.GP = GP;
+			registers.K0 = pspThread.registers.SP;
+			registers.RA = 0x08000000;
+			registers.A0 = 0; // argumentsLength.
+			registers.A1 = 0; // argumentsPointer
 		}
-		pspThread.switchTo(cpu);
+		threadManForUser.sceKernelStartThread(reinterpret!(SceUID)(pspThread), 0, null);
+		pspThread.switchTo();
 
 		writefln("PC: %08X", cpu.registers.PC);
-		writefln("GP: %08X", cpu.registers["gp"]);
-		writefln("SP: %08X", cpu.registers["sp"]);
+		writefln("GP: %08X", cpu.registers.GP);
+		writefln("SP: %08X", cpu.registers.SP);
 	}
 }
 

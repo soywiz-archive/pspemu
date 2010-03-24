@@ -32,6 +32,7 @@ class sceAudio_driver : Module {
 		mixin(registerd!(0x13F592BC, sceAudioOutputPannedBlocking));
 		mixin(registerd!(0x5EC81C55, sceAudioChReserve));
 		mixin(registerd!(0x6FC46853, sceAudioChRelease));
+		mixin(registerd!(0x136CAF51, sceAudioOutputBlocking));
 	}
 
 	void initModule() {
@@ -82,6 +83,22 @@ class sceAudio_driver : Module {
 
 		unimplemented();
 		return 0;
+	}
+
+	/**
+	 * Output audio of the specified channel (blocking)
+	 *
+	 * @param channel - The channel number.
+	 *
+	 * @param vol - The volume.
+	 *
+	 * @param buf - Pointer to the PCM data to output.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioOutputBlocking(int channel, int vol, void* buf) {
+		unimplemented();
+		return -1;
 	}
 
 	/**

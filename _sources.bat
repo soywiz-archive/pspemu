@@ -33,8 +33,8 @@ SET SOURCES=%SOURCES% pspemu/formats/ElfDwarf.d
 SET SOURCES=%SOURCES% pspemu/hle/Loader.d
 SET SOURCES=%SOURCES% pspemu/hle/Module.d
 SET SOURCES=%SOURCES% pspemu/hle/Syscall.d
+SET SOURCES=%SOURCES% pspemu/hle/Types.d
 
-SET SOURCES=%SOURCES% pspemu/hle/kd/types.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/audio.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/display.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/ge.d
@@ -48,6 +48,9 @@ SET SOURCES=%SOURCES% pspemu/hle/kd/loadexec.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/utils.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/rtc.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/pspnet_inet.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/hpremote.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/loadcore.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/exceptionman.d
 
 SET SOURCES=%SOURCES% pspemu/core/Memory.d
 

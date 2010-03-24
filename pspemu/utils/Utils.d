@@ -26,6 +26,9 @@ int   F_I(float v) { return *cast(int   *)&v; }
 // int -> float
 float I_F(int   v) { return *cast(float *)&v; }
 
+T onException(T)(lazy T t, T errorValue) { try { return t(); } catch { return errorValue; } }
+T nullOnException(T)(lazy T t) { return onException!(T)(t, null); }
+
 T1 reinterpret(T1, T2)(T2 v) { return *cast(T1 *)&v; }
 
 ubyte[] TA(T)(ref T v) {

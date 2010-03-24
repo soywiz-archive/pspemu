@@ -41,6 +41,7 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x27EB27B8, sceIoLseek));
 		mixin(registerd!(0xACE946E8, sceIoGetstat));
 		mixin(registerd!(0x54F5FB11, sceIoDevctl));
+		mixin(registerd!(0xF27A9C51, sceIoRemove));
 	}
 
 	Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
@@ -295,6 +296,17 @@ class IoFileMgrForKernel : Module {
 			writefln("STAT!! FAILED: %s", e);
 			return -1;
 		}
+	}
+
+	/**
+	 * Remove directory entry
+	 *
+	 * @param file - Path to the file to remove
+	 * @return < 0 on error
+	 */
+	int sceIoRemove(string file) {
+		unimplemented();
+		return -1;
 	}
 }
 

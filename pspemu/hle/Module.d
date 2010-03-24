@@ -4,7 +4,7 @@ public import std.stdio, std.string, std.stream;
 public import pspemu.utils.Utils;
 public import pspemu.core.cpu.Cpu;
 
-public import pspemu.hle.kd.types;
+public import pspemu.hle.Types;
 
 import std.traits;
 
@@ -28,7 +28,7 @@ static string classInfoBaseName(ClassInfo ci) {
 	//return std.string.split(ci.name, ".")[$ - 1];
 }
 
-string getModuleMethodDelegate(alias func)() {
+string getModuleMethodDelegate(alias func, uint nid = 0)() {
 	string functionName = FunctionName!(func);
 	string r = "";
 	alias ReturnType!(func) return_type;
@@ -73,6 +73,7 @@ string getModuleMethodDelegate(alias func)() {
 	}
 	r ~= "delegate void() { ";
 	{
+		r ~= "currentExecutingNid = " ~ tos(nid) ~ ";";
 		string parametersString = _parametersString;
 		string parametersPrototypeString = _parametersPrototypeString;
 		if (parametersPrototypeString.length) {
@@ -121,6 +122,7 @@ abstract class Module {
 	Function[Nid] nids;
 	Function[string] names;
 	ModuleManager moduleManager;
+	Nid currentExecutingNid;
 	
 	this() {
 		initNids();
@@ -161,7 +163,7 @@ abstract class Module {
 				pragma(msg, "}}}}");
 			}
 
-			return "names[\"" ~ FunctionName!(func) ~ "\"] = nids[" ~ tos(id) ~ "] = Function(this, " ~ tos(id) ~ ", \"" ~ FunctionName!(func) ~ "\", " ~ getModuleMethodDelegate!(func) ~ ");";
+			return "names[\"" ~ FunctionName!(func) ~ "\"] = nids[" ~ tos(id) ~ "] = Function(this, " ~ tos(id) ~ ", \"" ~ FunctionName!(func) ~ "\", " ~ getModuleMethodDelegate!(func, id) ~ ");";
 		}
 
 		static string registerModule(string moduleName) {
@@ -204,7 +206,7 @@ abstract class Module {
 	string toString() { return std.string.format("Module(%s)", baseName); }
 
 	void unimplemented(string file = __FILE__, int line = __LINE__)() {
-		throw(new Exception(std.string.format("Unimplemented '%s:%d'", file, line)));
+		throw(new Exception(std.string.format("Unimplemented '%s' at '%s:%d'", onException(nids[currentExecutingNid].name, "<unknown>"), file, line)));
 	}
 }
 

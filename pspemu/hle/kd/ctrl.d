@@ -1,7 +1,7 @@
 module pspemu.hle.kd.ctrl; // kd/ctrl.prx (sceController_Service)
 
 //debug = DEBUG_SYSCALL;
-debug = DEBUG_CONTROLLER;
+//debug = DEBUG_CONTROLLER;
 
 import pspemu.hle.Module;
 
