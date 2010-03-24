@@ -10,6 +10,7 @@ class sceGe_driver : Module {
 	void initNids() {
 		mixin(registerd!(0xE47E40E4, sceGeEdramGetAddr));
 		mixin(registerd!(0xAB49E76A, sceGeListEnQueue));
+		mixin(registerd!(0x1C0D95A6, sceGeListEnQueueHead));
 		mixin(registerd!(0xE0D68148, sceGeListUpdateStallAddr));
 		mixin(registerd!(0x03444EB4, sceGeListSync));
 		mixin(registerd!(0xB287BD61, sceGeDrawSync));
@@ -72,6 +73,21 @@ class sceGe_driver : Module {
 	 */
 	int sceGeListEnQueue(void* list, void* stall, int cbid, PspGeListArgs *arg) {
 		return cast(int)cast(void*)cpu.gpu.sceGeListEnQueue(list, stall);
+	}
+	
+	/**
+	 * Enqueue a display list at the head of the GE display list queue.
+	 * 
+	 * @param list - The head of the list to queue.
+	 * @param stall - The stall address.
+	 * If NULL then no stall address set and the list is transferred immediately.
+	 * @param cbid - ID of the callback set by calling sceGeSetCallback
+	 * @param arg - Structure containing GE context buffer address
+	 *
+	 * @return The ID of the queue.
+	 */
+	int sceGeListEnQueueHead(void* list, void* stall, int cbid, PspGeListArgs* arg) {
+		return cast(int)cast(void*)cpu.gpu.sceGeListEnQueueHead(list, stall);
 	}
 
 	/**

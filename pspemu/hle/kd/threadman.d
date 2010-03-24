@@ -1,7 +1,7 @@
 module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 
 //debug = DEBUG_THREADS;
-version = FAKE_SINGLE_THREAD;
+//version = FAKE_SINGLE_THREAD;
 
 import std.algorithm;
 
@@ -13,12 +13,15 @@ import pspemu.hle.kd.sysmem; // kd/sysmem.prx (sceSystemMemoryManager)
 class PspThread {
 	Registers registers;
 
+	string name;
+
 	// Id used for sorting threads.
-	uint nextId;
+	uint nextId = 0;
 	
 	uint priority = 32;
-	uint stackSize;
-	bool waiting;
+	uint stackSize = 0x1000;
+	bool waiting = false;
+	bool alive = true;
 	
 	//uint EntryPoint;
 	//bool running;
@@ -40,15 +43,20 @@ class PspThread {
 	}
 
 	string toString() {
-		return std.string.format("Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, waiting=%d)", cast(uint)cast(void *)this, registers.PC, registers.SP, nextId, priority, stackSize, waiting);
+		return std.string.format(
+			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, waiting=%d, alive=%d)",
+			cast(uint)cast(void *)this, registers.PC, registers.SP, nextId, priority, stackSize, waiting, alive
+		);
 	}
 }
 
 class ThreadManForUser : Module {
 	void initNids() {
 		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
+		mixin(registerd!(0x9ACE131E, sceKernelSleepThread));
 		mixin(registerd!(0x82826F70, sceKernelSleepThreadCB));
 		mixin(registerd!(0x446D8DE6, sceKernelCreateThread));
+		mixin(registerd!(0x9FA03CD3, sceKernelDeleteThread));
 		mixin(registerd!(0xF475845D, sceKernelStartThread));
 		mixin(registerd!(0xAA73C935, sceKernelExitThread));
 		mixin(registerd!(0x55C20A00, sceKernelCreateEventFlag));
@@ -63,10 +71,8 @@ class ThreadManForUser : Module {
 		threadRunningList ~= currentThread;
 	}
 
-	__gshared static {
-		PspThread currentThread;
-		PspThread[] threadRunningList;
-	}
+	PspThread currentThread;
+	PspThread[] threadRunningList;
 
 	PspThread threadMinNextId() {
 		uint minNextId = -1;
@@ -81,6 +87,12 @@ class ThreadManForUser : Module {
 		return minThread;
 	}
 
+	void threadsRemoveDead() {
+		PspThread[] list;
+		foreach (thread; threadRunningList) if (thread.alive) list ~= thread;
+		threadRunningList = list;
+	}
+
 	void threadsNormalizeNextId() {
 		if (!threadRunningList.length) return;
 		uint min = threadMinNextId.nextId;
@@ -89,7 +101,7 @@ class ThreadManForUser : Module {
 
 	PspThread[] threadsWaiting() {
 		PspThread[] list;
-		foreach (thread; threadRunningList) if (thread.waiting) list ~= thread;
+		foreach (thread; threadRunningList) if (thread.waiting || !thread.alive) list ~= thread;
 		return list;
 	}
 
@@ -112,20 +124,33 @@ class ThreadManForUser : Module {
 			}
 		} else {
 			PspThread nextThread;
+			
+			if (threadRunningList.length <= 1) {
+				debug (DEBUG_THREADS) {
+					dumpThreads();
+				}
+				return;
+			}
 
 			if (allThreadsWaiting) {
+				dumpThreads();
 				//writefln("All threads waiting!"); return;
 				throw(new Exception("All threads waiting!"));
 			}
 
+			int count = 0;
 			do {
 				nextThread = threadMinNextId;
 				nextThread.updateNextId();
-			} while (nextThread.waiting);
+				if (count++ > 1024) {
+					throw(new Exception("threadman stalled!"));
+				}
+			} while (nextThread.waiting || !nextThread.alive);
 			
-			if (nextThread.nextId > 0x_10_00_00) {
+			if (nextThread.nextId > 0x2000) {
 				threadsNormalizeNextId();
 			}
+			threadsRemoveDead();
 
 			debug (DEBUG_THREADS) {
 				dumpThreads();
@@ -134,8 +159,8 @@ class ThreadManForUser : Module {
 			}
 
 			if (nextThread != currentThread) {
-				currentThread.switchFrom(cpu);
-				nextThread.switchTo(cpu);
+				if (currentThread) currentThread.switchFrom(cpu);
+				if (nextThread   ) nextThread.switchTo(cpu);
 				currentThread = nextThread;
 			}
 		}
@@ -194,6 +219,28 @@ class ThreadManForUser : Module {
 	}
 
 	/**
+	 * Sleep thread
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelSleepThread() {
+		version (FAKE_SINGLE_THREAD) {
+			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelSleepThread"));
+			return 0;
+		} else {
+			cpu.registers.pcSet(cpu.registers.PC - 4); // Forces loop execution.
+			debug (DEBUG_THREADS) {
+				writefln("WAITING! %s", currentThread);
+			}
+			if (currentThread) currentThread.waiting = true;
+
+			// Switch to another thread immediately.
+			thread0InterruptHandler();
+			return 0;
+		}
+	}
+
+	/**
 	 * Sleep thread but service any callbacks as necessary
 	 *
 	 * @par Example:
@@ -204,13 +251,17 @@ class ThreadManForUser : Module {
 	 */
 	int sceKernelSleepThreadCB() {
 		version (FAKE_SINGLE_THREAD) {
+			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelSleepThreadCB"));
 			return 0;
 		} else {
 			cpu.registers.pcSet(cpu.registers.PC - 4); // Forces loop execution.
-			currentThread.waiting = true;
 			debug (DEBUG_THREADS) {
 				writefln("WAITING! %s", currentThread);
 			}
+			if (currentThread) currentThread.waiting = true;
+
+			// Switch to another thread immediately.
+			thread0InterruptHandler();
 			return 0;
 		}
 	}
@@ -220,7 +271,32 @@ class ThreadManForUser : Module {
 	 *
 	 * @param status - Exit status.
 	 */
-	int sceKernelExitThread(int status) {
+	void sceKernelExitThread(int status) {
+		version (FAKE_SINGLE_THREAD) {
+			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelExitThread"));
+		} else {
+			currentThread.waiting = true;
+			currentThread.alive   = false;
+
+			// Switch to another thread immediately.
+			thread0InterruptHandler();
+		}
+	}
+	
+	/**
+	 * Delate a thread
+	 *
+	 * @param thid - UID of the thread to be deleted.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelDeleteThread(SceUID thid) {
+		auto pspThread = cast(PspThread)cast(void *)thid;
+		if (pspThread is null) {
+			//throw(new Excepti);
+			return -1;
+		}
+		pspThread.alive = false;
 		return 0;
 	}
 
@@ -244,6 +320,7 @@ class ThreadManForUser : Module {
 	 */
 	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
 		auto pspThread = new PspThread;
+		pspThread.name = name.idup;
 		pspThread.registers.copyFrom(cpu.registers);
 		pspThread.registers.pcSet(entry);
 		//
@@ -278,7 +355,7 @@ class ThreadManForUser : Module {
 			if (pspThread is null) {
 				//throw(new Exception("sceKernelStartThread: Null"));
 				writefln("sceKernelStartThread: Null");
-				cpu.registers.V0 = 0;
+				cpu.registers.V0 = -1;
 				return;
 			}
 			pspThread.registers.A0 = arglen;

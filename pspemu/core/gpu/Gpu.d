@@ -154,6 +154,15 @@ class Gpu {
 			return ret;
 		}
 
+		// @TODO!!!! @FIXME!! change queue for queueHead
+		DisplayList* sceGeListEnQueueHead(void* list, void* stall = null) {
+			//while (!displayLists.readAvailable) WaitAndCheck();
+			while (!displayLists.writeAvailable) sleep(1);
+			DisplayList* ret = &displayLists.queue(DisplayList(list, stall));
+			//writefln("%s", *ret);
+			return ret;
+		}
+
 		void sceGeListUpdateStallAddr(DisplayList* displayList, void* stall) {
 			displayList.stall = cast(Command*)stall;
 		}

@@ -1,5 +1,8 @@
 module pspemu.core.cpu.Cpu;
 
+const uint THREAD0_CALL_MASK = 0xFFFF;
+//const uint THREAD0_CALL_MASK = 0xFF;
+
 //debug = DEBUG_GEN_SWITCH;
 version = ENABLE_BREAKPOINTS;
 
@@ -75,6 +78,8 @@ class Cpu : IDebugSource {
 	
 	mixin DebugSourceProxy;
 
+	void delegate() startupCallback;
+
 	bool running = true;
 
 	void stop() {
@@ -147,8 +152,7 @@ class Cpu : IDebugSource {
 			// Process IRQ (Interrupt ReQuest)
 
 			// Add a THREAD Interrupt (to switch threads)
-			if ((count & 0xFFFF) == 0) interrupts.queue(Interrupts.Type.THREAD0);
-			//if ((count & 0xFF) == 0) interrupts.queue(Interrupts.Type.THREAD0);
+			if ((count & THREAD0_CALL_MASK) == 0) interrupts.queue(Interrupts.Type.THREAD0);
 
 			// Process interrupts if there are pending interrupts
 			if (interrupts.InterruptFlag) interrupts.process();
@@ -336,6 +340,9 @@ class Cpu : IDebugSource {
 		//Thread.sleep(2000_0000);
 		//Sleep(2000);
 		try {
+			if (startupCallback !is null) {
+				startupCallback();
+			}
 			_running = true;
 			execute();
 		} catch (Object o) {

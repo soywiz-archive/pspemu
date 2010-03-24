@@ -41,16 +41,19 @@ class sceAudio_driver : Module {
 	  * Output panned audio of the specified channel (blocking)
 	  *
 	  * @param channel - The channel number.
-	  *
 	  * @param leftvol - The left volume.
-	  *
 	  * @param rightvol - The right volume.
-	  *
 	  * @param buf - Pointer to the PCM data to output.
 	  *
 	  * @return 0 on success, an error if less than 0.
 	  */
 	int sceAudioOutputPannedBlocking(int channel, int leftvol, int rightvol, void* buf) {
+		// Invalid channel.
+		if (!validChannelIndex(channel)) return -1;
+
+		auto cchannel = channels[channel];
+		writefln("  samplecount: %d", cchannel.samplecount);
+
 		return 0;
 	}
 

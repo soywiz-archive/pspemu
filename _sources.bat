@@ -45,6 +45,7 @@ SET SOURCES=%SOURCES% pspemu/hle/kd/sysmem.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/threadman.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/loadexec.d
 SET SOURCES=%SOURCES% pspemu/hle/kd/utils.d
+SET SOURCES=%SOURCES% pspemu/hle/kd/rtc.d
 
 SET SOURCES=%SOURCES% pspemu/core/Memory.d
 
