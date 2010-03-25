@@ -73,9 +73,7 @@ struct Instruction {
 			uint, "",      16
 		)); }
 
-		// EXT/INS (POS/SIZE_E/SIZE_I)
-		alias LSB POS;
-
+		
 		uint SIZE_E() { return MSB + 1; }
 		uint SIZE_E(uint size) { MSB = size - 1; return size; }
 
@@ -89,6 +87,8 @@ struct Instruction {
 			uint, "__6",   6
 		)); }
 
+		alias LSB POS; // EXT/INS (POS/SIZE_E/SIZE_I)
+		alias CODE CODE_BREAK; // @TODO Fixme! BREAK %c
 		alias IMM OFFSET;
 	}
 

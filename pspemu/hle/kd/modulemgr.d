@@ -5,6 +5,11 @@ import pspemu.hle.Module;
 class ModuleMgrForUser : Module {
 	void initNids() {
 		mixin(registerd!(0xD675EBB8, sceKernelSelfStopUnloadModule));
+		mixin(registerd!(0xB7F46618, sceKernelLoadModuleByID));
+		mixin(registerd!(0x977DE386, sceKernelLoadModule));
+		mixin(registerd!(0x50F0C1EC, sceKernelStartModule));
+		mixin(registerd!(0xD1FF982A, sceKernelStopModule));
+		mixin(registerd!(0x2E0911AA, sceKernelUnloadModule));
 	}
 
 	/**
@@ -20,9 +25,101 @@ class ModuleMgrForUser : Module {
 		throw(new Exception("sceKernelSelfStopUnloadModule"));
 		return 0;
 	}
+
+	/**
+	 * Load a module from the given file UID.
+	 *
+	 * @param fid - The module's file UID.
+	 * @param flags - Unused, always 0.
+	 * @param option - Pointer to an optional ::SceKernelLMOption structure.
+	 *
+	 * @return The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
+	 */
+	SceUID sceKernelLoadModuleByID(SceUID fid, int flags, SceKernelLMOption *option) {
+		unimplemented();
+		return 0;
+	}
+
+	/**
+	 * Load a module.
+	 * @note This function restricts where it can load from (such as from flash0) 
+	 * unless you call it in kernel mode. It also must be called from a thread.
+	 * 
+	 * @param path - The path to the module to load.
+	 * @param flags - Unused, always 0 .
+	 * @param option  - Pointer to a mod_param_t structure. Can be NULL.
+	 *
+	 * @return The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
+	 */
+	SceUID sceKernelLoadModule(const char *path, int flags, SceKernelLMOption *option) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Start a loaded module.
+	 *
+	 * @param modid - The ID of the module returned from LoadModule.
+	 * @param argsize - Length of the args.
+	 * @param argp - A pointer to the arguments to the module.
+	 * @param status - Returns the status of the start.
+	 * @param option - Pointer to an optional ::SceKernelSMOption structure.
+	 *
+	 * @return ??? on success, otherwise one of ::PspKernelErrorCodes.
+	 */
+	int sceKernelStartModule(SceUID modid, SceSize argsize, void *argp, int *status, SceKernelSMOption *option) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Stop a running module.
+	 *
+	 * @param modid - The UID of the module to stop.
+	 * @param argsize - The length of the arguments pointed to by argp.
+	 * @param argp - Pointer to arguments to pass to the module's module_stop() routine.
+	 * @param status - Return value of the module's module_stop() routine.
+	 * @param option - Pointer to an optional ::SceKernelSMOption structure.
+	 *
+	 * @return ??? on success, otherwise one of ::PspKernelErrorCodes.
+	 */
+	int sceKernelStopModule(SceUID modid, SceSize argsize, void *argp, int *status, SceKernelSMOption *option) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Unload a stopped module.
+	 *
+	 * @param modid - The UID of the module to unload.
+	 *
+	 * @return ??? on success, otherwise one of ::PspKernelErrorCodes.
+	 */
+	int sceKernelUnloadModule(SceUID modid) {
+		unimplemented();
+		return -1;
+	}
 }
 
 class ModuleMgrForKernel : ModuleMgrForUser {
+}
+
+struct SceKernelLMOption {
+	SceSize size;
+	SceUID  mpidtext;
+	SceUID  mpiddata;
+	uint    flags;
+	char    position;
+	char    access;
+	char    creserved[2];
+}
+
+struct SceKernelSMOption {
+	SceSize size;
+	SceUID  mpidstack;
+	SceSize stacksize;
+	int     priority;
+	uint    attribute;
 }
 
 static this() {

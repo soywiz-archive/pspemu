@@ -20,9 +20,21 @@ class sceGe_driver : Module {
 		mixin(registerd!(0xDC93CFEF, sceGeGetCmd));
 		mixin(registerd!(0x57C8945B, sceGeGetMtx));
 		mixin(registerd!(0x5FB86AB0, sceGeListDeQueue));
+		mixin(registerd!(0xB448EC0D, sceGeBreak));
+		mixin(registerd!(0x4C06E472, sceGeContinue));
 	}
 
 	PspGeCallbackData[] callbackDataList;
+
+	// @TODO: Unknown prototype
+	void sceGeBreak() {
+		unimplemented();
+	}
+
+	// @TODO: Unknown prototype
+	void sceGeContinue() {
+		unimplemented();
+	}
 
 	/**
 	 * Retrive the current value of a GE command.

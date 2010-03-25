@@ -30,23 +30,14 @@ import pspemu.hle.Module;
 import pspemu.hle.Loader;
 import pspemu.hle.Syscall;
 
-class PspDisplay : BasePspDisplay {
+class PspDisplay : Display {
 	Memory memory;
-	bool _vblank = true;
 
 	this(Memory memory) {
 		this.memory = memory;
-		super();
 	}
 
-	void* frameBufferPointer() {
-		//return memory.getPointer(Memory.frameBufferAddress);
-		//writefln("%08X", memory.displayMemory);
-		return memory.getPointer(_info.topaddr);
-	}
-
-	bool vblank(bool status) { return _vblank = status; }
-	bool vblank() { return _vblank; }
+	void* frameBufferPointer() { return memory.getPointer(info.topaddr); }
 }
 
 int main(string[] args) {
@@ -63,34 +54,34 @@ int main(string[] args) {
 	auto loader        = new Loader(cpu, moduleManager);
 	auto syscall       = new Syscall(cpu, moduleManager);
 
+	bool showMainMenu = true;
+
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 	//cpu.addBreakpoint(cpu.BreakPoint(0x0893F530, []));
 
-	string executableFile;
-
-	executableFile = "tests/test1.elf";
-
+	// Start running.
 	if (args.length >= 2) {
-		executableFile = args[1];
+		string executableFile = args[1];
+		//showMainMenu = false;
+
+		// Load.
+		loader.load(executableFile);
+		loader.setRegisters();
+
+		version (TRACE_FROM_BEGINING) {
+			cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
+		}
+
+		// Start GPU.
+		gpu.start();
+
+		// Start CPU.
+		cpu.start();
 	}
-
-	// Load.
-	loader.load(executableFile);
-	loader.setRegisters();
-
-	version (TRACE_FROM_BEGINING) {
-		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
-	}
-
-	// Start GPU.
-	gpu.start();
-
-	// Start CPU.
-	cpu.start();
 
 	int retval = 0;
 	try {
-		Application.run(new DisplayForm(moduleManager, cpu, display, controller));
+		Application.run(new DisplayForm(showMainMenu, moduleManager, cpu, display, controller));
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
 		retval = -1;

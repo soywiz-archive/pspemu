@@ -25,10 +25,15 @@ class DisplayForm : Form, IMessageFilter {
 	GLControlDisplay glc;
 	ModuleManager    moduleManager;
 	Cpu              cpu;
-	IDisplay         display;
+	Display          display;
 	IController      controller;
+	real             lastFps;
 
-	this(ModuleManager moduleManager = null, Cpu cpu = null, IDisplay display = null, IController controller = null) {
+	void updateTitle() {
+		text = std.string.format("PSP Emulator - r%s - FPS: %.1f", svnRevision, lastFps);
+	}
+
+	this(bool showMainMenu = false, ModuleManager moduleManager = null, Cpu cpu = null, Display display = null, IController controller = null) {
 		Application.addMessageFilter(this);
 
 		this.moduleManager = moduleManager;
@@ -46,15 +51,10 @@ class DisplayForm : Form, IMessageFilter {
 		icon = Application.resources.getIcon(101);
 		maximizeBox = false;
 
-		menu = new MainMenu;
-		menu.menuItems.add("&File");
-		menu.menuItems.add("&Run");
-		menu.menuItems.add("&Tools");
-		menu.menuItems.add("&Windows");
-		menu.menuItems.add("&Help");
+		if (showMainMenu) attachMenu();
 
 		setClientSizeCore(displaySize.width, displaySize.height);
-		text = "PSP Emulator - r" ~ svnRevision;
+		updateTitle();
 		maximumSize = Size(width, height);
 		minimumSize = Size(width, height);
 		
@@ -76,6 +76,106 @@ class DisplayForm : Form, IMessageFilter {
 			tick ~= (Timer sender, EventArgs ea) { controller.frameWrite(); };
 			start();
 		}
+
+		with (new Timer) {
+			interval = 2000;
+			tick ~= (Timer sender, EventArgs ea) {
+				lastFps = cast(real)cpu.display.fpsCounter / 2.0;
+				updateTitle();
+				display.fpsCounter = 0;
+			};
+			start();
+		}
+	}
+
+	void attachMenu() {
+		menu = new MainMenu;
+		Menu currentMenu = menu;
+
+		void addClick(string name, void delegate(MenuItem, EventArgs) registerCallback = null, void delegate() menuGenerateCallback = null) {
+			Menu backMenu = currentMenu;
+
+			MenuItem menuItem = new MenuItem;
+			menuItem.text = name;
+			menuItem.parent = backMenu;
+			if (registerCallback !is null) menuItem.click ~= registerCallback;
+
+			currentMenu = menuItem;
+			{
+				if (menuGenerateCallback !is null) menuGenerateCallback();
+			}
+			currentMenu = backMenu;
+		}
+
+		void add(string name, void delegate() menuGenerateCallback = null) {
+			addClick(name, null, menuGenerateCallback);
+		}
+
+		add("&File", {
+			addClick("&Open...", (MenuItem mi, EventArgs ea) {
+				auto fd = new OpenFileDialog;
+				//fd.fileName   = "EBOOT.PBP";
+				fd.filter     = "PSP Executable Files (*.pbp;*.elf;*.iso;*.cso;*.dax)|*.pbp;*.elf;*.iso;*.cso;*.dax|All Files (*.*)|*.*";
+				//fd.defaultExt = "iso";
+				if (fd.showDialog(this) == DialogResult.OK) {
+				}
+				/*
+				if (fd.showDialog(this) == DialogResult.OK) {
+					.load(fd.fileName);
+					updateDebug();
+				}
+				*/
+			});
+			add("-");
+			addClick("&Exit", (MenuItem mi, EventArgs ea) {
+				Application.exit();
+			});
+		});
+		add("&Run", {
+			add("&Execute");
+			add("&Stop");
+			add("&Pause");
+			add("-");
+			add("Step &Into");
+			add("Step &Over");
+			add("Run to &Cursor");
+			add("Run until &Return");
+			add("-");
+			add("S&ave State...");
+			add("&Load State...");
+		});
+		add("&Tools", {
+			add("&Debugger...");
+			add("&Memory viewer...");
+			add("&GE viewer...");
+			add("-");
+			add("Memory &Stick", {
+				add("&Insert");
+				add("&Eject");
+				add("Selected &Path...");
+			});
+			add("-");
+			add("Input", {
+				add("&Keyboard");
+				add("&Gamepad");
+			});
+			add("-");
+			addClick("Take Screenshot...", (MenuItem mi, EventArgs ea) {
+				SaveFileDialog fd = new SaveFileDialog;
+				fd.defaultExt = "png";
+				fd.fileName = "screenshot.png";
+				fd.filter = "PNG files (*.png)|*.png";
+				if (fd.showDialog(this) == DialogResult.OK) {
+					//ImageFileFormatProvider["png"].write(bmp, fd.fileName);
+				}
+			});
+			add("-");
+			add("Ignore errors");
+		});
+		add("&Help", {
+			add("&Website");
+			add("&About...");
+		});
 	}
 	
 	override void onPaint  (PaintEventArgs ea  ) { glc.refresh(); }

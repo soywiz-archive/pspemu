@@ -14,7 +14,7 @@ import pspemu.gui.GLControl;
 import pspemu.models.IDisplay;
 
 class GLControlDisplay : GLControl {
-	IDisplay display;
+	Display display;
 	Cpu      cpu;
 	bool update = true, updateOnce = false;
 	bool running = true;
@@ -87,6 +87,7 @@ class GLControlDisplay : GLControl {
 						if (performanceCounter - backPerformanceCounter >= delay) break;
 						Sleep(1);
 					}
+					//cpu.display.fpsCounter++;
 				}
 			} catch (Object e) {
 				writefln("GLControlDisplay.threadRun.error: %s", e);
@@ -122,7 +123,7 @@ class GLControlDisplay : GLControl {
 		running = false;
 	}
 	
-	this(Cpu cpu, IDisplay display) {
+	this(Cpu cpu, Display display) {
 		this.cpu     = cpu;
 		this.display = display;
 	}

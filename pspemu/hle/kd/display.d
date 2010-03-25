@@ -19,6 +19,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		mixin(registerd!(0x9C6EAAD7, sceDisplayGetVcount));
 		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
 		mixin(registerd!(0x8EB9EC49, sceDisplayWaitVblankCB));
+		mixin(registerd!(0x36CDFADE, sceDisplayWaitVblank));
 	}
 
 	/**
@@ -33,13 +34,15 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * Wait for vertical blank start
 	 */
 	int sceDisplayWaitVblankStart() {
+		cpu.display.fpsCounter++;
+		if (!cpu.display.frameLimiting) return 0;
+		
 		auto threadManForUser = moduleManager.get!(ThreadManForUser);
-
 		PspThread waitingThread = threadManForUser.threadManager.currentThread;
 		cpu.interrupts.registerCallbackSingle(Interrupts.Type.VBLANK, {
 			waitingThread.resumeAndReturn(0);
 		});
-	
+
 		return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart");
 	}
 
@@ -65,6 +68,14 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	}
 
 	/**
+	 * Wait for vertical blank
+	 */
+	int sceDisplayWaitVblank() {
+		unimplemented();
+		return sceDisplayWaitVblankStart();
+	}
+
+	/**
 	 * Display set framebuf
 	 *
 	 * @param topaddr - address of start of framebuffer
@@ -75,7 +86,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * @return 0 on success
 	 */
 	int sceDisplaySetFrameBuf(uint topaddr, int bufferwidth, int pixelformat, int sync) {
-		cpu.display.info = IDisplay.Info(topaddr, bufferwidth, pixelformat, sync);
+		cpu.display.info = Display.Info(topaddr, bufferwidth, pixelformat, sync);
 		return 0;
 	}
 

@@ -33,7 +33,7 @@ static do_unittest = false;
 
 unittest { do_unittest = true; }
 
-class PspDisplay : BasePspDisplay {
+class PspDisplay : Display {
 	Memory memory;
 	bool _vblank = true;
 

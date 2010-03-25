@@ -48,6 +48,10 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0x383F7BCC, sceKernelTerminateDeleteThread));
 		mixin(registerd!(0x71BC9871, sceKernelChangeThreadPriority));
 		mixin(registerd!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
+		mixin(registerd!(0x812346E4, sceKernelClearEventFlag));
+		mixin(registerd!(0x402FCF22, sceKernelWaitEventFlag));
+		mixin(registerd!(0x30FD48F0, sceKernelPollEventFlag));
+		mixin(registerd!(0x369ED59D, sceKernelGetSystemTimeLow));
 	}
 
 	/**
@@ -73,9 +77,62 @@ class ThreadManForUser : Module {
 	}
 
 	/**
-	 * Semaphore related stuff.
+	 * Get the low 32bits of the current system time
+	 *
+	 * @return The low 32bits of the system time
+	 */
+	uint sceKernelGetSystemTimeLow() {
+		unimplemented();
+		return 0;
+	}
+
+	/**
+	 * Semaphores related stuff.
 	 */
 	template TemplateSemaphore() {
+		/**
+		 * Creates a new semaphore
+		 *
+		 * @par Example:
+		 * @code
+		 * int semaid;
+		 * semaid = sceKernelCreateSema("MyMutex", 0, 1, 1, 0);
+		 * @endcode
+		 *
+		 * @param name      - Specifies the name of the sema
+		 * @param attr      - Sema attribute flags (normally set to 0)
+		 * @param initCount - Sema initial value 
+		 * @param maxCount  - Sema maximum value
+		 * @param option    - Sema options (normally set to 0)
+		 * @return A semaphore id
+		 */
+		SceUID sceKernelCreateSema(string name, SceUInt attr, int initCount, int maxCount, SceKernelSemaOptParam* option) {
+			auto semaphore = semaphoreManager.createSemaphore();
+
+			semaphore.name = name;
+			semaphore.info.name[0..name.length] = name[0..$];
+			semaphore.info.attr           = attr;
+			semaphore.info.initCount      = initCount;
+			semaphore.info.currentCount   = initCount; // Actually value
+			semaphore.info.maxCount       = maxCount;
+			semaphore.info.numWaitThreads = 0;
+
+			return reinterpret!(SceUID)(semaphore);
+		}
+
+		/**
+		 * Destroy a semaphore
+		 *
+		 * @param semaid - The semaid returned from a previous create call.
+		 * @return Returns the value 0 if its succesful otherwise -1
+		 */
+		int sceKernelDeleteSema(SceUID semaid) {
+			auto pspSemaphore = reinterpret!(PspSemaphore)(semaid);
+			if (pspSemaphore is null) return -1;
+			semaphoreManager.removeSemaphore(pspSemaphore);
+			return 0;
+		}
+
 		/**
 		 * Poll a sempahore.
 		 *
@@ -158,52 +215,127 @@ class ThreadManForUser : Module {
 			}
 			return 0;
 		}
+	}
 
-		/**
-		 * Destroy a semaphore
+	/**
+	 * Events related stuff.
+	 */
+	template TemplateEvent() {
+		/** 
+		  * Create an event flag.
+		  *
+		  * @param name - The name of the event flag.
+		  * @param attr - Attributes from ::PspEventFlagAttributes
+		  * @param bits - Initial bit pattern.
+		  * @param opt  - Options, set to NULL
+		  * @return < 0 on error. >= 0 event flag id.
+		  *
+		  * @par Example:
+		  * @code
+		  * int evid;
+		  * evid = sceKernelCreateEventFlag("wait_event", 0, 0, 0);
+		  * @endcode
+		  */
+		SceUID sceKernelCreateEventFlag(string name, int attr, int bits, SceKernelEventFlagOptParam *opt) {
+			//unimplemented();
+			return -1;
+		}
+
+		/** 
+		 * Delete an event flag
 		 *
-		 * @param semaid - The semaid returned from a previous create call.
-		 * @return Returns the value 0 if its succesful otherwise -1
+		 * @param evid - The event id returned by sceKernelCreateEventFlag.
+		 *
+		 * @return < 0 On error
 		 */
-		int sceKernelDeleteSema(SceUID semaid) {
-			auto pspSemaphore = reinterpret!(PspSemaphore)(semaid);
-			if (pspSemaphore is null) return -1;
-			semaphoreManager.removeSemaphore(pspSemaphore);
-			return 0;
+		int sceKernelDeleteEventFlag(int evid) {
+			//unimplemented();
+			return -1;
 		}
 
 		/**
-		 * Creates a new semaphore
+		 * Clear a event flag bit pattern
+		 *
+		 * @param evid - The event id returned by ::sceKernelCreateEventFlag
+		 * @param bits - The bits to clean
+		 *
+		 * @return < 0 on Error
+		 */
+		int sceKernelClearEventFlag(SceUID evid, u32 bits) {
+			unimplemented();
+			return -1;
+		}
+
+		/** 
+		  * Wait for an event flag for a given bit pattern.
+		  *
+		  * @param evid - The event id returned by sceKernelCreateEventFlag.
+		  * @param bits - The bit pattern to poll for.
+		  * @param wait - Wait type, one or more of ::PspEventFlagWaitTypes or'ed together
+		  * @param outBits - The bit pattern that was matched.
+		  * @param timeout  - Timeout in microseconds
+		  * @return < 0 On error
+		  */
+		int sceKernelWaitEventFlag(int evid, u32 bits, u32 wait, u32 *outBits, SceUInt *timeout) {
+			unimplemented();
+			return -1;
+		}
+
+		/** 
+		  * Set an event flag bit pattern.
+		  *
+		  * @param evid - The event id returned by sceKernelCreateEventFlag.
+		  * @param bits - The bit pattern to set.
+		  *
+		  * @return < 0 On error
+		  */
+		int sceKernelSetEventFlag(SceUID evid, u32 bits) {
+			unimplemented();
+			return -1;
+		}
+
+		/** 
+		  * Poll an event flag for a given bit pattern.
+		  *
+		  * @param evid - The event id returned by sceKernelCreateEventFlag.
+		  * @param bits - The bit pattern to poll for.
+		  * @param wait - Wait type, one or more of ::PspEventFlagWaitTypes or'ed together
+		  * @param outBits - The bit pattern that was matched.
+		  * @return < 0 On error
+		  */
+		int sceKernelPollEventFlag(int evid, u32 bits, u32 wait, u32 *outBits) {
+			unimplemented();
+			return -1;
+		}
+	}
+
+	/**
+	 * Callbacks related stuff.
+	 */
+	template TemplateCallback() {
+		/**
+		 * Create callback
 		 *
 		 * @par Example:
 		 * @code
-		 * int semaid;
-		 * semaid = sceKernelCreateSema("MyMutex", 0, 1, 1, 0);
+		 * int cbid;
+		 * cbid = sceKernelCreateCallback("Exit Callback", exit_cb, NULL);
 		 * @endcode
 		 *
-		 * @param name      - Specifies the name of the sema
-		 * @param attr      - Sema attribute flags (normally set to 0)
-		 * @param initCount - Sema initial value 
-		 * @param maxCount  - Sema maximum value
-		 * @param option    - Sema options (normally set to 0)
-		 * @return A semaphore id
+		 * @param name - A textual name for the callback
+		 * @param func - A pointer to a function that will be called as the callback
+		 * @param arg  - Argument for the callback ?
+		 *
+		 * @return >= 0 A callback id which can be used in subsequent functions, < 0 an error.
 		 */
-		SceUID sceKernelCreateSema(string name, SceUInt attr, int initCount, int maxCount, SceKernelSemaOptParam* option) {
-			auto semaphore = semaphoreManager.createSemaphore();
-
-			semaphore.name = name;
-			semaphore.info.name[0..name.length] = name[0..$];
-			semaphore.info.attr           = attr;
-			semaphore.info.initCount      = initCount;
-			semaphore.info.currentCount   = initCount; // Actually value
-			semaphore.info.maxCount       = maxCount;
-			semaphore.info.numWaitThreads = 0;
-
-			return reinterpret!(SceUID)(semaphore);
+		int sceKernelCreateCallback(string name, SceKernelCallbackFunction func, void *arg) {
+			return reinterpret!(int)(new PspCallback(name, func, arg));
 		}
 	}
 	
 	mixin TemplateSemaphore;
+	mixin TemplateEvent;
+	mixin TemplateCallback;
 
 	/**
 	 * Terminate and delete a thread.
@@ -347,57 +479,12 @@ class ThreadManForUser : Module {
 	}
 
 	/** 
-	  * Set an event flag bit pattern.
-	  *
-	  * @param evid - The event id returned by sceKernelCreateEventFlag.
-	  * @param bits - The bit pattern to set.
-	  *
-	  * @return < 0 On error
-	  */
-	int sceKernelSetEventFlag(SceUID evid, u32 bits) {
-		unimplemented();
-		return -1;
-	}
-
-	/** 
 	  * Exit a thread and delete itself.
 	  *
 	  * @param status - Exit status
 	  */
 	int sceKernelExitDeleteThread(int status) {
 		return sceKernelExitThread(status);
-	}
-
-	/** 
-	  * Create an event flag.
-	  *
-	  * @param name - The name of the event flag.
-	  * @param attr - Attributes from ::PspEventFlagAttributes
-	  * @param bits - Initial bit pattern.
-	  * @param opt  - Options, set to NULL
-	  * @return < 0 on error. >= 0 event flag id.
-	  *
-	  * @par Example:
-	  * @code
-	  * int evid;
-	  * evid = sceKernelCreateEventFlag("wait_event", 0, 0, 0);
-	  * @endcode
-	  */
-	SceUID sceKernelCreateEventFlag(string name, int attr, int bits, SceKernelEventFlagOptParam *opt) {
-		//unimplemented();
-		return -1;
-	}
-
-	/** 
-	 * Delete an event flag
-	 *
-	 * @param evid - The event id returned by sceKernelCreateEventFlag.
-	 *
-	 * @return < 0 On error
-	 */
-	int sceKernelDeleteEventFlag(int evid) {
-		//unimplemented();
-		return -1;
 	}
 
 	/**
@@ -541,24 +628,6 @@ class ThreadManForUser : Module {
 		return 0;
 	}
 
-	/**
-	 * Create callback
-	 *
-	 * @par Example:
-	 * @code
-	 * int cbid;
-	 * cbid = sceKernelCreateCallback("Exit Callback", exit_cb, NULL);
-	 * @endcode
-	 *
-	 * @param name - A textual name for the callback
-	 * @param func - A pointer to a function that will be called as the callback
-	 * @param arg  - Argument for the callback ?
-	 *
-	 * @return >= 0 A callback id which can be used in subsequent functions, < 0 an error.
-	 */
-	int sceKernelCreateCallback(string name, SceKernelCallbackFunction func, void *arg) {
-		return reinterpret!(int)(new PspCallback(name, func, arg));
-	}
 	/**
 	 * Create a message pipe
 	 *

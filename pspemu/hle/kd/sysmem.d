@@ -124,6 +124,20 @@ class sceSysEventForKernel : Module {
 }
 
 class sceSuspendForKernel : Module {
+	void initNids() {
+		mixin(registerd!(0xEADB1BD7, sceKernelPowerLock));
+		mixin(registerd!(0x3AEE7261, sceKernelPowerUnlock));
+	}
+
+	// @TODO: Unknown.
+	void sceKernelPowerLock() {
+		unimplemented();
+	}
+
+	// @TODO: Unknown.
+	void sceKernelPowerUnlock() {
+		unimplemented();
+	}
 }
 
 class sceSuspendForUser : sceSuspendForKernel {

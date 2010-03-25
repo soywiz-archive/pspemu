@@ -31,8 +31,6 @@ class IoFileMgrForKernel : Module {
 	}
 
 	void initNids() {
-		mixin(registerd!(0xB29DDF9C, sceIoDopen));
-		mixin(registerd!(0xEB092469, sceIoDclose));
 		mixin(registerd!(0x55F4717D, sceIoChdir));
 		mixin(registerd!(0x810C4BC3, sceIoClose));
 		mixin(registerd!(0x109F50BC, sceIoOpen));
@@ -42,9 +40,68 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0xACE946E8, sceIoGetstat));
 		mixin(registerd!(0x54F5FB11, sceIoDevctl));
 		mixin(registerd!(0xF27A9C51, sceIoRemove));
+
+		mixin(registerd!(0x779103A0, sceIoRename));
+
+		mixin(registerd!(0xB29DDF9C, sceIoDopen));
+		mixin(registerd!(0xEB092469, sceIoDclose));
+		mixin(registerd!(0xE3EB004C, sceIoDread));
+		mixin(registerd!(0x06A70004, sceIoMkdir));
+		mixin(registerd!(0x1117C65F, sceIoRmdir));
 	}
 
-	Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
+	/** 
+	  * Reads an entry from an opened file descriptor.
+	  *
+	  * @param fd - Already opened file descriptor (using sceIoDopen)
+	  * @param dir - Pointer to an io_dirent_t structure to hold the file information
+	  *
+	  * @return Read status
+	  * -   0 - No more directory entries left
+	  * - > 0 - More directory entired to go
+	  * - < 0 - Error
+	  */
+	int sceIoDread(SceUID fd, SceIoDirent *dir) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Make a directory file
+	 *
+	 * @param path
+	 * @param mode - Access mode.
+	 * @return Returns the value 0 if its succesful otherwise -1
+	 */
+	int sceIoMkdir(string path, SceMode mode) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Remove a directory file
+	 *
+	 * @param path - Removes a directory file pointed by the string path
+	 * @return Returns the value 0 if its succesful otherwise -1
+	 */
+	int sceIoRmdir(string path) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Change the name of a file
+	 *
+	 * @param oldname - The old filename
+	 * @param newname - The new filename
+	 * @return < 0 on error.
+	 */
+	int sceIoRename(string oldname, string newname) {
+		unimplemented();
+		return -1;
+	}
+
+	static Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
 
 	/**
 	 * Open a directory
@@ -410,6 +467,16 @@ enum : uint {
 	PSP_O_NOWAIT   = 0x8000,
 	PSP_O_UNKNOWN2 = 0xf0000, // seen on Wipeout Pure and Infected
 	PSP_O_UNKNOWN3 = 0x2000000, // seen on Puzzle Guzzle, Hammerin' Hero
+}
+
+struct SceIoDirent {
+	/** File status. */
+	SceIoStat 	d_stat;
+	/** File name. */
+	char 		d_name[256];
+	/** Device-specific data. */
+	void * 		d_private;
+	int 		dummy;
 }
 
 enum : uint { PSP_SEEK_SET, PSP_SEEK_CUR, PSP_SEEK_END }

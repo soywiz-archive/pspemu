@@ -69,7 +69,7 @@ class Cpu : IDebugSource {
 	 */
 	Gpu gpu;
 
-	IDisplay display;
+	Display display;
 	
 	IController controller;
 	
@@ -90,7 +90,7 @@ class Cpu : IDebugSource {
 	 *
 	 * @param  memory  Optional. A Memory object.
 	 */
-	this(Memory memory, Gpu gpu, IDisplay display, IController controller) {
+	this(Memory memory, Gpu gpu, Display display, IController controller) {
 		this.interrupts = new Interrupts();
 		this.registers  = new Registers();
 		this.memory     = memory;

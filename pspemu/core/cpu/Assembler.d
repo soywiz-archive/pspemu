@@ -273,7 +273,10 @@ class AllegrexAssembler : ISymbolResolver {
 							instruction.RS     = cast(uint)Registers.getAlias(results[2]);
 							//writefln("%s", results[1]);
 						} break;
-						case "%C": {
+						case "%c": { // BREAK
+							instruction.CODE_BREAK = getImmediate(Sign.Unsigned);
+						} break;
+						case "%C": { // SYSCALL
 							instruction.CODE = getImmediate(Sign.Unsigned);
 						} break;
 						default:

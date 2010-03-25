@@ -9,7 +9,7 @@ import pspemu.utils.Utils;
 /**
  * Interface for the Display.
  */
-interface IDisplay {
+abstract class Display {
 	static struct Size { int x, y; alias x width; alias y height; }
 	static struct Info {
 		uint topaddr = /*Memory.frameBufferAddress*/0x04_000000;
@@ -21,48 +21,37 @@ interface IDisplay {
 		int height = 272;
 	}
 
-	Info info(Info info);
-	Info info();
+	bool frameLimiting = true;
+	//bool frameLimiting = false;
+
+	Info info;
+	
+	uint fpsCounter;
 
 	/**
 	 * Returns a pointer to the begin of the frameBuffer.
 	 */
-	void* frameBufferPointer();
+	abstract void* frameBufferPointer();
 
-	int frameBufferPixelFormat();
+	int frameBufferPixelFormat() { return info.pixelformat; }
 
 	/**
 	 * Returns the size of the frameBuffer Size(512, 272).
 	 */
-	Size frameBufferSize();
+	Size frameBufferSize() { return Size(512, 272); }
 
 	/**
 	 * Returns the size of the visible screen Size(480, 272).
 	 */
-	Size displaySize();
+	Size displaySize() { return Size(480, 272); }
 
 	/**
 	 * Returns the refresh rate 60hz.
 	 */
-	int verticalRefreshRate();
-}
-
-abstract class BasePspDisplay : IDisplay {
-	Info _info;
-	Info info(Info info) { return _info = info; }
-	Info info() { return _info; }
-	
-	int frameBufferPixelFormat() { return _info.pixelformat; }
-
-	Size frameBufferSize() { return Size(512, 272); }
-	Size displaySize() { return Size(480, 272); }
 	int verticalRefreshRate() { return 60; }
-	
-	this() {
-	}
 }
 
-class NullDisplay : BasePspDisplay {
+class NullDisplay : Display {
 	uint[] data;
 
 	this() {
@@ -76,7 +65,6 @@ class NullDisplay : BasePspDisplay {
 				}
 			}
 		}
-		super();
 	}
 	void* frameBufferPointer() { return data.ptr; }
 }
