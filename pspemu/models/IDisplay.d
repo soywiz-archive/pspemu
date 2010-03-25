@@ -45,21 +45,6 @@ interface IDisplay {
 	 * Returns the refresh rate 60hz.
 	 */
 	int verticalRefreshRate();
-
-	/**
-	 * Triggers an vblank event.
-	 */
-	bool vblank(bool status);
-
-	/**
-	 * Obtains the status of the vblank.
-	 */
-	bool vblank();
-
-	/**
-	 * Wait vblank.
-	 */
-	void waitVblank();
 }
 
 abstract class BasePspDisplay : IDisplay {
@@ -74,18 +59,6 @@ abstract class BasePspDisplay : IDisplay {
 	int verticalRefreshRate() { return 60; }
 	
 	this() {
-	}
-	
-	void waitVblank() {
-		InfiniteLoop!(512) loop;
-		while (vblank) {
-			Sleep(1);
-			loop.increment();
-		}
-		while (!vblank) {
-			Sleep(1);
-			loop.increment();
-		}
 	}
 }
 
@@ -106,6 +79,4 @@ class NullDisplay : BasePspDisplay {
 		super();
 	}
 	void* frameBufferPointer() { return data.ptr; }
-	bool vblank() { return false; }
-	bool vblank(bool status) { return vblank; }
 }

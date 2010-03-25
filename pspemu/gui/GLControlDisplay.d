@@ -6,6 +6,8 @@ import core.thread, core.memory;
 
 import std.stdio, std.c.time;
 
+import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Interrupts;
 import pspemu.core.gpu.impl.GpuOpengl;
 
 import pspemu.gui.GLControl;
@@ -13,14 +15,21 @@ import pspemu.models.IDisplay;
 
 class GLControlDisplay : GLControl {
 	IDisplay display;
+	Cpu      cpu;
 	bool update = true, updateOnce = false;
 	bool running = true;
 	bool ready = false;
 	//ubyte[] data;
 
 	void threadRun() {
-		long bcounter, counter, frequency, delay;
+		long backPerformanceCounter, frequency, delay;
 		QueryPerformanceFrequency(&frequency);
+		
+		long performanceCounter() {
+			long value = void;
+			QueryPerformanceCounter(&value);
+			return value;
+		}
 
 		delay = frequency / display.verticalRefreshRate;
 
@@ -50,7 +59,7 @@ class GLControlDisplay : GLControl {
 
 				//while (!ready) Sleep(1);
 				while (running) {
-					QueryPerformanceCounter(&bcounter);
+					backPerformanceCounter = performanceCounter;
 					
 					//if ((update && !cpu.paused) || updateOnce) {
 					if (update || updateOnce) {
@@ -69,24 +78,20 @@ class GLControlDisplay : GLControl {
 					
 					//GC.minimize();
 					//GC.collect();
-					
+
+					cpu.interrupts.queue(Interrupts.Type.VBLANK);
 					while (true) {
-						QueryPerformanceCounter(&counter);
-						//Thread.sleep(0_5000);
-						if (counter - bcounter >= delay - 4) break;
-						//Thread.sleep(0_5000);
+						if (performanceCounter - backPerformanceCounter >= delay) break;
+						GC.minimize();
+
+						if (performanceCounter - backPerformanceCounter >= delay) break;
 						Sleep(1);
 					}
-					
-					display.vblank = true;
-					Sleep(4);
-					display.vblank = false;
 				}
 			} catch (Object e) {
 				writefln("GLControlDisplay.threadRun.error: %s", e);
 			} finally {
 				writefln("GLControlDisplay.threadRun.end");
-				//display.vblank = true;
 				//Thread.sleep(10_0000);
 				Sleep(10);
 			}
@@ -117,7 +122,8 @@ class GLControlDisplay : GLControl {
 		running = false;
 	}
 	
-	this(IDisplay display) {
+	this(Cpu cpu, IDisplay display) {
+		this.cpu     = cpu;
 		this.display = display;
 	}
 	

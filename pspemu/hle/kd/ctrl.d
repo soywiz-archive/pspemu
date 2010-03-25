@@ -6,6 +6,7 @@ module pspemu.hle.kd.ctrl; // kd/ctrl.prx (sceController_Service)
 import pspemu.hle.Module;
 
 import pspemu.models.IController;
+import pspemu.utils.Utils;
 
 class sceCtrl_driver : Module {
 	void initNids() {
@@ -13,6 +14,7 @@ class sceCtrl_driver : Module {
 		mixin(registerd!(0x1F4011E6, sceCtrlSetSamplingMode));
 		mixin(registerd!(0x1F803938, sceCtrlReadBufferPositive));
 		mixin(registerd!(0x3A622550, sceCtrlPeekBufferPositive));
+		mixin(registerd!(0x0B588501, sceCtrlReadLatch));
 	}
 
 	void readBufferedFrames(SceCtrlData* pad_data, int count = 1, bool positive = true) {
@@ -26,6 +28,7 @@ class sceCtrl_driver : Module {
 			// Negate.
 			if (!positive) pad_data[n].Buttons = ~pad_data[n].Buttons;
 		}
+		//sleep(1);
 	}
 
 	/**
@@ -76,6 +79,11 @@ class sceCtrl_driver : Module {
 	int sceCtrlSetSamplingMode(int mode) {
 		cpu.controller.samplingMode = cast(Controller.Mode)mode;
 		return 0;
+	}
+	
+	int sceCtrlReadLatch(SceCtrlLatch* latch_data) {
+		unimplemented();
+		return -1;
 	}
 }
 
@@ -140,6 +148,13 @@ enum PspCtrlMode {
 	PSP_CTRL_MODE_DIGITAL = 0,
 	/* Analog. */
 	PSP_CTRL_MODE_ANALOG
+}
+
+struct SceCtrlLatch {
+	uint 	uiMake;
+	uint 	uiBreak;
+	uint 	uiPress;
+	uint 	uiRelease;
 }
 
 /+

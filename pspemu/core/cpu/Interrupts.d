@@ -23,12 +23,33 @@ class Interrupts {
 	bool InterruptFlag;
 	List list;
 	Object mutex;
-	Callback[][Type] callbacks;
+
+	struct CallbackInfo {
+		bool autoremove;
+	}
+	
+	CallbackInfo[Callback][Type] callbacks;
 
 	this() {
 		list = new List;
 		mutex = new Object;
 		//callbacks[Type.THREAD0] ~= { writefln("THREAD0"); };
+	}
+
+	void registerCallback(Type type, Callback cb, bool autoremove = false) {
+		synchronized (mutex) {
+			callbacks[type][cb] = CallbackInfo(autoremove);
+		}
+	}
+
+	void registerCallbackSingle(Type type, Callback cb) {
+		registerCallback(type, cb, true);
+	}
+
+	void unregisterCallback(Type type, Callback cb) {
+		synchronized (mutex) {
+			callbacks[type].remove(cb);
+		}
 	}
 
 	void queue(Type type) {
@@ -38,12 +59,20 @@ class Interrupts {
 		}
 	}
 
+	Callback[1024] cblist;
 	void process() {
 		synchronized (mutex) {
 			while (list.readAvailable) {
 				auto type = list.consume();
 				if (type in callbacks) {
-					foreach (callback; callbacks[type]) callback();
+					auto callbackKeys = callbacks[type].keys;
+					cblist[0..callbackKeys.length] = callbackKeys[0..$];
+					foreach (callback; cblist[0..callbackKeys.length]) {
+						callback();
+						if (callbacks[type][callback].autoremove) {
+							callbacks[type].remove(callback);
+						}
+					}
 				}
 			}
 			InterruptFlag = false;

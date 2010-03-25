@@ -82,7 +82,7 @@ class Elf {
 	
 	static struct Reloc {
 		enum Type : byte { None = 0, Mips16, Mips32, MipsRel32, Mips26, MipsHi16, MipsLo16, MipsGpRel16, MipsLiteral, MipsGot16, MipsPc16, MipsCall16, MipsGpRel32 }
-		uint _offset;
+		uint offset;
 		union {
 			uint _info;
 			struct {
@@ -91,6 +91,8 @@ class Elf {
 				uint symbolIndex() { return _info >> 8; }
 			}
 		}
+		
+		uint sindex() { return (_info >> 8); }
 
 		// Check the size of the struct.
 		static assert(this.sizeof == 8);
@@ -222,9 +224,87 @@ class Elf {
 		//writefln("reserveMemory(%08X, %d)", address, size);
 	}
 
-	void performRelocation() {
-		// TODO.
-		throw(new Exception("Not implemented relocation yet."));
+	void performRelocation(Stream memory) {
+		uint baseAddress = relocationAddress;
+
+		uint memory_read32(uint position) {
+			memory.position = position;
+			return pspemu.utils.Utils.read!(uint)(memory);
+		}
+
+		uint memory_write32(uint position, uint data) {
+			memory.position = position;
+			memory.write(data);
+			return data;
+		}	
+
+		foreach (sectionHeader; sectionHeaders) {
+			// Filter sections we don't have to reloc.
+			if ((sectionHeader.type != SectionHeader.Type.REL) && (sectionHeader.type != SectionHeader.Type.PRXRELOC)) continue;
+			
+			uint[][32] regs;
+			
+			auto stream = SectionStream(sectionHeader);
+			
+			while (!stream.eof) {
+				auto reloc = read!(Reloc)(stream);
+				// Filtra las relocalizaciones nulas
+				if (reloc.type == Reloc.Type.None) continue;
+
+				// Obtiene el offset real a relocalizar 
+				uint offset = reloc.offset + baseAddress;
+				
+				// Lee la palabra original
+				uint DATA = memory_read32(offset);
+				
+				// Modifica la palabra según el tipo de relocalización
+				switch (reloc.type) { default: throw(new Exception(std.string.format("RELOC: unknown reloc type '%02X'", reloc.type)));
+					// LUI
+					case Reloc.Type.MipsHi16: { 
+						uint reg = (DATA >> 16) & 0x1F;
+						regs[reg] ~= offset;
+					} break;
+					
+					// ADDI, ORI ...
+					case Reloc.Type.MipsLo16: {
+						uint reg = ((DATA >> 21) & 0x1F);
+						uint vlo = ((DATA & 0x0000FFFF) ^ 0x00008000) - 0x00008000;
+						
+						foreach (hiaddr; regs[reg]) {
+							uint DATA2 = memory_read32(hiaddr);
+
+							uint temp = ((DATA2 & 0x0000FFFF) << 16) + vlo + baseAddress;
+							
+							temp = ((temp >> 16) + (((temp & 0x00008000) != 0) ? 1 : 0)) & 0x0000FFFF;
+							DATA2 = (DATA2 & ~0x0000FFFF) | temp;
+
+							memory_write32(hiaddr, DATA2);
+						}
+						
+						regs[reg].length = 0;
+						
+						DATA = (DATA & ~0x0000FFFF) | ((baseAddress + vlo) & 0x0000FFFF);
+					} break;
+					
+					// J, JAL
+					case Reloc.Type.Mips26:
+						uint backa = (DATA & 0x03FFFFFF) << 2;
+						DATA &= ~0x03FFFFFF;
+						DATA |= (baseAddress + backa) >> 2;
+					break;		
+		
+					// *POINTER*
+					case Reloc.Type.Mips32:
+						DATA = DATA;
+					break;
+				} // switch
+				
+				// Escribe la palabra modificada
+				memory_write32(offset, DATA);
+				
+			} // while
+			
+		} // foreach
 	}
 
 	void allocateBlockBound(ref uint low, ref uint high) {
@@ -255,8 +335,15 @@ class Elf {
 		return high;
 	}
 
+	uint relocationAddress = 0;
+
 	void writeToMemory(Stream stream, uint baseAddress = 0) {
-		if (needsRelocation) baseAddress += 0x08900000;
+		if (needsRelocation) {
+			baseAddress += 0x08900000;
+		}
+		
+		relocationAddress = baseAddress;
+		
 		foreach (k, sectionHeader; sectionHeaders) {			
 			stream.position = baseAddress + sectionHeader.address;
 			uint sectionHeaderOffset = cast(uint)stream.position;
@@ -282,7 +369,14 @@ class Elf {
 				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
 			}
 		}
-		if (needsRelocation) performRelocation();
+		if (needsRelocation) {
+			try {
+				performRelocation(stream);
+			} catch (Object o) {
+				writefln("Error relocating: %s", o.toString);
+				throw(o);
+			}
+		}
 	}
 
 	SectionHeader[] relocationSectionHeaders() {

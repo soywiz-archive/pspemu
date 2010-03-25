@@ -122,7 +122,7 @@ class ThreadManForUser : Module {
 			// @TODO implement timeout!
 
 			semaphore.info.numWaitThreads++;
-			return threadManager.currentThread.pause("sceKernelWaitSema", (PspThread pausedThread) {
+			return threadManager.currentThread.pauseAndYield("sceKernelWaitSema", (PspThread pausedThread) {
 				if (semaphore.info.currentCount >= signal) {
 					semaphore.info.numWaitThreads--;
 					semaphore.info.currentCount -= signal;
@@ -247,8 +247,8 @@ class ThreadManForUser : Module {
 	 * @return < 0 on error.
 	 */
 	int sceKernelChangeCurrentThreadAttr(int unknown, SceUInt attr) {
-		unimplemented();
-		return -1;
+		threadManager.currentThread.info.attr = attr;
+		return 0;
 	}
 
 	/** 
@@ -277,7 +277,7 @@ class ThreadManForUser : Module {
 	int sceKernelDelayThread(SceUInt delay) {
 		mixin(changeAfterTimerPausedMicroseconds);
 
-		return threadManager.currentThread.pause("sceKernelDelayThread", (PspThread pausedThread) {
+		return threadManager.currentThread.pauseAndYield("sceKernelDelayThread", (PspThread pausedThread) {
 			if (!paused) pausedThread.resumeAndReturn(0);
 		});
 	}
@@ -295,7 +295,7 @@ class ThreadManForUser : Module {
 	int sceKernelDelayThreadCB(SceUInt delay) {
 		mixin(changeAfterTimerPausedMicroseconds);
 
-		return threadManager.currentThread.pause("sceKernelDelayThreadCB", (PspThread pausedThread) {
+		return threadManager.currentThread.pauseAndYield("sceKernelDelayThreadCB", (PspThread pausedThread) {
 			processCallbacks();
 			if (!paused) pausedThread.resumeAndReturn(0);
 		});
@@ -409,7 +409,7 @@ class ThreadManForUser : Module {
 		// Sets the position of the thread to the syscall again.
 		// Sets the thread as waiting.
 		// Switch to another thread immediately.
-		return threadManager.currentThread.pause("sceKernelSleepThread", (PspThread pausedThread) {
+		return threadManager.currentThread.pauseAndYield("sceKernelSleepThread", (PspThread pausedThread) {
 			//writefln("sceKernelSleepThread");
 		});
 	}
@@ -425,7 +425,7 @@ class ThreadManForUser : Module {
 	 */
 	int sceKernelSleepThreadCB() {
 		// Ditto.
-		return threadManager.currentThread.pause("sceKernelSleepThreadCB", (PspThread pausedThread) {
+		return threadManager.currentThread.pauseAndYield("sceKernelSleepThreadCB", (PspThread pausedThread) {
 			processCallbacks();
 		});
 	}
@@ -774,8 +774,8 @@ class PspThread {
 		}
 	}
 
-	uint pause(string pausedName = null, PausedCallback pausedCallback = null) {
-		debug (DEBUG_THREADS) { writefln("  PspThread.pause(); callback = %s", reinterpret!(uint)(pausedCallback)); }
+	uint pauseAndYield(string pausedName = null, PausedCallback pausedCallback = null) {
+		debug (DEBUG_THREADS) { writefln("  PspThread.pauseAndYield(); callback = %s", reinterpret!(uint)(pausedCallback)); }
 		
 		assert(!paused);
 
@@ -814,9 +814,10 @@ class PspThread {
 			writefln("  PspThread.exit()");
 		}
 		alive = false;
+		paused = true;
 		threadManager.createdThreads.remove(this);
 		stack.free();
-		pause();
+		//pauseAndYield();
 	}
 }
 

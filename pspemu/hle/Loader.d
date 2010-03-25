@@ -1,7 +1,7 @@
 module pspemu.hle.Loader;
 
-//version = DEBUG_LOADER;
-version = LOAD_DWARF_INFORMATION;
+version = DEBUG_LOADER;
+//version = LOAD_DWARF_INFORMATION;
 
 import std.stream, std.stdio, std.string;
 
@@ -254,7 +254,10 @@ class Loader : IDebugSource {
 		this.moduleManager = moduleManager;
 		this.assembler     = new AllegrexAssembler(memory);
 
-		cpu.interrupts.callbacks[Interrupts.Type.THREAD0] ~= &moduleManager.get!(ThreadManForUser).threadManager.switchNextThread;
+		cpu.interrupts.registerCallback(
+			Interrupts.Type.THREAD0,
+			&moduleManager.get!(ThreadManForUser).threadManager.switchNextThread
+		);
 	}
 
 	void load(Stream stream) {
@@ -312,7 +315,7 @@ class Loader : IDebugSource {
 		moduleManager.get!(IoFileMgrForUser).setVirtualDir(path);
 		load(new BufferedFile(fileName, FileMode.In));
 	}
-	
+
 	void loadDwarfInformation() {
 		try {
 			dwarf = new ElfDwarf;
@@ -372,9 +375,16 @@ class Loader : IDebugSource {
 
 		this.elf.writeToMemory(memory);
 		readInplace(moduleInfo, elf.SectionStream(".rodata.sceModuleInfo"));
+
+		uint getRelocatedAddress(uint addr) {
+			return addr + elf.relocationAddress;
+		}
+		Stream getMemorySliceRelocated(uint from, uint to) {
+			return new SliceStream(memory, getRelocatedAddress(from), getRelocatedAddress(to));
+		}
 		
-		auto importsStream = new SliceStream(memory, moduleInfo.importsStart, moduleInfo.importsEnd);
-		auto exportsStream = new SliceStream(memory, moduleInfo.exportsStart, moduleInfo.exportsEnd);
+		auto importsStream = getMemorySliceRelocated(moduleInfo.importsStart, moduleInfo.importsEnd);
+		auto exportsStream = getMemorySliceRelocated(moduleInfo.exportsStart, moduleInfo.exportsEnd);
 		
 		// Load Imports.
 		version (DEBUG_LOADER) writefln("Imports (0x%08X-0x%08X):", moduleInfo.importsStart, moduleInfo.importsEnd);
@@ -383,31 +393,42 @@ class Loader : IDebugSource {
 		
 		while (!importsStream.eof) {
 			auto moduleImport     = read!(ModuleImport)(importsStream);
-			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
+			auto moduleImportName = moduleImport.name ? readStringz(memory, getRelocatedAddress(moduleImport.name)) : "<null>";
 			//assert(moduleImport.entry_size == moduleImport.sizeof);
-			version (DEBUG_LOADER) writefln("  '%s'", moduleImportName);
-			moduleImports ~= moduleImport;
-			auto nidStream  = new SliceStream(memory, moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
-			auto callStream = new SliceStream(memory, moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
-			//writefln("%08X", moduleImport.callAddress);
-			
-			auto pspModule = nullOnException(moduleManager[moduleImportName]);
-
-			while (!nidStream.eof) {
-				uint nid = read!(uint)(nidStream);
+			version (DEBUG_LOADER) {
+				writefln("  '%s'", moduleImportName);
+				writefln("  {");
+			}
+			try {
+				moduleImports ~= moduleImport;
+				auto nidStream  = getMemorySliceRelocated(moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
+				auto callStream = getMemorySliceRelocated(moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
+				//writefln("%08X", moduleImport.callAddress);
 				
-				if ((pspModule !is null) && (nid in pspModule.nids)) {
-					version (DEBUG_LOADER) writefln("    %s", pspModule.nids[nid]);
-					callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
-					callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
-				} else {
-					version (DEBUG_LOADER) writefln("    0x%08X:<unimplemented>", nid);
-					callStream.write(cast(uint)(0x70000000));
-					callStream.write(cast(uint)0);
-					unimplementedNids[moduleImportName] ~= nid;
+				auto pspModule = nullOnException(moduleManager[moduleImportName]);
+
+				while (!nidStream.eof) {
+					uint nid = read!(uint)(nidStream);
+					
+					if ((pspModule !is null) && (nid in pspModule.nids)) {
+						version (DEBUG_LOADER) writefln("    %s", pspModule.nids[nid]);
+						callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
+						callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
+					} else {
+						version (DEBUG_LOADER) writefln("    0x%08X:<unimplemented>", nid);
+						callStream.write(cast(uint)(0x70000000));
+						callStream.write(cast(uint)0);
+						unimplementedNids[moduleImportName] ~= nid;
+					}
+					//writefln("++");
+					//writefln("--");
 				}
-				//writefln("++");
-				//writefln("--");
+			} catch (Object o) {
+				writefln("  ERRROR!: %s", o);
+				throw(o);
+			}
+			version (DEBUG_LOADER) {
+				writefln("  }");
 			}
 		}
 		
@@ -418,9 +439,9 @@ class Loader : IDebugSource {
 				writefln("  %s // %s:", moduleName, PspLibdoc.singleton.getPrxInfo(moduleName));
 				foreach (nid; nids) {
 					if (auto symbol = PspLibdoc.singleton.locate(nid, moduleName)) {
-						writefln("    mixin(registerd!(0x%08X, %s));", symbol.nid, symbol.name);
+						writefln("    mixin(registerd!(0x%08X, %s));", nid, symbol.name);
 					} else {
-						writefln("    0x%08X:<Not found!>");
+						writefln("    0x%08X:<Not found!>", nid);
 					}
 				}
 				count += nids.length;

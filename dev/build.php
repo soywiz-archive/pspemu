@@ -4,6 +4,29 @@ ini_set('log_errors', 0);
 
 require(dirname(__FILE__) . '/setup.php');
 
+function findSvnMaxRev($path) {
+	$props = @file_get_contents("{$path}/.svn/all-wcprops");
+	preg_match_all('@/svn/!svn/ver/(\d+)/@Umsi', $props, $matches);
+	return @max($matches[1]);
+}
+
+function findSvnMaxRevRecu($path) {
+	$rev = findSvnMaxRev($path);
+	if ($rev === false) return false;
+	foreach (scandir($path) as $file) {
+		if ($file[0] == '.') continue;
+		$rfile = "{$path}/{$file}";
+		if (is_dir($rfile)) {
+			$rev = max($rev, findSvnMaxRevRecu($rfile));
+		}
+	}
+	return $rev;
+}
+
+$rootPath = dirname(dirname(__FILE__));
+
+file_put_contents("{$rootPath}/resources/svn.version", findSvnMaxRevRecu($rootPath));
+
 /*
 dmd\windows\bin\dmd -Jresources -Idmd\import -c pspemu\exe\Pspemu.d
 */
@@ -98,10 +121,10 @@ class DModule {
 class Builder {
 	public $dmd;
 	public $rcc;
+	public $flags;
 	public $modules = array();
-	public $flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 	public $inverseDependences = array();
-	public $exe = 'pspemu.exe';
+	public $exe;
 	public $objects_folder;
 	
 	public function explore($moduleName, $level = 0) {
@@ -133,7 +156,7 @@ class Builder {
 		if (isset($clist)) {
 			foreach ($clist as $cmodule) {
 				$list[] = $cmodule;
-				if ($recursive) $list = array_merge($list, $this->getInverseDependencesRecursive($cmodule));
+				if ($recursive) $list = array_merge($list, $this->getInverseDependencesRecursive($cmodule, $recursive));
 			}
 		}
 		unset($checking[$module->moduleName]);
@@ -145,7 +168,8 @@ class Builder {
 		foreach ($this->modules as $module) {
 			if ($module->invalidObject) {
 				$list[] = $module;
-				$list = array_merge($list, $this->getInverseDependencesRecursive($module));
+				//$list = array_merge($list, $this->getInverseDependencesRecursive($module, true));
+				$list = array_merge($list, $this->getInverseDependencesRecursive($module, false));
 			}
 		}
 		return array_values(array_unique($list));
@@ -238,12 +262,22 @@ class Builder {
 		return $list;
 	}
 
+	public function getFilesSortedByDate($modules = null) {
+		if ($modules === null) $modules = $this->modules;
+		usort($modules, function($a, $b) {
+			return $b->sourceTime() - $a->sourceTime();
+		});
+		$files = $this->getFiles($modules);
+		//print_r($files); exit;
+		return $files;
+	}
+
 	public function fullBuild() {
 		$maxTime = $this->getModulesMaxTime($this->modules);
 		
 		// Build exe.
 		if (@filemtime($this->exe) != $maxTime) {
-			$linkFilesStr = implode(' ', $this->getFiles());
+			$linkFilesStr = implode(' ', $this->getFilesSortedByDate());
 			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res {$linkFilesStr}";
 			$retval = 0;
 			echo "Building {$this->exe}...";
@@ -252,19 +286,40 @@ class Builder {
 				@unlink($this->exe);
 				exit;
 			} else {
+				touch($this->exe, $maxTime);
 				echo "Ok\n";
 			}
 		}
 	}
 
-	public function __construct() {
+	public function __construct($profile, $exe) {
 		$this->dmd = dirname(__FILE__) . '\\dmd2\\windows\\bin\\dmd.exe';
 		$this->rcc = dirname(__FILE__) . '\\rcc\\rcc.exe';
+		$this->exe = $exe;
 		$this->objects_folder = dirname(__FILE__) . '/objects';
+		switch (strtolower($profile)) {
+			case 'debug':
+				//$this->flags = "-Jresources -Idev\dmd2\import -g -O -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
+				$this->flags = "-Jresources -Idev\dmd2\import -g -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
+			break;
+			default:
+				echo "Unknown profile {$profile}. Selecting 'release'.";
+			case 'release':
+				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
+			break;
+		}
 	}
 }
 
-$builder = new Builder;
+if (!isset($argv[1])) {
+	die("Should specify a profile. For example: php build.php release");
+}
+
+if (!isset($argv[2])) {
+	$argv[2] = 'pspemu.exe';
+}
+
+$builder = new Builder($argv[1], $argv[2]);
 $builder->explore('pspemu.exe.Pspemu');
 foreach (scandir('pspemu/hle/kd') as $file) {
 	if ($file[0] == '.') continue;
@@ -273,7 +328,7 @@ foreach (scandir('pspemu/hle/kd') as $file) {
 	$builder->explore('pspemu.hle.kd.' . $moduleBase);
 }
 
-if (1) {
+if (0) {
 	$builder->incrementalBuild();
 } else {
 	$builder->fullBuild();

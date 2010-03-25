@@ -22,6 +22,7 @@ class UtilsForUser : Module {
 		mixin(registerd!(0x79D1C3FA, sceKernelDcacheWritebackAll));
 		mixin(registerd!(0xBFA98062, sceKernelDcacheInvalidateRange));
 		mixin(registerd!(0x34B9FA9E, sceKernelDcacheWritebackInvalidateRange));
+		mixin(registerd!(0x91E4F6A7, sceKernelLibcClock));
 	}
 
 	/** 
@@ -103,6 +104,14 @@ class UtilsForUser : Module {
 	 */
 	time_t sceKernelLibcTime(time_t* t) { 
 		return time(t);
+	}
+
+	/** 
+	 * Get the processor clock used since the start of the process
+	 */
+	clock_t sceKernelLibcClock() {
+		unimplemented();
+		return -1;
 	}
 }
 

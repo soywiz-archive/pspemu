@@ -8,13 +8,17 @@ import std.c.windows.windows;
 import pspemu.hle.Module;
 
 import pspemu.models.IDisplay;
+import pspemu.core.cpu.Interrupts;
+
+import pspemu.hle.kd.threadman;
 
 class sceDisplay_driver : Module { // Flags: 0x00010000
 	void initNids() {
 		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
 		mixin(registerd!(0x289D82FE, sceDisplaySetFrameBuf));
-		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
 		mixin(registerd!(0x9C6EAAD7, sceDisplayGetVcount));
+		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
+		mixin(registerd!(0x8EB9EC49, sceDisplayWaitVblankCB));
 	}
 
 	/**
@@ -29,8 +33,35 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * Wait for vertical blank start
 	 */
 	int sceDisplayWaitVblankStart() {
-		cpu.display.waitVblank();
-		return 0;
+		auto threadManForUser = moduleManager.get!(ThreadManForUser);
+
+		PspThread waitingThread = threadManForUser.threadManager.currentThread;
+		cpu.interrupts.registerCallbackSingle(Interrupts.Type.VBLANK, {
+			waitingThread.resumeAndReturn(0);
+		});
+	
+		return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart");
+	}
+
+	/**
+	 * Wait for vertical blank with callback
+	 */
+	int sceDisplayWaitVblankCB() {
+		return sceDisplayWaitVblankStart();
+		/*bool vblank = false;
+
+		void changeVblank() {
+			vblank = true;
+			cpu.interrupts.unregisterCallback(Interrupts.Type.VBLANK, &changeVblank);
+		}
+
+		cpu.interrupts.registerCallback(Interrupts.Type.VBLANK, &changeVblank);
+	
+		return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart", (PspThread pausedThread) {
+			if (vblank) {
+				pausedThread.resumeAndReturn(0);
+			}
+		});*/
 	}
 
 	/**

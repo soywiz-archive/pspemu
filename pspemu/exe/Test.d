@@ -64,10 +64,8 @@ void testExtended(string name) {
 	// Vblank.
 	(new Thread({
 		while (cpu.running) {
-			Sleep(2);
-			display.vblank = true;
-			Sleep(2);
-			display.vblank = false;
+			cpu.interrupts.queue(Interrupts.Type.VBLANK);
+			Sleep(1000 / 60);
 		}
 	})).start();
 

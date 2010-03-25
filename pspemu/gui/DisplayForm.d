@@ -5,6 +5,8 @@ import dfl.all, dfl.internal.winapi;
 import std.stdio, std.c.time;
 import std.typetuple;
 
+import pspemu.utils.Utils;
+
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Disassembler;
 
@@ -16,6 +18,8 @@ import pspemu.models.IController;
 
 import pspemu.hle.Module;
 import pspemu.hle.kd.threadman;
+
+static const string svnRevision = import("svn.version");
 
 class DisplayForm : Form, IMessageFilter {
 	GLControlDisplay glc;
@@ -50,11 +54,11 @@ class DisplayForm : Form, IMessageFilter {
 		menu.menuItems.add("&Help");
 
 		setClientSizeCore(displaySize.width, displaySize.height);
-		text = "pspemu";
+		text = "PSP Emulator - r" ~ svnRevision;
 		maximumSize = Size(width, height);
 		minimumSize = Size(width, height);
 		
-		with (glc = new GLControlDisplay(display)) {
+		with (glc = new GLControlDisplay(cpu, display)) {
 			dock    = DockStyle.FILL;
 			parent  = this;
 			visible = true;

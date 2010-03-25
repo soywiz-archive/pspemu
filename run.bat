@@ -1,9 +1,9 @@
 @ECHO OFF
 CLS
 
-DEL /Q pspemu.exe 2> NUL > NUL
-dev\php\php.exe dev\build.php
+REM DEL /Q pspemu.exe 2> NUL > NUL
+dev\php\php.exe dev\build.php release pspemu.exe
 
 IF EXIST "pspemu.exe" (
-	dev\dmd2\windows\bin\ddbg.exe -cmd "r;us;q" pspemu.exe %*
+	pspemu.exe %*
 )

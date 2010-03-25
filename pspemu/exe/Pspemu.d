@@ -63,7 +63,6 @@ int main(string[] args) {
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 	//cpu.addBreakpoint(cpu.BreakPoint(0x0893F530, []));
-	
 
 	string executableFile;
 
@@ -73,19 +72,21 @@ int main(string[] args) {
 		executableFile = args[1];
 	}
 
-	// Load.
-	loader.load(executableFile);
-	loader.setRegisters();
+	(new Thread({
+		// Load.
+		loader.load(executableFile);
+		loader.setRegisters();
 
-	version (TRACE_FROM_BEGINING) {
-		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
-	}
+		version (TRACE_FROM_BEGINING) {
+			cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
+		}
 
-	// Start GPU.
-	gpu.start();
+		// Start GPU.
+		gpu.start();
 
-	// Start CPU.
-	cpu.start();
+		// Start CPU.
+		cpu.start();
+	})).start();
 
 
 	int retval = 0;

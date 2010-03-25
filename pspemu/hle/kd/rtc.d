@@ -6,6 +6,8 @@ class sceRtc : Module {
 	void initNids() {
 		mixin(registerd!(0xC41C2853, sceRtcGetTickResolution));
 		mixin(registerd!(0x3F7AD767, sceRtcGetCurrentTick));
+		mixin(registerd!(0x05EF322C, sceRtcGetDaysInMonth));
+		mixin(registerd!(0x57726BC1, sceRtcGetDayOfWeek));
 	}
 	
 	
@@ -29,6 +31,31 @@ class sceRtc : Module {
 	int sceRtcGetCurrentTick(u64 *tick) {
 		std.c.windows.windows.QueryPerformanceCounter(cast(long *)tick);
 		return 0;
+	}
+
+	/**
+	 * Get number of days in a specific month
+	 *
+	 * @param year - year in which to check (accounts for leap year)
+	 * @param month - month to get number of days for
+	 * @return # of days in month, <0 on error (?)
+	 */
+	int sceRtcGetDaysInMonth(int year, int month) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get day of the week for a date
+	 *
+	 * @param year - year in which to check (accounts for leap year)
+	 * @param month - month that day is in
+	 * @param day - day to get day of week for
+	 * @return day of week with 0 representing Monday
+	 */
+	int sceRtcGetDayOfWeek(int year, int month, int day) {
+		unimplemented();
+		return -1;
 	}
 }
 

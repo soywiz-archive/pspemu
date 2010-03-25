@@ -36,6 +36,11 @@ class sceAudio_driver : Module {
 		mixin(registerd!(0x5EC81C55, sceAudioChReserve));
 		mixin(registerd!(0x6FC46853, sceAudioChRelease));
 		mixin(registerd!(0x136CAF51, sceAudioOutputBlocking));
+		mixin(registerd!(0xE2D56B2D, sceAudioOutputPanned));
+		mixin(registerd!(0xE9D97901, sceAudioGetChannelRestLen));
+		mixin(registerd!(0xCB2E439E, sceAudioSetChannelDataLen));
+		mixin(registerd!(0x95FD0C2D, sceAudioChangeChannelConfig));
+		mixin(registerd!(0xB7E1D8E7, sceAudioChangeChannelVolume));
 	}
 
 	void initModule() {
@@ -87,15 +92,86 @@ class sceAudio_driver : Module {
 		returnValue = 0;
 		avoidAutosetReturnValue();
 		
-		moduleManager.get!(ThreadManForUser).threadManager.currentThread.pause(
+		return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
 			"sceAudioOutputPannedBlocking", (PspThread pausedThread) {
 				if (!playing) {
-					pausedThread.resume();
+					pausedThread.resumeAndReturn(0);
 				}
 			}
 		);
+	}
 
-		return 0;
+	/**
+	 * Output panned audio of the specified channel
+	 *
+	 * @param channel - The channel number.
+	 *
+	 * @param leftvol - The left volume.
+	 *
+	 * @param rightvol - The right volume.
+	 *
+	 * @param buf - Pointer to the PCM data to output.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioOutputPanned(int channel, int leftvol, int rightvol, void *buf) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get count of unplayed samples remaining
+	 *
+	 * @param channel - The channel number.
+	 *
+	 * @return Number of samples to be played, an error if less than 0.
+	 */
+	int sceAudioGetChannelRestLen(int channel) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Change the output sample count, after it's already been reserved
+	 *
+	 * @param channel - The channel number.
+	 * @param samplecount - The number of samples to output in one output call.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioSetChannelDataLen(int channel, int samplecount) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Change the format of a channel
+	 *
+	 * @param channel - The channel number.
+	 *
+	 * @param format - One of ::PspAudioFormats
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioChangeChannelConfig(int channel, int format) {
+		unimplemented();
+		return -1;
+	}
+	
+	/**
+	 * Change the volume of a channel
+	 *
+	 * @param channel - The channel number.
+	 *
+	 * @param leftvol - The left volume.
+	 *
+	 * @param rightvol - The right volume.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioChangeChannelVolume(int channel, int leftvol, int rightvol) {
+		unimplemented();
+		return -1;
 	}
 
 	/**
