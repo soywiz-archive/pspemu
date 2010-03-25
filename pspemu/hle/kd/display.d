@@ -14,6 +14,15 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
 		mixin(registerd!(0x289D82FE, sceDisplaySetFrameBuf));
 		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
+		mixin(registerd!(0x9C6EAAD7, sceDisplayGetVcount));
+	}
+
+	/**
+	 * Number of vertical blank pulses up to now
+	 */
+	uint sceDisplayGetVcount() {
+		unimplemented();
+		return 0;
 	}
 
 	/**

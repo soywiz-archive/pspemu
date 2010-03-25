@@ -62,6 +62,8 @@ int main(string[] args) {
 	auto syscall       = new Syscall(cpu, moduleManager);
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
+	//cpu.addBreakpoint(cpu.BreakPoint(0x0893F530, []));
+	
 
 	string executableFile;
 
@@ -76,7 +78,6 @@ int main(string[] args) {
 	loader.setRegisters();
 
 	version (TRACE_FROM_BEGINING) {
-		cpu.checkBreakpoints = true;
 		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
 	}
 
@@ -89,7 +90,7 @@ int main(string[] args) {
 
 	int retval = 0;
 	try {
-		Application.run(new DisplayForm(cpu, display, controller));
+		Application.run(new DisplayForm(moduleManager, cpu, display, controller));
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
 		retval = -1;

@@ -7,10 +7,10 @@ import pspemu.hle.Module;
 import std.algorithm;
 
 class SysMemUserForUser : Module {
-	MemorySegment allocStack(uint stackSize) {
-		stackSize &= 0xF;
-		auto segment = pspMemorySegmentStacks.allocByHigh(stackSize);
-		//writefln("allocStack!!! %s", segment);
+	MemorySegment allocStack(uint stackSize, string name) {
+		stackSize &= ~0xF;
+		auto segment = pspMemorySegmentStacks.allocByHigh(stackSize, std.string.format("Stack for %s", name));
+		//writefln("allocStack!!! %s Size(%d)", segment, stackSize);
 		return segment;
 	}
 

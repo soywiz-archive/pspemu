@@ -1,7 +1,6 @@
 module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 
 //debug = DEBUG_THREADS;
-//version = FAKE_SINGLE_THREAD;
 //debug = DEBUG_SYSCALL;
 
 import std.algorithm;
@@ -12,6 +11,9 @@ import pspemu.core.cpu.Registers;
 
 import pspemu.hle.kd.sysmem; // kd/sysmem.prx (sceSystemMemoryManager)
 
+/**
+ * Library imports for the kernel threading library.
+ */
 class ThreadManForUser : Module {
 	void initNids() {
 		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
@@ -45,11 +47,159 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xBC6FEBC5, sceKernelReferSemaStatus));
 		mixin(registerd!(0x383F7BCC, sceKernelTerminateDeleteThread));
 		mixin(registerd!(0x71BC9871, sceKernelChangeThreadPriority));
+		mixin(registerd!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
+	}
+
+	/**
+	 * Thread Manager
+	 */
+	PspThreadManager    threadManager;
+	PspSemaphoreManager semaphoreManager;
+
+	void initModule() {
+		threadManager    = new PspThreadManager(this);
+		semaphoreManager = new PspSemaphoreManager(this);
 	}
 
 	void processCallbacks() {
 		// @TODO
 	}
+
+	/**
+	 * Semaphore related stuff.
+	 */
+	template TemplateSemaphore() {
+		/**
+		 * Poll a sempahore.
+		 *
+		 * @param semaid - UID of the semaphore to poll.
+		 * @param signal - The value to test for.
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelPollSema(SceUID semaid, int signal) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Retrieve information about a semaphore.
+		 *
+		 * @param semaid - UID of the semaphore to retrieve info for.
+		 * @param info - Pointer to a ::SceKernelSemaInfo struct to receive the info.
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelReferSemaStatus(SceUID semaid, SceKernelSemaInfo* info) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Lock a semaphore
+		 *
+		 * @par Example:
+		 * @code
+		 * sceKernelWaitSema(semaid, 1, 0);
+		 * @endcode
+		 *
+		 * @param semaid - The sema id returned from sceKernelCreateSema
+		 * @param signal - The value to wait for (i.e. if 1 then wait till reaches a signal state of 1)
+		 * @param timeout - Timeout in microseconds (assumed).
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelWaitSema(SceUID semaid, int signal, SceUInt* timeout) {
+			auto semaphore = reinterpret!(PspSemaphore)(semaid);
+			
+			// @TODO implement timeout!
+
+			threadManager.currentThread.pause("sceKernelWaitSema", (PspThread pausedThread) {
+				if (semaphore.info.currentCount >= signal) {
+					semaphore.info.currentCount -= signal;
+					pausedThread.resume();
+				}
+				//writefln("%d >= %d", semaphore.signal, signal);
+				//writefln("sceKernelSleepThread.entering!");
+			});
+
+			return 0;
+		}
+
+		/**
+		 * Send a signal to a semaphore
+		 *
+		 * @par Example:
+		 * @code
+		 * // Signal the sema
+		 * sceKernelSignalSema(semaid, 1);
+		 * @endcode
+		 *
+		 * @param semaid - The sema id returned from sceKernelCreateSema
+		 * @param signal - The amount to signal the sema (i.e. if 2 then increment the sema by 2)
+		 *
+		 * @return < 0 On error.
+		 */
+		int sceKernelSignalSema(SceUID semaid, int signal) {
+			auto semaphore = reinterpret!(PspSemaphore)(semaid);
+			if (signal    <= 0   ) return PspKernelErrorCodes.SCE_KERNEL_ERROR_ILLEGAL_COUNT;
+			if (semaphore is null) return PspKernelErrorCodes.SCE_KERNEL_ERROR_UNKNOWN_UID;
+
+			with (semaphore.info) {
+				currentCount += signal;
+				if (currentCount > maxCount) {
+					currentCount = maxCount;
+				}
+			}
+			return 0;
+		}
+
+		/**
+		 * Destroy a semaphore
+		 *
+		 * @param semaid - The semaid returned from a previous create call.
+		 * @return Returns the value 0 if its succesful otherwise -1
+		 */
+		int sceKernelDeleteSema(SceUID semaid) {
+			auto pspSemaphore = reinterpret!(PspSemaphore)(semaid);
+			if (pspSemaphore is null) return -1;
+			semaphoreManager.removeSemaphore(pspSemaphore);
+			return 0;
+		}
+
+		/**
+		 * Creates a new semaphore
+		 *
+		 * @par Example:
+		 * @code
+		 * int semaid;
+		 * semaid = sceKernelCreateSema("MyMutex", 0, 1, 1, 0);
+		 * @endcode
+		 *
+		 * @param name      - Specifies the name of the sema
+		 * @param attr      - Sema attribute flags (normally set to 0)
+		 * @param initCount - Sema initial value 
+		 * @param maxCount  - Sema maximum value
+		 * @param option    - Sema options (normally set to 0)
+		 * @return A semaphore id
+		 */
+		SceUID sceKernelCreateSema(string name, SceUInt attr, int initCount, int maxCount, SceKernelSemaOptParam* option) {
+			auto semaphore = semaphoreManager.createSemaphore();
+
+			with (semaphore) {
+				info.name[0..name.length] = name[0..$];
+				info.attr           = attr;
+				info.initCount      = initCount;
+				info.currentCount   = initCount; // Actually value
+				info.maxCount       = maxCount;
+				info.numWaitThreads = 0;
+			}
+
+			return reinterpret!(SceUID)(semaphore);
+		}
+	}
+	
+	mixin TemplateSemaphore;
 
 	/**
 	 * Terminate and delete a thread.
@@ -80,125 +230,22 @@ class ThreadManForUser : Module {
 	int sceKernelChangeThreadPriority(SceUID thid, int priority) {
 		auto pspThread = cast(PspThread)cast(void *)thid;
 		if (pspThread is null) return -1;
-		pspThread.priority = priority;
+		pspThread.info.currentPriority = priority;
 		return 0;
 	}
-
+	
 	/**
-	 * Poll a sempahore.
+	 * Modify the attributes of the current thread.
 	 *
-	 * @param semaid - UID of the semaphore to poll.
-	 * @param signal - The value to test for.
+	 * @param unknown - Set to 0.
+	 * @param attr - The thread attributes to modify.  One of ::PspThreadAttributes.
 	 *
 	 * @return < 0 on error.
 	 */
-	int sceKernelPollSema(SceUID semaid, int signal) {
+	int sceKernelChangeCurrentThreadAttr(int unknown, SceUInt attr) {
 		unimplemented();
 		return -1;
 	}
-
-	/**
-	 * Retrieve information about a semaphore.
-	 *
-	 * @param semaid - UID of the semaphore to retrieve info for.
-	 * @param info - Pointer to a ::SceKernelSemaInfo struct to receive the info.
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelReferSemaStatus(SceUID semaid, SceKernelSemaInfo* info) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Lock a semaphore
-	 *
-	 * @par Example:
-	 * @code
-	 * sceKernelWaitSema(semaid, 1, 0);
-	 * @endcode
-	 *
-	 * @param semaid - The sema id returned from sceKernelCreateSema
-	 * @param signal - The value to wait for (i.e. if 1 then wait till reaches a signal state of 1)
-	 * @param timeout - Timeout in microseconds (assumed).
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelWaitSema(SceUID semaid, int signal, SceUInt* timeout) {
-		auto semaphore = reinterpret!(PspSemaphore)(semaid);
-		
-		// @TODO implement timeout!
-
-		currentThread.pause("sceKernelWaitSema", (PspThread pausedThread) {
-			if (semaphore.signal >= signal) {
-				pausedThread.resume();
-			}
-			//writefln("sceKernelSleepThread.entering!");
-		});
-
-		return 0;
-	}
-
-	/**
-	 * Send a signal to a semaphore
-	 *
-	 * @par Example:
-	 * @code
-	 * // Signal the sema
-	 * sceKernelSignalSema(semaid, 1);
-	 * @endcode
-	 *
-	 * @param semaid - The sema id returned from sceKernelCreateSema
-	 * @param signal - The amount to signal the sema (i.e. if 2 then increment the sema by 2)
-	 *
-	 * @return < 0 On error.
-	 */
-	int sceKernelSignalSema(SceUID semaid, int signal) {
-		auto semaphore = reinterpret!(PspSemaphore)(semaid);
-		if (semaphore is null) return -1;
-		semaphore.signal += signal;
-		return 0;
-	}
-
-	/**
-	 * Destroy a semaphore
-	 *
-	 * @param semaid - The semaid returned from a previous create call.
-	 * @return Returns the value 0 if its succesful otherwise -1
-	 */
-	int sceKernelDeleteSema(SceUID semaid) {
-		auto pspSemaphore = reinterpret!(PspSemaphore)(semaid);
-		if (pspSemaphore is null) return -1;
-		pspSemaphore.exit();
-		return 0;
-	}
-
-	/**
-	 * Creates a new semaphore
-	 *
-	 * @par Example:
-	 * @code
-	 * int semaid;
-	 * semaid = sceKernelCreateSema("MyMutex", 0, 1, 1, 0);
-	 * @endcode
-	 *
-	 * @param name - Specifies the name of the sema
-	 * @param attr - Sema attribute flags (normally set to 0)
-	 * @param initVal - Sema initial value 
-	 * @param maxVal - Sema maximum value
-	 * @param option - Sema options (normally set to 0)
-	 * @return A semaphore id
-	 */
-	SceUID sceKernelCreateSema(string name, SceUInt attr, int initVal, int maxVal, SceKernelSemaOptParam* option) {
-		auto semaphore = new PspSemaphore(this);
-		semaphore.name    = name;
-		semaphore.attr    = attr;
-		semaphore.initVal = initVal;
-		semaphore.maxVal  = maxVal;
-		semaphore.option  = option;
-		return reinterpret!(SceUID)(semaphore);
-	}
-
 
 	/** 
 	 * Wait until a thread has ended.
@@ -213,12 +260,6 @@ class ThreadManForUser : Module {
 		return -1;
 	}
 
-	void changeAfter(T)(T* var, int microseconds, T value) {
-		(new Thread({ sleep(microseconds / 1000); *var = value; })).start();
-	}
-
-	static const timerPaused = "bool paused = true; changeAfter(&paused, delay, false);";
-
 	/**
 	 * Delay the current thread by a specified number of microseconds
 	 *
@@ -230,9 +271,9 @@ class ThreadManForUser : Module {
 	 * @endcode
 	 */
 	int sceKernelDelayThread(SceUInt delay) {
-		mixin(timerPaused);
+		mixin(changeAfterTimerPausedMicroseconds);
 
-		currentThread.pause("sceKernelDelayThread", (PspThread pausedThread) {
+		threadManager.currentThread.pause("sceKernelDelayThread", (PspThread pausedThread) {
 			if (!paused) pausedThread.resume();
 		});
 
@@ -250,85 +291,14 @@ class ThreadManForUser : Module {
 	 * @endcode
 	 */
 	int sceKernelDelayThreadCB(SceUInt delay) {
-		mixin(timerPaused);
+		mixin(changeAfterTimerPausedMicroseconds);
 
-		currentThread.pause("sceKernelDelayThreadCB", (PspThread pausedThread) {
+		threadManager.currentThread.pause("sceKernelDelayThreadCB", (PspThread pausedThread) {
 			processCallbacks();
 			if (!paused) pausedThread.resume();
 		});
 
 		return 0;
-	}
-
-	void initModule() {
-		initThreads();
-	}
-
-	void initThreads() {
-	}
-
-	PspThread   currentThread;
-	PspThread[] threadRunningList;
-	bool[PspThread] createdThreads;
-	bool[PspSemaphore] createdSemaphores;
-
-	PspThread threadMinNextId() {
-		uint minNextId = -1;
-		PspThread minThread;
-		foreach (thread; threadRunningList) {
-			if (thread.nextId < minNextId) {
-				minNextId = thread.nextId;
-				minThread = thread;
-			}
-		}
-		if (minThread is null) throw(new Exception("threadMinNextId: null: No threads?"));
-		return minThread;
-	}
-
-	void threadsRemoveDead() {
-		PspThread[] list;
-		foreach (thread; threadRunningList) if (thread.alive) list ~= thread;
-		threadRunningList = list;
-	}
-
-	void threadsNormalizeNextId() {
-		if (!threadRunningList.length) return;
-		uint min = threadMinNextId.nextId;
-		foreach (thread; threadRunningList) thread.nextId -= min;
-	}
-
-	void dumpThreads() {
-		writefln("Threads(%d) {", threadRunningList.length);
-		foreach (thread; threadRunningList) {
-			writefln("  %s", thread);
-		}
-		writefln("}");
-	}
-
-	void thread0InterruptHandler() {
-		version (FAKE_SINGLE_THREAD) {
-			debug (DEBUG_THREADS) {
-				writefln("thread0InterruptHandler");
-			}
-		} else {
-			threadsNormalizeNextId();
-			threadsRemoveDead();
-
-			if (threadRunningList.length == 0) {
-				throw(new Exception("No threads left!"));
-			}
-			
-			auto nextThread = threadMinNextId;
-			nextThread.updateNextId();
-
-			debug (DEBUG_THREADS) {
-				dumpThreads();
-				writefln("Current: %s", currentThread);
-				writefln("Next:    %s", nextThread);
-			}
-
-			nextThread.switchToThisThread();
-		}
 	}
 
 	/** 
@@ -351,9 +321,20 @@ class ThreadManForUser : Module {
 	int sceKernelReferThreadStatus(SceUID thid, SceKernelThreadInfo* info) {
 		auto thread = reinterpret!(PspThread)(thid);
 		if (thread is null) return -1;
+		if (info   is null) return -2;
 
-		*info = SceKernelThreadInfo(0);
-		return -1;
+		//if (size < threadManager.currentThread.info)
+		
+		ubyte[] copyFrom = TA(threadManager.currentThread.info);
+		ubyte[] copyTo   = (cast(ubyte*)info)[0..info.size];
+
+		uint copyLength = pspemu.utils.Utils.min(copyFrom.length, copyTo.length);
+
+		uint restoreSize = info.size;
+		copyTo[0..copyLength] = copyFrom[0..copyLength];
+		info.size = restoreSize;
+
+		return 0;
 	}
 
 	/** 
@@ -362,7 +343,7 @@ class ThreadManForUser : Module {
 	 * @return The thread id of the calling thread.
 	 */
 	SceUID sceKernelGetThreadId() {
-		return reinterpret!(SceUID)(currentThread);
+		return reinterpret!(SceUID)(threadManager.currentThread);
 	}
 
 	/** 
@@ -425,18 +406,13 @@ class ThreadManForUser : Module {
 	 * @return < 0 on error.
 	 */
 	int sceKernelSleepThread() {
-		version (FAKE_SINGLE_THREAD) {
-			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelSleepThread"));
-			return 0;
-		} else {
-			// Sets the position of the thread to the syscall again.
-			// Sets the thread as waiting.
-			// Switch to another thread immediately.
-			currentThread.pause("sceKernelSleepThread", (PspThread pausedThread) {
-				//writefln("sceKernelSleepThread");
-			});
-			return 0;
-		}
+		// Sets the position of the thread to the syscall again.
+		// Sets the thread as waiting.
+		// Switch to another thread immediately.
+		threadManager.currentThread.pause("sceKernelSleepThread", (PspThread pausedThread) {
+			//writefln("sceKernelSleepThread");
+		});
+		return 0;
 	}
 
 	/**
@@ -449,16 +425,11 @@ class ThreadManForUser : Module {
 	 * @endcode
 	 */
 	int sceKernelSleepThreadCB() {
-		version (FAKE_SINGLE_THREAD) {
-			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelSleepThreadCB"));
-			return 0;
-		} else {
-			// Ditto.
-			currentThread.pause("sceKernelSleepThreadCB", (PspThread pausedThread) {
-				processCallbacks();
-			});
-			return 0;
-		}
+		// Ditto.
+		threadManager.currentThread.pause("sceKernelSleepThreadCB", (PspThread pausedThread) {
+			processCallbacks();
+		});
+		return 0;
 	}
 	
 	/**
@@ -467,13 +438,8 @@ class ThreadManForUser : Module {
 	 * @param status - Exit status.
 	 */
 	int sceKernelExitThread(int status) {
-		version (FAKE_SINGLE_THREAD) {
-			throw(new Exception("FAKE_SINGLE_THREAD.sceKernelExitThread"));
-			return 0;
-		} else {
-			currentThread.exit();
-			return 0;
-		}
+		threadManager.currentThread.exit();
+		return 0;
 	}
 	
 	/**
@@ -502,60 +468,68 @@ class ThreadManForUser : Module {
 	 * thid = sceKernelCreateThread("my_thread", threadFunc, 0x18, 0x10000, 0, NULL);
 	 * @endcode
 	 *
-	 * @param name - An arbitrary thread name.
-	 * @param entry - The thread function to run when started.
+	 * @param name         - An arbitrary thread name.
+	 * @param entry        - The thread function to run when started.
 	 * @param initPriority - The initial priority of the thread. Less if higher priority.
-	 * @param stackSize - The size of the initial stack.
-	 * @param attr - The thread attributes, zero or more of ::PspThreadAttributes.
-	 * @param option - Additional options specified by ::SceKernelThreadOptParam.
+	 * @param stackSize    - The size of the initial stack.
+	 * @param attr         - The thread attributes, zero or more of ::PspThreadAttributes.
+	 * @param option       - Additional options specified by ::SceKernelThreadOptParam.
 
 	 * @return UID of the created thread, or an error code.
 	 */
 	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
-		auto pspThread = new PspThread(this);
-		pspThread.name = name.idup;
-		pspThread.registers.copyFrom(cpu.registers);
-		pspThread.registers.pcSet(entry);
-		debug (DEBUG_THREADS) writefln("stackCurrent: %08X", pspThread.registers.SP);
-		pspThread.stack = moduleManager.get!(SysMemUserForUser).allocStack(stackSize);
-		pspThread.registers.SP = pspThread.stack.block.high;
-		pspThread.registers.RA = 0x08000000;
-		debug (DEBUG_THREADS) writefln("stackNew: %08X", pspThread.registers.SP);
-		pspThread.priority = initPriority;
-		pspThread.stackSize = stackSize;
+		auto pspThread = threadManager.createThread();
+		// Set stack.
+		pspThread.stack = moduleManager.get!(SysMemUserForUser).allocStack(stackSize, name);
+
+		// Copy name string.
+		pspThread.name = name;
+		pspThread.info.name[0..name.length] = name[0..name.length];
+
+		// Set stack info.
+		pspThread.info.stack     = cast(void*)pspThread.stack.block.low;
+		pspThread.info.stackSize = stackSize;
+
+		// Set priority info.
+		pspThread.info.initPriority    = initPriority;
+		pspThread.info.currentPriority = initPriority;
+
+		// Set entry info.
+		pspThread.info.entry = entry;
+
+		// Set extra info.
+		pspThread.info.size  = pspThread.info.sizeof;
+		pspThread.info.attr  = attr;
+		pspThread.info.gpReg = cast(void *)cpu.registers.GP;
+
+		// Set thread registers.
+		with (pspThread.registers) {
+			copyFrom(cpu.registers);
+			pcSet(entry);
+			SP = pspThread.stack.block.high;
+			RA = 0x08000000; // sleep
+		}
+
 		return reinterpret!(SceUID)(pspThread);
 	}
 
 	/**
 	 * Start a created thread
 	 *
-	 * @param thid - Thread id from sceKernelCreateThread
+	 * @param thid   - Thread id from sceKernelCreateThread
 	 * @param arglen - Length of the data pointed to by argp, in bytes
-	 * @param argp - Pointer to the arguments.
+	 * @param argp   - Pointer to the arguments.
 	 */
-	//int sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
-	void sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
-		version (FAKE_SINGLE_THREAD) {
-			auto pspThread = reinterpret!(PspThread)(thid);
-			if (pspThread is null) throw(new Exception("sceKernelStartThread: Null"));
-			cpu.registers.pcSet(pspThread.registers.PC);
-			cpu.registers.A0 = 0;
-			cpu.registers.A1 = 0;
-		} else {
-			auto pspThread = reinterpret!(PspThread)(thid);
-			if (pspThread is null) {
-				//throw(new Exception("sceKernelStartThread: Null"));
-				writefln("sceKernelStartThread: Null");
-				cpu.registers.V0 = -1;
-				return;
-			}
-			pspThread.registers.A0 = arglen;
-			pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
-			pspThread.nextId = threadRunningList.length ? threadMinNextId.nextId : 0;
-			threadRunningList ~= pspThread;
-			cpu.registers.V0 = 0;
-			return;
+	int sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
+		auto pspThread = reinterpret!(PspThread)(thid);
+		if (pspThread is null) {
+			writefln("sceKernelStartThread: Null");
+			return -1;
 		}
+		pspThread.registers.A0 = arglen;
+		pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
+		threadManager.addToRunningList(pspThread);
+		return 0;
 	}
 
 	/**
@@ -687,143 +661,16 @@ class ThreadManForUser : Module {
 class ThreadManForKernel : ThreadManForUser {
 }
 
-alias uint SceKernelThreadEntry;
-alias uint SceKernelCallbackFunction;
-
-//alias int function(SceSize args, void *argp) SceKernelThreadEntry;
-//alias int function(int arg1, int arg2, void *arg) SceKernelCallbackFunction;
-
-/** Structure to hold the event flag information */
-struct SceKernelEventFlagInfo {
-	SceSize 	size;
-	char 		name[32];
-	SceUInt 	attr;
-	SceUInt 	initPattern;
-	SceUInt 	currentPattern;
-	int 		numWaitThreads;
-}
-
-/** 64-bit system clock type. */
-struct SceKernelSysClock {
-	SceUInt32   low;
-	SceUInt32   hi;
-}
-
-struct SceKernelThreadInfo {
-	/** Size of the structure */
-	SceSize     size;
-	/** Nul terminated name of the thread */
-	char    	name[32];
-	/** Thread attributes */
-	SceUInt     attr;
-	/** Thread status */
-	int     	status;
-	/** Thread entry point */
-	SceKernelThreadEntry    entry;
-	/** Thread stack pointer */
-	void *  	stack;
-	/** Thread stack size */
-	int     	stackSize;
-	/** Pointer to the gp */
-	void *  	gpReg;
-	/** Initial priority */
-	int     	initPriority;
-	/** Current priority */
-	int     	currentPriority;
-	/** Wait type */
-	int     	waitType;
-	/** Wait id */
-	SceUID  	waitId;
-	/** Wakeup count */
-	int     	wakeupCount;
-	/** Exit status of the thread */
-	int     	exitStatus;
-	/** Number of clock cycles run */
-	SceKernelSysClock   runClocks;
-	/** Interrupt preemption count */
-	SceUInt     intrPreemptCount;
-	/** Thread preemption count */
-	SceUInt     threadPreemptCount;
-	/** Release count */
-	SceUInt     releaseCount;
-}
-
-struct SceKernelEventFlagOptParam {
-	SceSize 	size;
-}
-
-/** Additional options used when creating threads. */
-struct SceKernelThreadOptParam {
-	/** Size of the ::SceKernelThreadOptParam structure. */
-	SceSize 	size;
-	/** UID of the memory block (?) allocated for the thread's stack. */
-	SceUID 		stackMpid;
-}
-
-/** Attribute for threads. */
-enum PspThreadAttributes {
-	/** Enable VFPU access for the thread. */
-	PSP_THREAD_ATTR_VFPU = 0x00004000,
-	/** Start the thread in user mode (done automatically 
-	  if the thread creating it is in user mode). */
-	PSP_THREAD_ATTR_USER = 0x80000000,
-	/** Thread is part of the USB/WLAN API. */
-	PSP_THREAD_ATTR_USBWLAN = 0xa0000000,
-	/** Thread is part of the VSH API. */
-	PSP_THREAD_ATTR_VSH = 0xc0000000,
-	/** Allow using scratchpad memory for a thread, NOT USABLE ON V1.0 */
-	PSP_THREAD_ATTR_SCRATCH_SRAM = 0x00008000,
-	/** Disables filling the stack with 0xFF on creation */
-	PSP_THREAD_ATTR_NO_FILLSTACK = 0x00100000,
-	/** Clear the stack when the thread is deleted */
-	PSP_THREAD_ATTR_CLEAR_STACK = 0x00200000,
-}
-
-struct SceKernelMppInfo {
-	SceSize 	size;
-	char 	name[32];
-	SceUInt 	attr;
-	int 	bufSize;
-	int 	freeSize;
-	int 	numSendWaitThreads;
-	int 	numReceiveWaitThreads;
-}
-
-struct SceKernelSemaInfo {
-	/** Size of the ::SceKernelSemaInfo structure. */
-	SceSize 	size;
-	/** NUL-terminated name of the semaphore. */
-	char 		name[32];
-	/** Attributes. */
-	SceUInt 	attr;
-	/** The initial count the semaphore was created with. */
-	int 		initCount;
-	/** The current count. */
-	int 		currentCount;
-	/** The maximum count. */
-	int 		maxCount;
-	/** The number of threads waiting on the semaphore. */
-	int 		numWaitThreads;
-}
-
-struct SceKernelSemaOptParam {
-	/** Size of the ::SceKernelSemaOptParam structure. */
-	SceSize 	size;
-}
-
 class PspThread {
-	ThreadManForUser threadManager;
+	PspThreadManager threadManager;
 	Registers registers;
 	Registers resumeRegisters;
 
 	string name;
 	MemorySegment stack;
 
-	// Id used for sorting threads.
-	uint nextId = 0;
-	
-	uint priority  = 32;
-	uint stackSize = 0x1000;
+	SceKernelThreadInfo info;
+
 	bool paused   = false;
 	bool alive     = true;
 	
@@ -834,17 +681,14 @@ class PspThread {
 	alias void delegate(PspThread) PausedCallback;
 	PausedCallback pausedCallback;
 
-	this(ThreadManForUser threadManager) {
+	this(PspThreadManager threadManager) {
 		this.threadManager   = threadManager;
 		this.registers       = new Registers;
 		this.resumeRegisters = new Registers;
-		threadManager.createdThreads[this] = true;
 	}
 
 	void executeHlePausedEnterCallback() {
-		debug (DEBUG_THREADS) {
-			writefln("  PspThread.executeHlePausedEnterCallback = 0x%08X", reinterpret!(uint)(pausedCallback));
-		}
+		debug (DEBUG_THREADS) { writefln("  PspThread.executeHlePausedEnterCallback = 0x%08X", reinterpret!(uint)(pausedCallback)); }
 		if (pausedCallback !is null) {
 			pausedCallback(this);
 		}
@@ -860,22 +704,22 @@ class PspThread {
 	}
 	
 	void updateNextId() {
-		nextId += (priority + 1);
+		info.threadPreemptCount += (info.currentPriority + 1);
 	}
 
 	string toString() {
 		return std.string.format(
-			"Thread(Name='%s' ID=0x%06X, PC=0x%08X, SP=0x%08X, nextId=0x%03X, priority=0x%02X, stackSize=0x%05X, paused=%d, alive=%d, callback='%s':%08X) resume-PC:%08X, resume-RA:%08X",
-			name, reinterpret!(uint)(this), registers.PC, registers.SP, nextId, priority, stackSize, paused, alive, pausedName, reinterpret!(uint)(pausedCallback), resumeRegisters.PC, resumeRegisters.RA
+			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, threadPreemptCount=0x%03X, currentPriority=0x%02X, "
+			"stackSize=0x%05X, paused=%d, alive=%d, callback='%s':%08X, Name='%s') resume-PC:%08X, resume-RA:%08X",
+			reinterpret!(uint)(this), registers.PC, registers.SP, info.threadPreemptCount, info.currentPriority,
+			info.stackSize, paused, alive, pausedName, reinterpret!(uint)(pausedCallback), name, resumeRegisters.PC, resumeRegisters.RA
 		);
 	}
 
 	void switchToOtherThread() {
-		debug (DEBUG_THREADS) {
-			writefln("  PspThread.switchToOtherThread()");
-		}
+		debug (DEBUG_THREADS) { writefln("  PspThread.switchToOtherThread()"); }
 		// Change execution to another thread.
-		threadManager.thread0InterruptHandler();
+		threadManager.switchNextThread();
 	}
 
 	void switchToThisThread() {
@@ -890,16 +734,14 @@ class PspThread {
 	}
 
 	void pause(string pausedName = null, PausedCallback pausedCallback = null) {
-		debug (DEBUG_THREADS) {
-			writefln("  PspThread.pause(); callback = %s", reinterpret!(uint)(pausedCallback));
-		}
+		debug (DEBUG_THREADS) { writefln("  PspThread.pause(); callback = %s", reinterpret!(uint)(pausedCallback)); }
 		
 		assert(!paused);
 
 		// Stalls at syscall.
 		resumeRegisters.copyFrom(threadManager.cpu.registers);
 		threadManager.cpu.registers.pcSet(0x08000010);
-		threadManager.setReturnValue = false;
+		threadManager.threadManForUser.setReturnValue = false;
 
 		this.pausedName     = pausedName;
 		this.pausedCallback = pausedCallback;
@@ -908,27 +750,15 @@ class PspThread {
 	}
 
 	void resume() {
-		debug (DEBUG_THREADS) {
-			writefln("  PspThread.resume()");
-		}
+		debug (DEBUG_THREADS) { writefln("  PspThread.resume()"); }
+
 		assert(paused);
 		
-		//writefln("resumeRegisters.PC=%08X, resumeRegisters.nPC=%08X", resumeRegisters.PC, resumeRegisters.nPC);
-
-		if (paused) {
-			//this.registers.copyFrom(resumeRegisters);
-		}
 		paused = false;
 		switchToThisThread();
 		
 		this.registers.copyFrom(resumeRegisters);
 		threadManager.cpu.registers.copyFrom(resumeRegisters);
-		
-		//writefln("  -- cpu.registers.PC=0x%08X, cpu.registers.nPC=0x%08X", threadManager.cpu.registers.PC, threadManager.cpu.registers.nPC);
-		
-		//threadManager.dumpThreads();
-
-		//static int count; if (count++ >= 4) assert(0);
 	}
 
 	void exit() {
@@ -955,28 +785,119 @@ class Callback {
 }
 
 class PspSemaphore {
-	ThreadManForUser threadManager;
-	string name;
-	SceUInt attr;
-	int initVal;
-	int signal;
-	int maxVal;
-	SceKernelSemaOptParam* option;
-	bool alive = true;
+	PspSemaphoreManager semaphoreManager;
+	SceKernelSemaInfo info;
 
-	this(ThreadManForUser threadManager) {
-		this.threadManager = threadManager;
-		threadManager.createdSemaphores[this] = true;
-	}
-
-	void exit() {
-		alive = false;
-		threadManager.createdSemaphores.remove(this);
+	this(PspSemaphoreManager semaphoreManager) {
+		this.semaphoreManager = semaphoreManager;
 	}
 }
 
-// @TODO
-class ThreadManager {
+template ThreadSubsystemManager() {
+	ThreadManForUser threadManForUser;
+	Cpu cpu() { return threadManForUser.cpu; }
+
+	public this(ThreadManForUser threadManForUser) {
+		this.threadManForUser = threadManForUser;
+	}
+}
+
+class PspThreadManager {
+	mixin ThreadSubsystemManager;
+
+	PspThread currentThread;
+	PspThread[] threadRunningList;
+	bool[PspThread] createdThreads;
+
+	PspThread getNextThread(bool doThrow = false) {
+		uint threadPreemptCount = -1;
+		PspThread minThread;
+		foreach (thread; threadRunningList) {
+			if (thread.info.threadPreemptCount < threadPreemptCount) {
+				threadPreemptCount = thread.info.threadPreemptCount;
+				minThread = thread;
+			}
+		}
+		if (doThrow && (minThread is null)) throw(new Exception("threadMinPreemptCount: null: No threads?"));
+		return minThread;
+	}
+	
+	uint threadMinPreemptCount() {
+		auto thread = getNextThread();
+		return thread ? thread.info.threadPreemptCount : 0;
+	}
+
+	void threadsRemoveDead() {
+		PspThread[] list;
+		foreach (thread; threadRunningList) if (thread.alive) list ~= thread;
+		threadRunningList = list;
+	}
+
+	void threadsNormalizePreemptCount() {
+		if (!threadRunningList.length) return;
+		uint min = threadMinPreemptCount;
+		foreach (thread; threadRunningList) thread.info.threadPreemptCount -= min;
+	}
+
+	void dumpThreads() {
+		writefln("Threads(%d) {", threadRunningList.length);
+		foreach (thread; threadRunningList) {
+			writefln("  %s", thread);
+		}
+		writefln("}");
+	}
+
+	void switchNextThread() {
+		threadsNormalizePreemptCount();
+		threadsRemoveDead();
+
+		if (threadRunningList.length == 0) {
+			throw(new Exception("No threads left!"));
+		}
+		
+		auto nextThread = getNextThread;
+		nextThread.updateNextId();
+
+		debug (DEBUG_THREADS) {
+			dumpThreads();
+			writefln("Current: %s", currentThread);
+			writefln("Next:    %s", nextThread);
+		}
+
+		nextThread.switchToThisThread();
+	}
+
+	void addToRunningList(PspThread pspThread) {
+		pspThread.info.threadPreemptCount = threadMinPreemptCount;
+		threadRunningList ~= pspThread;
+	}
+
+	PspThread createThread() {
+		auto pspThread = new PspThread(this);
+		createdThreads[pspThread] = true;
+		return pspThread;
+	}
+
+	void removeThread(PspThread pspThread) {
+		createdThreads.remove(pspThread);
+		pspThread.exit();
+	}
+}
+
+class PspSemaphoreManager {
+	mixin ThreadSubsystemManager;
+
+	bool[PspSemaphore] createdSemaphores;
+
+	PspSemaphore createSemaphore() {
+		auto pspSemaphore = new PspSemaphore(this);
+		createdSemaphores[pspSemaphore] = true;
+		return pspSemaphore;
+	}
+
+	void removeSemaphore(PspSemaphore pspSemaphore) {
+		createdSemaphores.remove(pspSemaphore);
+	}
 }
 
 static this() {

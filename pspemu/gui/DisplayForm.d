@@ -15,15 +15,20 @@ import pspemu.gui.GLControl;
 import pspemu.models.IDisplay;
 import pspemu.models.IController;
 
+import pspemu.hle.Module;
+import pspemu.hle.kd.threadman;
+
 class DisplayForm : Form, IMessageFilter {
 	GLControlDisplay glc;
+	ModuleManager    moduleManager;
 	Cpu              cpu;
 	IDisplay         display;
 	IController      controller;
 
-	this(Cpu cpu = null, IDisplay display = null, IController controller = null) {
+	this(ModuleManager moduleManager = null, Cpu cpu = null, IDisplay display = null, IController controller = null) {
 		Application.addMessageFilter(this);
 
+		this.moduleManager = moduleManager;
 		this.cpu = cpu;
 		if (display    is null) display    = new NullDisplay;
 		if (controller is null) controller = new Controller();
@@ -110,6 +115,7 @@ class DisplayForm : Form, IMessageFilter {
 				auto dissasembler = new AllegrexDisassembler(cpu.memory);
 				dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
 				dissasembler.dump(cpu.registers.PC, -6, 6);
+				moduleManager.get!(ThreadManForUser).dumpThreads();
 			break;
 			default:
 		}

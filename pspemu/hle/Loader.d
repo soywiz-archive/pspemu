@@ -253,14 +253,7 @@ class Loader : IDebugSource {
 		this.moduleManager = moduleManager;
 		this.assembler     = new AllegrexAssembler(memory);
 
-		static if (0) {
-			cpu.interrupts.callbacks[Interrupts.Type.THREAD0] ~= &moduleManager.get!(ThreadManForUser).thread0InterruptHandler;
-		} else {
-			cpu.startupCallback = {
-				writefln("cpu.startupCallback");
-				cpu.interrupts.callbacks[Interrupts.Type.THREAD0] ~= &moduleManager.get!(ThreadManForUser).thread0InterruptHandler;
-			};
-		}
+		cpu.interrupts.callbacks[Interrupts.Type.THREAD0] ~= &moduleManager.get!(ThreadManForUser).threadManager.switchNextThread;
 	}
 
 	void load(Stream stream) {

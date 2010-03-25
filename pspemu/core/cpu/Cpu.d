@@ -78,8 +78,6 @@ class Cpu : IDebugSource {
 	
 	mixin DebugSourceProxy;
 
-	void delegate() startupCallback;
-
 	bool running = true;
 
 	void stop() {
@@ -227,6 +225,7 @@ class Cpu : IDebugSource {
 
 		void addBreakpoint(BreakPoint bp) {
 			breakpoints[bp.PC] = bp;
+			checkBreakpoints = true;
 		}
 		bool checkBreakpoint(uint PC) {
 			if (breakpointRegisters is null) breakpointRegisters = new Registers;
@@ -340,9 +339,6 @@ class Cpu : IDebugSource {
 		//Thread.sleep(2000_0000);
 		//Sleep(2000);
 		try {
-			if (startupCallback !is null) {
-				startupCallback();
-			}
 			_running = true;
 			execute();
 		} catch (Object o) {

@@ -20,6 +20,8 @@ class UtilsForUser : Module {
 		mixin(registerd!(0x27CC57F0, sceKernelLibcTime));
 		mixin(registerd!(0x71EC4271, sceKernelLibcGettimeofday));
 		mixin(registerd!(0x79D1C3FA, sceKernelDcacheWritebackAll));
+		mixin(registerd!(0xBFA98062, sceKernelDcacheInvalidateRange));
+		mixin(registerd!(0x34B9FA9E, sceKernelDcacheWritebackInvalidateRange));
 	}
 
 	/** 
@@ -28,6 +30,20 @@ class UtilsForUser : Module {
 	void sceKernelDcacheWritebackAll() {
 		// http://hitmen.c02.at/files/yapspd/psp_doc/chap4.html#sec4.10
 		// Unimplemented cache.
+	}
+
+	/**
+	 * Invalidate a range of addresses in data cache
+	 */
+	void sceKernelDcacheInvalidateRange(const void* p, uint size) {
+		// Unimplemented cache.	
+	}
+
+	/**
+	 * Write back and invalidate a range of addresses in data cache
+	 */
+	void sceKernelDcacheWritebackInvalidateRange(const void *p, uint size) {
+		// Unimplemented cache.	
 	}
 
 	/** 

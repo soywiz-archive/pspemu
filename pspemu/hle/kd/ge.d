@@ -17,9 +17,37 @@ class sceGe_driver : Module {
 		mixin(registerd!(0xA4FC06A4, sceGeSetCallback));
 		mixin(registerd!(0x05DB22CE, sceGeUnsetCallback));
 		mixin(registerd!(0x1F6752AD, sceGeEdramGetSize));
+		mixin(registerd!(0xDC93CFEF, sceGeGetCmd));
+		mixin(registerd!(0x57C8945B, sceGeGetMtx));
+		mixin(registerd!(0x5FB86AB0, sceGeListDeQueue));
 	}
 
 	PspGeCallbackData[] callbackDataList;
+
+	/**
+	 * Retrive the current value of a GE command.
+	 *
+	 * @param cmd - The GE command register to retrieve.
+	 *
+	 * @return The value of the GE command.
+	 */
+	uint sceGeGetCmd(int cmd) {
+		unimplemented();
+		return 0;
+	}
+
+	/**
+	 * Retrieve a matrix of the given type.
+	 *
+	 * @param type - One of ::PspGeMatrixTypes.
+	 * @param matrix - Pointer to a variable to store the matrix.
+	 *
+	 * @return ???
+	 */
+	int sceGeGetMtx(int type, void *matrix) {
+		unimplemented();
+		return 0;
+	}
 
 	/**
 	 * Wait for syncronisation of a list.
@@ -118,6 +146,18 @@ class sceGe_driver : Module {
 	 */
 	int sceGeListEnQueueHead(void* list, void* stall, int cbid, PspGeListArgs* arg) {
 		return cast(int)cast(void*)cpu.gpu.sceGeListEnQueueHead(list, stall);
+	}
+
+	/**
+	 * Cancel a queued or running list.
+	 *
+	 * @param qid - The ID of the queue.
+	 *
+	 * @return ???
+	 */
+	int sceGeListDeQueue(int qid) {
+		unimplemented();
+		return 0;
 	}
 
 	/**

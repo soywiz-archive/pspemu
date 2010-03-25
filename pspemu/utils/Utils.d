@@ -38,6 +38,12 @@ struct InfiniteLoop(int maxCount = 512/*, string file = __FILE__, int line = __L
 	}
 }
 
+void changeAfter(T)(T* var, int microseconds, T value) {
+	(new Thread({ sleep(microseconds / 1000); *var = value; })).start();
+}
+
+static const changeAfterTimerPausedMicroseconds = "bool paused = true; changeAfter(&paused, delay, false);";
+
 T onException(T)(lazy T t, T errorValue) { try { return t(); } catch { return errorValue; } }
 T nullOnException(T)(lazy T t) { return onException!(T)(t, null); }
 
