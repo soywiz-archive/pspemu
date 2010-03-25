@@ -17,8 +17,9 @@ class sceHprm : Module {
 	 */
 	int sceHprmPeekCurrentKey(u32 *key) {
 		*key = 0;
-		unimplemented();
-		return -1;
+		//unimplemented();
+		//return -1;
+		return 0;
 	}
 }
 

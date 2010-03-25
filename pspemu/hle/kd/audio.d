@@ -80,7 +80,7 @@ class sceAudio_driver : Module {
 
 		bool playing = true;
 		(new Thread({
-			audio.writeWait(samples, volumef(leftvol), volumef(rightvol));
+			audio.writeWait(channel, samples, volumef(leftvol), volumef(rightvol));
 			playing = false;
 		})).start();
 

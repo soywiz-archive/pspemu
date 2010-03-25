@@ -59,6 +59,10 @@ class ThreadManForUser : Module {
 	void initModule() {
 		threadManager    = new PspThreadManager(this);
 		semaphoreManager = new PspSemaphoreManager(this);
+		writefln("moduleManager:%p", moduleManager);
+		moduleManager.getCurrentThreadName = {
+			return threadManager.currentThread.name;
+		};
 	}
 
 	/**
@@ -117,16 +121,14 @@ class ThreadManForUser : Module {
 			
 			// @TODO implement timeout!
 
-			threadManager.currentThread.pause("sceKernelWaitSema", (PspThread pausedThread) {
+			semaphore.info.numWaitThreads++;
+			return threadManager.currentThread.pause("sceKernelWaitSema", (PspThread pausedThread) {
 				if (semaphore.info.currentCount >= signal) {
+					semaphore.info.numWaitThreads--;
 					semaphore.info.currentCount -= signal;
-					pausedThread.resume();
+					pausedThread.resumeAndReturn(0);
 				}
-				//writefln("%d >= %d", semaphore.signal, signal);
-				//writefln("sceKernelSleepThread.entering!");
 			});
-
-			return 0;
 		}
 
 		/**
@@ -189,14 +191,13 @@ class ThreadManForUser : Module {
 		SceUID sceKernelCreateSema(string name, SceUInt attr, int initCount, int maxCount, SceKernelSemaOptParam* option) {
 			auto semaphore = semaphoreManager.createSemaphore();
 
-			with (semaphore) {
-				info.name[0..name.length] = name[0..$];
-				info.attr           = attr;
-				info.initCount      = initCount;
-				info.currentCount   = initCount; // Actually value
-				info.maxCount       = maxCount;
-				info.numWaitThreads = 0;
-			}
+			semaphore.name = name;
+			semaphore.info.name[0..name.length] = name[0..$];
+			semaphore.info.attr           = attr;
+			semaphore.info.initCount      = initCount;
+			semaphore.info.currentCount   = initCount; // Actually value
+			semaphore.info.maxCount       = maxCount;
+			semaphore.info.numWaitThreads = 0;
 
 			return reinterpret!(SceUID)(semaphore);
 		}
@@ -276,11 +277,9 @@ class ThreadManForUser : Module {
 	int sceKernelDelayThread(SceUInt delay) {
 		mixin(changeAfterTimerPausedMicroseconds);
 
-		threadManager.currentThread.pause("sceKernelDelayThread", (PspThread pausedThread) {
-			if (!paused) pausedThread.resume();
+		return threadManager.currentThread.pause("sceKernelDelayThread", (PspThread pausedThread) {
+			if (!paused) pausedThread.resumeAndReturn(0);
 		});
-
-		return 0;
 	}
 
 	/**
@@ -296,12 +295,10 @@ class ThreadManForUser : Module {
 	int sceKernelDelayThreadCB(SceUInt delay) {
 		mixin(changeAfterTimerPausedMicroseconds);
 
-		threadManager.currentThread.pause("sceKernelDelayThreadCB", (PspThread pausedThread) {
+		return threadManager.currentThread.pause("sceKernelDelayThreadCB", (PspThread pausedThread) {
 			processCallbacks();
-			if (!paused) pausedThread.resume();
+			if (!paused) pausedThread.resumeAndReturn(0);
 		});
-
-		return 0;
 	}
 
 	/** 
@@ -412,10 +409,9 @@ class ThreadManForUser : Module {
 		// Sets the position of the thread to the syscall again.
 		// Sets the thread as waiting.
 		// Switch to another thread immediately.
-		threadManager.currentThread.pause("sceKernelSleepThread", (PspThread pausedThread) {
+		return threadManager.currentThread.pause("sceKernelSleepThread", (PspThread pausedThread) {
 			//writefln("sceKernelSleepThread");
 		});
-		return 0;
 	}
 
 	/**
@@ -429,10 +425,9 @@ class ThreadManForUser : Module {
 	 */
 	int sceKernelSleepThreadCB() {
 		// Ditto.
-		threadManager.currentThread.pause("sceKernelSleepThreadCB", (PspThread pausedThread) {
+		return threadManager.currentThread.pause("sceKernelSleepThreadCB", (PspThread pausedThread) {
 			processCallbacks();
 		});
-		return 0;
 	}
 	
 	/**
@@ -754,8 +749,9 @@ class PspThread {
 
 	string toString() {
 		return std.string.format(
-			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, threadPreemptCount=0x%03X, currentPriority=0x%02X, "
-			"stackSize=0x%05X, paused=%d, alive=%d, callback='%s':%08X, Name='%s') resume-PC:%08X, resume-RA:%08X",
+			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, threadPreemptCount=0x%03X, currentPriority=0x%02X, stackSize=0x%05X\n"
+			"    paused=%d, alive=%d, callback='%s':%08X, Name='%s')\n"
+			"    resume-PC:%08X, resume-RA:%08X",
 			reinterpret!(uint)(this), registers.PC, registers.SP, info.threadPreemptCount, info.currentPriority,
 			info.stackSize, paused, alive, pausedName, reinterpret!(uint)(pausedCallback), name, resumeRegisters.PC, resumeRegisters.RA
 		);
@@ -778,7 +774,7 @@ class PspThread {
 		}
 	}
 
-	void pause(string pausedName = null, PausedCallback pausedCallback = null) {
+	uint pause(string pausedName = null, PausedCallback pausedCallback = null) {
 		debug (DEBUG_THREADS) { writefln("  PspThread.pause(); callback = %s", reinterpret!(uint)(pausedCallback)); }
 		
 		assert(!paused);
@@ -786,12 +782,14 @@ class PspThread {
 		// Stalls at syscall.
 		resumeRegisters.copyFrom(threadManager.cpu.registers);
 		threadManager.cpu.registers.pcSet(0x08000010);
-		threadManager.threadManForUser.avoidAutosetReturnValue();
 
 		this.pausedName     = pausedName;
 		this.pausedCallback = pausedCallback;
 		this.paused = true;
 		//this.switchToOtherThread();
+
+		threadManager.threadManForUser.avoidAutosetReturnValue();
+		return 0;
 	}
 
 	void resume() {
@@ -804,6 +802,11 @@ class PspThread {
 		
 		this.registers.copyFrom(resumeRegisters);
 		threadManager.cpu.registers.copyFrom(resumeRegisters);
+	}
+
+	void resumeAndReturn(uint value) {
+		resume();
+		threadManager.cpu.registers.V0 = value;
 	}
 
 	void exit() {
@@ -861,10 +864,22 @@ class PspSemaphore {
 	SceKernelSemaInfo info;
 
 	/**
+	 * Name of the semaphore.
+	 */
+	string name;
+
+	/**
 	 * Constructor.
 	 */
 	this(PspSemaphoreManager semaphoreManager) {
 		this.semaphoreManager = semaphoreManager;
+	}
+
+	string toString() {
+		return std.string.format(
+			"Semaphore('%s', attr=0x%08X, initCount=%d, currentCount=%d, maxCount=%d, numWaitThreads=%d)",
+			name, info.attr, info.initCount, info.currentCount, info.maxCount, info.numWaitThreads
+		);
 	}
 }
 
@@ -922,9 +937,16 @@ class PspThreadManager {
 		writefln("}");
 	}
 
+	bool allThreadsPaused() {
+		foreach (thread; threadRunningList) if (!thread.paused) return false;
+		return true;
+	}
+
 	void switchNextThread() {
 		threadsNormalizePreemptCount();
 		threadsRemoveDead();
+		
+		if (allThreadsPaused) sleep(1);
 
 		if (threadRunningList.length == 0) {
 			throw(new Exception("No threads left!"));
@@ -972,6 +994,14 @@ class PspSemaphoreManager {
 
 	void removeSemaphore(PspSemaphore pspSemaphore) {
 		createdSemaphores.remove(pspSemaphore);
+	}
+
+	void dumpSemaphores() {
+		writefln("Semaphores(%d) {", createdSemaphores.length);
+		foreach (semaphore; createdSemaphores.keys) {
+			writefln("  %s", semaphore);
+		}
+		writefln("}");
 	}
 }
 

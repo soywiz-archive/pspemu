@@ -123,6 +123,7 @@ class DisplayForm : Form, IMessageFilter {
 				dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
 				dissasembler.dump(cpu.registers.PC, -6, 6);
 				moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
+				moduleManager.get!(ThreadManForUser).semaphoreManager.dumpSemaphores();
 			break;
 			default:
 		}

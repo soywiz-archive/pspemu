@@ -2,6 +2,7 @@ module pspemu.utils.Audio;
 
 import std.c.windows.windows;
 import std.contracts;
+import std.stdio;
 
 pragma(lib, "winmm.lib");
 
@@ -134,7 +135,7 @@ class Audio {
 		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
 	}
 
-	void write(float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
+	void write(int channel, float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
 		bool REPEAT_ALWAYS = true;
 		currentBuffer = buffer;
 		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
@@ -145,14 +146,15 @@ class Audio {
 		wavehdr.dwLoops         = REPEAT_ALWAYS ? -1 : 0;
 		enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
 		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
+		//writefln("writtingChannel(%d)", channel);
 	}
 
 	void wait() {
 		while (position < currentBuffer.length / pcmwf.nChannels) Sleep(1);
 	}
 
-	void writeWait(float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
-		write(buffer, volumeleft, volumeright);
+	void writeWait(int channel, float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
+		write(channel, buffer, volumeleft, volumeright);
 		wait();
 	}
 

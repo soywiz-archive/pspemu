@@ -77,6 +77,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		r ~= "setReturnValue = true;";
 		string parametersString = _parametersString;
 		string parametersPrototypeString = _parametersPrototypeString;
+		r ~= "debug (DEBUG_SYSCALL) .writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, cpu.registers.PC);";
 		if (parametersPrototypeString.length) {
 			r ~= "debug (DEBUG_SYSCALL) .writef(\"" ~ functionName ~ "(" ~ _parametersPrototypeString ~ ")\", " ~ parametersString ~ "); ";
 		} else {
@@ -138,10 +139,13 @@ abstract class Module {
 	}
 	
 	this() {
+	}
+
+	final void init() {
 		initNids();
 		initModule();
 	}
-	
+
 	abstract void initNids();
 	void initModule() { }
 	
@@ -234,6 +238,13 @@ class ModuleManager {
 	this(Cpu cpu) {
 		this.cpu = cpu;
 	}
+	
+	string delegate() getCurrentThreadName;
+	
+	string currentThreadName() {
+		string s = getCurrentThreadName ? getCurrentThreadName() : "<unknown>";
+		return std.string.format("Thread('%-12s')", s);
+	}
 
 	/**
 	 * Obtains a singleton instance of the module by a given name.
@@ -243,6 +254,7 @@ class ModuleManager {
 			auto loadedModule = cast(Module)(Module.getModule(moduleName).create);
 			loadedModule.cpu = cpu;
 			loadedModule.moduleManager = this;
+			loadedModule.init();
 			loadedModules[moduleName] = loadedModule;
 		}
 		return loadedModules[moduleName];
