@@ -129,7 +129,10 @@ class DisplayForm : Form, IMessageFilter {
 				moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
 				moduleManager.get!(ThreadManForUser).semaphoreManager.dumpSemaphores();
 			break;
+			case Keys.F6:
+			break;
 			default:
+			break;
 		}
 	}
 

@@ -142,23 +142,23 @@ class MemorySegment {
 	
 	unittest {
 		// overlap
-		assert(Block(10, 20).overlap(10, 20) == true );
-		assert(Block(10, 20).overlap( 5, 15) == true );
-		assert(Block(10, 20).overlap(15, 25) == true );
-		assert(Block(10, 20).overlap( 0,  9) == false);
-		assert(Block(10, 20).overlap(21, 22) == false);
-		assert(Block(10, 20).overlap( 0, 10) == false);
-		assert(Block(10, 20).overlap(20, 22) == false);
+		assert(Block(10, 20).overlap(Block(10, 20)) == true );
+		assert(Block(10, 20).overlap(Block( 5, 15)) == true );
+		assert(Block(10, 20).overlap(Block(15, 25)) == true );
+		assert(Block(10, 20).overlap(Block( 0,  9)) == false);
+		assert(Block(10, 20).overlap(Block(21, 22)) == false);
+		assert(Block(10, 20).overlap(Block( 0, 10)) == false);
+		assert(Block(10, 20).overlap(Block(20, 22)) == false);
 
 		// inside
-		assert(Block( 0, 15).inside(10, 20) == false);
-		assert(Block(15, 25).inside(10, 20) == false);
-		assert(Block( 5, 20).inside(10, 20) == false);
-		assert(Block(10, 25).inside(10, 20) == false);
-		assert(Block(10, 20).inside(10, 20) == true );
-		assert(Block(10, 15).inside(10, 20) == true );
-		assert(Block(15, 20).inside(10, 20) == true );
-		assert(Block(11, 19).inside(10, 20) == true );
+		assert(Block( 0, 15).inside(Block(10, 20)) == false);
+		assert(Block(15, 25).inside(Block(10, 20)) == false);
+		assert(Block( 5, 20).inside(Block(10, 20)) == false);
+		assert(Block(10, 25).inside(Block(10, 20)) == false);
+		assert(Block(10, 20).inside(Block(10, 20)) == true );
+		assert(Block(10, 15).inside(Block(10, 20)) == true );
+		assert(Block(15, 20).inside(Block(10, 20)) == true );
+		assert(Block(11, 19).inside(Block(10, 20)) == true );
 	}
 
 	MemorySegment parent;

@@ -58,6 +58,7 @@ template TemplateCpu_MISC() {
 	}
 }
 
+/*
 unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
 	scope cpu       = new Cpu;
@@ -67,3 +68,4 @@ unittest {
 
 	mixin TemplateCpu_MISC;
 }
+*/

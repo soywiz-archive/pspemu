@@ -248,37 +248,42 @@ class AllegrexAssembler : ISymbolResolver {
 					return 0;
 				}
 				//writefln("param:%s", paramType);
-				switch (paramType) {
-					// Register.
-					case "%d" : instruction.RD     = getRegister;  break; // Rd
-					case "%s" : instruction.RS     = getRegister;  break; // Rs
-					case "%t" : instruction.RT     = getRegister;  break; // Rt
-					case "%1" :
-					case "%S" : instruction.FS     = getFPRegister; break; // Fs
-					case "%D" : instruction.FD     = getFPRegister; break; // Fd
-					case "%T" : instruction.FT     = getFPRegister; break; // Ft
-					case "%i" : instruction.IMM    = getImmediate(Sign.Signed); break; // 16bit signed immediate
-					case "%I" : instruction.IMMU   = getImmediate(Sign.Unsigned); break; // 16bit unsigned immediate (always printed in hex)
-					case "%O" : instruction.OFFSET = getOffset;    break; // 16bit signed offset (PC relative)
-					case "%j" : instruction.JUMP   = getAbsoluteOffset; break; // 26bit absolute offset
-					case "%J" : instruction.RS     = getRegister;  break; // register jump
-					case "%a" : instruction.POS    = getImmediate(Sign.Unsigned); break;
-					case "%ne": instruction.SIZE_E = getImmediate(Sign.Unsigned); break;
-					case "%ni": instruction.SIZE_I = getImmediate(Sign.Unsigned); break;
-					case "%o" : {
-						scope results = RegExp(r"^(\-?\d+)\(([\$\d\w\-\+\_]+)\)$", "").match(paramValue);
-						assert(results.length == 3);
-						instruction.OFFSET = cast(int)parseString(results[1]);
-						instruction.RS     = cast(uint)Registers.getAlias(results[2]);
-						//writefln("%s", results[1]);
-					} break;
-					case "%C": {
-						instruction.CODE = getImmediate(Sign.Unsigned);
-					} break;
-					default:
-						throw(new Exception(std.string.format("Assembler.assembleInternal doesn't know how to process '%s'", paramType)));
-					break;
- 				}
+				try {
+					switch (paramType) {
+						// Register.
+						case "%d" : instruction.RD     = getRegister;  break; // Rd
+						case "%s" : instruction.RS     = getRegister;  break; // Rs
+						case "%t" : instruction.RT     = getRegister;  break; // Rt
+						case "%1" :
+						case "%S" : instruction.FS     = getFPRegister; break; // Fs
+						case "%D" : instruction.FD     = getFPRegister; break; // Fd
+						case "%T" : instruction.FT     = getFPRegister; break; // Ft
+						case "%i" : instruction.IMM    = getImmediate(Sign.Signed); break; // 16bit signed immediate
+						case "%I" : instruction.IMMU   = getImmediate(Sign.Unsigned); break; // 16bit unsigned immediate (always printed in hex)
+						case "%O" : instruction.OFFSET = getOffset;    break; // 16bit signed offset (PC relative)
+						case "%j" : instruction.JUMP   = getAbsoluteOffset; break; // 26bit absolute offset
+						case "%J" : instruction.RS     = getRegister;  break; // register jump
+						case "%a" : instruction.POS    = getImmediate(Sign.Unsigned); break;
+						case "%ne": instruction.SIZE_E = getImmediate(Sign.Unsigned); break;
+						case "%ni": instruction.SIZE_I = getImmediate(Sign.Unsigned); break;
+						case "%o" : {
+							scope results = RegExp(r"^(\-?\d+)\(([\$\d\w\-\+\_]+)\)$", "").match(paramValue);
+							assert(results.length == 3);
+							instruction.OFFSET = cast(int)parseString(results[1]);
+							instruction.RS     = cast(uint)Registers.getAlias(results[2]);
+							//writefln("%s", results[1]);
+						} break;
+						case "%C": {
+							instruction.CODE = getImmediate(Sign.Unsigned);
+						} break;
+						default:
+							throw(new Exception(std.string.format("Assembler.assembleInternal doesn't know how to process '%s'", paramType)));
+						break;
+					}
+				} catch (Object o) {
+					writefln("Error processing parameter '%s' instruction 0x%08X.", paramType, instruction.v);
+					//throw(o);
+				}
 			}
 
 			PC += 4;

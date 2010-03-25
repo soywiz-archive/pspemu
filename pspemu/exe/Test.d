@@ -11,12 +11,19 @@ import pspemu.formats.Pbp;
 import pspemu.utils.Utils;
 import pspemu.utils.Assertion;
 
+import pspemu.models.IDisplay;
+import pspemu.models.IController;
+import pspemu.models.ISyscall;
+
 import pspemu.core.Memory;
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Interrupts;
 import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
+import pspemu.core.gpu.impl.GpuOpengl;
 
+import pspemu.hle.Module;
 import pspemu.hle.Loader;
 import pspemu.hle.Syscall;
 
@@ -32,25 +39,34 @@ class PspDisplay : BasePspDisplay {
 
 	this(Memory memory) {
 		this.memory = memory;
+		super();
 	}
 
 	void* frameBufferPointer() {
 		//return memory.getPointer(Memory.frameBufferAddress);
-		return memory.getPointer(memory.displayMemory);
+		//writefln("%08X", memory.displayMemory);
+		return memory.getPointer(_info.topaddr);
 	}
 
 	bool vblank(bool status) { return _vblank = status; }
 	bool vblank() { return _vblank; }
 }
 
-void testExtended(string name) {
-	auto memory  = new Memory;
-	auto display = new PspDisplay(memory);
-	auto gpu     = new Gpu(memory);
-	auto cpu     = new Cpu(memory, gpu, display);
-	auto dissasembler = new AllegrexDisassembler(memory);
+void testExtended(string executableFile) {
+	// Components.
+	auto memory        = new Memory;
+	auto controller    = new Controller();
+	auto display       = new PspDisplay(memory);
+	auto gpu           = new Gpu(new GpuOpengl, memory);
+	auto cpu           = new Cpu(memory, gpu, display, controller);
+	auto dissasembler  = new AllegrexDisassembler(memory);
 
-	auto loader  = new Loader(name ~ ".elf", cpu);
+	// HLE.
+	auto moduleManager = new ModuleManager(cpu);
+	auto loader        = new Loader(cpu, moduleManager);
+	auto syscall       = new Syscall(cpu, moduleManager);
+
+	loader.load(std.string.format("%s.elf", executableFile));
 	loader.setRegisters();
 
 	version (TRACE_FROM_BEGINING) {
@@ -71,7 +87,7 @@ void testExtended(string name) {
 
 	// Start CPU.
 	try {
-		Syscall.emits = [];
+		syscall.emits = [];
 		cpu.execute();
 	} catch (Object o) {
 		writefln("%s", o);
@@ -81,31 +97,20 @@ void testExtended(string name) {
 
 	int emitPosition = 0;
 
-	auto lines = std.string.splitlines(cast(char[])std.file.read(name ~ ".expected"));
+	auto lines = std.string.splitlines(
+		cast(char[])std.file.read(
+			std.string.format("%s.expected", executableFile)
+		)
+	);
 
 	foreach (line; lines) {
-		/*
-		void check(T)() {
-			auto expected = Variant(std.conv.to!(T)(line));
-			auto emited   = Syscall.emits[emitPosition]; // Variant
-			assertTrue(emited == expected, std.string.format("emit!(%s)(emited(%s) == expected(%s))", typeid(T), emited, expected));
-		}
-		//auto line = cast(string)line_c;
-		// Float
-		if (std.string.indexOf(line, '.') >= 0) {
-			check!(float)();
-		}
-		else {
-			check!(int)();
-		}
-		*/
-		auto emited   = (emitPosition < Syscall.emits.length) ? Syscall.emits[emitPosition] : "<not emited>";
+		auto emited   = (emitPosition < syscall.emits.length) ? syscall.emits[emitPosition] : "<not emited>";
 		auto expected = line;
 		assertTrue(emited == expected, std.string.format("emit(emited(%s) == expected(%s))", emited, expected));
 		emitPosition++;
 	}
 
-	assertTrue(Syscall.emits.length == lines.length, std.string.format("emits.length(emited(%d) == expected(%d))", Syscall.emits.length, lines.length));
+	assertTrue(syscall.emits.length == lines.length, std.string.format("emits.length(emited(%d) == expected(%d))", syscall.emits.length, lines.length));
 }
 
 unittest {

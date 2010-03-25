@@ -69,7 +69,7 @@ struct Instruction {
 		struct { mixin(bitfields!(
 			uint, "",      6,
 			uint, "LSB",   5,
-			uint, "MSB",  5,
+			uint, "MSB",   5,
 			uint, "",      16
 		)); }
 

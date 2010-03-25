@@ -50,11 +50,13 @@ class PspDisplay : BasePspDisplay {
 }
 
 int main(string[] args) {
+	// Components.
 	auto memory        = new Memory;
 	auto controller    = new Controller();
 	auto display       = new PspDisplay(memory);
 	auto gpu           = new Gpu(new GpuOpengl, memory);
 	auto cpu           = new Cpu(memory, gpu, display, controller);
+	auto dissasembler  = new AllegrexDisassembler(memory);
 
 	// HLE.
 	auto moduleManager = new ModuleManager(cpu);
@@ -72,22 +74,19 @@ int main(string[] args) {
 		executableFile = args[1];
 	}
 
-	(new Thread({
-		// Load.
-		loader.load(executableFile);
-		loader.setRegisters();
+	// Load.
+	loader.load(executableFile);
+	loader.setRegisters();
 
-		version (TRACE_FROM_BEGINING) {
-			cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
-		}
+	version (TRACE_FROM_BEGINING) {
+		cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
+	}
 
-		// Start GPU.
-		gpu.start();
+	// Start GPU.
+	gpu.start();
 
-		// Start CPU.
-		cpu.start();
-	})).start();
-
+	// Start CPU.
+	cpu.start();
 
 	int retval = 0;
 	try {

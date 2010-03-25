@@ -241,15 +241,15 @@ class Builder {
 			//printf("Linking...%s\n", $cmd);
 			$retval = 0;
 			passthru($cmd, $retval);
+			$exeBase = pathinfo($this->exe, PATHINFO_FILENAME);
+			@unlink("{$exeBase}.map");
+			@unlink("{$exeBase}.obj");
 			if (($retval == 0) && filesize($this->exe) > 0) {
 				touch($this->exe, $maxTime);
 			} else {
 				@unlink($this->exe);
 				exit;
 			}
-
-			@unlink("pspemu.map");
-			@unlink("pspemu.obj");
 		}
 	}
 
@@ -282,6 +282,9 @@ class Builder {
 			$retval = 0;
 			echo "Building {$this->exe}...";
 			passthru($cmd, $retval);
+			$exeBase = pathinfo($this->exe, PATHINFO_FILENAME);
+			@unlink("{$exeBase}.map");
+			@unlink("{$exeBase}.obj");
 			if ($retval != 0) {
 				@unlink($this->exe);
 				exit;
@@ -299,13 +302,18 @@ class Builder {
 		$this->objects_folder = dirname(__FILE__) . '/objects';
 		switch (strtolower($profile)) {
 			case 'debug':
-				//$this->flags = "-Jresources -Idev\dmd2\import -g -O -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
 				$this->flags = "-Jresources -Idev\dmd2\import -g -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
 			break;
 			default:
 				echo "Unknown profile {$profile}. Selecting 'release'.";
 			case 'release':
+				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -O -version=DFL_EXE -release -L/exet:nt/su:windows:4.0";
+			break;
+			case 'normal':
 				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
+			break;
+			case 'test':
+				$this->flags = "-Jresources -Idev\dmd2\import -g -O -version=DFL_EXE -debug -unittest -L/exet:nt/su:console:4.0";
 			break;
 		}
 	}
@@ -319,8 +327,16 @@ if (!isset($argv[2])) {
 	$argv[2] = 'pspemu.exe';
 }
 
-$builder = new Builder($argv[1], $argv[2]);
-$builder->explore('pspemu.exe.Pspemu');
+list(,$profile, $exeName) = $argv;
+
+$builder = new Builder($profile, $exeName);
+
+if ($profile == 'test') {
+	$builder->explore('pspemu.exe.Test');
+} else {
+	$builder->explore('pspemu.exe.Pspemu');
+}
+
 foreach (scandir('pspemu/hle/kd') as $file) {
 	if ($file[0] == '.') continue;
 	list($moduleBase) = explode('.', $file);
