@@ -58,10 +58,14 @@ class Builder {
 	}
 
 	public function build() {
+		$exe = 'pspemu.exe';
 		$objects_folder = dirname(__FILE__) . '/objects';
+
 		@mkdir($objects_folder, 0777, true);
+
 		$compileFiles = array();
 		$linkFiles = array();
+
 		foreach ($this->getModules() as $module) {
 			$basePath = str_replace('.', '/', $module);
 			$object = sprintf('%s/%s.obj', $objects_folder, str_replace('.', '_', $module));
@@ -81,7 +85,12 @@ class Builder {
 			@unlink($object);
 			$cmd = "{$this->dmd} {$flags} -of{$object} -c {$source}";
 			printf("Compiling...%s\n", $cmd);
-			echo `{$cmd}`;
+			$retval = 0;
+			passthru($cmd, $retval);
+			if ($retval != 0) {
+				@unlink($exe);
+				exit;
+			}
 
 			if (filesize($object)) {
 				touch($object, filemtime($source));
@@ -94,7 +103,6 @@ class Builder {
 		foreach ($linkFiles as $file) $maxTime[] = filemtime($file);
 		$maxTime = max($maxTime);
 		
-		$exe = 'pspemu.exe';
 		// Build EXE.
 		if (@filemtime($exe) != $maxTime) {
 			$linkFilesStr = implode(' ', $linkFiles);
@@ -104,7 +112,12 @@ class Builder {
 
 			$cmd = "{$this->dmd} dfl.lib {$flags} -of\"{$exe}\" resources/psp.res {$linkFilesStr}";
 			//printf("Linking...%s\n", $cmd);
-			echo `$cmd`;
+			$retval = 0;
+			passthru($cmd, $retval);
+			if ($retval != 0) {
+				@unlink($exe);
+				exit;
+			}
 
 			if (filesize($exe)) {
 				touch($exe, $maxTime);

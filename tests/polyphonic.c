@@ -609,7 +609,7 @@ void audioOutCallback(int channel, unsigned short* buf, unsigned int reqn)
 		}
 		buf[0] = value;
 		buf[1] = value;
-		printf("%f\n", value);
+		//printf("%f\n", value);
 		buf += 2;
 	}
 }

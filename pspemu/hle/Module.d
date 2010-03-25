@@ -84,8 +84,8 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		}
 		if (return_value) r ~= "auto retval = ";
 		r ~= "this." ~ functionName ~ "(" ~ parametersString ~ ");";
-		r ~= "if (setReturnValue) {";
 		if (return_value) {
+			r ~= "if (setReturnValue) {";
 			if (isPointerType!(ReturnType!(func))) {
 				r ~= "cpu.registers.V0 = cpu.memory.getPointerReverseOrNull(cast(void *)retval);";
 			} else {
@@ -94,8 +94,8 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 					r ~= "cpu.registers.V1 = (cast(uint *)&retval)[1];";
 				}
 			}
+			r ~= "}";
 		}
-		r ~= "}";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func)) || isClassType!(ReturnType!(func))) {
 				r ~= "debug (DEBUG_SYSCALL) .writefln(\" = 0x%08X\", cpu.registers.V0); ";
@@ -127,6 +127,15 @@ abstract class Module {
 	ModuleManager moduleManager;
 	Nid currentExecutingNid;
 	bool setReturnValue;
+
+	void avoidAutosetReturnValue() {
+		setReturnValue = false;
+	}
+
+	// Will avoid obtaining the value from function.
+	void returnValue(uint value) {
+		cpu.registers.V0 = value;
+	}
 	
 	this() {
 		initNids();

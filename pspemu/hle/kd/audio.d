@@ -1,14 +1,17 @@
 module pspemu.hle.kd.audio; // kd/audio.prx (sceAudio_Driver)
 
-debug = DEBUG_AUDIO;
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_AUDIO;
+//debug = DEBUG_SYSCALL;
 
 import std.c.windows.windows;
 
+import core.thread;
 import std.contracts;
 
 import pspemu.hle.Module;
 import pspemu.utils.Audio;
+
+import pspemu.hle.kd.threadman;
 
 enum PspAudioFormats : uint {
 	/** Channel is set to stereo output. */
@@ -73,26 +76,25 @@ class sceAudio_driver : Module {
 		
 		auto cchannel = channels[channel];
 		
-		//auto samples = (cast(float*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample];
-		auto samples = (cast(float*)buf)[0..cchannel.samplecount];
-		/*
-		writefln("  samplecount: %d", cchannel.samplecount);
-		writefln("    %s", (cast(ubyte*)buf)[0..cchannel.samplecount*4]);
-		*/
+		auto samples = (cast(float*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample];
 
-		// Fills with predefined values to check that writeWait works.
-		static if (0) {
-			for (int n = 0; n < samples.length; n += 2) samples[n + 1] = samples[n + 0] = std.math.cos((cast(float)n) / 128);
-		}
+		bool playing = true;
+		(new Thread({
+			audio.writeWait(samples, volumef(leftvol), volumef(rightvol));
+			playing = false;
+		})).start();
+
+		returnValue = 0;
+		avoidAutosetReturnValue();
 		
-		/*
-		foreach (sample; (cast(ushort*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample]) {
-			writefln("    %d", sample);
-		}
-		*/
-		audio.writeWait(samples, volumef(leftvol), volumef(rightvol));
+		moduleManager.get!(ThreadManForUser).threadManager.currentThread.pause(
+			"sceAudioOutputPannedBlocking", (PspThread pausedThread) {
+				if (!playing) {
+					pausedThread.resume();
+				}
+			}
+		);
 
-		//unimplemented();
 		return 0;
 	}
 
@@ -108,8 +110,7 @@ class sceAudio_driver : Module {
 	 * @return 0 on success, an error if less than 0.
 	 */
 	int sceAudioOutputBlocking(int channel, int vol, void* buf) {
-		unimplemented();
-		return -1;
+		return sceAudioOutputPannedBlocking(channel, vol, vol, buf);
 	}
 
 	/**

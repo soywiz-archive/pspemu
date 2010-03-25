@@ -1,6 +1,6 @@
 @ECHO OFF
 REM http://minpspw.sourceforge.net/
-SET PSPSDK=%CD%/../dmd/pspsdk
+SET PSPSDK=%CD%/../dev/pspsdk
 SET LIBS=-lpspaudiolib -lpspaudio -lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc -lpspnet -lpspnet_inet -lpspnet_apctl -lpspnet_resolver -lpsputility -lpspuser -lpspkernel
 REM SET FLAGS=-G0 -Wall -O2 -g -gstabs
 SET FLAGS=-Wall -g

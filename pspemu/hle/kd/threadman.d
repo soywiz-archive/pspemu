@@ -532,6 +532,17 @@ class ThreadManForUser : Module {
 		pspThread.registers.A0 = arglen;
 		pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
 		threadManager.addToRunningList(pspThread);
+
+		// NOTE: It's mandatory to switch immediately to this thread, because the new thread
+		// may use volatile data (por example a value that will be change in the parent thread)
+		// in a few instructions.
+		// Set the value to the current thread.
+		returnValue = 0;
+		avoidAutosetReturnValue();
+
+		// Then change to the next thread and avoid writting the return value to that thread.
+		pspThread.switchToThisThread();
+
 		return 0;
 	}
 
@@ -775,7 +786,7 @@ class PspThread {
 		// Stalls at syscall.
 		resumeRegisters.copyFrom(threadManager.cpu.registers);
 		threadManager.cpu.registers.pcSet(0x08000010);
-		threadManager.threadManForUser.setReturnValue = false;
+		threadManager.threadManForUser.avoidAutosetReturnValue();
 
 		this.pausedName     = pausedName;
 		this.pausedCallback = pausedCallback;
