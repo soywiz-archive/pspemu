@@ -61,6 +61,9 @@ class ThreadManForUser : Module {
 		semaphoreManager = new PspSemaphoreManager(this);
 	}
 
+	/**
+	 * Process callbacks in sceKernel*ThreadCB() methods.
+	 */
 	void processCallbacks() {
 		// @TODO
 	}
@@ -483,8 +486,8 @@ class ThreadManForUser : Module {
 		pspThread.stack = moduleManager.get!(SysMemUserForUser).allocStack(stackSize, name);
 
 		// Copy name string.
-		pspThread.name = name;
 		pspThread.info.name[0..name.length] = name[0..name.length];
+		pspThread.name = cast(string)pspThread.info.name[0..name.length];
 
 		// Set stack info.
 		pspThread.info.stack     = cast(void*)pspThread.stack.block.low;
@@ -548,7 +551,7 @@ class ThreadManForUser : Module {
 	 * @return >= 0 A callback id which can be used in subsequent functions, < 0 an error.
 	 */
 	int sceKernelCreateCallback(string name, SceKernelCallbackFunction func, void *arg) {
-		return reinterpret!(int)(new Callback(name, func, arg));
+		return reinterpret!(int)(new PspCallback(name, func, arg));
 	}
 	/**
 	 * Create a message pipe
@@ -658,24 +661,55 @@ class ThreadManForUser : Module {
 	}
 }
 
+/**
+ * Library imports for the kernel threading library.
+ */
 class ThreadManForKernel : ThreadManForUser {
 }
 
+/**
+ * A Thread in Psp machine.
+ */
 class PspThread {
+	/**
+	 * Thread Manager associate to this thread.
+	 */
 	PspThreadManager threadManager;
+
+	/**
+	 * State of registers to restore when switching to this thread.
+	 */
 	Registers registers;
+
+	/**
+	 * State of registers before a pause.
+	 */
 	Registers resumeRegisters;
 
+	/**
+	 * Name of the thread.
+	 */
 	string name;
+
+	/**
+	 * Memory Segment with the stack.
+	 */
 	MemorySegment stack;
 
+	/**
+	 * Information of the thread.
+	 */
 	SceKernelThreadInfo info;
 
-	bool paused   = false;
-	bool alive     = true;
-	
-	//uint EntryPoint;
-	//bool running;
+	/**
+	 * Flag showing if this thread is paused.
+	 */
+	bool paused = false;
+
+	/**
+	 * Flag showing if this thread is alive.
+	 */
+	bool alive = true;
 	
 	string pausedName;
 	alias void delegate(PspThread) PausedCallback;
@@ -703,7 +737,7 @@ class PspThread {
 		registers.copyFrom(threadManager.cpu.registers);
 	}
 	
-	void updateNextId() {
+	void updatePreemptCount() {
 		info.threadPreemptCount += (info.currentPriority + 1);
 	}
 
@@ -772,11 +806,28 @@ class PspThread {
 	}
 }
 
-class Callback {
+/**
+ * Psp Callback.
+ */
+class PspCallback {
+	/**
+	 * Name of the callback.
+	 */
 	string name;
+
+	/**
+	 * Pointer to the callback function to execute.
+	 */
 	SceKernelCallbackFunction func;
+
+	/**
+	 * Argument to send to callback function.
+	 */
 	void* arg;
 
+	/**
+	 * Constructor.
+	 */
 	this(string name, SceKernelCallbackFunction func, void* arg) {
 		this.name = name;
 		this.func = func;
@@ -784,10 +835,23 @@ class Callback {
 	}
 }
 
+/**
+ * Psp Semaphore.
+ */
 class PspSemaphore {
+	/**
+	 * Semaphore Manager associate to this semaphore.
+	 */
 	PspSemaphoreManager semaphoreManager;
+
+	/**
+	 * Information of the semaphore.
+	 */
 	SceKernelSemaInfo info;
 
+	/**
+	 * Constructor.
+	 */
 	this(PspSemaphoreManager semaphoreManager) {
 		this.semaphoreManager = semaphoreManager;
 	}
@@ -856,7 +920,7 @@ class PspThreadManager {
 		}
 		
 		auto nextThread = getNextThread;
-		nextThread.updateNextId();
+		nextThread.updatePreemptCount();
 
 		debug (DEBUG_THREADS) {
 			dumpThreads();

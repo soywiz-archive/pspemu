@@ -134,7 +134,7 @@ class Audio {
 		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
 	}
 
-	void write(float[] buffer) {
+	void write(float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
 		bool REPEAT_ALWAYS = true;
 		currentBuffer = buffer;
 		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
@@ -151,8 +151,8 @@ class Audio {
 		while (position < currentBuffer.length / pcmwf.nChannels) Sleep(1);
 	}
 
-	void writeWait(float[] buffer) {
-		write(buffer);
+	void writeWait(float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
+		write(buffer, volumeleft, volumeright);
 		wait();
 	}
 

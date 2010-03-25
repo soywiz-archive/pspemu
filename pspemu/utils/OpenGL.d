@@ -2,7 +2,7 @@ module pspemu.utils.OpenGL;
 
 private import std.string, std.stdio, std.stream;
 
-debug = DEBUG_GL_VER;
+//debug = DEBUG_GL_VER;
 
 static __gshared:
 private bool glInitializated = false;

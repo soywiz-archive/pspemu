@@ -114,13 +114,6 @@ class ElfDwarf {
 			ptr += header.total_length_real;
 		}
 		pcs = pcToState.keys.sort;
-		//dump();
-		/*
-		find(0x08900368);
-		find(0x0890036C);
-		find(0x08900378);
-		find(0x089004C8);
-		*/
 	}
 
 	State* find(uint PC) {
@@ -185,16 +178,11 @@ class ElfDwarf {
 		}
 		
 		directory = std.string.join(final_chunks, "/");
-		/*
-		writefln("%s", directory);
-		assert(0);
-		*/
 		
 		return directory;
 	}
 	
 	void parseDebugChunk(Header *header, ubyte[] data) {
-		//writefln("%s", *header);
 		
 		string[] directories = [""];
 		FileEntry*[] files = [&allFileEntries[0]];
@@ -281,6 +269,10 @@ class ElfDwarf {
 						auto value = readSleb128(program);
 						state.line += value;
 						debug (DEBUG_ELF_DWARF_OPCODES) writefln("DWARF-2: Advance line by %d to %d", value, state.line);
+					} break;
+					case DW_LNS_set_file: {
+						auto value = readUleb128(program);
+						state.file = cast(uint)value;
 					} break;
 					case DW_LNS_const_add_pc: {
 						auto value = (255 - header.opcode_base) / header.line_range;

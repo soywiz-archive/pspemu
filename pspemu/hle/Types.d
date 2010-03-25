@@ -39,8 +39,8 @@ struct ScePspDateTime {
 alias uint SceKernelThreadEntry;
 alias uint SceKernelCallbackFunction;
 
-//alias int function(SceSize args, void *argp) SceKernelThreadEntry;
-//alias int function(int arg1, int arg2, void *arg) SceKernelCallbackFunction;
+//alias int function(SceSize args, void* argp) SceKernelThreadEntry;
+//alias int function(int arg1, int arg2, void* arg) SceKernelCallbackFunction;
 
 /** Structure to hold the event flag information */
 struct SceKernelEventFlagInfo {

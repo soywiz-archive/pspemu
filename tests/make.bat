@@ -5,16 +5,18 @@ SET LIBS=-lpspaudiolib -lpspaudio -lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpsp
 REM SET FLAGS=-G0 -Wall -O2 -g -gstabs
 SET FLAGS=-Wall -g
 
-CALL :BUILD mytest "common/callbacks.c"
-CALL :BUILD test_zlib "-lz"
-CALL :BUILD test_malloc
-CALL :BUILD test_file
-CALL :BUILD test_sprintf
-CALL :BUILD test1
-CALL :BUILD test2
-CALL :BUILD ortho "common/callbacks.c common/vram.c"
 CALL :BUILD polyphonic
-CALL :BUILD vertex "common/callbacks.c common/vram.c common/menu.c"
+
+REM CALL :BUILD mytest "common/callbacks.c"
+REM CALL :BUILD test_zlib "-lz"
+REM CALL :BUILD test_malloc
+REM CALL :BUILD test_file
+REM CALL :BUILD test_sprintf
+REM CALL :BUILD test1
+REM CALL :BUILD test2
+REM CALL :BUILD ortho "common/callbacks.c common/vram.c"
+REM CALL :BUILD polyphonic
+REM CALL :BUILD vertex "common/callbacks.c common/vram.c common/menu.c"
 
 EXIT /B
 

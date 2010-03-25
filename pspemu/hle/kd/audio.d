@@ -50,13 +50,15 @@ class sceAudio_driver : Module {
 		return (index >= 0 && index < channels.length);
 	}
 
+	static float volumef(int shortval) { return (cast(float)shortval) / cast(float)0xFFFF; }
+
 	/**
 	  * Output panned audio of the specified channel (blocking)
 	  *
-	  * @param channel - The channel number.
-	  * @param leftvol - The left volume.
+	  * @param channel  - The channel number.
+	  * @param leftvol  - The left volume.
 	  * @param rightvol - The right volume.
-	  * @param buf - Pointer to the PCM data to output.
+	  * @param buf      - Pointer to the PCM data to output.
 	  *
 	  * @return 0 on success, an error if less than 0.
 	  */
@@ -68,20 +70,29 @@ class sceAudio_driver : Module {
 			}
 			return -1;
 		}
-
+		
 		auto cchannel = channels[channel];
 		
-		auto samples = (cast(float*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample];
-		//writefln("  samplecount: %d", cchannel.samplecount);
-		//writefln("    %s", (cast(ubyte*)buf)[0..cchannel.samplecount*4]);
+		//auto samples = (cast(float*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample];
+		auto samples = (cast(float*)buf)[0..cchannel.samplecount];
+		/*
+		writefln("  samplecount: %d", cchannel.samplecount);
+		writefln("    %s", (cast(ubyte*)buf)[0..cchannel.samplecount*4]);
+		*/
+
+		// Fills with predefined values to check that writeWait works.
+		static if (0) {
+			for (int n = 0; n < samples.length; n += 2) samples[n + 1] = samples[n + 0] = std.math.cos((cast(float)n) / 128);
+		}
+		
 		/*
 		foreach (sample; (cast(ushort*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample]) {
 			writefln("    %d", sample);
 		}
 		*/
-		audio.writeWait(samples);
+		audio.writeWait(samples, volumef(leftvol), volumef(rightvol));
 
-		unimplemented();
+		//unimplemented();
 		return 0;
 	}
 

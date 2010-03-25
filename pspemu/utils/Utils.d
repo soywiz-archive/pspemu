@@ -32,7 +32,7 @@ struct InfiniteLoop(int maxCount = 512/*, string file = __FILE__, int line = __L
 		count--;
 		if (count <= 0) {
 			count = maxCount;
-			writefln("Infinite loop at '%s':%d", file, line);
+			writefln("Infinite loop detected at '%s':%d", file, line);
 			if (callback !is null) callback();
 		}
 	}

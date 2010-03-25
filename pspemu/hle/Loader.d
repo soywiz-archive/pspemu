@@ -1,6 +1,7 @@
 module pspemu.hle.Loader;
 
 //version = DEBUG_LOADER;
+version = LOAD_DWARF_INFORMATION;
 
 import std.stream, std.stdio, std.string;
 
@@ -298,7 +299,9 @@ class Loader : IDebugSource {
 		}
 		*/
 
-		//checkDebug();
+		version (LOAD_DWARF_INFORMATION) {
+			loadDwarfInformation();
+		}
 	}
 
 	void load(string fileName) {
@@ -310,14 +313,15 @@ class Loader : IDebugSource {
 		load(new BufferedFile(fileName, FileMode.In));
 	}
 	
-	void checkDebug() {
+	void loadDwarfInformation() {
 		try {
 			dwarf = new ElfDwarf;
 			dwarf.parseDebugLine(elf.SectionStream(".debug_line"));
 			dwarf.find(0x089004C8);
 			cpu.debugSource = this;
+			writefln("Loaded debug information");
 		} catch (Object o) {
-			writefln("Can't find debug information: '%s'", o.toString);
+			writefln("Can't find debug information: '%s'", o);
 		}
 	}
 
