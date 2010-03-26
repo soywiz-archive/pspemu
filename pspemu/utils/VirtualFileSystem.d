@@ -51,7 +51,7 @@ class VFS {
 	}
 
 	VFS opIndex(string index) {
-		auto separatorIndex = findIndex(index, "/");
+		auto separatorIndex = index.indexOf("/");
 		if (separatorIndex == -1) separatorIndex = index.length;
 
 		string singleComponent = index[0..separatorIndex];
@@ -128,12 +128,7 @@ class VFS {
 	}
 
 	this(string name, VFS parent = null) {
-		this.name = name;
-		this.parent = parent;
-	}
-
-	this(VFS parent = null) {
-		this.name = "<unknown>";
+		this.name   = name;
 		this.parent = parent;
 	}
 
@@ -170,7 +165,7 @@ public final:
 	}
 
 	Stream open(string path, FileMode mode = FileMode.In, int attr = 0777) {
-		int index = findLastIndex(path, "/");
+		int index = path.lastIndexOf("/");
 		if (index != -1) return this[path[0..index]].open(path[index + 1..$], mode, attr);
 		//assert(!isDir, "Can't open a directory");
 		scope (exit) flush();
@@ -181,7 +176,7 @@ public final:
 	bool isDir () { return stats.isdir; }
 
 	VFS mkdir(string path, int mode = 0777) {
-		int index = findLastIndex(path, "/");
+		int index = path.lastIndexOf("/");
 		if (index != -1) return this[path[0..index]].mkdir(path[index + 1..$], mode);
 		//assert(!isDir, "Can't open a directory");
 		implMkdir(path, mode);
@@ -193,9 +188,8 @@ class VFS_Proxy : VFS {
 	VFS node;
 
 	this(string name, VFS node, VFS parent = null) {
-		this.name   = name;
-		this.node   = node;
-		this.parent = parent;
+		this.node = node;
+		super(name, parent);
 	}
 
 	void flushChildren() { node.flushChildren(); }

@@ -1,4 +1,4 @@
-module pspemu.formats.cso;
+module pspemu.formats.iso.Cso;
 
 import kernel.vfs.base;
 import kernel.vfs.iso;

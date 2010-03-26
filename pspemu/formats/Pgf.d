@@ -8,4 +8,9 @@ class Pgf {
 		ubyte _ver[4] = x"00008801";
 		char magic[4] = "PGF0";
 	}
+
+	// @TODO
+	this() {
+		assert(0, "unimplemented");
+	}
 }

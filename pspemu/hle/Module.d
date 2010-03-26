@@ -22,7 +22,7 @@ string FunctionName(alias f)() { return (&f).stringof[2 .. $]; }
 string FunctionName(T)() { return T.stringof[2 .. $]; }
 string stringOf(T)() { return T.stringof; }
 static string classInfoBaseName(ClassInfo ci) {
-	auto index = std.string.lastIndexOf(ci.name, ".");
+	auto index = ci.name.lastIndexOf('.');
 	if (index == -1) index = 0; else index++;
 	return ci.name[index..$];
 	//return std.string.split(ci.name, ".")[$ - 1];
@@ -139,6 +139,7 @@ abstract class Module {
 	}
 	
 	this() {
+		writefln("::Loading module '%s'...", typeid(this));
 	}
 
 	final void init() {
@@ -214,16 +215,20 @@ abstract class Module {
 		return names[functionName];
 	}
 
-	void opDispatch(string s)() {
+	/*void opDispatch(string s)() {
 		writefln("Module.opDispatch('%s.%s')", this.baseName, s);
 		throw(new Exception(std.string.format("Not implemented %s.%s", this.baseName, s)));
-	}
+	}*/
 	
 	string baseName() { return classInfoBaseName(typeid(this)); }
 	string toString() { return std.string.format("Module(%s)", baseName); }
 
 	void unimplemented(string file = __FILE__, int line = __LINE__)() {
 		throw(new Exception(std.string.format("Unimplemented '%s' at '%s:%d'", onException(nids[currentExecutingNid].name, "<unknown>"), file, line)));
+	}
+	
+	void unimplemented_notice(string file = __FILE__, int line = __LINE__)() {
+		writefln("Unimplemented '%s' at '%s:%d'", onException(nids[currentExecutingNid].name, "<unknown>"), file, line);
 	}
 }
 
@@ -240,6 +245,12 @@ class ModuleManager {
 	}
 	
 	string delegate() getCurrentThreadName;
+
+	void reset() {
+		writefln("::ModuleManager.reset()");
+		loadedModules = null;
+		getCurrentThreadName = null;
+	}
 	
 	string currentThreadName() {
 		string s = getCurrentThreadName ? getCurrentThreadName() : "<unknown>";

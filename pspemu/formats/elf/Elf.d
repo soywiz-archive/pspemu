@@ -1,4 +1,4 @@
-module pspemu.formats.Elf;
+module pspemu.formats.elf.Elf;
 
 import pspemu.utils.Utils;
 

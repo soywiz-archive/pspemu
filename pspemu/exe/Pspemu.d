@@ -54,34 +54,22 @@ int main(string[] args) {
 	auto loader        = new Loader(cpu, moduleManager);
 	auto syscall       = new Syscall(cpu, moduleManager);
 
-	bool showMainMenu = true;
+	bool showMainMenu  = true;
+	
+	cpu.init();
+	gpu.init();
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 	//cpu.addBreakpoint(cpu.BreakPoint(0x0893F530, []));
 
 	// Start running.
 	if (args.length >= 2) {
-		string executableFile = args[1];
-		//showMainMenu = false;
-
-		// Load.
-		loader.load(executableFile);
-		loader.setRegisters();
-
-		version (TRACE_FROM_BEGINING) {
-			cpu.addBreakpoint(cpu.BreakPoint(loader.PC, [], true));
-		}
-
-		// Start GPU.
-		gpu.start();
-
-		// Start CPU.
-		cpu.start();
+		loader.loadAndExecute(args[1]);
 	}
 
 	int retval = 0;
 	try {
-		Application.run(new DisplayForm(showMainMenu, moduleManager, cpu, display, controller));
+		Application.run(new DisplayForm(showMainMenu, loader, moduleManager, cpu, display, controller));
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
 		retval = -1;

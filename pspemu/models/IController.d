@@ -81,9 +81,16 @@ class Controller { // SceCtrl
 		currentFrame.Rsrv[] = 0;
 		frames.queue(currentFrame);
 	}
-	
+
+	void reset() {
+		frames        = new Frames(128);
+		currentFrame  = currentFrame.init;
+		samplingCycle = samplingCycle.init;
+		samplingMode  = samplingMode.init;
+	}
+
 	this() {
-		frames = new Frames(128);
+		reset();
 	}
 }
 

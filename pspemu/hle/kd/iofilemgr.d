@@ -6,28 +6,38 @@ import std.date;
 
 import pspemu.hle.Module;
 
+import pspemu.utils.Utils;
 import pspemu.utils.VirtualFileSystem;
 
 class IoFileMgrForKernel : Module {
-	VFS fsroot;
+	VFS fsroot, gameroot;
 	string fscurdir;
 
 	void initModule() {
-		fsroot = new VFS();
+		fsroot = new VFS("<root>");
 
 		//fsroot["/ms0/PSP/GAME"].addChild(new VFS_Proxy("virtual", new VFS()));
 
-		fsroot.addChild(new FileSystem("pspfs/ms0"), "ms0:");
-		fsroot.addChild(new FileSystem("pspfs/flash0"), "flash0:");
+		writefln("ApplicationPaths.exe:%s", ApplicationPaths.exe);
+		static if (true) {
+			fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/ms0"), "ms0:");
+			fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash0"), "flash0:");
+		} else {
+			fsroot.addChild(new FileSystem("pspfs/ms0"), "ms0:");
+			fsroot.addChild(new FileSystem("pspfs/flash0"), "flash0:");
+		}
 
 		// Aliases.
 		fsroot.addChild(fsroot["ms0:"], "ms:");
-
+		
 		fscurdir = "ms0:/PSP/GAME/virtual";
+
+		gameroot = new VFS_Proxy("<gameroot>", fsroot[fscurdir]);
 	}
 
 	void setVirtualDir(string path) {
 		fsroot["ms0:/PSP/GAME"].addChild(new FileSystem(path), "virtual");
+		gameroot = new VFS_Proxy("<gameroot>", fsroot[fscurdir]);
 	}
 
 	void initNids() {
@@ -37,10 +47,12 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x6A638D83, sceIoRead));
 		mixin(registerd!(0x42EC03AC, sceIoWrite));
 		mixin(registerd!(0x27EB27B8, sceIoLseek));
-		mixin(registerd!(0xACE946E8, sceIoGetstat));
-		mixin(registerd!(0x54F5FB11, sceIoDevctl));
-		mixin(registerd!(0xF27A9C51, sceIoRemove));
 
+		mixin(registerd!(0x54F5FB11, sceIoDevctl));
+
+		mixin(registerd!(0xACE946E8, sceIoGetstat));
+		mixin(registerd!(0xB8A740F4, sceIoChstat));
+		mixin(registerd!(0xF27A9C51, sceIoRemove));
 		mixin(registerd!(0x779103A0, sceIoRename));
 
 		mixin(registerd!(0xB29DDF9C, sceIoDopen));
@@ -100,8 +112,6 @@ class IoFileMgrForKernel : Module {
 		unimplemented();
 		return -1;
 	}
-
-	static Stream stream(SceUID fd) { return cast(Stream)cast(void *)fd; }
 
 	/**
 	 * Open a directory
@@ -175,21 +185,21 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error
 	 */
 	int sceIoClose(SceUID fd) {
-		stream(fd).close();
+		reinterpret!(Stream)(fd).close();
 		return 0;
 	}
 
-	VFS locateParent(string file) {
-		VFS vfs = fsroot;
+	VFS locateParentAndUpdateFile(ref string file) {
+		VFS vfs = gameroot;
 
-		// Full path.
-		if (file.findIndex(":") == -1) {
-			vfs = fsroot[fscurdir];
+		// A full path.
+		if (file.indexOf(":") >= 0) {
+			vfs = fsroot;
+			//while (file.length && file[0] == '/') file = file[1..$];
 		}
-		/*
-		if (file.length && file[0] == '/') {
-		}
-		*/
+		
+		//writefln("\n\n\nSELECTED DIR: %s\n\n", vfs);
+
 		return vfs;
 	}
 
@@ -224,7 +234,7 @@ class IoFileMgrForKernel : Module {
 			if (mode & PSP_O_APPEND) fmode |= FileMode.Append;
 			if (mode & PSP_O_CREAT ) fmode |= FileMode.OutNew;
 			
-			auto stream = locateParent(file).open(file, fmode, 0777);
+			auto stream = new SliceStream(locateParentAndUpdateFile(file).open(file, fmode, 0777), 0);
 			return cast(SceUID)cast(void *)stream;
 		} catch (Object o) {
 			writefln("sceIoOpen exception: %s", o);
@@ -247,7 +257,15 @@ class IoFileMgrForKernel : Module {
 	 * @return The number of bytes read
 	 */
 	int sceIoRead(SceUID fd, void* data, SceSize size) {
-		return stream(fd).read((cast(ubyte *)data)[0..size]);
+		auto stream = reinterpret!(Stream)(fd);
+		if (stream is null) return -1;
+		if (data is null) return -1;
+		try {
+			return stream.read((cast(ubyte *)data)[0..size]);
+		} catch (Object o) {
+			throw(o);
+			return -1;
+		}
 	}
 
 	/**
@@ -265,9 +283,16 @@ class IoFileMgrForKernel : Module {
 	 * @return The number of bytes written
 	 */
 	int sceIoWrite(SceUID fd, /*const*/ void* data, SceSize size) {
-		auto s = stream(fd);
-		assert (s.position < 256 * 1024 * 1024); // Less than 256 MB.
-		return s.write((cast(ubyte *)data)[0..size]);
+		auto stream = reinterpret!(Stream)(fd);
+		if (stream is null) return -1;
+		if (data is null) return -1;
+		assert (stream.position < 256 * 1024 * 1024); // Less than 256 MB.
+		try {
+			return stream.write((cast(ubyte *)data)[0..size]);
+		} catch (Object o) {
+			throw(o);
+			return -1;
+		}
 	}
 
 	/**
@@ -286,10 +311,19 @@ class IoFileMgrForKernel : Module {
 	 * @return The position in the file after the seek. 
 	 */
 	SceOff sceIoLseek(SceUID fd, SceOff offset, int whence) {
-		auto s = stream(fd);
-		s.seek(offset, cast(SeekPos)whence);
-		//writefln("  position:%08X", s.position);
-		return s.position;
+		auto stream = reinterpret!(Stream)(fd);
+		static if (0) {
+			writef("posBefore(%d) | ", stream.position);
+			switch (whence) {
+				case SEEK_SET: stream.position = offset; break;
+				case SEEK_CUR: stream.position = stream.position + offset; break;
+				case SEEK_END: stream.position = stream.size + offset; break;
+			}
+			writef("posAfter(%d) | ", stream.position);
+		} else {
+			stream.seek(offset, cast(SeekPos)whence);
+		}
+		return stream.position;
 	}
 
 	/** 
@@ -301,28 +335,6 @@ class IoFileMgrForKernel : Module {
 	  * @return < 0 on error.
 	  */
 	int sceIoGetstat(string file, SceIoStat* stat) {
-		/*
-		struct SceIoStat {
-			SceMode         st_mode;
-			uint            st_attr;
-			SceOff          st_size;
-			ScePspDateTime  st_ctime;
-			ScePspDateTime  st_atime;
-			ScePspDateTime  st_mtime;
-			uint            st_private[6];
-		}
-		*/
-		/*
-		struct ScePspDateTime {
-			ushort	year;
-			ushort 	month;
-			ushort 	day;
-			ushort 	hour;
-			ushort 	minute;
-			ushort 	second;
-			uint 	microsecond;
-		}
-		*/
 		ScePspDateTime convertTime(d_time timeD) {
 			ScePspDateTime dateTimePsp;
 			std.date.Date dateTimeD;
@@ -340,19 +352,53 @@ class IoFileMgrForKernel : Module {
 		}
 		
 		try {
-			auto fentry   = locateParent(file)[file];
-			stat.st_mode  = fentry.stats.mode;
-			stat.st_attr  = fentry.stats.attr;
+			auto fentry   = locateParentAndUpdateFile(file)[file];
+			
+			{
+				stat.st_mode = 0;
+				
+				// User access rights mask
+				stat.st_mode |= IOAccessModes.FIO_S_IRUSR | IOAccessModes.FIO_S_IWUSR | IOAccessModes.FIO_S_IXUSR;
+				// Group access rights mask
+				stat.st_mode |= IOAccessModes.FIO_S_IRGRP | IOAccessModes.FIO_S_IWGRP | IOAccessModes.FIO_S_IXGRP;
+				// Others access rights mask
+				stat.st_mode |= IOAccessModes.FIO_S_IROTH | IOAccessModes.FIO_S_IWOTH | IOAccessModes.FIO_S_IXOTH;
+
+				//stat.st_mode |= FIO_S_IFLNK
+				stat.st_mode |= fentry.stats.isdir ? IOAccessModes.FIO_S_IFDIR : IOAccessModes.FIO_S_IFREG;
+			}
+			{
+				stat.st_attr  = 0;
+				
+				//stat.st_attr |= IOFileModes.FIO_SO_IFLNK;
+
+				stat.st_attr |= fentry.stats.isdir ? IOFileModes.FIO_SO_IFDIR : IOFileModes.FIO_SO_IFREG;
+				stat.st_attr |= IOFileModes.FIO_SO_IROTH | IOFileModes.FIO_SO_IWOTH | IOFileModes.FIO_SO_IXOTH; // rwx
+			}
+			
 			stat.st_size  = fentry.stats.size;
 			stat.st_ctime = convertTime(fentry.stats.time_c);
 			stat.st_atime = convertTime(fentry.stats.time_a);
 			stat.st_mtime = convertTime(fentry.stats.time_m);
-			writefln("STAT!! %s", *stat);
 			return 0;
 		} catch (Exception e) {
-			writefln("STAT!! FAILED: %s", e);
+			writefln("ERROR: STAT!! FAILED: %s", e);
 			return -1;
 		}
+	}
+
+	/** 
+	 * Change the status of a file.
+	 *
+	 * @param file - The path to the file.
+	 * @param stat - A pointer to an io_stat_t structure.
+	 * @param bits - Bitmask defining which bits to change.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceIoChstat(string file, SceIoStat *stat, int bits) {
+		unimplemented();
+		return -1;
 	}
 
 	/**
@@ -436,6 +482,12 @@ enum IOFileModes {
 	/** Hidden execute permission */
 	FIO_SO_IXOTH		= 0x0001,		// execute
 }
+
+/*
+#define FIO_SO_ISLNK(m)	(((m) & FIO_SO_IFMT) == FIO_SO_IFLNK)
+#define FIO_SO_ISREG(m)	(((m) & FIO_SO_IFMT) == FIO_SO_IFREG)
+#define FIO_SO_ISDIR(m)	(((m) & FIO_SO_IFMT) == FIO_SO_IFDIR)
+*/
 
 /** Structure to hold the status information about a file */
 struct SceIoStat {

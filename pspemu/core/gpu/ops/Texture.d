@@ -39,7 +39,8 @@ template Gpu_Texture() {
 		with (gpu.state.textures[N]) {
 			width  = 1 << ((command.param24 >> 0) & 0xFF);
 			height = 1 << ((command.param24 >> 8) & 0xFF);
-			format = gpu.state.textureFormat;
+			format   = gpu.state.textureFormat;
+			swizzled = gpu.state.textureSwizzled;
 		}
 	}
 

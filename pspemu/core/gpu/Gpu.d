@@ -24,9 +24,7 @@ import pspemu.core.gpu.ops.Matrix;
 import pspemu.core.gpu.ops.Texture;
 import pspemu.core.gpu.ops.Enable;
 
-class Gpu {
-	mixin PspHardwareComponent;
-
+class Gpu : PspHardwareComponent {
 	Memory   memory;
 	GpuImpl  impl;
 	GpuState state;
@@ -37,12 +35,18 @@ class Gpu {
 	TaskQueue externalActions;
 	
 	this(GpuImpl impl, Memory memory) {
-		this.impl            = impl;
-		this.memory          = memory;
+		this.impl   = impl;
+		this.memory = memory;
+		this.reset();
+	}
+
+	void reset() {
+		this.state = GpuState.init;
 		this.displayLists    = new DisplayLists(1024);
 		this.externalActions = new TaskQueue;
-		state.memory = memory;
-		impl.setState(&state);
+		this.state.memory = memory;
+		this.impl.reset();
+		this.impl.setState(&state);
 	}
 
 	void executeSingleCommand(ref DisplayList displayList) {
@@ -122,14 +126,25 @@ class Gpu {
 	}
 
 	bool executingDisplayList() { return (currentDisplayList !is null); }
-	
-	private void run() {
-		try {
-			impl.init();
-			_running = true;
-			while (true) {
-				while (displayLists.readAvailable) executeList(displayLists.consume);
 
+	bool implInitialized;
+
+	override void run() {
+		try {
+			if (!implInitialized) {
+				impl.init();
+				implInitialized = true;
+			}
+			componentInitialized = true;
+			while (true) {
+				while (displayLists.readAvailable) {
+					impl.startDisplayList();
+					{
+						executeList(displayLists.consume);
+					}
+					impl.endDisplayList();
+				}
+				if (runningState != RunningState.RUNNING) waitUntilResume();
 				WaitAndCheck;
 			}
 		} catch (Object o) {

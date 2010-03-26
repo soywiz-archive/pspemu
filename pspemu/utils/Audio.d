@@ -129,7 +129,8 @@ class Audio {
 		pcmwf.nChannels			= 2;
 		pcmwf.wBitsPerSample	= float.sizeof * 8;
 		pcmwf.nBlockAlign		= cast(ushort)(pcmwf.nChannels * pcmwf.wBitsPerSample / 8);
-		pcmwf.nSamplesPerSec	= 44100;
+		pcmwf.nSamplesPerSec    = 44100;
+		//pcmwf.nSamplesPerSec    = 22050;
 		pcmwf.nAvgBytesPerSec	= pcmwf.nSamplesPerSec * pcmwf.nBlockAlign; 
 		pcmwf.cbSize			= 0;
 		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));

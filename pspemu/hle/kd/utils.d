@@ -22,6 +22,8 @@ class UtilsForUser : Module {
 		mixin(registerd!(0x79D1C3FA, sceKernelDcacheWritebackAll));
 		mixin(registerd!(0xBFA98062, sceKernelDcacheInvalidateRange));
 		mixin(registerd!(0x34B9FA9E, sceKernelDcacheWritebackInvalidateRange));
+		mixin(registerd!(0xB435DEC5, sceKernelDcacheWritebackInvalidateAll));
+		mixin(registerd!(0x3EE30821, sceKernelDcacheWritebackRange));
 		mixin(registerd!(0x91E4F6A7, sceKernelLibcClock));
 	}
 
@@ -36,15 +38,29 @@ class UtilsForUser : Module {
 	/**
 	 * Invalidate a range of addresses in data cache
 	 */
-	void sceKernelDcacheInvalidateRange(const void* p, uint size) {
+	void sceKernelDcacheInvalidateRange(/*const*/ void* p, uint size) {
 		// Unimplemented cache.	
 	}
 
 	/**
 	 * Write back and invalidate a range of addresses in data cache
 	 */
-	void sceKernelDcacheWritebackInvalidateRange(const void *p, uint size) {
-		// Unimplemented cache.	
+	void sceKernelDcacheWritebackInvalidateRange(/*const*/ void* p, uint size) {
+		// Unimplemented cache.
+	}
+
+	/**
+	 * Write back a range of addresses from data cache to memory
+	 */
+	void sceKernelDcacheWritebackRange(/*const*/ void* p, uint size) {
+		// Unimplemented cache.
+	}
+
+	/**
+	 * Write back and invalidate the data cache
+	 */
+	void sceKernelDcacheWritebackInvalidateAll() {
+		// Unimplemented cache.
 	}
 
 	/** 

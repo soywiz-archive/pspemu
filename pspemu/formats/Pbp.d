@@ -47,14 +47,19 @@ class Pbp {
 		// Process all the files.
 		slices = null;
 		foreach (n, name; files) {
-			assert(offsets[n + 1] >= offsets[n], format("Invalid entry '%s' (0x%08X >= 0x%08X)", name, offsets[n + 1], offsets[n]));
+			if (offsets[n + 1] < offsets[n]) throw(new Exception(format("Pbp.load() : Invalid entry '%s' (0x%08X >= 0x%08X)", name, offsets[n + 1], offsets[n])));
 			if (offsets[n + 1] != offsets[n]) slices[name] = new SliceStream(stream, offsets[n], offsets[n + 1]);
 		}
 	}
 
 	bool has(string name) { return (name in slices) !is null; }
-	Stream opIndex(string name) { assert(has(name)); return new SliceStream(slices[name], 0); }
-	Stream opIndexAssign(string name, Stream stream) { return slices[name] = stream; }
+	Stream opIndex(string name) {
+		if (!has(name)) throw(new Exception(std.string.format("Pbp.opIndex() can't found name '%s'", name)));
+		return new SliceStream(slices[name], 0);
+	}
+	Stream opIndexAssign(string name, Stream stream) {
+		return slices[name] = stream;
+	}
 
 	int opApply(int delegate(ref string, ref Stream) callback) { int result = 0; foreach (name, stream; slices) if ((result = callback(name, stream)) != 0) break; return result; }
 	int opApply(int delegate(ref string) callback) { int result = 0; foreach (name; slices.keys) if ((result = callback(name)) != 0) break; return result; }

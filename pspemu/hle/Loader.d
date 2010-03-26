@@ -8,8 +8,8 @@ import std.stream, std.stdio, std.string;
 import pspemu.utils.Utils;
 import pspemu.utils.Expression;
 
-import pspemu.formats.Elf;
-import pspemu.formats.ElfDwarf;
+import pspemu.formats.elf.Elf;
+import pspemu.formats.elf.ElfDwarf;
 import pspemu.formats.Pbp;
 
 import pspemu.hle.Module;
@@ -253,11 +253,6 @@ class Loader : IDebugSource {
 		this.cpu           = cpu;
 		this.moduleManager = moduleManager;
 		this.assembler     = new AllegrexAssembler(memory);
-
-		cpu.interrupts.registerCallback(
-			Interrupts.Type.THREAD0,
-			&moduleManager.get!(ThreadManForUser).threadManager.switchNextThread
-		);
 	}
 
 	void load(Stream stream) {
@@ -307,13 +302,40 @@ class Loader : IDebugSource {
 		}
 	}
 
+	string lastLoadedFile;
+
 	void load(string fileName) {
+		memory.reset();
+		cpu.reset();
+		reset();
 		fileName = fileName.replace("\\", "/");
 		string path = ".";
-		int index = fileName.lastIndexOf("/");
+		int index = fileName.lastIndexOf('/');
 		if (index != -1) path = fileName[0..index];
 		moduleManager.get!(IoFileMgrForUser).setVirtualDir(path);
-		load(new BufferedFile(fileName, FileMode.In));
+		load(new BufferedFile(lastLoadedFile = fileName, FileMode.In));
+	}
+
+	void reloadAndExecute() {
+		loadAndExecute(lastLoadedFile);
+	}
+
+	void reset() {
+		moduleManager.reset();
+		cpu.interrupts.registerCallback(
+			Interrupts.Type.THREAD0,
+			&moduleManager.get!(ThreadManForUser).threadManager.switchNextThread
+		);
+	}
+
+	void loadAndExecute(string fileName) {
+		load(fileName);
+		setRegisters();
+
+		core.memory.GC.collect();
+
+		cpu.gpu.start(); // Start GPU.
+		cpu.start();     // Start CPU.
 	}
 
 	void loadDwarfInformation() {
@@ -370,19 +392,20 @@ class Loader : IDebugSource {
 		writefln("allocatedIn:%08X", blockaddress);
 	}
 
+	uint getRelocatedAddress(uint addr) {
+		return addr + elf.relocationAddress;
+	}
+
+	Stream getMemorySliceRelocated(uint from, uint to) {
+		return new SliceStream(memory, getRelocatedAddress(from), getRelocatedAddress(to));
+	}
+
 	void load() {
 		allocatePartitionBlock();
 
 		this.elf.writeToMemory(memory);
 		readInplace(moduleInfo, elf.SectionStream(".rodata.sceModuleInfo"));
 
-		uint getRelocatedAddress(uint addr) {
-			return addr + elf.relocationAddress;
-		}
-		Stream getMemorySliceRelocated(uint from, uint to) {
-			return new SliceStream(memory, getRelocatedAddress(from), getRelocatedAddress(to));
-		}
-		
 		auto importsStream = getMemorySliceRelocated(moduleInfo.importsStart, moduleInfo.importsEnd);
 		auto exportsStream = getMemorySliceRelocated(moduleInfo.exportsStart, moduleInfo.exportsEnd);
 		
@@ -459,8 +482,8 @@ class Loader : IDebugSource {
 		}
 	}
 
-	uint PC() { return elf.header.entryPoint; }
-	uint GP() { return moduleInfo.gp; }
+	uint PC() { return getRelocatedAddress(elf.header.entryPoint); }
+	uint GP() { return getRelocatedAddress(moduleInfo.gp); }
 
 	void setRegisters() {
 		auto threadManForUser = moduleManager.get!(ThreadManForUser);
@@ -479,6 +502,7 @@ class Loader : IDebugSource {
 		with (pspThread) {
 			registers.pcSet = PC;
 			registers.GP = GP;
+
 			registers.K0 = pspThread.registers.SP;
 			registers.RA = 0x08000000;
 			registers.A0 = 0; // argumentsLength.

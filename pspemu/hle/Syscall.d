@@ -84,8 +84,7 @@ class Syscall : ISyscall {
 				//cpu.addBreakpoint(cpu.BreakPoint(cpu.registers.PC, [], true));
 			} break;
 			default:
-				.writefln("Unimplemented SYSCALL (%08X)", code);
-				assert(0);
+				throw new Exception(std.string.format("Unimplemented SYSCALL (%08X)", code));
 			break;
 		}
 	}

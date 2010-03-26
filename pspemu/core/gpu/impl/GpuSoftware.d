@@ -6,6 +6,19 @@ class GpuSoftware : GpuImplAbstract {
 	void init() {
 		assert(0);
 	}
+	
+	void reset() {
+		assert(0);
+	}
+
+	void startDisplayList() {
+		// Here we should invalidate texture cache? and recheck hashes of the textures?
+		assert(0);
+	}
+
+	void endDisplayList() {
+		assert(0);
+	}
 
 	void clear() {
 		assert(0);

@@ -5,9 +5,8 @@ SET LIBS=-lpspaudiolib -lpspaudio -lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpsp
 REM SET FLAGS=-G0 -Wall -O2 -g -gstabs
 SET FLAGS=-Wall -g
 
-CALL :BUILD polyphonic
-
-REM CALL :BUILD mytest "common/callbacks.c"
+REM CALL :BUILD polyphonic
+CALL :BUILD mytest "common/callbacks.c"
 REM CALL :BUILD test_zlib "-lz"
 REM CALL :BUILD test_malloc
 REM CALL :BUILD test_file

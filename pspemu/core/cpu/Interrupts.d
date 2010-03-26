@@ -17,23 +17,29 @@ class Interrupts {
 		THREAD1   = 65, INTERRUPT = 66,
 	}
 
-	alias CircularList!(Type, false) List;
-	alias void delegate() Callback;
-
-	bool InterruptFlag;
-	List list;
-	Object mutex;
-
 	struct CallbackInfo {
 		bool autoremove;
 	}
-	
+
+	alias CircularList!(Type, false) List;
+	alias void delegate() Callback;
+
+	// Fields.
+	bool InterruptFlag;
+	List list;
+	Object mutex;
 	CallbackInfo[Callback][Type] callbacks;
 
 	this() {
+		reset();
+	}
+
+	void reset() {
+		InterruptFlag = InterruptFlag.init;
 		list = new List;
 		mutex = new Object;
-		//callbacks[Type.THREAD0] ~= { writefln("THREAD0"); };
+		callbacks = null;
+		//callbacks[Type.THREAD0] ~= { writefln("THREAD0"); };	
 	}
 
 	void registerCallback(Type type, Callback cb, bool autoremove = false) {

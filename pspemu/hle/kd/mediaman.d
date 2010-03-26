@@ -6,6 +6,47 @@ class sceUmdUser : Module {
 	void initNids() {
 		mixin(registerd!(0xC6183D47, sceUmdActivate));
 		mixin(registerd!(0x6B4A146C, sceUmdGetDriveStat));
+		mixin(registerd!(0x46EBB729, sceUmdCheckMedium));
+		mixin(registerd!(0xE83742BA, sceUmdDeactivate));
+		mixin(registerd!(0x4A9E5E29, sceUmdWaitDriveStatCB));
+	}
+
+	/** 
+	 * Check whether there is a disc in the UMD drive
+	 *
+	 * @return 0 if no disc present, anything else indicates a disc is inserted.
+	 */
+	int sceUmdCheckMedium() {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Deativates the UMD drive
+	 * 
+	 * @param unit - The unit to initialise (probably). Should be set to 1.
+	 *
+	 * @param drive - A prefix string for the fs device to mount the UMD on (e.g. "disc0:")
+	 *
+	 * @return < 0 on error
+	 */
+	int sceUmdDeactivate(int unit, string drive) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Wait for the UMD drive to reach a certain state (plus callback)
+	 *
+	 * @param stat - One or more of ::pspUmdState
+	 *
+	 * @param timeout - Timeout value in microseconds
+	 *
+	 * @return < 0 on error
+	 */
+	int sceUmdWaitDriveStatCB(int stat, uint timeout) {
+		unimplemented();
+		return -1;
 	}
 
 	/** 

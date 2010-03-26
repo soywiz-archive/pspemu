@@ -2,7 +2,7 @@ module pspemu.gui.DisplayForm;
 
 import dfl.all, dfl.internal.winapi;
 
-import std.stdio, std.c.time;
+import std.stdio, std.c.time, core.memory;
 import std.typetuple;
 
 import pspemu.utils.Utils;
@@ -17,27 +17,76 @@ import pspemu.models.IDisplay;
 import pspemu.models.IController;
 
 import pspemu.hle.Module;
+import pspemu.hle.Loader;
+import pspemu.hle.Syscall;
 import pspemu.hle.kd.threadman;
+
+import pspemu.gui.AboutForm;
 
 static const string svnRevision = import("svn.version");
 
 class DisplayForm : Form, IMessageFilter {
 	GLControlDisplay glc;
 	ModuleManager    moduleManager;
+	Loader           loader;
 	Cpu              cpu;
 	Display          display;
 	IController      controller;
 	real             lastFps;
 
 	void updateTitle() {
-		text = std.string.format("PSP Emulator - r%s - FPS: %.1f", svnRevision, lastFps);
+		text = std.string.format("D PSP Emulator - r%s - FPS: %.1f - %s", svnRevision, lastFps, enumToString(cpu.runningState));
 	}
 
-	this(bool showMainMenu = false, ModuleManager moduleManager = null, Cpu cpu = null, Display display = null, IController controller = null) {
+	int resumeCount = 1;
+
+	static const string emulationScopePauseResume = "emulationPauseCount(); scope (exit) emulationResumeCount();";
+
+	void emulationPauseCount() {
+		if (--resumeCount <= 0) {
+			cpu.pause();
+			updateTitle();
+		}
+	}
+
+	void emulationResumeCount() {
+		if (++resumeCount > 0) {
+			cpu.resume();
+			updateTitle();
+		}
+	}
+
+	void emulationPause() {
+		resumeCount = 1;
+		emulationPauseCount();
+	}
+	
+	void emulationResume() {
+		resumeCount = 0;
+		emulationResumeCount();
+	}
+
+	void emulationReset() {
+		try {
+			mixin(emulationScopePauseResume);
+			loader.reloadAndExecute();
+		} catch (Object o) {
+			msgBox(o.toString(), "Error reloading", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
+		}
+	}
+
+	void emulationStop() {
+		resumeCount = resumeCount.init;
+		cpu.stop();
+		updateTitle();
+	}
+
+	this(bool showMainMenu = false, Loader loader = null, ModuleManager moduleManager = null, Cpu cpu = null, Display display = null, IController controller = null) {
 		Application.addMessageFilter(this);
 
 		this.moduleManager = moduleManager;
 		this.cpu = cpu;
+		this.loader = loader;
 		if (display    is null) display    = new NullDisplay;
 		if (controller is null) controller = new Controller();
 		this.display    = display;
@@ -59,11 +108,16 @@ class DisplayForm : Form, IMessageFilter {
 		minimumSize = Size(width, height);
 		
 		with (glc = new GLControlDisplay(cpu, display)) {
-			dock    = DockStyle.FILL;
+			static if (0) {
+				dock    = DockStyle.FILL;
+			} else {
+				width   = displaySize.width;
+				height  = displaySize.height;
+			}
 			parent  = this;
 			visible = true;
 		}
-		
+
 		with (new GLControl) {
 			width   = displaySize.width;
 			height  = displaySize.height;
@@ -92,7 +146,7 @@ class DisplayForm : Form, IMessageFilter {
 		menu = new MainMenu;
 		Menu currentMenu = menu;
 
-		void addClick(string name, void delegate(MenuItem, EventArgs) registerCallback = null, void delegate() menuGenerateCallback = null) {
+		MenuItem addClick(string name, void delegate(MenuItem, EventArgs) registerCallback = null, void delegate() menuGenerateCallback = null) {
 			Menu backMenu = currentMenu;
 
 			MenuItem menuItem = new MenuItem;
@@ -105,46 +159,69 @@ class DisplayForm : Form, IMessageFilter {
 				if (menuGenerateCallback !is null) menuGenerateCallback();
 			}
 			currentMenu = backMenu;
+			
+			return menuItem;
 		}
 
-		void add(string name, void delegate() menuGenerateCallback = null) {
-			addClick(name, null, menuGenerateCallback);
+		MenuItem add(string name, void delegate() menuGenerateCallback = null) {
+			return addClick(name, null, menuGenerateCallback);
 		}
 
 		add("&File", {
 			addClick("&Open...", (MenuItem mi, EventArgs ea) {
 				auto fd = new OpenFileDialog;
-				//fd.fileName   = "EBOOT.PBP";
-				fd.filter     = "PSP Executable Files (*.pbp;*.elf;*.iso;*.cso;*.dax)|*.pbp;*.elf;*.iso;*.cso;*.dax|All Files (*.*)|*.*";
-				//fd.defaultExt = "iso";
+				fd.filter  = "PSP Executable Files (*.pbp;*.elf;*.iso;*.cso;*.dax)|*.pbp;*.elf;*.iso;*.cso;*.dax|All Files (*.*)|*.*";
+
+				// Pauses execution and resumes at the end.
+				mixin(emulationScopePauseResume);
+				//emulationPauseCount();
+
 				if (fd.showDialog(this) == DialogResult.OK) {
+					try {
+						loader.loadAndExecute(fd.fileName);
+					} catch (Object o) {
+						msgBox(o.toString(), "Error loading", MsgBoxButtons.OK, MsgBoxIcon.ERROR);
+					}
+				} else {
+					//emulationResumeCount();
 				}
-				/*
-				if (fd.showDialog(this) == DialogResult.OK) {
-					.load(fd.fileName);
-					updateDebug();
-				}
-				*/
 			});
 			add("-");
 			addClick("&Exit", (MenuItem mi, EventArgs ea) {
-				Application.exit();
+				//cpu.stop();
+				this.close();
+				//Application.exit();
 			});
 		});
 		add("&Run", {
-			add("&Execute");
-			add("&Stop");
-			add("&Pause");
+			addClick("&Execute", (MenuItem mi, EventArgs ea) {
+				emulationResume();
+			});
+			addClick("&Pause", (MenuItem mi, EventArgs ea) {
+				emulationPause();
+			});
+			add("-");
+			addClick("&Reset", (MenuItem mi, EventArgs ea) {
+				emulationReset();
+			});
+			addClick("&Stop", (MenuItem mi, EventArgs ea) {
+				emulationStop();
+			});
+			/* // For Debugger
 			add("-");
 			add("Step &Into");
 			add("Step &Over");
 			add("Run to &Cursor");
 			add("Run until &Return");
+			*/
+			/*
 			add("-");
 			add("S&ave State...");
 			add("&Load State...");
+			*/
 		});
 		add("&Tools", {
+			/*
 			add("&Debugger...");
 			add("&Memory viewer...");
 			add("&GE viewer...");
@@ -171,10 +248,31 @@ class DisplayForm : Form, IMessageFilter {
 			});
 			add("-");
 			add("Ignore errors");
+			*/
+			addClick("Frame &limiting", (MenuItem mi, EventArgs ea) {
+				mi.checked = !mi.checked;
+				display.frameLimiting = mi.checked;
+			}).checked = true;
 		});
 		add("&Help", {
-			add("&Website");
-			add("&About...");
+			addClick("&Website", (MenuItem mi, EventArgs ea) {
+				ShellExecuteA(null, "open", "http://pspemu.soywiz.com/", null, null, SW_SHOWNORMAL);
+			});
+			addClick("&About...", (MenuItem mi, EventArgs ea) {
+				string str = std.string.format(
+					"D PSP Emulator\n"
+					"soywiz 2008,2010\n"
+					"\n"
+					"Compiler: %s v%.3f\n"
+					"Compiled on: %s\n"
+					"SVN revision: %s\n"
+					, __VENDOR__
+					, cast(float)(__VERSION__) / 1000
+					, __TIMESTAMP__
+					, svnRevision
+				);
+				msgBox(str, "About", MsgBoxButtons.OK, MsgBoxIcon.INFORMATION, MsgBoxDefaultButton.BUTTON1);	
+			});
 		});
 	}
 	

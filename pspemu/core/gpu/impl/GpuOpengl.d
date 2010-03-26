@@ -26,14 +26,47 @@ class Texture {
 		glDeleteTextures(1, &gltex);
 	}
 
-	void update(Memory memory, TextureBuffer tbuffer) {
-		ubyte* data = cast(ubyte*)memory.getPointer(tbuffer.address);
+	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureBuffer tbuffer) {
+		int rowWidth = tbuffer.rwidth;
+		int pitch    = (rowWidth - 16) / 4;
+		int bxc      = rowWidth / 16;
+		int byc      = tbuffer.height / 8;
+
+		uint* src = cast(uint*)inData.ptr;
+		
+		auto ydest = outData.ptr;
+		for (int by = 0; by < byc; by++) {
+			auto xdest = ydest;
+			for (int bx = 0; bx < bxc; bx++) {
+				auto dest = cast(uint*)xdest;
+				for (int n = 0; n < 8; n++, dest += pitch) {
+					*(dest++) = *(src++);
+					*(dest++) = *(src++);
+					*(dest++) = *(src++);
+					*(dest++) = *(src++);
+				}
+				xdest += 16;
+			}
+			ydest += rowWidth * 8;
+		}
+	}
+
+	void update(Memory memory, ref TextureBuffer tbuffer) {
+		auto inData = (cast(ubyte*)memory.getPointer(tbuffer.address))[0..tbuffer.totalSize];
 		auto pformat = GpuOpengl.PixelFormats[tbuffer.format];
 
 		glActiveTexture(GL_TEXTURE0);
 		bind();
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pformat.size);
+
+		auto outData = inData;
+
+		if (tbuffer.swizzled) {
+			outData = new ubyte[inData.length];
+			//outData[] = 0xFF;
+			unswizzle(inData, outData, tbuffer);
+		}
 
 		glTexImage2D(
 			GL_TEXTURE_2D,
@@ -44,14 +77,14 @@ class Texture {
 			0,
 			pformat.external,
 			pformat.opengl,
-			data
+			outData.ptr
 		);
 		//glCheckError();
 		
 		//std.file.write("demodemo", data[0..(tbuffer.width * tbuffer.height) * cast(uint)pformat.size]);
 		
 		//writefln("%d, %d, %d");
-		writefln("update(%d):%08X,%s, %d", gltex, data, tbuffer, (tbuffer.width * tbuffer.height) * cast(uint)pformat.size);
+		writefln("update(%d):%08X,%s, %d", gltex, inData.ptr, tbuffer, (tbuffer.width * tbuffer.height) * cast(uint)pformat.size);
 	}
 
 	void bind() {
@@ -70,6 +103,17 @@ class GpuOpengl : GpuImplAbstract {
 	void init() {
 		openglInit();
 		openglPostInit();
+	}
+
+	void reset() {
+		textureCache = null;
+	}
+
+	void startDisplayList() {
+		// Here we should invalidate texture cache? and recheck hashes of the textures?
+	}
+
+	void endDisplayList() {
 	}
 
 	void clear() {
@@ -106,76 +150,21 @@ class GpuOpengl : GpuImplAbstract {
 					}
 
 					glPushAttrib(GL_CULL_FACE);
-					glDisable(GL_CULL_FACE);
-					//if (!state.vertexType.transform2D) {
-					if (0) {
-						// TEST.
-						glMatrixMode(GL_PROJECTION); glLoadIdentity();
-						glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
-						glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-
-						auto matrix = state.projectionMatrix * state.worldMatrix * state.viewMatrix;
-						for (int n = 0; n < vertexList.length; n += 2) {
-							VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
-							vertex = v1;
-							
-							//auto vv1 = Vector(v1.px, v1.py, v1.pz, 0);
-							//auto vv2 = Vector(v2.px, v2.py, v2.pz, 0);
-							
-							//auto vertexProjected1 = matrix * [v1.px, v1.py, v1.pz, 1];
-							//auto vertexProjected2 = matrix * [v2.px, v2.py, v2.pz, 1];
-							auto vertexProjectedm = matrix * ((v1.p + v2.p) / 2);
-							vertexProjectedm.x *= 480;
-							vertexProjectedm.y *= 272;
-							float width  = std.math.fabs(v2.p.x - v1.p.x) * 480;
-							float height = std.math.fabs(v2.p.y - v1.p.y) * 272;
-							
-							mixin(spriteVertexInterpolate("v1", "v1")); vertex.px = vertexProjectedm.x - width; vertex.py = vertexProjectedm.y - height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
-							mixin(spriteVertexInterpolate("v2", "v1")); vertex.px = vertexProjectedm.x + width; vertex.py = vertexProjectedm.y - height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
-							mixin(spriteVertexInterpolate("v2", "v2")); vertex.px = vertexProjectedm.x + width; vertex.py = vertexProjectedm.y + height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
-							mixin(spriteVertexInterpolate("v1", "v2")); vertex.px = vertexProjectedm.x - width; vertex.py = vertexProjectedm.y + height; vertex.pz = 0; putVertex(vertex); writefln("%s", vertex);
-							writefln("");
-
-							//vertexProjected1
-							//writefln("%s | %s", v2.px - v1.px, v2.py - v1.py);
-							// gl_Position = gl_ModelViewProjectionMatrix
-							//state.viewMatrix * state.worldMatrix * state.projectionMatrix
-						}
-					}
-					else {
-						if (1) {
-							glBegin(GL_QUADS);
-							{
-								for (int n = 0; n < vertexList.length; n += 2) {
-									VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
-									vertex = v1;
-									
-									mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
-									mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
-									mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
-									mixin(spriteVertexInterpolate("v1", "v2")); putVertex(vertex);
-								}
+					{
+						glDisable(GL_CULL_FACE);
+						glBegin(GL_QUADS);
+						{
+							for (int n = 0; n < vertexList.length; n += 2) {
+								VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
+								vertex = v1;
+								
+								mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
+								mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
+								mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
+								mixin(spriteVertexInterpolate("v1", "v2")); putVertex(vertex);
 							}
-							glEnd();
-						} else {
-							glEnable(GL_POINT_SPRITE);
-							//glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);  
-							//glEnable(GL_COORD_REPLACE);
-							glBegin(GL_POINTS);
-							{
-								for (int n = 0; n < vertexList.length; n += 2) {
-									VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
-									vertex = v1;
-									vertex.position = (v1.position + v2.position) / 2;
-									putVertex(vertex);
-									//Vector(v1.px, v1.py, v1.pz) + Vector(v2.px, v2.py, v3.pz)
-								}
-								//foreach (ref vertex; vertexList) putVertex(vertex);
-							}
-							glEnd();
-							glDisable(GL_POINT_SPRITE);
-							//glDisable(GL_COORD_REPLACE);
 						}
+						glEnd();
 					}
 					glPopAttrib();
 				break;
@@ -384,6 +373,7 @@ template OpenglUtils() {
 	}
 	
 	void drawEnd() {
+		prevState = *state;
 	}
 
 	struct PixelFormat {
@@ -412,7 +402,7 @@ template OpenglBase() {
 	HWND hwnd;
 	HDC hdc;
 	HGLRC hrc;
-	uint *bitmapData;
+	uint* bitmapData;
 
 	version (VERSION_GL_BITMAP_RENDERING) {
 		void openglInit() {

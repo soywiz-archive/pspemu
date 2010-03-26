@@ -1,4 +1,4 @@
-module pspemu.formats.iso;
+module pspemu.formats.iso.Iso;
 
 import pspemu.formats.base;
 

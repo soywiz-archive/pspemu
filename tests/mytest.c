@@ -25,6 +25,12 @@ int main(int argc, char* argv[]) {
 	pspDebugScreenInit();
 	setupCallbacks();
 	
+	{
+		FILE* f = fopen("ms0:/prueba.txt", "wb");
+		fprintf(f, "Hola!\n");
+		fclose(f);
+	}
+	
 	pspDebugScreenPrintf("sceKernelCreateThread+sceKernelStartThread\n");
 	sceKernelStartThread(
 		sceKernelCreateThread(

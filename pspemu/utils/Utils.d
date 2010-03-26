@@ -1,6 +1,6 @@
 module pspemu.utils.Utils;
 
-import std.stream, std.stdio;
+import std.stream, std.stdio, std.path, std.typecons;
 
 private import std.c.windows.windows;
 private import std.windows.syserror;
@@ -217,38 +217,88 @@ class TaskQueue {
 	alias executeAll opCall;
 }
 
-template PspHardwareComponent() {
+mixin(defineEnum!("RunningState", uint,
+	"RUNNING", 0,
+	"PAUSED" , 1,
+	"STOPPED", 2
+));
+
+class HaltException : Exception { this(string type = "HALT") { super(type); } }
+
+abstract class PspHardwareComponent {
 	Thread thread;
-	bool _running;
+	RunningState runningState = RunningState.STOPPED;
+	bool componentInitialized = false;
 
 	void start() {
-		if (running) return;
+		if ((thread !is null) && thread.isRunning) return;
+
+		componentInitialized = false;
+		runningState = RunningState.RUNNING;
 		thread = new Thread(&run);
 		thread.start();
 		waitStart();
 	}
+	
+	abstract void run();
 
-	void stop() {
-		_running = false;
+	/**
+	 * Pauses emulation.
+	 */
+	void pause() {
+		runningState = RunningState.PAUSED;
 	}
 
-	bool running() { return _running && (thread && thread.isRunning); }
+	/**
+	 * Resumes emulation.
+	 */
+	void resume() {
+		runningState = RunningState.RUNNING;
+	}
+
+	/**
+	 * Stops emulation.
+	 */
+	void stop() {
+		runningState = RunningState.STOPPED;
+	}
+
+	void stopAndWait() {
+		stop();
+		while (running) sleep(1);
+	}
+
+	void init() {
+	}
+
+	void reset() {
+	}
+
+	bool running() {
+		return (runningState == RunningState.RUNNING) && (thread && thread.isRunning);
+	}
 
 	void waitStart() {
-		while (!_running) sleep(1);
+		InfiniteLoop!(512) loop;
+		while (!componentInitialized && (runningState == RunningState.RUNNING)) {
+			loop.increment();
+			sleep(1);
+		}
+	}
+
+	void waitUntilResume() {
+		while (runningState != RunningState.RUNNING) {
+			if (runningState == RunningState.STOPPED) throw(new HaltException("RunningState.STOPPED"));
+			sleep(1);
+		}
 	}
 }
 
-int findIndex(string s, string r) {
-	for (int n = 0; n < s.length - r.length; n++) {
-		if (s[n..n + r.length] == r) return n;
-	}
-	return -1;
-}
+import dfl.all;
 
-int findLastIndex(string s, string r) {
-	for (int n = s.length - r.length - 1; n >= 0; n--) {
-		if (s[n..n + r.length] == r) return n;
-	}
-	return -1;
+class ApplicationPaths {
+	static string exe() { return cast(string)std.path.dirname(Application.executablePath); }
+	static string current() { return cast(string)std.path.curdir; }
+	static string startup() { return cast(string)Application.startupPath; }
+	static string userAppData() { return cast(string)Application.userAppDataBasePath; }
 }

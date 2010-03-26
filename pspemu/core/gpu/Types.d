@@ -29,10 +29,23 @@ struct ScreenBuffer {
 }
 
 struct TextureBuffer {
+	static const auto textureSizeMul = [2, 2, 2, 4, 1, 1, 2, 4, 4, 4, 4];
+	static const auto textureSizeDiv = [1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1];
+
 	uint address;
 	uint width, height;
 	uint size;
 	uint format;
+	bool swizzled;
+
+	uint sizePixels(uint count) in {
+		assert((format >= 0 && format) < (textureSizeMul.length));
+	} body {
+		return (count * textureSizeMul[format]) / textureSizeDiv[format];
+	}
+
+	uint rwidth() { return sizePixels(width); }
+	uint totalSize() { return rwidth * height; }
 }
 
 struct Colorf {
@@ -405,6 +418,9 @@ static struct GpuState {
 interface GpuImpl {
 	void setState(GpuState *state);
 	void init();
+	void reset();
+	void startDisplayList();
+	void endDisplayList();
 	void clear();
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags);
 	void flush();

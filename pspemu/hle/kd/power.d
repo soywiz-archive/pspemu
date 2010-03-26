@@ -1,5 +1,7 @@
 module pspemu.hle.kd.power; // kd/power.prx (scePower_Service)
 
+debug = DEBUG_SYSCALL;
+
 import pspemu.hle.Module;
 
 class scePower : Module {
@@ -19,8 +21,25 @@ class scePower : Module {
 		mixin(registerd!(0xFEE03A2F, scePowerGetCpuClockFrequency));
 		mixin(registerd!(0x478FE6F5, scePowerGetBusClockFrequency));
 		mixin(registerd!(0x737486F2, scePowerSetClockFrequency));
+		mixin(registerd!(0x843FBF43, scePowerSetCpuClockFrequency));
+		mixin(registerd!(0xB8D7B3FB, scePowerSetBusClockFrequency));
 	}
 
+	// http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/HLE/modules150/scePower.java
+	int  pllfreq = 0;
+	int  cpufreq = 222;
+	int  busfreq = 111;
+	int  batteryLifeTime = (5 * 60); // 5 hours
+    int  batteryTemp = 28; //some standard battery temperature 28 deg C
+    int  batteryVoltage = 4135; //battery voltage 4,135 in slim
+    bool pluggedIn = true;
+    bool batteryPresent = true;
+    int  batteryPowerPercent = 100;
+    int  batteryLowPercent = 12;
+    int  batteryForceSuspendPercent = 4;
+    int  fullBatteryCapacity = 1800;
+    bool batteryCharging = false;
+    int  backlightMaximum = 4;
 	/**
 	 * Generate a power tick, preventing unit from 
 	 * powering off and turning off display.
@@ -182,8 +201,28 @@ class scePower : Module {
 	 *
 	 */
 	int scePowerSetClockFrequency(int pllfreq, int cpufreq, int busfreq) {
-		unimplemented();
-		return -1;
+		this.pllfreq = pllfreq;
+		this.cpufreq = cpufreq;
+		this.busfreq = busfreq;
+		return 0;
+	}
+	
+	/**
+	 * Set CPU Frequency
+	 * @param cpufreq - new CPU frequency, valid values are 1 - 333
+	 */
+	int scePowerSetCpuClockFrequency(int cpufreq) {
+		this.cpufreq = cpufreq;
+		return 0;
+	}
+
+	/**
+	 * Set Bus Frequency
+	 * @param busfreq - new BUS frequency, valid values are 1 - 167
+	 */
+	int scePowerSetBusClockFrequency(int busfreq) {
+		this.busfreq = busfreq;
+		return 0;
 	}
 }
 

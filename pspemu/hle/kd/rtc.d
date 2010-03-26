@@ -8,6 +8,7 @@ class sceRtc : Module {
 		mixin(registerd!(0x3F7AD767, sceRtcGetCurrentTick));
 		mixin(registerd!(0x05EF322C, sceRtcGetDaysInMonth));
 		mixin(registerd!(0x57726BC1, sceRtcGetDayOfWeek));
+		mixin(registerd!(0x26D25A5D, sceRtcTickAddMicroseconds));
 	}
 	
 	
@@ -20,6 +21,19 @@ class sceRtc : Module {
 		long frequency;
 		std.c.windows.windows.QueryPerformanceFrequency(&frequency);
 		return cast(uint)frequency;
+	}
+
+	/**
+	 * Add an amount of ms to a tick
+	 *
+	 * @param destTick - pointer to tick to hold result
+	 * @param srcTick - pointer to source tick
+	 * @param numMS - number of ms to add
+	 * @return 0 on success, <0 on error
+	 */
+	int sceRtcTickAddMicroseconds(u64* destTick, const u64* srcTick, u64 numMS) {
+		unimplemented();
+		return 0;
 	}
 
 	/**

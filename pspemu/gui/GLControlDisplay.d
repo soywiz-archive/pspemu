@@ -34,7 +34,9 @@ class GLControlDisplay : GLControl {
 		delay = frequency / display.verticalRefreshRate;
 
 		//Thread.sleep(100_0000);
-		while (true) {
+		//Sleep(1000);
+
+		while (running) {
 			try {
 				// Check OpenGL.
 				makeCurrent();

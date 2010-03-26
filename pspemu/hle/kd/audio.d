@@ -25,7 +25,8 @@ class sceAudio_driver : Module {
 		bool reserved;
 		int  samplecount;
 		PspAudioFormats format;
-		int valuesPerSample() { return (format == PspAudioFormats.PSP_AUDIO_FORMAT_MONO) ? 1 : 2; }
+		int numchannels() { return (format == PspAudioFormats.PSP_AUDIO_FORMAT_MONO) ? 1 : 2; }
+		int dataCount() { return samplecount * numchannels; }
 	}
 	
 	Channel channels[8]; // PSP_AUDIO_CHANNEL_MAX
@@ -80,12 +81,30 @@ class sceAudio_driver : Module {
 		}
 		
 		auto cchannel = channels[channel];
+
+		// TODO. FIX.
 		
-		auto samples = (cast(float*)buf)[0..cchannel.samplecount * cchannel.valuesPerSample];
+		float toFloat(short sample) { return cast(float)sample / cast(float)(0x8000 - 1); }
+		
+		auto samples_short = (cast(short*)buf)[0..cchannel.dataCount];
+		auto samples_float = new float[cchannel.samplecount * 2];
+		if (cchannel.numchannels == 1) {
+			for (int n = 0; n < samples_short.length; n++) {
+				samples_float[n * 2 + 0] = toFloat(samples_short[n]) * leftvol;
+				samples_float[n * 2 + 1] = toFloat(samples_short[n]) * rightvol;
+			}
+		} else {
+			for (int n = 0; n < samples_short.length; n += 2) {
+				samples_float[n + 0] = toFloat(samples_short[n + 0]) * leftvol;
+				samples_float[n + 1] = toFloat(samples_short[n + 1]) * rightvol;
+			}
+		}
+		
+		//writefln("numchannels:%d", cchannel.numchannels);
 
 		bool playing = true;
 		(new Thread({
-			audio.writeWait(channel, samples, volumef(leftvol), volumef(rightvol));
+			audio.writeWait(channel, samples_float, volumef(leftvol), volumef(rightvol));
 			playing = false;
 		})).start();
 

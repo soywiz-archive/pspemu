@@ -51,9 +51,7 @@ version (ENABLE_BREAKPOINTS) {
 /**
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
-class Cpu : IDebugSource {
-	mixin PspHardwareComponent;
-
+class Cpu : PspHardwareComponent, IDebugSource {
 	/**
 	 * Registers.
 	 */
@@ -79,12 +77,6 @@ class Cpu : IDebugSource {
 	
 	mixin DebugSourceProxy;
 
-	bool running = true;
-
-	void stop() {
-		running = false;
-	}
-
 	/**
 	 * Constructor. It will create the registers and the memory.
 	 *
@@ -105,6 +97,10 @@ class Cpu : IDebugSource {
 	void reset() {
 		registers.reset();
 		memory.reset();
+		interrupts.reset();
+		gpu.reset();
+		display.reset();
+		controller.reset();
 	}
 
 	/**
@@ -152,7 +148,7 @@ class Cpu : IDebugSource {
 
 			// Add a THREAD Interrupt (to switch threads)
 			if ((count & THREAD0_CALL_MASK) == 0) interrupts.queue(Interrupts.Type.THREAD0);
-
+			
 			// Process interrupts if there are pending interrupts
 			if (interrupts.InterruptFlag) interrupts.process();
 
@@ -165,9 +161,9 @@ class Cpu : IDebugSource {
 					}
 				}
 			}
-			
-			if (!running) throw(new HaltException("stop"));
 
+			if (runningState != RunningState.RUNNING) waitUntilResume();
+			
 			instruction.v = memory.read32(registers.PC);
 			mixin(genSwitch(PspInstructions));
 
@@ -336,27 +332,23 @@ class Cpu : IDebugSource {
 	}
 	mixin BreakPointStuff;
 	
-	void run() {
+	override void run() {
 		//Thread.sleep(2000_0000);
 		//Sleep(2000);
 		try {
-			_running = true;
+			componentInitialized = true;
 			execute();
 		} catch (Object o) {
 			writefln("CPU Error: %s", o.toString());
 			registers.dump();
 			auto dissasembler = new AllegrexDisassembler(memory);
 			dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-			dissasembler.dump(registers.PC, -6, 6);
+			dissasembler.dump(registers.PC, -3, +3);
 			writefln("CPU Error: %s", o.toString());
 		} finally {
 			.writefln("End CPU executing.");
 			stop();
 			gpu.stop();
-			/*
-			cpu.stop();
-			Application.exit();
-			*/
 		}
 	}
 }

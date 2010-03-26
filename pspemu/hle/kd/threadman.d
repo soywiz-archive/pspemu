@@ -15,6 +15,18 @@ import pspemu.hle.kd.sysmem; // kd/sysmem.prx (sceSystemMemoryManager)
  * Library imports for the kernel threading library.
  */
 class ThreadManForUser : Module {
+	/**
+	 * Thread Manager
+	 */
+	PspThreadManager    threadManager;
+	PspSemaphoreManager semaphoreManager;
+
+	void initModule() {
+		threadManager    = new PspThreadManager(this);
+		semaphoreManager = new PspSemaphoreManager(this);
+		moduleManager.getCurrentThreadName = { return threadManager.currentThread.name; };
+	}
+
 	void initNids() {
 		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
 		mixin(registerd!(0x9ACE131E, sceKernelSleepThread));
@@ -52,21 +64,6 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0x402FCF22, sceKernelWaitEventFlag));
 		mixin(registerd!(0x30FD48F0, sceKernelPollEventFlag));
 		mixin(registerd!(0x369ED59D, sceKernelGetSystemTimeLow));
-	}
-
-	/**
-	 * Thread Manager
-	 */
-	PspThreadManager    threadManager;
-	PspSemaphoreManager semaphoreManager;
-
-	void initModule() {
-		threadManager    = new PspThreadManager(this);
-		semaphoreManager = new PspSemaphoreManager(this);
-		writefln("moduleManager:%p", moduleManager);
-		moduleManager.getCurrentThreadName = {
-			return threadManager.currentThread.name;
-		};
 	}
 
 	/**
@@ -333,407 +330,413 @@ class ThreadManForUser : Module {
 		}
 	}
 	
+	template TemplateMsgPipe() {
+		/**
+		 * Create a message pipe
+		 *
+		 * @param name - Name of the pipe
+		 * @param part - ID of the memory partition
+		 * @param attr - Set to 0?
+		 * @param unk1 - Unknown
+		 * @param opt  - Message pipe options (set to NULL)
+		 *
+		 * @return The UID of the created pipe, < 0 on error
+		 */
+		SceUID sceKernelCreateMsgPipe(string name, int part, int attr, void* unk1, void* opt) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Delete a message pipe
+		 *
+		 * @param uid - The UID of the pipe
+		 *
+		 * @return 0 on success, < 0 on error
+		 */
+		int sceKernelDeleteMsgPipe(SceUID uid) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Send a message to a pipe
+		 *
+		 * @param uid - The UID of the pipe
+		 * @param message - Pointer to the message
+		 * @param size - Size of the message
+		 * @param unk1 - Unknown
+		 * @param unk2 - Unknown
+		 * @param timeout - Timeout for send
+		 *
+		 * @return 0 on success, < 0 on error
+		 */
+		int sceKernelSendMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2, uint* timeout) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Try to send a message to a pipe
+		 *
+		 * @param uid - The UID of the pipe
+		 * @param message - Pointer to the message
+		 * @param size - Size of the message
+		 * @param unk1 - Unknown
+		 * @param unk2 - Unknown
+		 *
+		 * @return 0 on success, < 0 on error
+		 */
+		int sceKernelTrySendMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Receive a message from a pipe
+		 *
+		 * @param uid - The UID of the pipe
+		 * @param message - Pointer to the message
+		 * @param size - Size of the message
+		 * @param unk1 - Unknown
+		 * @param unk2 - Unknown
+		 * @param timeout - Timeout for receive
+		 *
+		 * @return 0 on success, < 0 on error
+		 */
+		int sceKernelReceiveMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2, uint* timeout) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Receive a message from a pipe
+		 *
+		 * @param uid - The UID of the pipe
+		 * @param message - Pointer to the message
+		 * @param size - Size of the message
+		 * @param unk1 - Unknown
+		 * @param unk2 - Unknown
+		 *
+		 * @return 0 on success, < 0 on error
+		 */
+		int sceKernelTryReceiveMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Get the status of a Message Pipe
+		 *
+		 * @param uid - The uid of the Message Pipe
+		 * @param info - Pointer to a ::SceKernelMppInfo structure
+		 *
+		 * @return 0 on success, < 0 on error
+		 */
+		int sceKernelReferMsgPipeStatus(SceUID uid, SceKernelMppInfo* info) {
+			unimplemented();
+			return -1;
+		}
+	}
+
+	template TemplateThread() {
+		/**
+		 * Create a thread
+		 *
+		 * @par Example:
+		 * @code
+		 * SceUID thid;
+		 * thid = sceKernelCreateThread("my_thread", threadFunc, 0x18, 0x10000, 0, NULL);
+		 * @endcode
+		 *
+		 * @param name         - An arbitrary thread name.
+		 * @param entry        - The thread function to run when started.
+		 * @param initPriority - The initial priority of the thread. Less if higher priority.
+		 * @param stackSize    - The size of the initial stack.
+		 * @param attr         - The thread attributes, zero or more of ::PspThreadAttributes.
+		 * @param option       - Additional options specified by ::SceKernelThreadOptParam.
+
+		 * @return UID of the created thread, or an error code.
+		 */
+		SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
+			auto pspThread = threadManager.createThread();
+			// Set stack.
+			pspThread.stack = moduleManager.get!(SysMemUserForUser).allocStack(stackSize, name);
+
+			// Copy name string.
+			pspThread.info.name[0..name.length] = name[0..name.length];
+			pspThread.name = cast(string)pspThread.info.name[0..name.length];
+
+			// Set stack info.
+			pspThread.info.stack     = cast(void*)pspThread.stack.block.low;
+			pspThread.info.stackSize = stackSize;
+
+			// Set priority info.
+			pspThread.info.initPriority    = initPriority;
+			pspThread.info.currentPriority = initPriority;
+
+			// Set entry info.
+			pspThread.info.entry = entry;
+
+			// Set extra info.
+			pspThread.info.size  = pspThread.info.sizeof;
+			pspThread.info.attr  = attr;
+			pspThread.info.gpReg = cast(void *)cpu.registers.GP;
+
+			// Set thread registers.
+			with (pspThread.registers) {
+				copyFrom(cpu.registers);
+				pcSet(entry);
+				SP = pspThread.stack.block.high;
+				RA = 0x08000000; // sleep
+			}
+
+			return reinterpret!(SceUID)(pspThread);
+		}
+
+		/**
+		 * Start a created thread
+		 *
+		 * @param thid   - Thread id from sceKernelCreateThread
+		 * @param arglen - Length of the data pointed to by argp, in bytes
+		 * @param argp   - Pointer to the arguments.
+		 */
+		int sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
+			auto pspThread = reinterpret!(PspThread)(thid);
+			if (pspThread is null) {
+				writefln("sceKernelStartThread: Null");
+				return -1;
+			}
+			pspThread.registers.A0 = arglen;
+			pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
+			threadManager.addToRunningList(pspThread);
+
+			// NOTE: It's mandatory to switch immediately to this thread, because the new thread
+			// may use volatile data (por example a value that will be change in the parent thread)
+			// in a few instructions.
+			// Set the value to the current thread.
+			returnValue = 0;
+			avoidAutosetReturnValue();
+
+			// Then change to the next thread and avoid writting the return value to that thread.
+			pspThread.switchToThisThread();
+
+			return 0;
+		}
+
+		/**
+		 * Delate a thread
+		 *
+		 * @param thid - UID of the thread to be deleted.
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelDeleteThread(SceUID thid) {
+			auto pspThread = reinterpret!(PspThread)(thid);
+			if (pspThread is null) {
+				throw(new Exception("Invalid sceKernelDeleteThread"));
+				return -1;
+			}
+			pspThread.exit();
+			return 0;
+		}
+
+		/** 
+		  * Exit a thread and delete itself.
+		  *
+		  * @param status - Exit status
+		  */
+		int sceKernelExitDeleteThread(int status) {
+			return sceKernelExitThread(status);
+		}
+
+		/**
+		 * Terminate and delete a thread.
+		 *
+		 * @param thid - UID of the thread to terminate and delete.
+		 *
+		 * @return Success if >= 0, an error if < 0.
+		 */
+		int sceKernelTerminateDeleteThread(SceUID thid) {
+			return sceKernelDeleteThread(thid);
+		}
+
+		/**
+		 * Exit a thread
+		 *
+		 * @param status - Exit status.
+		 */
+		int sceKernelExitThread(int status) {
+			threadManager.currentThread.exit();
+			return 0;
+		}
+		
+		/**
+		  * Change the threads current priority.
+		  * 
+		  * @param thid - The ID of the thread (from sceKernelCreateThread or sceKernelGetThreadId)
+		  * @param priority - The new priority (the lower the number the higher the priority)
+		  *
+		  * @par Example:
+		  * @code
+		  * int thid = sceKernelGetThreadId();
+		  * // Change priority of current thread to 16
+		  * sceKernelChangeThreadPriority(thid, 16);
+		  * @endcode
+		  *
+		  * @return 0 if successful, otherwise the error code.
+		  */
+		int sceKernelChangeThreadPriority(SceUID thid, int priority) {
+			auto pspThread = cast(PspThread)cast(void *)thid;
+			if (pspThread is null) return -1;
+			pspThread.info.currentPriority = priority;
+			return 0;
+		}
+		
+		/**
+		 * Modify the attributes of the current thread.
+		 *
+		 * @param unknown - Set to 0.
+		 * @param attr - The thread attributes to modify.  One of ::PspThreadAttributes.
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelChangeCurrentThreadAttr(int unknown, SceUInt attr) {
+			threadManager.currentThread.info.attr = attr;
+			return 0;
+		}
+
+		/** 
+		 * Wait until a thread has ended.
+		 *
+		 * @param thid - Id of the thread to wait for.
+		 * @param timeout - Timeout in microseconds (assumed).
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelWaitThreadEnd(SceUID thid, SceUInt* timeout) {
+			unimplemented();
+			return -1;
+		}
+
+		/**
+		 * Delay the current thread by a specified number of microseconds
+		 *
+		 * @param delay - Delay in microseconds.
+		 *
+		 * @par Example:
+		 * @code
+		 * sceKernelDelayThread(1000000); // Delay for a second
+		 * @endcode
+		 */
+		int sceKernelDelayThread(SceUInt delay) {
+			mixin(changeAfterTimerPausedMicroseconds);
+
+			return threadManager.currentThread.pauseAndYield("sceKernelDelayThread", (PspThread pausedThread) {
+				if (!paused) pausedThread.resumeAndReturn(0);
+			});
+		}
+
+		/**
+		 * Delay the current thread by a specified number of microseconds and handle any callbacks.
+		 *
+		 * @param delay - Delay in microseconds.
+		 *
+		 * @par Example:
+		 * @code
+		 * sceKernelDelayThread(1000000); // Delay for a second
+		 * @endcode
+		 */
+		int sceKernelDelayThreadCB(SceUInt delay) {
+			mixin(changeAfterTimerPausedMicroseconds);
+
+			return threadManager.currentThread.pauseAndYield("sceKernelDelayThreadCB", (PspThread pausedThread) {
+				processCallbacks();
+				if (!paused) pausedThread.resumeAndReturn(0);
+			});
+		}
+
+		/** 
+		 * Get the status information for the specified thread.
+		 * 
+		 * @param thid - Id of the thread to get status
+		 * @param info - Pointer to the info structure to receive the data.
+		 * Note: The structures size field should be set to
+		 * sizeof(SceKernelThreadInfo) before calling this function.
+		 *
+		 * @par Example:
+		 * @code
+		 * SceKernelThreadInfo status;
+		 * status.size = sizeof(SceKernelThreadInfo);
+		 * if(sceKernelReferThreadStatus(thid, &status) == 0)
+		 * { Do something... }
+		 * @endcode 
+		 * @return 0 if successful, otherwise the error code.
+		 */
+		int sceKernelReferThreadStatus(SceUID thid, SceKernelThreadInfo* info) {
+			auto thread = reinterpret!(PspThread)(thid);
+			if (thread is null) return -1;
+			if (info   is null) return -2;
+
+			//if (size < threadManager.currentThread.info)
+			
+			ubyte[] copyFrom = TA(threadManager.currentThread.info);
+			ubyte[] copyTo   = (cast(ubyte*)info)[0..info.size];
+
+			uint copyLength = pspemu.utils.Utils.min(copyFrom.length, copyTo.length);
+
+			uint restoreSize = info.size;
+			copyTo[0..copyLength] = copyFrom[0..copyLength];
+			info.size = restoreSize;
+
+			return 0;
+		}
+
+		/** 
+		 * Get the current thread Id
+		 *
+		 * @return The thread id of the calling thread.
+		 */
+		SceUID sceKernelGetThreadId() {
+			return reinterpret!(SceUID)(threadManager.currentThread);
+		}
+
+		/**
+		 * Sleep thread
+		 *
+		 * @return < 0 on error.
+		 */
+		int sceKernelSleepThread() {
+			// Sets the position of the thread to the syscall again.
+			// Sets the thread as waiting.
+			// Switch to another thread immediately.
+			return threadManager.currentThread.pauseAndYield("sceKernelSleepThread", (PspThread pausedThread) {
+				//writefln("sceKernelSleepThread");
+			});
+		}
+
+		/**
+		 * Sleep thread but service any callbacks as necessary
+		 *
+		 * @par Example:
+		 * @code
+		 * // Once all callbacks have been setup call this function
+		 * sceKernelSleepThreadCB();
+		 * @endcode
+		 */
+		int sceKernelSleepThreadCB() {
+			// Ditto.
+			return threadManager.currentThread.pauseAndYield("sceKernelSleepThreadCB", (PspThread pausedThread) {
+				processCallbacks();
+			});
+		}
+	}
+	
 	mixin TemplateSemaphore;
 	mixin TemplateEvent;
 	mixin TemplateCallback;
-
-	/**
-	 * Terminate and delete a thread.
-	 *
-	 * @param thid - UID of the thread to terminate and delete.
-	 *
-	 * @return Success if >= 0, an error if < 0.
-	 */
-	int sceKernelTerminateDeleteThread(SceUID thid) {
-		return sceKernelDeleteThread(thid);
-	}
-
-	/**
-	  * Change the threads current priority.
-	  * 
-	  * @param thid - The ID of the thread (from sceKernelCreateThread or sceKernelGetThreadId)
-	  * @param priority - The new priority (the lower the number the higher the priority)
-	  *
-	  * @par Example:
-	  * @code
-	  * int thid = sceKernelGetThreadId();
-	  * // Change priority of current thread to 16
-	  * sceKernelChangeThreadPriority(thid, 16);
-	  * @endcode
-	  *
-	  * @return 0 if successful, otherwise the error code.
-	  */
-	int sceKernelChangeThreadPriority(SceUID thid, int priority) {
-		auto pspThread = cast(PspThread)cast(void *)thid;
-		if (pspThread is null) return -1;
-		pspThread.info.currentPriority = priority;
-		return 0;
-	}
-	
-	/**
-	 * Modify the attributes of the current thread.
-	 *
-	 * @param unknown - Set to 0.
-	 * @param attr - The thread attributes to modify.  One of ::PspThreadAttributes.
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelChangeCurrentThreadAttr(int unknown, SceUInt attr) {
-		threadManager.currentThread.info.attr = attr;
-		return 0;
-	}
-
-	/** 
-	 * Wait until a thread has ended.
-	 *
-	 * @param thid - Id of the thread to wait for.
-	 * @param timeout - Timeout in microseconds (assumed).
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelWaitThreadEnd(SceUID thid, SceUInt* timeout) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Delay the current thread by a specified number of microseconds
-	 *
-	 * @param delay - Delay in microseconds.
-	 *
-	 * @par Example:
-	 * @code
-	 * sceKernelDelayThread(1000000); // Delay for a second
-	 * @endcode
-	 */
-	int sceKernelDelayThread(SceUInt delay) {
-		mixin(changeAfterTimerPausedMicroseconds);
-
-		return threadManager.currentThread.pauseAndYield("sceKernelDelayThread", (PspThread pausedThread) {
-			if (!paused) pausedThread.resumeAndReturn(0);
-		});
-	}
-
-	/**
-	 * Delay the current thread by a specified number of microseconds and handle any callbacks.
-	 *
-	 * @param delay - Delay in microseconds.
-	 *
-	 * @par Example:
-	 * @code
-	 * sceKernelDelayThread(1000000); // Delay for a second
-	 * @endcode
-	 */
-	int sceKernelDelayThreadCB(SceUInt delay) {
-		mixin(changeAfterTimerPausedMicroseconds);
-
-		return threadManager.currentThread.pauseAndYield("sceKernelDelayThreadCB", (PspThread pausedThread) {
-			processCallbacks();
-			if (!paused) pausedThread.resumeAndReturn(0);
-		});
-	}
-
-	/** 
-	 * Get the status information for the specified thread.
-	 * 
-	 * @param thid - Id of the thread to get status
-	 * @param info - Pointer to the info structure to receive the data.
-	 * Note: The structures size field should be set to
-	 * sizeof(SceKernelThreadInfo) before calling this function.
-	 *
-	 * @par Example:
-	 * @code
-	 * SceKernelThreadInfo status;
-	 * status.size = sizeof(SceKernelThreadInfo);
-	 * if(sceKernelReferThreadStatus(thid, &status) == 0)
-	 * { Do something... }
-	 * @endcode 
-	 * @return 0 if successful, otherwise the error code.
-	 */
-	int sceKernelReferThreadStatus(SceUID thid, SceKernelThreadInfo* info) {
-		auto thread = reinterpret!(PspThread)(thid);
-		if (thread is null) return -1;
-		if (info   is null) return -2;
-
-		//if (size < threadManager.currentThread.info)
-		
-		ubyte[] copyFrom = TA(threadManager.currentThread.info);
-		ubyte[] copyTo   = (cast(ubyte*)info)[0..info.size];
-
-		uint copyLength = pspemu.utils.Utils.min(copyFrom.length, copyTo.length);
-
-		uint restoreSize = info.size;
-		copyTo[0..copyLength] = copyFrom[0..copyLength];
-		info.size = restoreSize;
-
-		return 0;
-	}
-
-	/** 
-	 * Get the current thread Id
-	 *
-	 * @return The thread id of the calling thread.
-	 */
-	SceUID sceKernelGetThreadId() {
-		return reinterpret!(SceUID)(threadManager.currentThread);
-	}
-
-	/** 
-	  * Exit a thread and delete itself.
-	  *
-	  * @param status - Exit status
-	  */
-	int sceKernelExitDeleteThread(int status) {
-		return sceKernelExitThread(status);
-	}
-
-	/**
-	 * Sleep thread
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelSleepThread() {
-		// Sets the position of the thread to the syscall again.
-		// Sets the thread as waiting.
-		// Switch to another thread immediately.
-		return threadManager.currentThread.pauseAndYield("sceKernelSleepThread", (PspThread pausedThread) {
-			//writefln("sceKernelSleepThread");
-		});
-	}
-
-	/**
-	 * Sleep thread but service any callbacks as necessary
-	 *
-	 * @par Example:
-	 * @code
-	 * // Once all callbacks have been setup call this function
-	 * sceKernelSleepThreadCB();
-	 * @endcode
-	 */
-	int sceKernelSleepThreadCB() {
-		// Ditto.
-		return threadManager.currentThread.pauseAndYield("sceKernelSleepThreadCB", (PspThread pausedThread) {
-			processCallbacks();
-		});
-	}
-	
-	/**
-	 * Exit a thread
-	 *
-	 * @param status - Exit status.
-	 */
-	int sceKernelExitThread(int status) {
-		threadManager.currentThread.exit();
-		return 0;
-	}
-	
-	/**
-	 * Delate a thread
-	 *
-	 * @param thid - UID of the thread to be deleted.
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelDeleteThread(SceUID thid) {
-		auto pspThread = reinterpret!(PspThread)(thid);
-		if (pspThread is null) {
-			throw(new Exception("Invalid sceKernelDeleteThread"));
-			return -1;
-		}
-		pspThread.exit();
-		return 0;
-	}
-
-	/**
-	 * Create a thread
-	 *
-	 * @par Example:
-	 * @code
-	 * SceUID thid;
-	 * thid = sceKernelCreateThread("my_thread", threadFunc, 0x18, 0x10000, 0, NULL);
-	 * @endcode
-	 *
-	 * @param name         - An arbitrary thread name.
-	 * @param entry        - The thread function to run when started.
-	 * @param initPriority - The initial priority of the thread. Less if higher priority.
-	 * @param stackSize    - The size of the initial stack.
-	 * @param attr         - The thread attributes, zero or more of ::PspThreadAttributes.
-	 * @param option       - Additional options specified by ::SceKernelThreadOptParam.
-
-	 * @return UID of the created thread, or an error code.
-	 */
-	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
-		auto pspThread = threadManager.createThread();
-		// Set stack.
-		pspThread.stack = moduleManager.get!(SysMemUserForUser).allocStack(stackSize, name);
-
-		// Copy name string.
-		pspThread.info.name[0..name.length] = name[0..name.length];
-		pspThread.name = cast(string)pspThread.info.name[0..name.length];
-
-		// Set stack info.
-		pspThread.info.stack     = cast(void*)pspThread.stack.block.low;
-		pspThread.info.stackSize = stackSize;
-
-		// Set priority info.
-		pspThread.info.initPriority    = initPriority;
-		pspThread.info.currentPriority = initPriority;
-
-		// Set entry info.
-		pspThread.info.entry = entry;
-
-		// Set extra info.
-		pspThread.info.size  = pspThread.info.sizeof;
-		pspThread.info.attr  = attr;
-		pspThread.info.gpReg = cast(void *)cpu.registers.GP;
-
-		// Set thread registers.
-		with (pspThread.registers) {
-			copyFrom(cpu.registers);
-			pcSet(entry);
-			SP = pspThread.stack.block.high;
-			RA = 0x08000000; // sleep
-		}
-
-		return reinterpret!(SceUID)(pspThread);
-	}
-
-	/**
-	 * Start a created thread
-	 *
-	 * @param thid   - Thread id from sceKernelCreateThread
-	 * @param arglen - Length of the data pointed to by argp, in bytes
-	 * @param argp   - Pointer to the arguments.
-	 */
-	int sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
-		auto pspThread = reinterpret!(PspThread)(thid);
-		if (pspThread is null) {
-			writefln("sceKernelStartThread: Null");
-			return -1;
-		}
-		pspThread.registers.A0 = arglen;
-		pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
-		threadManager.addToRunningList(pspThread);
-
-		// NOTE: It's mandatory to switch immediately to this thread, because the new thread
-		// may use volatile data (por example a value that will be change in the parent thread)
-		// in a few instructions.
-		// Set the value to the current thread.
-		returnValue = 0;
-		avoidAutosetReturnValue();
-
-		// Then change to the next thread and avoid writting the return value to that thread.
-		pspThread.switchToThisThread();
-
-		return 0;
-	}
-
-	/**
-	 * Create a message pipe
-	 *
-	 * @param name - Name of the pipe
-	 * @param part - ID of the memory partition
-	 * @param attr - Set to 0?
-	 * @param unk1 - Unknown
-	 * @param opt  - Message pipe options (set to NULL)
-	 *
-	 * @return The UID of the created pipe, < 0 on error
-	 */
-	SceUID sceKernelCreateMsgPipe(string name, int part, int attr, void* unk1, void* opt) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Delete a message pipe
-	 *
-	 * @param uid - The UID of the pipe
-	 *
-	 * @return 0 on success, < 0 on error
-	 */
-	int sceKernelDeleteMsgPipe(SceUID uid) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Send a message to a pipe
-	 *
-	 * @param uid - The UID of the pipe
-	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
-	 * @param timeout - Timeout for send
-	 *
-	 * @return 0 on success, < 0 on error
-	 */
-	int sceKernelSendMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2, uint* timeout) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Try to send a message to a pipe
-	 *
-	 * @param uid - The UID of the pipe
-	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
-	 *
-	 * @return 0 on success, < 0 on error
-	 */
-	int sceKernelTrySendMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Receive a message from a pipe
-	 *
-	 * @param uid - The UID of the pipe
-	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
-	 * @param timeout - Timeout for receive
-	 *
-	 * @return 0 on success, < 0 on error
-	 */
-	int sceKernelReceiveMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2, uint* timeout) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Receive a message from a pipe
-	 *
-	 * @param uid - The UID of the pipe
-	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
-	 *
-	 * @return 0 on success, < 0 on error
-	 */
-	int sceKernelTryReceiveMsgPipe(SceUID uid, void* message, uint size, int unk1, void* unk2) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Get the status of a Message Pipe
-	 *
-	 * @param uid - The uid of the Message Pipe
-	 * @param info - Pointer to a ::SceKernelMppInfo structure
-	 *
-	 * @return 0 on success, < 0 on error
-	 */
-	int sceKernelReferMsgPipeStatus(SceUID uid, SceKernelMppInfo* info) {
-		unimplemented();
-		return -1;
-	}
+	mixin TemplateMsgPipe;
+	mixin TemplateThread;
 }
 
 /**

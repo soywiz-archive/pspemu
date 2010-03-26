@@ -33,6 +33,8 @@ abstract class Display {
 	 */
 	abstract void* frameBufferPointer();
 
+	void reset() { }
+
 	int frameBufferPixelFormat() { return info.pixelformat; }
 
 	/**
