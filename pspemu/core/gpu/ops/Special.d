@@ -52,18 +52,18 @@ template Gpu_Special() {
 	// Stencil Test
 	auto OP_STST() {
 		with (gpu.state) {
-			stencilFuncFunc = (command.param24 >>  0) & 0xFF;
-			stencilFuncRef  = (command.param24 >>  8) & 0xFF;
-			stencilFuncMask = (command.param24 >> 16) & 0xFF;
+			stencilFuncFunc = cast(TestFunction)(command.byte3[0]);
+			stencilFuncRef  = command.byte3[1];
+			stencilFuncMask = command.byte3[2];
 		}
 	}
 
 	// Stencil OPeration
 	auto OP_SOP() {
 		with (gpu.state) {
-			stencilOperationSfail  = (command.param24 >>  0) & 0xFF;
-			stencilOperationDpfail = (command.param24 >>  8) & 0xFF;
-			stencilOperationDppass = (command.param24 >> 16) & 0xFF;
+			stencilOperationSfail  = cast(StencilOperations)(command.byte3[0]);
+			stencilOperationDpfail = cast(StencilOperations)(command.byte3[1]);
+			stencilOperationDppass = cast(StencilOperations)(command.byte3[2]);
 		}
 	}
 
@@ -74,5 +74,5 @@ template Gpu_Special() {
 	auto OP_DFIX() { gpu.state.fixDst = command.param24; }
 
 	// Logical Operation
-	auto OP_LOP() { gpu.state.logicalOperation = command.param24; }
+	auto OP_LOP() { gpu.state.logicalOperation = cast(LogicalOperation)command.param24; }
 }

@@ -279,6 +279,8 @@ struct Command {
 	float    float1 () { return reinterpret!(float)(v << 8); }
 	bool     bool1  () { return (v << 8) != 0; }
 
+	alias V byte3;
+
 	string toString() {
 		return std.string.format("Command[%08X](%02X:%s)", v, opcode, enumToString(opcode));
 	}

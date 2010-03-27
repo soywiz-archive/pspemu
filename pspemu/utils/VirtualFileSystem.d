@@ -35,6 +35,8 @@ class VFS {
 			);
 		}
 	}
+	//bool caseInsensitive = false;
+	bool caseInsensitive = true;
 	VFS parent;
 	string name;
 	private bool _statsCached;
@@ -78,6 +80,11 @@ class VFS {
 			if (singleComponent == "..") return parentOrThis;
 			if ((node = (singleComponent in childrenMounted)) !is null) return *node;
 			if ((node = (singleComponent in children       )) !is null) return *node;
+			if (caseInsensitive) {
+				string singleComponentLower = std.string.tolower(singleComponent);
+				foreach (key; childrenMounted.keys) if (std.string.tolower(key) == singleComponentLower) return childrenMounted[key];
+				foreach (key; children.keys) if (std.string.tolower(key) == singleComponentLower) return children[key];
+			}
 			throw(new Exception(std.string.format("Can't find component '%s' in '%s'", index, full_name)));
 		}
 	}

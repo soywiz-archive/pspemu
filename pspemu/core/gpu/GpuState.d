@@ -135,18 +135,18 @@ static struct GpuState {
 	int blendFuncSrc;
 	int blendFuncDst;
 
-	int  stencilFuncFunc;
+	TestFunction stencilFuncFunc;
 	int  stencilFuncRef;
 	uint stencilFuncMask;
 
-	uint stencilOperationSfail;
-	uint stencilOperationDpfail;
-	uint stencilOperationDppass;
+	StencilOperations stencilOperationSfail;
+	StencilOperations stencilOperationDpfail;
+	StencilOperations stencilOperationDppass;
 
 	uint fixSrc;
 	uint fixDst;
 
-	uint logicalOperation = 3; // GL_COPY (default)
+	LogicalOperation logicalOperation = LogicalOperation.GU_COPY; // GL_COPY (default)
 }
 
 struct PrimitiveFlags {

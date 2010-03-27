@@ -62,6 +62,8 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x1117C65F, sceIoRmdir));
 	}
 
+	bool[Stream] openedStreams;
+
 	/** 
 	  * Reads an entry from an opened file descriptor.
 	  *
@@ -185,7 +187,10 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error
 	 */
 	int sceIoClose(SceUID fd) {
-		reinterpret!(Stream)(fd).close();
+		auto stream = reinterpret!(Stream)(fd);
+		if (stream is null) return -1;
+		openedStreams.remove(stream);
+		stream.close();
 		return 0;
 	}
 
@@ -235,6 +240,7 @@ class IoFileMgrForKernel : Module {
 			if (mode & PSP_O_CREAT ) fmode |= FileMode.OutNew;
 			
 			auto stream = new SliceStream(locateParentAndUpdateFile(file).open(file, fmode, 0777), 0);
+			openedStreams[stream] = true;
 			return cast(SceUID)cast(void *)stream;
 		} catch (Object o) {
 			writefln("sceIoOpen exception: %s", o);
