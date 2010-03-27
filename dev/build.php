@@ -281,6 +281,7 @@ class Builder {
 			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res {$linkFilesStr}";
 			$retval = 0;
 			echo "Building {$this->exe}...";
+			@unlink($this->exe);
 			passthru($cmd, $retval);
 			$exeBase = pathinfo($this->exe, PATHINFO_FILENAME);
 			@unlink("{$exeBase}.map");

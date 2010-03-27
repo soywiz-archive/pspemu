@@ -18,4 +18,8 @@ template Gpu_Colors() {
 
 	// Material Color
 	auto OP_CMAT() { gpu.state.materialColor.rgb[] = command.float3[]; }
+
+	// Ambient Light Color/Alpha
+	auto OP_ALC() { gpu.state.ambientLightColor.rgb[] = command.float3[]; }
+	auto OP_ALA() { gpu.state.ambientLightColor.alpha = command.float4[0]; }
 }

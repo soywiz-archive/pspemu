@@ -1,6 +1,8 @@
 module pspemu.core.gpu.ops.Texture;
 
 template Gpu_Texture() {
+	static pure string TextureArrayOperation(string type, string code) { return ArrayOperation(type, 0, 7, code); }
+
 	auto OP_TPSM() { // Texture Pixel Storage Mode
 		with (gpu.state) {
 			textureFormat = command.param24;
@@ -13,36 +15,30 @@ template Gpu_Texture() {
 			mipMapLevel      = (command.param24 >> 16) & 0x3;
 		}
 	}
-	
-	alias OP_TBP_n OP_TBP0, OP_TBP1, OP_TBP2, OP_TBP3, OP_TBP4, OP_TBP5, OP_TBP6, OP_TBP7;
-	auto OP_TBP_n() {
-		uint N = command.opcode - Opcode.TBP0;
-		with (gpu.state.textures[N]) {
+
+	mixin (TextureArrayOperation("TBP", q{
+		with (gpu.state.textures[Index]) {
 			address &= 0xFF000000;
 			address |= command.param24;
 		}
-	}
+	}));
 
-	alias OP_TBW_n OP_TBW0, OP_TBW1, OP_TBW2, OP_TBW3, OP_TBW4, OP_TBW5, OP_TBW6, OP_TBW7;
-	auto OP_TBW_n() {
-		int N = command.opcode - Opcode.TBW0;
-		with (gpu.state.textures[N]) {
+	mixin (TextureArrayOperation("TBW", q{
+		with (gpu.state.textures[Index]) {
 			//width    = param16; // ???
 			address &= 0x00FFFFFF;
 			address |= (command.param24 << 8) & 0xFF000000;
 		}
-	}
+	}));
 
-	alias OP_TSIZE_n OP_TSIZE0, OP_TSIZE1, OP_TSIZE2, OP_TSIZE3, OP_TSIZE4, OP_TSIZE5, OP_TSIZE6, OP_TSIZE7;
-	auto OP_TSIZE_n() {
-		int N = command.opcode - Opcode.TSIZE0;
-		with (gpu.state.textures[N]) {
+	mixin (TextureArrayOperation("TSIZE", q{
+		with (gpu.state.textures[Index]) {
 			width  = 1 << ((command.param24 >> 0) & 0xFF);
 			height = 1 << ((command.param24 >> 8) & 0xFF);
 			format   = gpu.state.textureFormat;
 			swizzled = gpu.state.textureSwizzled;
 		}
-	}
+	}));
 
 	auto OP_TFLUSH() {
 	}

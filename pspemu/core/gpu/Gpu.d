@@ -14,6 +14,9 @@ import pspemu.utils.Utils;
 import pspemu.core.Memory;
 import pspemu.core.gpu.Commands;
 import pspemu.core.gpu.Types;
+import pspemu.core.gpu.Utils;
+import pspemu.core.gpu.GpuState;
+import pspemu.core.gpu.GpuImpl;
 import pspemu.core.gpu.DisplayList;
 
 import pspemu.core.gpu.ops.Special;
@@ -23,6 +26,7 @@ import pspemu.core.gpu.ops.Draw;
 import pspemu.core.gpu.ops.Matrix;
 import pspemu.core.gpu.ops.Texture;
 import pspemu.core.gpu.ops.Enable;
+import pspemu.core.gpu.ops.Lights;
 
 class Gpu : PspHardwareComponent {
 	Memory   memory;
@@ -49,6 +53,24 @@ class Gpu : PspHardwareComponent {
 		this.impl.setState(&state);
 	}
 
+	// Utility.
+	static pure string ArrayOperation(string type, int from, int to, string code) {
+		string r;
+		assert (from <= to);
+
+		// Aliases.
+		r ~= "alias OP_" ~ type ~ "_n ";
+		for (int n = from; n <= to; n++) {
+			if (n > from) r ~= ", ";
+			r ~= "OP_" ~ type ~ tos(n);
+		}
+		r ~= ";";
+
+		// Operations.
+		r ~= "auto OP_" ~ type ~ "_n() { uint Index = BaseIndex(Opcode." ~ type ~ tos(from) ~ "); " ~ code ~ "}";
+		return r;
+	}
+
 	void executeSingleCommand(ref DisplayList displayList) {
 		//debug (DEBUG_GPU_VERBOSE) writefln("  executeCommand");
 		auto commandPointer = displayList.pointer;
@@ -63,6 +85,7 @@ class Gpu : PspHardwareComponent {
 			debug (GPU_UNKNOWN_COMMANDS) writefln("0x%08X: Unimplemented %s", reinterpret!(uint)(&command), command);
 			debug (GPU_UNKNOWN_COMMANDS_STOP) doassert(0);
 		}
+		uint BaseIndex(uint base) { return command.opcode - base; }
 
 		mixin Gpu_Enable;
 		mixin Gpu_Special;
@@ -71,6 +94,7 @@ class Gpu : PspHardwareComponent {
 		mixin Gpu_Draw;
 		mixin Gpu_Matrix;
 		mixin Gpu_Texture;
+		mixin Gpu_Lights;
 
 		mixin({
 			string s;

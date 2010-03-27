@@ -69,6 +69,7 @@ int main(string[] args) {
 
 	int retval = 0;
 	try {
+		Application.enableVisualStyles();
 		Application.run(new DisplayForm(showMainMenu, loader, moduleManager, cpu, display, controller));
 	} catch (Object o) {
 		msgBox(o.toString(), "Fatal Error", MsgBoxButtons.OK, MsgBoxIcon.ERROR);

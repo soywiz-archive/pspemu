@@ -14,6 +14,9 @@ import pspemu.utils.OpenGL;
 
 import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
+import pspemu.core.gpu.GpuState;
+import pspemu.core.gpu.GpuImpl;
+import pspemu.core.gpu.Utils;
 
 class Texture {
 	GLuint gltex;
@@ -26,11 +29,11 @@ class Texture {
 		glDeleteTextures(1, &gltex);
 	}
 
-	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureBuffer tbuffer) {
-		int rowWidth = tbuffer.rwidth;
+	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState textureState) {
+		int rowWidth = textureState.rwidth;
 		int pitch    = (rowWidth - 16) / 4;
 		int bxc      = rowWidth / 16;
-		int byc      = tbuffer.height / 8;
+		int byc      = textureState.height / 8;
 
 		uint* src = cast(uint*)inData.ptr;
 		
@@ -51,9 +54,9 @@ class Texture {
 		}
 	}
 
-	void update(Memory memory, ref TextureBuffer tbuffer) {
-		auto inData = (cast(ubyte*)memory.getPointer(tbuffer.address))[0..tbuffer.totalSize];
-		auto pformat = GpuOpengl.PixelFormats[tbuffer.format];
+	void update(Memory memory, ref TextureState textureState) {
+		auto inData = (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize];
+		auto pformat = GpuOpengl.PixelFormats[textureState.format];
 
 		glActiveTexture(GL_TEXTURE0);
 		bind();
@@ -62,18 +65,18 @@ class Texture {
 
 		auto outData = inData;
 
-		if (tbuffer.swizzled) {
+		if (textureState.swizzled) {
 			outData = new ubyte[inData.length];
 			//outData[] = 0xFF;
-			unswizzle(inData, outData, tbuffer);
+			unswizzle(inData, outData, textureState);
 		}
 
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
 			pformat.internal,
-			tbuffer.width,
-			tbuffer.height,
+			textureState.width,
+			textureState.height,
 			0,
 			pformat.external,
 			pformat.opengl,
@@ -81,10 +84,10 @@ class Texture {
 		);
 		//glCheckError();
 		
-		//std.file.write("demodemo", data[0..(tbuffer.width * tbuffer.height) * cast(uint)pformat.size]);
+		//std.file.write("demodemo", data[0..(textureState.width * textureState.height) * cast(uint)pformat.size]);
 		
 		//writefln("%d, %d, %d");
-		writefln("update(%d):%08X,%s, %d", gltex, inData.ptr, tbuffer, (tbuffer.width * tbuffer.height) * cast(uint)pformat.size);
+		writefln("update(%d):%08X,%s, %d", gltex, inData.ptr, textureState, (textureState.width * textureState.height) * cast(uint)pformat.size);
 	}
 
 	void bind() {
@@ -233,7 +236,7 @@ template OpenglUtils() {
 		if (enable) glEnable(type); else glDisable(type);
 	}
 
-	Texture getTexture(TextureBuffer tbuffer) {
+	Texture getTexture(TextureState tbuffer) {
 		if ((tbuffer.address in textureCache) is null) {
 			Texture texture = new Texture();
 			texture.update(state.memory, tbuffer);
@@ -243,17 +246,6 @@ template OpenglUtils() {
 	}
 
 	void drawBegin() {
-		void prepareEnables() {
-			glEnableDisable(GL_CLIP_PLANE0,    state.clipPlaneEnabled);
-			glEnableDisable(GL_CULL_FACE,      state.backfaceCullingEnabled);
-			glEnableDisable(GL_BLEND,          state.alphaBlendEnabled);
-			glEnableDisable(GL_DEPTH_TEST,     state.depthTestEnabled);
-			glEnableDisable(GL_STENCIL_TEST,   state.stencilTestEnabled);
-			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
-			glEnableDisable(GL_TEXTURE_2D,     state.textureMappingEnabled);
-			glEnableDisable(GL_ALPHA_TEST,     state.alphaTestEnabled);
-		}
-
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
@@ -277,6 +269,7 @@ template OpenglUtils() {
 		}
 
 		void prepareTexture() {
+			glEnableDisable(GL_TEXTURE_2D, state.textureMappingEnabled);
 			if (!state.textureMappingEnabled) return;
 
 			glActiveTexture(GL_TEXTURE0);
@@ -309,6 +302,7 @@ template OpenglUtils() {
 		}
 		
 		void prepareStencil() {
+			glEnableDisable(GL_STENCIL_TEST, state.stencilTestEnabled);
 			if (!state.stencilTestEnabled) return;
 
 			//writefln("%d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask);
@@ -328,6 +322,7 @@ template OpenglUtils() {
 		}
 
 		void prepareBlend() {
+			glEnableDisable(GL_BLEND, state.alphaBlendEnabled);
 			if (!state.alphaBlendEnabled) return;
 
 			glBlendEquation(BlendEquationTranslate[state.blendEquation]);
@@ -336,10 +331,12 @@ template OpenglUtils() {
 		}
 
 		void prepareColors() {
+			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
 			glColor4fv(state.ambientModelColor.ptr);
 		}
 
 		void prepareCulling() {
+			glEnableDisable(GL_CULL_FACE, state.backfaceCullingEnabled);
 			if (!state.backfaceCullingEnabled) return;
 
 			glFrontFace(state.faceCullingOrder ? GL_CW : GL_CCW);
@@ -360,7 +357,34 @@ template OpenglUtils() {
 			);
 		}
 
-		prepareEnables();
+		void prepareLogicOp() {
+			glLogicOp(LogicalOperationTranslate[state.logicalOperation]);
+		}
+
+		// http://jerome.jouvie.free.fr/OpenGl/Tutorials/Tutorial13.php
+		void prepareLighting() {
+			return; // @TODO. Temporary disabled.
+
+			glEnableDisable(GL_LIGHTING, state.lightingEnabled);
+			if (!state.lightingEnabled) return;
+
+			for (int n = 0; n < 4; n++) {
+				LightState* light = &state.lights[n];
+				glEnableDisable(GL_LIGHT0 + n, light.enabled);
+
+				glLightfv(GL_LIGHT0 + n, GL_POSITION , light.position.pointer);
+
+				glLightfv(GL_LIGHT0 + n, GL_AMBIENT  , light.ambientLightColor.pointer);
+				glLightfv(GL_LIGHT0 + n, GL_DIFFUSE  , light.diffuseLightColor.pointer);
+				glLightfv(GL_LIGHT0 + n, GL_SPECULAR , light.specularLightColor.pointer);
+
+				// Spot.
+				glLightfv(GL_LIGHT0 + n, GL_SPOT_DIRECTION, light.spotDirection.pointer);
+				glLightfv(GL_LIGHT0 + n, GL_SPOT_EXPONENT , &light.spotLightExponent);
+				glLightfv(GL_LIGHT0 + n, GL_SPOT_CUTOFF   , &light.spotLightCutoff);
+			}
+		}
+		
 		prepareMatrix();
 		prepareStencil();
 		prepareScissor();
@@ -368,8 +392,8 @@ template OpenglUtils() {
 		prepareCulling();
 		prepareColors();
 		prepareTexture();
-
-		glLogicOp(LogicalOperationTranslate[state.logicalOperation]);
+		prepareLighting();
+		prepareLogicOp();
 	}
 	
 	void drawEnd() {

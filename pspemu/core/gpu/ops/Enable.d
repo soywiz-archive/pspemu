@@ -25,6 +25,9 @@ template Gpu_Enable() {
 	// Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
 	auto OP_ATE() { gpu.state.alphaTestEnabled = command.bool1; /*gpu.state.alphaFunc = 0; gpu.state.alphaFuncValue = 0.03f;*/ }
 
+	// Lighting Test Enable GL_LIGHTING.
+	auto OP_LTE() { gpu.state.lightingEnabled = command.bool1; }
+
 	// glDepthMask
 	auto OP_ZMSK() { }
 
