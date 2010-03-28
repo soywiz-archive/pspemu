@@ -1,6 +1,7 @@
 module pspemu.hle.Loader;
 
 version = DEBUG_LOADER;
+//version = ALLOW_UNIMPLEMENTED_NIDS;
 //version = LOAD_DWARF_INFORMATION;
 
 import std.stream, std.stdio, std.string;
@@ -439,8 +440,8 @@ class Loader : IDebugSource {
 						callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
 					} else {
 						version (DEBUG_LOADER) writefln("    0x%08X:<unimplemented>", nid);
-						callStream.write(cast(uint)(0x70000000));
-						callStream.write(cast(uint)0);
+						//callStream.write(cast(uint)(0x70000000));
+						//callStream.write(cast(uint)0);
 						unimplementedNids[moduleImportName] ~= nid;
 					}
 					//writefln("++");
@@ -470,7 +471,10 @@ class Loader : IDebugSource {
 				count += nids.length;
 			}
 			//writefln("%s", PspLibdoc.singleton.prxs);
-			throw(new Exception(std.string.format("Several unimplemented NIds. (%d)", count)));
+			version (ALLOW_UNIMPLEMENTED_NIDS) {
+			} else {
+				throw(new Exception(std.string.format("Several unimplemented NIds. (%d)", count)));
+			}
 		}
 		// Load Exports.
 		version (DEBUG_LOADER) writefln("Exports (0x%08X-0x%08X):", moduleInfo.exportsStart, moduleInfo.exportsEnd);
@@ -488,7 +492,6 @@ class Loader : IDebugSource {
 	void setRegisters() {
 		auto threadManForUser = moduleManager.get!(ThreadManForUser);
 
-		
 		assembler.assembleBlock(r"
 			.text 0x08000000
 			syscall 0x2015   ; ThreadManForUser.sceKernelSleepThreadCB
@@ -505,8 +508,10 @@ class Loader : IDebugSource {
 
 			registers.K0 = pspThread.registers.SP;
 			registers.RA = 0x08000000;
-			registers.A0 = 0; // argumentsLength.
-			registers.A1 = 0; // argumentsPointer
+			registers.A0 = 1; // argumentsLength.
+			registers.A1 = 0x08000100; // argumentsPointer
+			memory.position = registers.A1;
+			memory.writeString("ms0:/PSP/GAME/virtual/EBOOT.PBP\0");
 		}
 		threadManForUser.sceKernelStartThread(reinterpret!(SceUID)(pspThread), 0, null);
 		pspThread.switchToThisThread();

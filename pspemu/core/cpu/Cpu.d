@@ -214,6 +214,7 @@ class Cpu : PspHardwareComponent, IDebugSource {
 			uint PC;
 			string[] traceRegisters;
 			bool traceStep = false;
+			void delegate() callback;
 			AllegrexDisassembler.RegistersType registersType = AllegrexDisassembler.RegistersType.Symbolic;
 			//disassembler
 			//dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
@@ -247,6 +248,8 @@ class Cpu : PspHardwareComponent, IDebugSource {
 		}
 		
 		void trace(BreakPoint bp, uint PC, bool traceOnlyIfChanged = false) {
+			if (breakpointRegisters is null) breakpointRegisters = new Registers;
+			if (bp.callback) bp.callback();
 			version (ENABLE_BREAKPOINTS) {
 				if (instructionCounter is null) instructionCounter = new InstructionCounter();
 				Instruction instruction = void; instruction.v = memory.read32(PC);
@@ -322,10 +325,20 @@ class Cpu : PspHardwareComponent, IDebugSource {
 			writef(" | ");
 			
 			if (breakpointRegisters) {
-				if (0) {
-					foreach (k; 0..32) if (breakpointRegisters.R [k] != registers.R [k]) writef(" r%d = 0x%08X, ", k, registers.R[k]);
-				} else {
-					foreach (k; 0..32) if (breakpointRegisters.R [k] != registers.R [k]) writef(" %s = 0x%08X, ", Registers.aliasesInv[k], registers.R[k]);
+				//writef("changes: ");
+				
+				bool showRegister(int index) {
+					//if (index == 29) return true;
+					//if (index == 31) return true;
+					return breakpointRegisters.R[index] != registers.R[index];
+				}
+				
+				foreach (index; 0..32) if (showRegister(index)) {
+					if (dissasembler.registersType == AllegrexDisassembler.RegistersType.Simple) {
+						writef(" r%d = 0x%08X, ", index, registers.R[index]);
+					} else {
+						writef(" %s = 0x%08X, ", Registers.aliasesInv[index], registers.R[index]);
+					}
 				}
 				foreach (k; 0..32) if (breakpointRegisters.RF[k] != registers.RF[k]) writef(" f%d = $f, ", k, registers.F[k]);
 				if (breakpointRegisters.HILO != registers.HILO) writef(" hilo = 0x%016X, ",registers.HILO);

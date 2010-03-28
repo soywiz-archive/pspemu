@@ -9,6 +9,7 @@ public import pspemu.hle.Types;
 import std.traits;
 
 debug = DEBUG_SYSCALL;
+//debug = DEBUG_ALL_SYSCALLS;
 
 //debug = DEBUG_MODULE_DELEGATE;
 
@@ -79,7 +80,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		r ~= "setReturnValue = true;";
 		string parametersString = _parametersString;
 		string parametersPrototypeString = _parametersPrototypeString;
-		r ~= "debug (DEBUG_SYSCALL)";
+		debug (DEBUG_ALL_SYSCALLS) { } else { r ~= "debug (DEBUG_SYSCALL)"; }
 		r ~= "{";
 		r ~= ".writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, cpu.registers.PC);";
 		if (parametersPrototypeString.length) {
@@ -102,15 +103,18 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 			}
 			r ~= "}";
 		}
+		debug (DEBUG_ALL_SYSCALLS) { } else { r ~= "debug (DEBUG_SYSCALL)"; }
+		r ~= "{";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func)) || isClassType!(ReturnType!(func))) {
-				r ~= "debug (DEBUG_SYSCALL) .writefln(\" = 0x%08X\", cpu.registers.V0); ";
+				r ~= ".writefln(\" = 0x%08X\", cpu.registers.V0); ";
 			} else {
-				r ~= "debug (DEBUG_SYSCALL) .writefln(\" = %s\", retval); ";
+				r ~= ".writefln(\" = %s\", retval); ";
 			}
 		} else {
-			r ~= "debug (DEBUG_SYSCALL) .writefln(\" = <void>\"); ";
+			r ~= ".writefln(\" = <void>\"); ";
 		}
+		r ~= "}";
 	}
 	r ~= " }";
 	return r;
@@ -166,7 +170,13 @@ abstract class Module {
 		void* param_p(int n) {
 			uint v = cpu.registers[4 + n];
 			if (v != 0) {
-				return cpu.memory.getPointer(v);
+				try {
+					return cpu.memory.getPointer(v);
+				} catch (Object o) {
+					// @TODO: Reenable?
+					throw(o);
+					return null;
+				}
 			} else {
 				return null;
 			}

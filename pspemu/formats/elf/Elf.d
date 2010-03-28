@@ -370,6 +370,7 @@ class Elf {
 			}
 		}
 		if (needsRelocation) {
+			throw(new Exception("Relocation not implemented yet!"));
 			try {
 				performRelocation(stream);
 			} catch (Object o) {

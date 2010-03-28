@@ -59,15 +59,17 @@ int main(string[] args) {
 	bool showMainMenu  = true;
 
 	cpu.errorHandler = (Cpu cpu, Object error) {
+		writefln("------------------------------------------------");
+		writefln("CPU Error: %s", error.toString());
 		cpu.registers.dump();
 		auto dissasembler = new AllegrexDisassembler(cpu.memory);
-		writefln("CPU Error: %s", error.toString());
 		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
 		dissasembler.dump(cpu.registers.PC, -3, +3);
 		dissasembler.dump(cpu.lastValidPC, -3, +3);
 		moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
 		moduleManager.get!(ThreadManForUser).semaphoreManager.dumpSemaphores();
 		writefln("CPU Error: %s", error.toString());
+		writefln("------------------------------------------------");
 	};
 	
 	cpu.init();
@@ -78,8 +80,18 @@ int main(string[] args) {
 		cpu.checkBreakpoints = true;
 	}
 
+	/*
+	cpu.checkBreakpoints = true;
+	cpu.addBreakpoint(cpu.BreakPoint(
+		//0x0895A9E4
+		0x0895ACAC
+	, [], true, {
+		cpu.traceStep = true;
+		cpu.checkBreakpoints = true;
+	}));
+	*/
+	
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
-	//cpu.addBreakpoint(cpu.BreakPoint(0x0893F530, []));
 
 	// Start running.
 	if (args.length >= 2) {

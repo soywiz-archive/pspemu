@@ -312,7 +312,12 @@ class IoFileMgrForKernel : Module {
 		auto stream = reinterpret!(Stream)(fd);
 		if (stream is null) return -1;
 		if (data is null) return -1;
-		assert (stream.position < 256 * 1024 * 1024); // Less than 256 MB.
+
+		// Less than 256 MB.
+		if (stream.position >= 256 * 1024 * 1024) {
+			throw(new Exception(std.string.format("Write position over 256MB! There was a prolem with sceIoWrite: position(%d)", stream.position)));
+		}
+
 		try {
 			return stream.write((cast(ubyte *)data)[0..size]);
 		} catch (Object o) {

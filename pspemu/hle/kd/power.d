@@ -165,8 +165,14 @@ class scePower : Module {
 	 * @return 0 on success, the slot number if -1 is passed, < 0 on error.
 	 */
 	int scePowerRegisterCallback(int slot, SceUID cbid) {
-		unimplemented();
-		return -1;
+		//unimplemented();
+		//return -1;
+		unimplemented_notice();
+		if (slot == -1) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 
 	/**

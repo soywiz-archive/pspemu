@@ -25,10 +25,11 @@ final class Registers {
 	union {
 		uint[32] R;      // GPR | General Purpose Registers
 		struct {
-			uint _ZR, AT, V0, V1, A0, A1, A2, A3;
-			uint T0, T1, T2, T3, T4, T5, T6, T7;
-			uint S0, S1, S2, S3, S4, S5, S6, S7;
-			uint T8, T9, K0, K1, GP, SP, _FP, RA;
+		    //   +00 +01 +02 +03 +04 +05  +06 +07
+			uint _ZR, AT, V0, V1, A0, A1,  A2, A3; // +00
+			uint  T0, T1, T2, T3, T4, T5,  T6, T7; // +08
+			uint  S0, S1, S2, S3, S4, S5,  S6, S7; // +16
+			uint  T8, T9, K0, K1, GP, SP, _FP, RA; // +24
 		}
 	}
 	union { uint[32] RF; float[32] F; } // Floating point registers.

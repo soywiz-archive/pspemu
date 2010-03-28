@@ -14,7 +14,7 @@ class Kernel_Library : Module {
 	 * @return The current state of the interrupt controller, to be used with ::sceKernelCpuResumeIntr().
 	 */
 	uint sceKernelCpuSuspendIntr() {
-		unimplemented();
+		unimplemented_notice();
 		return -1;
 	}
 
@@ -24,7 +24,7 @@ class Kernel_Library : Module {
 	 * @param flags - The value returned from ::sceKernelCpuSuspendIntr().
 	 */
 	void sceKernelCpuResumeIntr(uint flags) {
-		unimplemented();
+		unimplemented_notice();
 	}
 }
 
