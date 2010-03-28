@@ -394,6 +394,8 @@ template OpenglUtils() {
 		prepareTexture();
 		prepareLighting();
 		prepareLogicOp();
+		
+		glDepthFunc(TestTranslate[state.depthFunc]);
 	}
 	
 	void drawEnd() {

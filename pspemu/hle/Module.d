@@ -8,6 +8,8 @@ public import pspemu.hle.Types;
 
 import std.traits;
 
+debug = DEBUG_SYSCALL;
+
 //debug = DEBUG_MODULE_DELEGATE;
 
 // http://dsource.org/projects/minid/browser/trunk/minid/bind.d
@@ -77,12 +79,15 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		r ~= "setReturnValue = true;";
 		string parametersString = _parametersString;
 		string parametersPrototypeString = _parametersPrototypeString;
-		r ~= "debug (DEBUG_SYSCALL) .writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, cpu.registers.PC);";
+		r ~= "debug (DEBUG_SYSCALL)";
+		r ~= "{";
+		r ~= ".writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, cpu.registers.PC);";
 		if (parametersPrototypeString.length) {
-			r ~= "debug (DEBUG_SYSCALL) .writef(\"" ~ functionName ~ "(" ~ _parametersPrototypeString ~ ")\", " ~ parametersString ~ "); ";
+			r ~= ".writef(\"" ~ functionName ~ "(" ~ _parametersPrototypeString ~ ")\", " ~ parametersString ~ "); ";
 		} else {
-			r ~= "debug (DEBUG_SYSCALL) .writef(\"" ~ functionName ~ "()\"); ";
+			r ~= ".writef(\"" ~ functionName ~ "()\"); ";
 		}
+		r ~= "}";
 		if (return_value) r ~= "auto retval = ";
 		r ~= "this." ~ functionName ~ "(" ~ parametersString ~ ");";
 		if (return_value) {
@@ -143,8 +148,13 @@ abstract class Module {
 	}
 
 	final void init() {
-		initNids();
-		initModule();
+		try {
+			initNids();
+			initModule();
+		} catch (Object o) {
+			writefln("Error initializing module: '%s'", o);
+			throw(o);
+		}
 	}
 
 	abstract void initNids();

@@ -18,14 +18,11 @@ class IoFileMgrForKernel : Module {
 
 		//fsroot["/ms0/PSP/GAME"].addChild(new VFS_Proxy("virtual", new VFS()));
 
-		writefln("ApplicationPaths.exe:%s", ApplicationPaths.exe);
-		static if (true) {
-			fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/ms0"), "ms0:");
-			fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash0"), "flash0:");
-		} else {
-			fsroot.addChild(new FileSystem("pspfs/ms0"), "ms0:");
-			fsroot.addChild(new FileSystem("pspfs/flash0"), "flash0:");
-		}
+		fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/ms0"), "ms0:");
+		fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash0"), "flash0:");
+		fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash1"), "flash1:");
+		
+		// disc0:
 
 		// Aliases.
 		fsroot.addChild(fsroot["ms0:"], "ms:");
@@ -88,8 +85,14 @@ class IoFileMgrForKernel : Module {
 	 * @return Returns the value 0 if its succesful otherwise -1
 	 */
 	int sceIoMkdir(string path, SceMode mode) {
-		unimplemented();
-		return -1;
+		auto vfs = locateParentAndUpdateFile(path);
+		try {
+			vfs.mkdir(path);
+			return 0;
+		} catch (Exception e) {
+			//throw(e);
+			return -1;
+		}
 	}
 
 	/**
@@ -151,8 +154,16 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error.
 	 */
 	int sceIoChdir(string path) {
-		unimplemented();
-		return -1;
+		try {
+			fscurdir = path;
+			fsroot[fscurdir];
+			//unimplemented();
+			//return -1;
+			return 0;
+		} catch (Exception e) {
+			//throw(e);
+			return -1;
+		}
 	}
 
 	/** 
@@ -172,8 +183,13 @@ class IoFileMgrForKernel : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceIoDevctl(string dev, int cmd, void* indata, int inlen, void* outdata, int outlen) {
-		unimplemented();
-		return -1;
+		static if (0) {
+			unimplemented();
+			return -1;
+		} else {
+			unimplemented_notice();
+			return 0;
+		}
 	}
 
 	/**
@@ -190,6 +206,7 @@ class IoFileMgrForKernel : Module {
 		auto stream = reinterpret!(Stream)(fd);
 		if (stream is null) return -1;
 		openedStreams.remove(stream);
+		stream.flush();
 		stream.close();
 		return 0;
 	}
@@ -198,9 +215,12 @@ class IoFileMgrForKernel : Module {
 		VFS vfs = gameroot;
 
 		// A full path.
-		if (file.indexOf(":") >= 0) {
+		auto index = file.indexOf(":");
+		if (index >= 0) {
 			vfs = fsroot;
-			//while (file.length && file[0] == '/') file = file[1..$];
+			vfs = vfs[file[0..index + 1]];
+			file = file[index + 1..$];
+			while (file.length && file[0] == '/') file = file[1..$];
 		}
 		
 		//writefln("\n\n\nSELECTED DIR: %s\n\n", vfs);

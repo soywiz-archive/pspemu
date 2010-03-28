@@ -30,6 +30,8 @@ import pspemu.hle.Module;
 import pspemu.hle.Loader;
 import pspemu.hle.Syscall;
 
+import pspemu.hle.kd.threadman;
+
 class PspDisplay : Display {
 	Memory memory;
 
@@ -55,9 +57,26 @@ int main(string[] args) {
 	auto syscall       = new Syscall(cpu, moduleManager);
 
 	bool showMainMenu  = true;
+
+	cpu.errorHandler = (Cpu cpu, Object error) {
+		cpu.registers.dump();
+		auto dissasembler = new AllegrexDisassembler(cpu.memory);
+		writefln("CPU Error: %s", error.toString());
+		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
+		dissasembler.dump(cpu.registers.PC, -3, +3);
+		dissasembler.dump(cpu.lastValidPC, -3, +3);
+		moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
+		moduleManager.get!(ThreadManForUser).semaphoreManager.dumpSemaphores();
+		writefln("CPU Error: %s", error.toString());
+	};
 	
 	cpu.init();
 	gpu.init();
+	
+	version (TRACE_FROM_BEGINING) {
+		cpu.traceStep = true;
+		cpu.checkBreakpoints = true;
+	}
 
 	//cpu.addBreakpoint(cpu.BreakPoint(0x08900130 + 4, ["t1", "t2", "v0"]));
 	//cpu.addBreakpoint(cpu.BreakPoint(0x0893F530, []));

@@ -5,7 +5,7 @@ template Gpu_Texture() {
 
 	auto OP_TPSM() { // Texture Pixel Storage Mode
 		with (gpu.state) {
-			textureFormat = command.param24;
+			textureFormat = cast(PixelFormats)command.param24;
 		}
 	}
 	

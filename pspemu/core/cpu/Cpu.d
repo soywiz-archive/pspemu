@@ -89,6 +89,7 @@ class Cpu : PspHardwareComponent, IDebugSource {
 		this.gpu        = gpu;
 		this.display    = display;
 		this.controller = controller;
+		this.errorHandler = &defaultErrorHandler;
 	}
 
 	/**
@@ -114,6 +115,8 @@ class Cpu : PspHardwareComponent, IDebugSource {
 		//.writefln("Unimplemented CPU instruction '%s'", s);
 		//assert(0, std.string.format("Unimplemented CPU instruction '%s'", s));
 	}*/
+
+	uint lastValidPC = 0;
 
 	/**
 	 * Will execute a number of instructions.
@@ -165,6 +168,7 @@ class Cpu : PspHardwareComponent, IDebugSource {
 			if (runningState != RunningState.RUNNING) waitUntilResume();
 			
 			instruction.v = memory.read32(registers.PC);
+			lastValidPC = registers.PC;
 			mixin(genSwitch(PspInstructions));
 
 			version (ENABLE_BREAKPOINTS) {
@@ -332,19 +336,26 @@ class Cpu : PspHardwareComponent, IDebugSource {
 	}
 	mixin BreakPointStuff;
 	
+	void delegate(Cpu cpu, Object error) errorHandler;
+	
+	void defaultErrorHandler(Cpu cpu, Object error) {
+		cpu.registers.dump();
+		auto dissasembler = new AllegrexDisassembler(cpu.memory);
+		writefln("CPU Error: %s", error.toString());
+		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
+		dissasembler.dump(cpu.registers.PC, -3, +3);
+		writefln("CPU Error: %s", error.toString());
+	}
+	
 	override void run() {
 		//Thread.sleep(2000_0000);
 		//Sleep(2000);
 		try {
 			componentInitialized = true;
 			execute();
-		} catch (Object o) {
-			writefln("CPU Error: %s", o.toString());
-			registers.dump();
-			auto dissasembler = new AllegrexDisassembler(memory);
-			dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-			dissasembler.dump(registers.PC, -3, +3);
-			writefln("CPU Error: %s", o.toString());
+		} catch (Object error) {
+			if (errorHandler !is null) errorHandler(this, error);
+			//throw(error);
 		} finally {
 			.writefln("End CPU executing.");
 			stop();

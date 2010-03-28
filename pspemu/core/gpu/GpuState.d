@@ -4,19 +4,21 @@ import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
 import pspemu.core.gpu.Utils;
 
+struct Clut {
+	uint address;
+	PixelFormats format;
+	uint shift;
+	uint mask;
+	uint start;
+}
+
 struct ScreenBuffer {
 	uint _address = 0;
 	uint width = 512;
-	uint format = 3;
+	PixelFormats format = PixelFormats.GU_PSM_8888;
 	uint address(uint _address) { return this._address = (0x04_000000 | _address); }
 	uint address() { return this._address; }
-	uint pixelSize() {
-		switch (format) {
-			case 0, 1, 2: return 2;
-			case 3: return 4;
-			default: throw(new Exception(std.string.format("Invalid ScreenBuffer.format %d", format)));
-		}
-	}
+	uint pixelSize() { return TextureState.textureSizeMul[format]; }
 	ubyte[] row(void* ptr, int row) {
 		int rowsize = width * pixelSize;
 		return ((cast(ubyte *)ptr) + rowsize * row)[0..rowsize];
@@ -30,7 +32,7 @@ struct TextureState {
 	uint address;
 	uint width, height;
 	uint size;
-	uint format;
+	PixelFormats format;
 	bool swizzled;
 
 	uint sizePixels(uint count) in {
@@ -103,17 +105,20 @@ static struct GpuState {
 	bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
 	int  mipMapLevel;
 	bool textureSwizzled;
-	int  textureFormat;
+	PixelFormats textureFormat;
 	int  textureFilterMin, textureFilterMag;
 	int  textureWrapS, textureWrapT;
 	int  textureEnvMode;
 	UV   textureScale, textureOffset;
 
 	TextureState[8] textures;
+	Clut clut;
 
 	Rect scissor;
 	int faceCullingOrder;
 	int shadeModel;
+
+	float[8] morphWeights;
 
 	// Lights related.
 	Colorf ambientLightColor;
@@ -129,6 +134,8 @@ static struct GpuState {
 	bool logicalOperationEnabled; // Logical Operation Enable (GL_COLOR_LOGIC_OP)
 	bool alphaTestEnabled;        // Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
 	bool lightingEnabled;         // Lighting Enable (GL_LIGHTING)
+	
+	TestFunction depthFunc = TestFunction.GU_ALWAYS;
 
 	// Blending.
 	int blendEquation;

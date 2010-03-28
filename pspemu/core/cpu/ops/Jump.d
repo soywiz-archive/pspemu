@@ -32,7 +32,7 @@ template TemplateCpu_JUMP_Utils() {
 	static pure nothrow {
 		string LINK() {
 			return q{
-				registers[31] = registers.nPC + 4;
+				registers.RA = registers.nPC + 4;
 			};
 		}
 		string JUMP() {

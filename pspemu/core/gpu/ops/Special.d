@@ -24,10 +24,10 @@ template Gpu_Special() {
 	}
 
 	// Frame Buffer Width
-	auto OP_FBW() { gpu.state.drawBuffer.width   = command.param16; }
+	auto OP_FBW() { gpu.state.drawBuffer.width  = command.param16; }
 
 	// texture Pixel Storage Mode
-	auto OP_PSM() { gpu.state.drawBuffer.format = command.param24; }
+	auto OP_PSM() { gpu.state.drawBuffer.format = cast(PixelFormats)command.param24; }
 
 	// SCISSOR start (1)
 	auto OP_SCISSOR1() {
@@ -48,6 +48,8 @@ template Gpu_Special() {
 	auto OP_FFACE() { gpu.state.faceCullingOrder = command.param24; }
 	
 	auto OP_SHADE() { gpu.state.shadeModel = command.param24; }
+
+	auto OP_ZTST() { gpu.state.depthFunc = cast(TestFunction)command.param24; }
 
 	// Stencil Test
 	auto OP_STST() {

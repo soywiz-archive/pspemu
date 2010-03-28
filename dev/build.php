@@ -303,7 +303,9 @@ class Builder {
 		$this->objects_folder = dirname(__FILE__) . '/objects';
 		switch (strtolower($profile)) {
 			case 'debug':
-				$this->flags = "-Jresources -Idev\dmd2\import -g -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
+				//$this->flags = "-Jresources -Idev\dmd2\import -g -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
+				//$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
+				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
 			default:
 				echo "Unknown profile {$profile}. Selecting 'release'.";

@@ -42,7 +42,7 @@ class sceRtc : Module {
 	 * @param tick - pointer to u64 to receive tick count
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceRtcGetCurrentTick(u64 *tick) {
+	int sceRtcGetCurrentTick(u64* tick) {
 		std.c.windows.windows.QueryPerformanceCounter(cast(long *)tick);
 		return 0;
 	}

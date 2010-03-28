@@ -1,7 +1,6 @@
 module pspemu.utils.VirtualFileSystem;
 
 import std.stream, std.string, std.stdio, std.file, std.date;
-import pspemu.utils.Utils;
 
 class VFS {
 	enum Type {
@@ -53,6 +52,24 @@ class VFS {
 	}
 
 	VFS opIndex(string index) {
+		return access(index, false);
+	}
+
+	/*VFS opIndexAssign(VFS newNode, string index) {
+		int lastSepIndex = index.lastIndexOf('/');
+		VFS base = this;
+		if (lastSepIndex != -1) {
+			base = base.access(index[0..lastSepIndex], true);
+			index = index[lastSepIndex + 1..$];
+		}
+		return base.childrenMounted[index] = newNode;
+	}*/
+
+	VFS opCatAssign(VFS newNode) {
+		return this.childrenMounted[newNode.name] = newNode;
+	}
+
+	VFS access(string index, bool create = false) {
 		auto separatorIndex = index.indexOf("/");
 		if (separatorIndex == -1) separatorIndex = index.length;
 
@@ -65,30 +82,42 @@ class VFS {
 
 			// First character is '/' (so we should get the root node.
 			if (!singleComponent.length) {
-				return remainingComponents.length ? root[remainingComponents] : root;
+				return remainingComponents.length ? root.access(remainingComponents, create) : root;
 			}
 			// We have a selection first.
 			else {
-				return this[singleComponent][remainingComponents];
+				return this.access(singleComponent, create).access(remainingComponents, create);
 			}
 		}
 		// We have a single component
 		else {
-			VFS *node;
 			if (singleComponent == ""  ) return this;
 			if (singleComponent == "." ) return this;
 			if (singleComponent == "..") return parentOrThis;
-			if ((node = (singleComponent in childrenMounted)) !is null) return *node;
-			if ((node = (singleComponent in children       )) !is null) return *node;
-			if (caseInsensitive) {
-				string singleComponentLower = std.string.tolower(singleComponent);
-				foreach (key; childrenMounted.keys) if (std.string.tolower(key) == singleComponentLower) return childrenMounted[key];
-				foreach (key; children.keys) if (std.string.tolower(key) == singleComponentLower) return children[key];
-			}
-			throw(new Exception(std.string.format("Can't find component '%s' in '%s'", index, full_name)));
+			if (auto node = contains(singleComponent, create)) return node;
+			throw(new Exception(std.string.format("Can't find component '%s' in '%s' (create:%s)", index, full_name, create)));
 		}
 	}
 
+	VFS contains(string index, bool create = false) {
+		if (caseInsensitive) {
+			string singleComponentLower = std.string.tolower(index);
+			foreach (key; childrenMounted.keys) if (std.string.tolower(key) == singleComponentLower) return childrenMounted[key];
+			foreach (key; children.keys) if (std.string.tolower(key) == singleComponentLower) return children[key];
+		} else {
+			VFS* node;
+			if ((node = (index in childrenMounted)) !is null) return *node;
+			if ((node = (index in children       )) !is null) return *node;
+		}
+
+		if (auto node = implContains(index, create)) {
+			_childrenCached = false;
+			return node;
+		}
+
+		return null;
+	}
+	
 	private VFS[string] childrenMounted;
 	private VFS[string] _children;
 	private bool _childrenCached;
@@ -158,17 +187,23 @@ class VFS {
 
 // To implement.
 protected:
-	bool implIsFile() { return !implIsDir; }
-	bool implIsDir () { return true; }
-	Stats implStats() { return Stats(); }
-	VFS[] implList() { return []; }
-	void   implMkdir(string path, int mode = 0777) { addChild(new VFS_Proxy(name, new VFS(name, this))); }
+	VFS    implContains(string index, bool create = false) { return null; }
+	bool   implIsFile() { return !implIsDir; }
+	bool   implIsDir () { return true; }
+	Stats  implStats() { return Stats(); }
+	VFS[]  implList() { return []; }
+	VFS    implMkdir(string path, int mode = 0777) {
+		writefln("Dummy MKDIR!");
+		addChild(new VFS_Proxy(name, new VFS(name, this))); flushChildren(); return this[name];
+	}
 	Stream implOpen (string path, FileMode mode, int attr = 0777) { return new MemoryStream(); }
+	void   implFlush() { }
 
 public final:
 	void flush() {
 		flushChildren();
 		flushStats();
+		implFlush();
 	}
 
 	Stream open(string path, FileMode mode = FileMode.In, int attr = 0777) {
@@ -183,11 +218,18 @@ public final:
 	bool isDir () { return stats.isdir; }
 
 	VFS mkdir(string path, int mode = 0777) {
+		VFS vfs = this;
+		while (path.length && path[0] == '/') path = path[1..$];
 		int index = path.lastIndexOf("/");
-		if (index != -1) return this[path[0..index]].mkdir(path[index + 1..$], mode);
+		if (index != -1) {
+			vfs = this[path[0..index]];
+			path = path[index + 1..$];
+		}
+		
+		writefln("!!MKDIR('%s', '%s')", this, path);
 		//assert(!isDir, "Can't open a directory");
-		implMkdir(path, mode);
-		return this[path];
+		//scope (exit) vfs.flush();
+		return vfs.implMkdir(path, mode);
 	}
 }
 
@@ -209,6 +251,7 @@ class VFS_Proxy : VFS {
 		}
 		return nodes;
 	}
+	override VFS    implMkdir(string path, int mode = 0777) { return node.implMkdir(path, mode); }
 	Stream implOpen(string path, FileMode mode, int attr) { return node.implOpen(path, mode, attr); }
 }
 
@@ -255,16 +298,19 @@ class FileSystem : VFS {
 		}
 		return _stats;
 	}
-	void implMkdir(string name, int mode = 0777) {
-		mkdir(full_name ~ "/" ~ name);
+	override VFS implMkdir(string name, int mode = 0777) {
+		writefln("::MKDIR('%s', '%s')", full_name, name);
+		std.file.mkdir(full_name ~ "/" ~ name);
 		flushChildren();
+		return this[name];
 	}
 	void implRmdir(string name) {
-		rmdir(full_name ~ "/" ~ name);
+		std.file.rmdir(full_name ~ "/" ~ name);
 		flushChildren();
 	}
 	Stream implOpen(string name, FileMode mode, int attr) {
-		return new std.stream.File(full_name ~ "/" ~ name, mode);
+		//return new std.stream.File(full_name ~ "/" ~ name, mode);
+		return new std.stream.BufferedFile(full_name ~ "/" ~ name, mode);
 	}
 }
 
@@ -272,8 +318,16 @@ class FileSystem : VFS {
 void main() {
 	auto path = new FileSystem("../..");
 	path.addChild(new VFS_Proxy("demos", new FileSystem(".")));
-	auto s = path.open("/demos/lol.txt", FileMode.OutNew);
-	
-	//foreach (e; path["/demos"]) writefln("%s", e);
+	//auto s = path.open("/demos/lol.txt", FileMode.OutNew);
+	//try { path.mkdir("/demos/prueba"); } catch { }
+	//path.mkdir("/demos/prueba/test");
+
+	VFS ms0root, gameroot;
+	ms0root = new VFS("<root>");
+
+	ms0root.addChild(new FileSystem("../../pspfs/ms0"), "ms0:");
+	ms0root.addChild(new FileSystem("../../pspfs/flash0"), "flash0:");
+	ms0root["ms0:"].mkdir("/PSP");
+	ms0root["ms0:"].mkdir("/PSP/SAVES");
 }
 */

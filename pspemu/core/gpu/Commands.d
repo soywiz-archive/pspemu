@@ -279,6 +279,10 @@ struct Command {
 	float    float1 () { return reinterpret!(float)(v << 8); }
 	bool     bool1  () { return (v << 8) != 0; }
 
+	T extract(T = uint)(uint displacement, ubyte numberOfBits) {
+		return cast(T)((param24 >> displacement) & ((1 << numberOfBits) - 1));
+	}
+
 	alias V byte3;
 
 	string toString() {

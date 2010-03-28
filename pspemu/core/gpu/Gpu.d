@@ -27,6 +27,8 @@ import pspemu.core.gpu.ops.Matrix;
 import pspemu.core.gpu.ops.Texture;
 import pspemu.core.gpu.ops.Enable;
 import pspemu.core.gpu.ops.Lights;
+import pspemu.core.gpu.ops.Morph;
+import pspemu.core.gpu.ops.Clut;
 
 class Gpu : PspHardwareComponent {
 	Memory   memory;
@@ -95,6 +97,8 @@ class Gpu : PspHardwareComponent {
 		mixin Gpu_Matrix;
 		mixin Gpu_Texture;
 		mixin Gpu_Lights;
+		mixin Gpu_Morph;
+		mixin Gpu_Clut;
 
 		mixin({
 			string s;

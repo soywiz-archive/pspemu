@@ -1003,6 +1003,8 @@ class PspThreadManager {
 	}
 
 	void dumpThreads() {
+		writefln("CurrentThread:");
+		writefln("  %s", currentThread);
 		writefln("Threads(%d) {", threadRunningList.length);
 		foreach (thread; threadRunningList) {
 			writefln("  %s", thread);
