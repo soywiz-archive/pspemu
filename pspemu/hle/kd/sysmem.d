@@ -1,6 +1,7 @@
 module pspemu.hle.kd.sysmem; // kd/sysmem.prx (sceSystemMemoryManager)
 
 debug = DEBUG_SYSCALL;
+//debug = DEBUG_MEMORY_ALLOCS;
 
 import pspemu.hle.Module;
 
@@ -235,7 +236,7 @@ class MemorySegment {
 	MemorySegment opAddAssign(MemorySegment child) {
 		childs ~= child;
 		child.parent = this;
-		writefln("ALLOC: %s", child.toString);
+		debug (DEBUG_MEMORY_ALLOCS) writefln("ALLOC: %s", child.toString);
 		return child;
 	}
 

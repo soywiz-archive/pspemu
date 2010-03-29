@@ -8,7 +8,7 @@ const uint THREAD0_CALL_MASK = 0xFFFF;
 version = ENABLE_BREAKPOINTS;
 
 // Hack. It shoudln't be here.
-// Create a PspHardwareComponents class with all the components there.
+// Create a PspHardwareComponents class with all the components there?
 import pspemu.core.gpu.Gpu;
 import pspemu.models.IDisplay;
 import pspemu.models.IController;
@@ -26,6 +26,7 @@ import pspemu.core.Memory;
 
 import core.thread;
 import pspemu.utils.Utils;
+import pspemu.utils.Logger;
 
 // OPS.
 import pspemu.core.cpu.Utils;
@@ -370,7 +371,7 @@ class Cpu : PspHardwareComponent, IDebugSource {
 			if (errorHandler !is null) errorHandler(this, error);
 			//throw(error);
 		} finally {
-			.writefln("End CPU executing.");
+			Logger.log(Logger.Level.DEBUG, "Cpu", "End CPU executing.");
 			stop();
 			gpu.stop();
 		}

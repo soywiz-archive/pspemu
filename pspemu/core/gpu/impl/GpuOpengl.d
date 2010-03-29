@@ -134,6 +134,7 @@ class GpuOpengl : GpuImplAbstract {
 			if (flags.hasNormal  ) glNormal3f(vertex.nx, vertex.ny, vertex.nz);
 			if (flags.hasPosition) glVertex3f(vertex.px, vertex.py, vertex.pz);
 			//writefln("UV(%f, %f)", vertex.u, vertex.v);
+			//writefln("POS(%f, %f, %f)", vertex.px, vertex.py, vertex.pz);
 		}
 
 		drawBegin();

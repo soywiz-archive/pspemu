@@ -6,6 +6,8 @@ public import pspemu.core.cpu.Cpu;
 
 public import pspemu.hle.Types;
 
+import pspemu.utils.Logger;
+
 import std.traits;
 
 debug = DEBUG_SYSCALL;
@@ -148,7 +150,7 @@ abstract class Module {
 	}
 	
 	this() {
-		writefln("::Loading module '%s'...", typeid(this));
+		Logger.log(Logger.Level.DEBUG, "Module", "Loading '%s'...", typeid(this));
 	}
 
 	final void init() {
@@ -231,8 +233,8 @@ abstract class Module {
 	mixin Parameters;
 	mixin Registration;
 
-	Function getFunctionByName(string functionName) {
-		return names[functionName];
+	Function* getFunctionByName(string functionName) {
+		return functionName in names;
 	}
 
 	/*void opDispatch(string s)() {
@@ -267,7 +269,7 @@ class ModuleManager {
 	string delegate() getCurrentThreadName;
 
 	void reset() {
-		writefln("::ModuleManager.reset()");
+		Logger.log(Logger.Level.DEBUG, "ModuleManager", "reset()");
 		loadedModules = null;
 		getCurrentThreadName = null;
 	}

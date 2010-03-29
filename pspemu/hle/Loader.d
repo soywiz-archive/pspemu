@@ -1,6 +1,6 @@
 module pspemu.hle.Loader;
 
-version = DEBUG_LOADER;
+//version = DEBUG_LOADER;
 //version = ALLOW_UNIMPLEMENTED_NIDS;
 //version = LOAD_DWARF_INFORMATION;
 
@@ -26,6 +26,8 @@ import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.InstructionCounter;
 
 import pspemu.models.IDebugSource;
+
+import pspemu.utils.Logger;
 
 import std.xml;
 
@@ -388,9 +390,10 @@ class Loader : IDebugSource {
 		auto blockid = sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Program", PspSysMemBlockTypes.PSP_SMEM_Addr, this.elf.requiredBlockSize, this.elf.suggestedBlockAddress);
 		uint blockaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(blockid);
 
-		writefln("suggestedBlockAddress:%08X", this.elf.suggestedBlockAddress);
-		writefln("requiredBlockSize:%08X", this.elf.requiredBlockSize);
-		writefln("allocatedIn:%08X", blockaddress);
+		Logger.log(Logger.Level.DEBUG, "Loader", "suggestedBlockAddress:%08X", this.elf.suggestedBlockAddress);
+		Logger.log(Logger.Level.DEBUG, "Loader", "requiredBlockSize:%08X", this.elf.requiredBlockSize);
+		Logger.log(Logger.Level.DEBUG, "Loader", "allocatedIn:%08X", blockaddress);
+
 	}
 
 	uint getRelocatedAddress(uint addr) {
@@ -436,7 +439,7 @@ class Loader : IDebugSource {
 					
 					if ((pspModule !is null) && (nid in pspModule.nids)) {
 						version (DEBUG_LOADER) writefln("    %s", pspModule.nids[nid]);
-						callStream.write(cast(uint)(0x0000000C | (0x2307 << 6)));
+						callStream.write(cast(uint)(0x0000000C | (0x1000 << 6))); // syscall 0x2307
 						callStream.write(cast(uint)cast(void *)&pspModule.nids[nid]);
 					} else {
 						version (DEBUG_LOADER) writefln("    0x%08X:<unimplemented>", nid);
@@ -516,9 +519,9 @@ class Loader : IDebugSource {
 		threadManForUser.sceKernelStartThread(reinterpret!(SceUID)(pspThread), 0, null);
 		pspThread.switchToThisThread();
 
-		writefln("PC: %08X", cpu.registers.PC);
-		writefln("GP: %08X", cpu.registers.GP);
-		writefln("SP: %08X", cpu.registers.SP);
+		Logger.log(Logger.Level.DEBUG, "Loader", "PC: %08X", cpu.registers.PC);
+		Logger.log(Logger.Level.DEBUG, "Loader", "GP: %08X", cpu.registers.GP);
+		Logger.log(Logger.Level.DEBUG, "Loader", "SP: %08X", cpu.registers.SP);
 	}
 }
 

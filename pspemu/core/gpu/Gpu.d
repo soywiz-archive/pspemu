@@ -1,7 +1,7 @@
 module pspemu.core.gpu.Gpu;
 
 //debug = DEBUG_GPU_VERBOSE;
-debug = GPU_UNKNOWN_COMMANDS;
+//debug = GPU_UNKNOWN_COMMANDS;
 //debug = GPU_UNKNOWN_COMMANDS_STOP;
 //debug = DEBUG_GPU_SHOW_COMMAND;
 
@@ -10,6 +10,7 @@ import core.thread;
 import std.stdio;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Logger;
 
 import pspemu.core.Memory;
 import pspemu.core.gpu.Commands;
@@ -175,12 +176,12 @@ class Gpu : PspHardwareComponent {
 				if (runningState != RunningState.RUNNING) waitUntilResume();
 				WaitAndCheck;
 			}
-		} catch (Object o) {
-			writefln("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			writefln("Gpu.run exception: %s", o);
-			writefln("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		} catch (HaltException e) {
+			Logger.log(Logger.Level.DEBUG, "Gpu", "Gpu.run HaltException: %s", e);
+		} catch (Object e) {
+			Logger.log(Logger.Level.CRITICAL, "Gpu", "Gpu.run exception: %s", e);
 		} finally {
-			writefln("Gpu.shutdown");
+			Logger.log(Logger.Level.DEBUG, "Gpu", "Gpu.shutdown");
 		}
 	}
 

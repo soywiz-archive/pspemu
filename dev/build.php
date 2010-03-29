@@ -316,7 +316,8 @@ class Builder {
 				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
 			case 'test':
-				$this->flags = "-Jresources -Idev\dmd2\import -g -O -version=DFL_EXE -debug -unittest -L/exet:nt/su:console:4.0";
+				//$this->flags = "-Jresources -Idev\dmd2\import -g -O -version=DFL_EXE -debug -unittest -L/exet:nt/su:console:4.0";
+				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
 		}
 	}
@@ -335,7 +336,8 @@ list(,$profile, $exeName) = $argv;
 $builder = new Builder($profile, $exeName);
 
 if ($profile == 'test') {
-	$builder->explore('pspemu.exe.Test');
+	//$builder->explore('pspemu.exe.Test');
+	$builder->explore('pspemu.tests.TestsEx');
 } else {
 	$builder->explore('pspemu.exe.Pspemu');
 }

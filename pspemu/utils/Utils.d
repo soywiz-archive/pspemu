@@ -279,7 +279,7 @@ abstract class PspHardwareComponent {
 	}
 
 	void waitStart() {
-		InfiniteLoop!(512) loop;
+		InfiniteLoop!(1024) loop;
 		while (!componentInitialized && (runningState == RunningState.RUNNING)) {
 			loop.increment();
 			sleep(1);
@@ -289,6 +289,12 @@ abstract class PspHardwareComponent {
 	void waitUntilResume() {
 		while (runningState != RunningState.RUNNING) {
 			if (runningState == RunningState.STOPPED) throw(new HaltException("RunningState.STOPPED"));
+			sleep(1);
+		}
+	}
+
+	void waitEnd() {
+		while (runningState == RunningState.RUNNING) {
 			sleep(1);
 		}
 	}

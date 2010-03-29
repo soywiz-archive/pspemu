@@ -1,6 +1,6 @@
 module pspemu.hle.kd.loadexec; // kd/loadexec.prx (sceLoadExec)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 

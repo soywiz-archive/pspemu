@@ -35,21 +35,14 @@ unittest { do_unittest = true; }
 
 class PspDisplay : Display {
 	Memory memory;
-	bool _vblank = true;
 
 	this(Memory memory) {
 		this.memory = memory;
-		super();
 	}
 
 	void* frameBufferPointer() {
-		//return memory.getPointer(Memory.frameBufferAddress);
-		//writefln("%08X", memory.displayMemory);
-		return memory.getPointer(_info.topaddr);
+		return memory.getPointer(info.topaddr);
 	}
-
-	bool vblank(bool status) { return _vblank = status; }
-	bool vblank() { return _vblank; }
 }
 
 void testExtended(string executableFile) {
