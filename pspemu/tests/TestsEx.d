@@ -64,14 +64,16 @@ void main() {
 		if (e.name.length >= 9 && e.name[$ - 9..$] == ".expected") {
 			string fileNameExpected = e.name;
 			string fileNameElf      = std.path.getName(e.name) ~ ".elf";
+
 			auto expectedLines = std.string.split(cast(string)std.file.read(fileNameExpected), "\n");
 			writefln("Testing... %s", fileNameElf);
 			syscall.reset();
 			loader.loadAndExecute(fileNameElf);
 			cpu.waitEnd();
-			int maxLen = max(syscall.emits.length, expectedLines.length);
+
 			int passCount = 0, failCount = 0;
-			for (int n = 0; n < maxLen; n++) {
+
+			for (int n = 0, maxLen = max(syscall.emits.length, expectedLines.length); n < maxLen; n++) {
 				string emitedLine   = (n < syscall.emits.length) ? syscall.emits[n] : "<not emited>";
 				string expectedLine = (n < expectedLines.length) ? expectedLines[n] : "<not expected>";
 				bool pass = (emitedLine == expectedLine);
@@ -79,11 +81,13 @@ void main() {
 				if (!pass) failCount++;
 				totalExecuted++;
 			}
+
+			writefln("");
+
 			totalFailed += failCount;
 		}
 	}
 
-	writefln("");
 	writefln("Results:");
 	writefln("  Total : %d", totalExecuted);
 	writefln("  Failed: %d", totalFailed);
