@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
    }
 
    // It will check the contents of the frameBuffer.
-   emitMemoryBlock((void *)((unsigned int)frameBufferPointer | 0x04000000), SCR_WIDTH * SCR_HEIGHT * 4);
+   emitMemoryBlock((void *)((unsigned int)frameBufferPointer | 0x04000000), BUF_WIDTH * SCR_HEIGHT * 4);
    
    sceGuTerm();
    sceKernelExitGame();

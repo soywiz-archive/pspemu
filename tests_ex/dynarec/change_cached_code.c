@@ -20,7 +20,7 @@ void test2() { emitInt(2); } void test2_end() { }
 
 int main() {
 	memcpy(test_dyna, test1, test1_end - test1); ((void(*)(void))test_dyna)();
-	memcpy(test_dyna, test2, test2_end - test1); ((void(*)(void))test_dyna)();
+	memcpy(test_dyna, test2, test2_end - test2); ((void(*)(void))test_dyna)();
 	
 	sceKernelExitGame();
 	

@@ -12,7 +12,7 @@ class LoadCoreForKernel : Module {
 	 * Invalidate the CPU's instruction cache.
 	 */
 	void sceKernelIcacheClearAll() {
-		unimplemented();
+		//unimplemented();
 	}
 
 	/**

@@ -488,8 +488,8 @@ class ThreadManForUser : Module {
 				pspThread.registers.R[] = 0; // Clears all the registers (though it's not necessary).
 				pcSet(entry);
 				GP = cpu.registers.GP;
-				SP = pspThread.stack.block.high;
-				RA = 0x08000000; // sleep
+				SP = pspThread.stack.block.high - 0x600;
+				RA = 0x08000200; // sceKernelExitDeleteThread
 			}
 
 			return reinterpret!(SceUID)(pspThread);

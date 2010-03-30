@@ -22,6 +22,8 @@ final class Registers {
 	uint IC;         // Interrupt controller
 	Fcsr FCSR;       // Floating point Control / Status register
 	bool CC;         // Control Word (Floating point? C1)
+	uint CLOCKS;
+	uint[] CallStack;
 	union {
 		uint[32] R;      // GPR | General Purpose Registers
 		struct {
@@ -60,6 +62,12 @@ final class Registers {
 		this.CC   = that.CC;
 		this.R [] = that.R [];
 		this.RF[] = that.RF[];
+		this.CLOCKS   = that.CLOCKS;
+		if (that.CallStack.length) {
+			this.CallStack = that.CallStack.dup;
+		} else {
+			this.CallStack = [];
+		}
 	}
 
 	static this() {

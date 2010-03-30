@@ -16,6 +16,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	void initNids() {
 		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
 		mixin(registerd!(0x289D82FE, sceDisplaySetFrameBuf));
+		mixin(registerd!(0xEEDA2E54, sceDisplayGetFrameBuf));
 		mixin(registerd!(0x9C6EAAD7, sceDisplayGetVcount));
 		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
 		mixin(registerd!(0x8EB9EC49, sceDisplayWaitVblankCB));
@@ -87,6 +88,23 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 */
 	int sceDisplaySetFrameBuf(uint topaddr, int bufferwidth, int pixelformat, int sync) {
 		cpu.display.info = Display.Info(topaddr, bufferwidth, pixelformat, sync);
+		return 0;
+	}
+
+	/**
+	 * Get Display Framebuffer information
+	 *
+	 * @param topaddr - pointer to void* to receive address of start of framebuffer
+	 * @param bufferwidth - pointer to int to receive buffer width (must be power of 2)
+	 * @param pixelformat - pointer to int to receive one of ::PspDisplayPixelFormats.
+	 * @param sync - One of ::PspDisplaySetBufSync
+	 *
+	 * @return 0 on success
+	 */
+	int sceDisplayGetFrameBuf(uint* topaddr, int* bufferwidth, int* pixelformat, int sync) {
+		*topaddr     = cpu.display.info.topaddr;
+		*bufferwidth = cpu.display.info.bufferwidth;
+		*pixelformat = cpu.display.info.pixelformat;
 		return 0;
 	}
 

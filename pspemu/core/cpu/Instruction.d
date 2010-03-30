@@ -65,6 +65,9 @@ struct Instruction {
 			uint, "__2",  6
 		)); }
 
+		uint JUMP2() { return JUMP << 2; }
+		uint JUMP2(uint v) { JUMP = v >> 2; return v; }
+
 		// LSB/MSB
 		struct { mixin(bitfields!(
 			uint, "",      6,

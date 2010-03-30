@@ -8,6 +8,19 @@ class sceUtility : Module {
 		mixin(registerd!(0x9790B33C, sceUtilitySavedataShutdownStart));
 		mixin(registerd!(0xD4B95FFB, sceUtilitySavedataUpdate));
 		mixin(registerd!(0x8874DBE0, sceUtilitySavedataGetStatus));
+		mixin(registerd!(0xA5DA2406, sceUtilityGetSystemParamInt));
+	}
+
+	/**
+	 * Get Integer System Parameter
+	 *
+	 * @param id - which parameter to get
+	 * @param value - pointer to integer value to place result in
+	 * @return 0 on success, PSP_SYSTEMPARAM_RETVAL_FAIL on failure
+	 */
+	int sceUtilityGetSystemParamInt( int id, int *value ) {
+		unimplemented_notice();
+		return -1;
 	}
 
 	/**

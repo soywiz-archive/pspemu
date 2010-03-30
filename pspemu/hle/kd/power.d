@@ -49,8 +49,12 @@ class scePower : Module {
 	 * @return 0 on success, < 0 on error.
 	 */
 	int scePowerTick(int type) {
+		/*
 		unimplemented();
 		return -1;
+		*/
+		//unimplemented_notice();
+		return 0;
 	}
 
 	/**

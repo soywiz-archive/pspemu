@@ -1,5 +1,7 @@
 module pspemu.core.cpu.Cpu;
 
+//const uint THREAD0_CALL_MASK = 0xFFFFFF;
+//const uint THREAD0_CALL_MASK = 0xFFF;
 const uint THREAD0_CALL_MASK = 0xFFFF;
 //const uint THREAD0_CALL_MASK = 0xFFFFF;
 //const uint THREAD0_CALL_MASK = 0xFF;
@@ -182,6 +184,8 @@ class Cpu : PspHardwareComponent, IDebugSource {
 					}
 				}
 			}
+
+			registers.CLOCKS++;
 		}
 		//writefln("Execute: end");
 	}

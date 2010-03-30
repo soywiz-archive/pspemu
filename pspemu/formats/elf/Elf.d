@@ -2,7 +2,11 @@ module pspemu.formats.elf.Elf;
 
 import pspemu.utils.Utils;
 
+import pspemu.core.cpu.Instruction;
+
 import std.stdio, std.stream, std.string, std.math;
+
+import pspemu.utils.Logger;
 
 //debug = MODULE_LOADER;
 
@@ -81,7 +85,7 @@ class Elf {
 	}
 	
 	static struct Reloc {
-		enum Type : byte { None = 0, Mips16, Mips32, MipsRel32, Mips26, MipsHi16, MipsLo16, MipsGpRel16, MipsLiteral, MipsGot16, MipsPc16, MipsCall16, MipsGpRel32 }
+		enum Type : byte { None = 0, Mips16 = 1, Mips32 = 2, MipsRel32 = 3, Mips26 = 4, MipsHi16 = 5, MipsLo16 = 6, MipsGpRel16 = 7, MipsLiteral = 8, MipsGot16 = 9, MipsPc16 = 10, MipsCall16 = 11, MipsGpRel32 = 12 }
 		uint offset;
 		union {
 			uint _info;
@@ -255,20 +259,19 @@ class Elf {
 				uint offset = reloc.offset + baseAddress;
 				
 				// Lee la palabra original
-				uint DATA = memory_read32(offset);
+				Instruction instruction = Instruction(memory_read32(offset));
 				
 				// Modifica la palabra según el tipo de relocalización
 				switch (reloc.type) { default: throw(new Exception(std.string.format("RELOC: unknown reloc type '%02X'", reloc.type)));
 					// LUI
 					case Reloc.Type.MipsHi16: { 
-						uint reg = (DATA >> 16) & 0x1F;
-						regs[reg] ~= offset;
+						regs[instruction.RT] ~= offset;
 					} break;
 					
 					// ADDI, ORI ...
 					case Reloc.Type.MipsLo16: {
-						uint reg = ((DATA >> 21) & 0x1F);
-						uint vlo = ((DATA & 0x0000FFFF) ^ 0x00008000) - 0x00008000;
+						uint reg = instruction.RS;
+						uint vlo = ((instruction.v & 0x0000FFFF) ^ 0x00008000) - 0x00008000;
 						
 						foreach (hiaddr; regs[reg]) {
 							uint DATA2 = memory_read32(hiaddr);
@@ -283,24 +286,26 @@ class Elf {
 						
 						regs[reg].length = 0;
 						
-						DATA = (DATA & ~0x0000FFFF) | ((baseAddress + vlo) & 0x0000FFFF);
+						instruction.v = (instruction.v & ~0x0000FFFF) | ((baseAddress + vlo) & 0x0000FFFF);
 					} break;
 					
 					// J, JAL
 					case Reloc.Type.Mips26:
-						uint backa = (DATA & 0x03FFFFFF) << 2;
-						DATA &= ~0x03FFFFFF;
-						DATA |= (baseAddress + backa) >> 2;
-					break;		
+						instruction.JUMP2 = instruction.JUMP2 + baseAddress;
+					break;
 		
 					// *POINTER*
 					case Reloc.Type.Mips32:
-						DATA = DATA;
+						instruction.v = instruction.v + baseAddress;
 					break;
+					
+					case Reloc.Type.MipsGpRel16: {
+						Logger.log(Logger.Level.WARNING, "Loader", "Reloc.Type.MipsGpRel16: %08X", instruction.v);
+					} break;
 				} // switch
 				
 				// Escribe la palabra modificada
-				memory_write32(offset, DATA);
+				memory_write32(offset, instruction.v);
 				
 			} // while
 			
@@ -370,7 +375,7 @@ class Elf {
 			}
 		}
 		if (needsRelocation) {
-			throw(new Exception("Relocation not implemented yet!"));
+			//throw(new Exception("Relocation not implemented yet!"));
 			try {
 				performRelocation(stream);
 			} catch (Object o) {

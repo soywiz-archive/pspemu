@@ -211,7 +211,7 @@ class GpuOpengl : GpuImplAbstract {
 			0, 0, // x, y
 			state.drawBuffer.width, 272, // w, h
 			PixelFormats[state.drawBuffer.format].external,
-			GL_UNSIGNED_BYTE,
+			PixelFormats[state.drawBuffer.format].opengl,
 			&buffer_temp
 		);
 		for (int n = 0; n < 272; n++) {
@@ -250,7 +250,7 @@ template OpenglUtils() {
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
-				glOrtho(0.0f, 480.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+				glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
 				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 				//writefln("transform");
 			} else {

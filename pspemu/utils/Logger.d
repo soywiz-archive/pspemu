@@ -24,6 +24,7 @@ class Logger {
 		auto message = Message(std.c.time.time(null), level, component, text);
 		messages ~= message;
 		if (level >= Level.WARNING) {
+		//if (level >= Level.DEBUG) {
 			message.print();
 		}
 	}

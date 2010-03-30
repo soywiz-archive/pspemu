@@ -5,6 +5,7 @@ import pspemu.hle.Module;
 class sceHprm : Module {
 	void initNids() {
 		mixin(registerd!(0x1910B327, sceHprmPeekCurrentKey));
+		mixin(registerd!(0x208DB1BD, sceHprmIsRemoteExist));
 	}
 
 	/** 
@@ -19,6 +20,15 @@ class sceHprm : Module {
 		*key = 0;
 		//unimplemented();
 		//return -1;
+		return 0;
+	}
+
+	/** 
+	 * Determines whether the remote is plugged in.
+	 *
+	 * @return 1 if the remote is plugged in, else 0.
+	 */
+	int sceHprmIsRemoteExist() {
 		return 0;
 	}
 }

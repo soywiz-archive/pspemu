@@ -84,7 +84,9 @@ int main(string[] args) {
 	cpu.checkBreakpoints = true;
 	cpu.addBreakpoint(cpu.BreakPoint(
 		//0x0895A9E4
-		0x0895ACAC
+		//0x0895ACAC
+		//0x0895ACD4
+		0x0895A914
 	, [], true, {
 		cpu.traceStep = true;
 		cpu.checkBreakpoints = true;

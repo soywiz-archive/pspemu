@@ -16,6 +16,7 @@ alias void SceKernelUtilsMt19937Context;
 class UtilsForUser : Module {
 	void initNids() {
 		mixin(registerd!(0x27CC57F0, sceKernelUtilsMt19937Init));
+		mixin(registerd!(0xE860E75E, sceKernelUtilsMt19937Init));
 		mixin(registerd!(0x06FB8A63, sceKernelUtilsMt19937UInt));
 		mixin(registerd!(0x27CC57F0, sceKernelLibcTime));
 		mixin(registerd!(0x71EC4271, sceKernelLibcGettimeofday));
@@ -101,7 +102,7 @@ class UtilsForUser : Module {
 		(cast(std.random.Mt19937 *)ctx).seed(seed);
 		return 0;
 	}
-
+	
 	/**
 	 * Function to return a new psuedo random number.
 	 *
@@ -126,8 +127,11 @@ class UtilsForUser : Module {
 	 * Get the processor clock used since the start of the process
 	 */
 	clock_t sceKernelLibcClock() {
+		/*
 		unimplemented();
 		return -1;
+		*/
+		return cast(clock_t)cpu.registers.CLOCKS; // @TODO: It's the thread CLOCK not the global CLOCK!
 	}
 }
 

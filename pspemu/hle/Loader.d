@@ -502,6 +502,10 @@ class Loader : IDebugSource {
 			.text 0x08000010
 			ininite_loop: j ininite_loop
 			nop
+
+			.text 0x08000200 ; sceKernelExitDeleteThread
+			li a0, 0
+			syscall 0x2071   ; sceKernelExitThread
 		");
 
 		auto pspThread = reinterpret!(PspThread)(threadManForUser.sceKernelCreateThread("Main Thread", PC, 32, 0x8000, 0, null));
@@ -509,11 +513,11 @@ class Loader : IDebugSource {
 			registers.pcSet = PC;
 			registers.GP = GP;
 
-			registers.K0 = pspThread.registers.SP;
+			registers.K0 = registers.SP;
 			registers.RA = 0x08000000;
-			registers.A0 = 1; // argumentsLength.
-			registers.A1 = 0x08000100; // argumentsPointer
-			memory.position = registers.A1;
+			registers.A0 = 32; // argumentsLength.
+			registers.A1 = registers.SP; // argumentsPointer
+			memory.position = registers.SP;
 			memory.writeString("ms0:/PSP/GAME/virtual/EBOOT.PBP\0");
 		}
 		threadManForUser.sceKernelStartThread(reinterpret!(SceUID)(pspThread), 0, null);

@@ -8,6 +8,8 @@ import pspemu.utils.Utils;
 
 import std.stdio;
 
+//debug = DEBUG_SB;
+
 template TemplateCpu_MEMORY() {
 	mixin TemplateCpu_MEMORY_Utils;
 
@@ -46,7 +48,18 @@ template TemplateCpu_MEMORY() {
 	// SW -- Store word
 	// The contents of $t is stored at the specified address.
 	// MEM[$s + offset] = $t; advance_pc (4);
-	auto OP_SB() { mixin(STORE(8 )); }
+	auto OP_SB() {
+		debug (DEBUG_SB) {
+			writef("%08X: ", registers[instruction.RS] + instruction.OFFSET);
+			for (int n = -4; n <= 4; n++) writef("%02X", memory[registers[instruction.RS] + instruction.OFFSET + n]);
+			writef(" -> ");
+		}
+		mixin(STORE(8 ));
+		debug (DEBUG_SB) {
+			for (int n = -4; n <= 4; n++) writef("%02X", memory[registers[instruction.RS] + instruction.OFFSET + n]);
+			writefln("");
+		}
+	}
 	auto OP_SH() { mixin(STORE(16)); }
 	auto OP_SW() { mixin(STORE(32)); }
 

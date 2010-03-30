@@ -63,7 +63,7 @@ template TemplateCpu_ALU() {
 	auto OP_SLT  () { mixin(CE("$rd = #rs < #rt;")); }
 	auto OP_SLTU () { mixin(CE("$rd = $rs < $rt;")); }
 	auto OP_SLTI () { mixin(CE("$rt = #rs < #im;")); }
-	auto OP_SLTIU() { mixin(CE("$rt = $rs < #im;")); }
+	auto OP_SLTIU() { mixin(CE("$rt = $rs < cast(uint)#im;")); }
 
 	// LUI -- Load upper immediate
 	// The immediate value is shifted left 16 bits and stored in the register. The lower 16 bits are zeroes.
