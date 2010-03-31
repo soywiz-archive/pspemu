@@ -2,17 +2,18 @@ module pspemu.core.cpu.Instruction;
 
 import std.stdio, std.string, std.bitmanip;
 
-struct InstructionDefinition {
-	string   name;
-	uint     opcode;
-	uint     mask;
+// Extra.
+enum { INSTR_TYPE_NONE = 0, INSTR_TYPE_PSP = 1, INSTR_TYPE_B = 2, INSTR_TYPE_JUMP = 4, INSTR_TYPE_JAL = 8, INSTR_TYPE_BRANCH = INSTR_TYPE_B | INSTR_TYPE_JUMP | INSTR_TYPE_JAL }
+enum { ADDR_TYPE_NONE = 0, ADDR_TYPE_16 = 1, ADDR_TYPE_26 = 2, ADDR_TYPE_REG = 3 }
 
-	// Extra.
-	enum Type    { NONE = 0, PSP = 1, B = 2, JUMP = 4, JAL = 8, BRANCH = B | JUMP | JAL }
-	enum Address { NONE = 0, T16 = 1, T26 = 2, REG = 3 }
-	string   fmt;
-	Address  addrtype;
-	Type     type;
+struct InstructionDefinition {
+	string  name;
+	uint    opcode;
+	uint    mask;
+
+	string  fmt;
+	uint    addrtype;
+	uint    type;
 
 	string toString() {
 		return format("InstructionDefinition('%s', %08X, %08X, '%s', %s, %s)", name, opcode, mask, fmt, addrtype, type);

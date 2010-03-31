@@ -170,7 +170,7 @@ class DisplayForm : Form, IMessageFilter {
 		add("&File", {
 			addClick("&Open...", (MenuItem mi, EventArgs ea) {
 				auto fd = new OpenFileDialog;
-				fd.filter  = "PSP Executable Files (*.pbp;*.elf;*.iso;*.cso;*.dax)|*.pbp;*.elf;*.iso;*.cso;*.dax|All Files (*.*)|*.*";
+				fd.filter  = "PSP Executable Files (*.pbp;*.elf;*.asm;*.iso;*.cso;*.dax)|*.pbp;*.elf;*.asm;*.iso;*.cso;*.dax|All Files (*.*)|*.*";
 
 				// Pauses execution and resumes at the end.
 				mixin(emulationScopePauseResume);

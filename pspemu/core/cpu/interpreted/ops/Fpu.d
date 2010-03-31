@@ -1,16 +1,7 @@
-module pspemu.core.cpu.ops.Fpu;
+module pspemu.core.cpu.interpreted.ops.Fpu;
+import pspemu.core.cpu.interpreted.Utils;
 
-import pspemu.utils.Utils;
-
-import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.cpu.Utils;
-import pspemu.core.cpu.ops.Branch;
-import pspemu.core.Memory;
-
-import std.stdio;
-import std.traits;
-import std.math;
+import pspemu.core.cpu.interpreted.ops.Branch;
 
 template TemplateCpu_FPU() {
 	// Branch.
@@ -83,22 +74,4 @@ template TemplateCpu_FPU() {
 	// Memory transfer.
 	auto OP_LWC1() { mixin(CE("$Ft = memory.read32($rs + #im);")); }
 	auto OP_SWC1() { mixin(CE("memory.write32($rs + #im, $Ft);")); }
-}
-
-unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-	scope memory    = new Memory;
-	scope registers = new Registers;
-	Instruction instruction = void;
-
-	mixin TemplateCpu_FPU;
-	
-	// ABS.S
-	{
-		registers.F[1] = -5.0;
-		instruction.FS = 1;
-		instruction.FD = 0;
-		OP_ABS_S();
-		assert(registers.F[0] == 5.0);
-	}
 }

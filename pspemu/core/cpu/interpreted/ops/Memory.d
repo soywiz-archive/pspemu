@@ -1,17 +1,13 @@
-module pspemu.core.cpu.ops.Memory;
-
-import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.Memory;
-
-import pspemu.utils.Utils;
-
-import std.stdio;
+module pspemu.core.cpu.interpreted.ops.Memory;
+import pspemu.core.cpu.interpreted.Utils;
 
 //debug = DEBUG_SB;
 
 template TemplateCpu_MEMORY() {
 	mixin TemplateCpu_MEMORY_Utils;
+	
+	alias pspemu.utils.Utils.Signed Signed;
+	alias pspemu.utils.Utils.Unsigned Unsigned;
 
 	// LB(U) -- Load byte (unsigned)
 	// LH(U) -- Load half (unsigned)
@@ -90,27 +86,5 @@ template TemplateCpu_MEMORY_Utils() {
 				"registers.pcAdvance(4);"
 			);
 		}
-	}
-}
-
-unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-	scope memory    = new Memory;
-	scope registers = new Registers;
-	Instruction instruction = void;
-
-	mixin TemplateCpu_MEMORY;
-
-	uint value = 0x_12_34_56_78;
-
-	writefln("  Check LB (Sign extension)...");
-	{
-		memory[Memory.mainMemoryAddress] = cast(ubyte)-1;
-		registers[2] = Memory.mainMemoryAddress;
-		instruction.RT = 1;
-		instruction.RS = 2;
-		instruction.OFFSET = 0;
-		OP_LB();
-		assert(registers[instruction.RT] == -1);
 	}
 }

@@ -18,6 +18,7 @@ import pspemu.models.ISyscall;
 import pspemu.core.Memory;
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.interpreted.Cpu;
 import pspemu.core.cpu.Interrupts;
 import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;

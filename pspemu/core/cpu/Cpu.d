@@ -1,14 +1,5 @@
 module pspemu.core.cpu.Cpu;
 
-//const uint THREAD0_CALL_MASK = 0xFFFFFF;
-//const uint THREAD0_CALL_MASK = 0xFFF;
-const uint THREAD0_CALL_MASK = 0xFFFF;
-//const uint THREAD0_CALL_MASK = 0xFFFFF;
-//const uint THREAD0_CALL_MASK = 0xFF;
-
-//debug = DEBUG_GEN_SWITCH;
-version = ENABLE_BREAKPOINTS;
-
 // Hack. It shoudln't be here.
 // Create a PspHardwareComponents class with all the components there?
 import pspemu.core.gpu.Gpu;
@@ -16,45 +7,24 @@ import pspemu.models.IDisplay;
 import pspemu.models.IController;
 import pspemu.models.ISyscall;
 
+// For breakpoints.
+import pspemu.core.cpu.Disassembler;
+import pspemu.core.cpu.InstructionCounter;
+
 import pspemu.models.IDebugSource;
 
 import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Table;
-import pspemu.core.cpu.Switch;
 import pspemu.core.cpu.Assembler;
 import pspemu.core.cpu.Instruction;
-import pspemu.core.cpu.Utils;
+import pspemu.core.cpu.Interrupts;
 import pspemu.core.Memory;
 
-import core.thread;
 import pspemu.utils.Utils;
 import pspemu.utils.Logger;
 
-// OPS.
-import pspemu.core.cpu.Utils;
-import pspemu.core.cpu.Interrupts;
-import pspemu.core.cpu.ops.Alu;
-import pspemu.core.cpu.ops.Branch;
-import pspemu.core.cpu.ops.Jump;
-import pspemu.core.cpu.ops.Memory;
-import pspemu.core.cpu.ops.Misc;
-import pspemu.core.cpu.ops.Fpu;
-import pspemu.core.cpu.ops.VFpu;
-import pspemu.core.cpu.ops.Unimplemented;
+import std.stdio, std.string, std.stream;
 
-// For breakpoints.
-import pspemu.core.cpu.Disassembler;
-
-import std.stdio, std.string, std.math;
-
-version (ENABLE_BREAKPOINTS) {
-	import pspemu.core.cpu.InstructionCounter;
-}
-
-/**
- * Class that will be on charge of the emulation of Allegrex main CPU.
- */
-class Cpu : PspHardwareComponent, IDebugSource {
+abstract class Cpu : PspHardwareComponent, IDebugSource {
 	/**
 	 * Registers.
 	 */
@@ -77,6 +47,8 @@ class Cpu : PspHardwareComponent, IDebugSource {
 	ISyscall syscall;
 	
 	Interrupts interrupts;
+
+	uint lastValidPC = 0;
 	
 	mixin DebugSourceProxy;
 
@@ -118,77 +90,9 @@ class Cpu : PspHardwareComponent, IDebugSource {
 		//.writefln("Unimplemented CPU instruction '%s'", s);
 		//assert(0, std.string.format("Unimplemented CPU instruction '%s'", s));
 	}*/
+	
+	abstract void execute(uint count);
 
-	uint lastValidPC = 0;
-
-	/**
-	 * Will execute a number of instructions.
-	 *
-	 * Note: Some instructions may throw some kind of exceptions that will break the flow.
-	 *
-	 * @param  count  Maximum number of instructions to execute.
-	 */
-	void execute(uint count) {
-		// Shortcuts for registers and memory.
-		auto registers = this.registers;
-		auto memory    = this.memory;
-		auto cpu       = this;
-
-		// Declaration for instruction struct that will allow to decode instructions easily.
-		Instruction instruction = void;
-
-		// Operations.
-		mixin TemplateCpu_ALU;
-		mixin TemplateCpu_BRANCH;
-		mixin TemplateCpu_JUMP;
-		mixin TemplateCpu_MEMORY;
-		mixin TemplateCpu_MISC;
-		mixin TemplateCpu_FPU;
-		mixin TemplateCpu_VFPU;
-		mixin TemplateCpu_UNIMPLEMENTED;
-
-		// Will execute instructions until count reach zero or an exception is thrown.
-		//writefln("Execute: %08X", count);
-		while (count--) {
-			// Process IRQ (Interrupt ReQuest)
-
-			// Add a THREAD Interrupt (to switch threads)
-			if ((count & THREAD0_CALL_MASK) == 0) interrupts.queue(Interrupts.Type.THREAD0);
-			
-			// Process interrupts if there are pending interrupts
-			if (interrupts.InterruptFlag) interrupts.process();
-
-			version (ENABLE_BREAKPOINTS) {
-				if (checkBreakpoints) {
-					breakPointPrevPC = registers.PC;
-					if (traceStep) {
-						if (breakpointRegisters) breakpointRegisters.copyFrom(registers);
-						//breakpointStep.registers.
-					}
-				}
-			}
-
-			if (runningState != RunningState.RUNNING) waitUntilResume();
-			
-			instruction.v = memory.read32(registers.PC);
-			lastValidPC = registers.PC;
-			mixin(genSwitch(PspInstructions));
-
-			version (ENABLE_BREAKPOINTS) {
-				if (checkBreakpoints) {
-					if (traceStep) {
-						trace(breakpointStep, breakPointPrevPC, true);
-					} else {
-						if (!checkBreakpoint(breakPointPrevPC)) {
-						}
-					}
-				}
-			}
-
-			registers.CLOCKS++;
-		}
-		//writefln("Execute: end");
-	}
 
 	/**
 	 * Will execute forever (Until a unhandled Exception is thrown).
@@ -213,7 +117,7 @@ class Cpu : PspHardwareComponent, IDebugSource {
 	}
 
 	template BreakPointStuff() {
-		version (ENABLE_BREAKPOINTS) uint breakPointPrevPC;
+		uint breakPointPrevPC;
 
 		static struct BreakPoint {
 			uint PC;
@@ -248,18 +152,14 @@ class Cpu : PspHardwareComponent, IDebugSource {
 			return true;
 		}
 
-		version (ENABLE_BREAKPOINTS) {
-			InstructionCounter instructionCounter;
-		}
+		InstructionCounter instructionCounter;
 		
 		void trace(BreakPoint bp, uint PC, bool traceOnlyIfChanged = false) {
 			if (breakpointRegisters is null) breakpointRegisters = new Registers;
 			if (bp.callback) bp.callback();
-			version (ENABLE_BREAKPOINTS) {
-				if (instructionCounter is null) instructionCounter = new InstructionCounter();
-				Instruction instruction = void; instruction.v = memory.read32(PC);
-				instructionCounter.count(instruction);
-			}
+			if (instructionCounter is null) instructionCounter = new InstructionCounter();
+			Instruction instruction = void; instruction.v = memory.read32(PC);
+			instructionCounter.count(instruction);
 			if (traceOnlyIfChanged && bp.traceRegisters.length) {
 				bool cancel = true;
 				foreach (reg; bp.traceRegisters) {
@@ -366,8 +266,6 @@ class Cpu : PspHardwareComponent, IDebugSource {
 	}
 	
 	override void run() {
-		//Thread.sleep(2000_0000);
-		//Sleep(2000);
 		try {
 			componentInitialized = true;
 			execute();
@@ -380,9 +278,4 @@ class Cpu : PspHardwareComponent, IDebugSource {
 			gpu.stop();
 		}
 	}
-}
-
-// Shows the generated switch.
-debug (DEBUG_GEN_SWITCH) {
-	pragma(msg, genSwitch(PspInstructions));
 }

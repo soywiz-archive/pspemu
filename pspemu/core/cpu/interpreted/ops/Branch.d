@@ -1,4 +1,4 @@
-module pspemu.core.cpu.ops.Branch;
+module pspemu.core.cpu.interpreted.ops.Branch;
 
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Instruction;
@@ -69,61 +69,4 @@ template TemplateCpu_BRANCH() {
 	// if $s != $t advance_pc (offset << 2)); else advance_pc (4);
 	auto OP_BNE () { mixin(BRANCH(Likely.NO , Link.NO , "registers[instruction.RS] != registers[instruction.RT]")); }
 	auto OP_BNEL() { mixin(BRANCH(Likely.YES, Link.NO , "registers[instruction.RS] != registers[instruction.RT]")); }
-}
-
-unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-	scope memory    = new Memory;
-	scope registers = new Registers;
-	Instruction instruction = void;
-
-	mixin TemplateCpu_BRANCH;
-
-	uint base = 0x1000;
-	registers[0] =  0;
-	registers[1] = +1;
-	registers[2] = -1;
-	int offset = -7;
-
-	void set_RS_RT_OFFSET(int rs, int rt = 0) {
-		instruction.RS = rs;
-		instruction.RT = rt;
-		instruction.OFFSET = offset;
-	}
-
-	writefln("  Check BEQ (Branch)");
-	{
-		registers.pcSet(base);
-		set_RS_RT_OFFSET(0, 0);
-		OP_BEQ();
-		assert(registers.PC == base + 4);
-		assert(registers.nPC == registers.PC + offset * 4);
-	}
-
-	writefln("  Check BEQ (No branch)");
-	{
-		registers.pcSet(base);
-		set_RS_RT_OFFSET(0, 1);
-		OP_BEQ();
-		assert(registers.PC == base + 4);
-		assert(registers.nPC == base + 8);
-	}
-
-	writefln("  Check OP_BGEZL (Branch)");
-	{
-		registers.pcSet(base);
-		set_RS_RT_OFFSET(1);
-		OP_BGEZL();
-		assert(registers.PC == base + 4);
-		assert(registers.nPC ==  registers.PC + offset * 4);
-	}
-
-	writefln("  Check OP_BGEZL (No Branch)");
-	{
-		registers.pcSet(base);
-		set_RS_RT_OFFSET(2);
-		OP_BGEZL();
-		assert(registers.PC == base + 8);
-		assert(registers.nPC == registers.PC + 4);
-	}
 }

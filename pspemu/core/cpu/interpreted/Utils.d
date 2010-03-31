@@ -1,6 +1,14 @@
-module pspemu.core.cpu.Utils;
+module pspemu.core.cpu.interpreted.Utils;
 
-import std.stdio;
+public import pspemu.utils.Utils;
+
+public import pspemu.core.cpu.Registers;
+public import pspemu.core.cpu.Instruction;
+public import pspemu.core.Memory;
+
+public import std.stdio;
+public import std.traits;
+public import std.math;
 
 enum Advance { NO, YES }
 

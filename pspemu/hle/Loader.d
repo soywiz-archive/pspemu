@@ -246,7 +246,7 @@ class Loader : IDebugSource {
 	ElfDwarf dwarf;
 	Cpu cpu;
 	ModuleManager moduleManager;
-	AllegrexAssembler assembler;
+	AllegrexAssembler assembler, assemblerExe;
 	Memory memory() { return cpu.memory; }
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
@@ -256,52 +256,50 @@ class Loader : IDebugSource {
 		this.cpu           = cpu;
 		this.moduleManager = moduleManager;
 		this.assembler     = new AllegrexAssembler(memory);
+		this.assemblerExe  = new AllegrexAssembler(memory);
 	}
 
-	void load(Stream stream) {
-		while (true) {
-			auto magics = new SliceStream(stream, 0, 4);
-			switch (magics.readString(4)) {
-				case "\x7FELF":
-				break;
-				case "~PSP":
-					throw(new Exception("Not support compressed elf files"));
-				break;
-				case "\0PBP":
-					stream = (new Pbp(stream))["psp.data"];
-					continue;
-				break;
-				default:
-					throw(new Exception("Unknown file type"));
+	void load(Stream stream, string name = "<unknown>") {
+		// Assembler.
+		if (name.length >= 4 && name[$ - 4..$] == ".asm") {
+			assemblerExe.assembleBlock(cast(string)stream.readString(cast(uint)stream.size));
+		}
+		// Binary
+		else {
+			while (true) {
+				auto magics = new SliceStream(stream, 0, 4);
+				auto magic_data = cast(ubyte[])magics.readString(4);
+				switch (cast(string)magic_data) {
+					case "\x7FELF":
+					break;
+					case "~PSP":
+						throw(new Exception("Not support compressed elf files"));
+					break;
+					case "\0PBP":
+						stream = (new Pbp(stream))["psp.data"];
+						continue;
+					break;
+					default:
+						throw(new Exception(std.string.format("Unknown file type '%s' : [%s]", name, magic_data)));
+					break;
+				}
 				break;
 			}
-			break;
-		}
-		
-		this.elf = new Elf(stream);
+			
+			this.elf = new Elf(stream);
 
-		/*
-		version (DEBUG_LOADER) {
-			elf.dumpSections();
-		}
-		*/
+			version (DEBUG_LOADER) elf.dumpSections();
 
-		try {
-			load();
-		} catch (Object o) {
-			writefln("Loader.load Exception: %s", o);
-			throw(o);
-		}
+			try {
+				load();
+			} catch (Object o) {
+				writefln("Loader.load Exception: %s", o);
+				throw(o);
+			}
 
-		/*
-		version (DEBUG_LOADER) {
-			count();
-			moduleManager.dumpLoadedModules();
-		}
-		*/
+			version (DEBUG_LOADER) { count(); moduleManager.dumpLoadedModules(); }
 
-		version (LOAD_DWARF_INFORMATION) {
-			loadDwarfInformation();
+			version (LOAD_DWARF_INFORMATION) loadDwarfInformation();
 		}
 	}
 
@@ -312,11 +310,13 @@ class Loader : IDebugSource {
 		cpu.reset();
 		reset();
 		fileName = fileName.replace("\\", "/");
+
 		string path = ".";
 		int index = fileName.lastIndexOf('/');
 		if (index != -1) path = fileName[0..index];
 		moduleManager.get!(IoFileMgrForUser).setVirtualDir(path);
-		load(new BufferedFile(lastLoadedFile = fileName, FileMode.In));
+
+		load(new BufferedFile(lastLoadedFile = fileName, FileMode.In), fileName);
 	}
 
 	void reloadAndExecute() {
@@ -489,8 +489,11 @@ class Loader : IDebugSource {
 		}
 	}
 
-	uint PC() { return getRelocatedAddress(elf.header.entryPoint); }
-	uint GP() { return getRelocatedAddress(moduleInfo.gp); }
+	uint PC() {
+		//writefln("assemblertext: %08X", assemblerExe.segments["text"]);
+		return elf ? getRelocatedAddress(elf.header.entryPoint) : assemblerExe.segments["text"];
+	}
+	uint GP() { return elf ? getRelocatedAddress(moduleInfo.gp) : 0; }
 
 	void setRegisters() {
 		auto threadManForUser = moduleManager.get!(ThreadManForUser);

@@ -156,36 +156,3 @@ class AllegrexDisassembler {
 		writef("%08X: %s", PC, dissasmSimple(PC, memory));
 	}
 }
-
-version (Unittest):
-import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.Assembler;
-import pspemu.utils.Assertion;
-
-unittest {
-	auto cpu          = new Cpu();
-	auto assembler    = new AllegrexAssembler(cpu.memory);
-	auto dissasembler = new AllegrexDisassembler(cpu.memory);
-
-	assembler.assembleBlock(r"
-	.text
-		addi a0, zero, 7
-		halt
-	");
-
-	uint start = assembler.segments["text"];
-
-	assertGroup("RegistersType.Simple");
-	{
-		dissasembler.registersType = AllegrexDisassembler.RegistersType.Simple;
-		assertTrue(dissasembler.dissasm(start) == ["addi", " ", "r4", ", ", "r0", ", ", "7"]);
-		assertTrue(dissasembler.dissasmSimple(start + 0) == "addi r4, r0, 7", "Check addi");
-		assertTrue(dissasembler.dissasmSimple(start + 4) == "halt"          , "Check halt");
-	}
-	assertGroup("RegistersType.Symbolic");
-	{
-		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-		assertTrue(dissasembler.dissasmSimple(start + 0) == "addi a0, zr, 7", "Check addi");
-	}
-}
-

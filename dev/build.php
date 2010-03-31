@@ -1,5 +1,11 @@
 <?php
 
+/*
+I should use:
+- http://dsource.org/projects/dsss
+- http://d-ide.sourceforge.net/
+*/
+
 ini_set('log_errors', 0);
 
 require(dirname(__FILE__) . '/setup.php');
@@ -129,7 +135,17 @@ class Builder {
 	
 	public function explore($moduleName, $level = 0) {
 		//printf("Module: %s\n", $module);
-		$this->modules[$moduleName] = $module = new DModule($this, sprintf('%s.d', str_replace('.', '/', $moduleName)));
+		$baseName = str_replace('.', '/', $moduleName);
+		if (is_dir($baseName)) {
+			foreach (scandir($baseName) as $file) {
+				if ($file[0] == '.') continue;
+				list($moduleBase) = explode('.', $file, 2);
+				$this->explore("{$moduleName}.{$moduleBase}");
+			}
+			return;
+		}
+		
+		$this->modules[$moduleName] = $module = new DModule($this, sprintf('%s.d', $baseName));
 
 		foreach ($module->imports as $importedModule) {
 			if (substr($importedModule, 0, 7) != 'pspemu.') continue;
@@ -274,6 +290,7 @@ class Builder {
 
 	public function fullBuild() {
 		$maxTime = $this->getModulesMaxTime($this->modules);
+		//print_r($this->getFilesSortedByDate());
 		
 		// Build exe.
 		if (@filemtime($this->exe) != $maxTime) {
@@ -307,11 +324,12 @@ class Builder {
 				//$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
-			default:
-				echo "Unknown profile {$profile}. Selecting 'release'.";
 			case 'release':
 				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -O -version=DFL_EXE -release -L/exet:nt/su:windows:4.0";
 			break;
+			default:
+				echo "Unknown profile {$profile}. Selecting 'normal'.";
+			case 'assembler':
 			case 'normal':
 				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
@@ -335,18 +353,18 @@ list(,$profile, $exeName) = $argv;
 
 $builder = new Builder($profile, $exeName);
 
-if ($profile == 'test') {
-	//$builder->explore('pspemu.exe.Test');
-	$builder->explore('pspemu.tests.TestsEx');
-} else {
-	$builder->explore('pspemu.exe.Pspemu');
-}
-
-foreach (scandir('pspemu/hle/kd') as $file) {
-	if ($file[0] == '.') continue;
-	list($moduleBase) = explode('.', $file);
-	//echo "$file\n";
-	$builder->explore('pspemu.hle.kd.' . $moduleBase);
+switch ($profile) {
+	case 'test':
+		$builder->explore('pspemu.tests.TestsEx');
+		$builder->explore('pspemu.hle.kd');
+	break;
+	case 'assembler':
+		$builder->explore('pspemu.exe.Assembler');
+	break;
+	default:
+		$builder->explore('pspemu.exe.Pspemu');
+		$builder->explore('pspemu.hle.kd');
+	break;
 }
 
 if (0) {

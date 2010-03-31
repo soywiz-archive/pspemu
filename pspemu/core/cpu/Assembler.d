@@ -10,7 +10,7 @@ import pspemu.core.cpu.Switch;
 import pspemu.core.cpu.Table;
 import pspemu.core.cpu.Registers;
 
-import std.stdio, std.string, std.stream, std.regexp, std.traits, std.conv;
+import std.stdio, std.string, std.stream, std.regexp, std.traits, std.conv, std.ctype;
 
 static InstructionDefinition[string] instructionsAvailable;
 static bool[string] macros;
@@ -47,7 +47,7 @@ template AllegrexAssemblerSymbolTemplate() {
 
 // http://en.wikibooks.org/wiki/MIPS_Assembly/MIPS_Instructions
 class AllegrexAssembler : ISymbolResolver {
-	Stream stream;
+	Stream memory;
 	uint[string] labels;
 	uint[string] segments;
 	Reloc[] relocs;
@@ -66,23 +66,23 @@ class AllegrexAssembler : ISymbolResolver {
 			return std.string.format("Reloc(%d, '%s', 0x%08X)", type, symbolName, address);
 		}
 
-		void relocate(Stream stream, ISymbolResolver symbolResolver) {
+		void relocate(Stream memory, ISymbolResolver symbolResolver) {
 			Instruction instruction;
 
 			assert(symbolResolver.hasSymbol(symbolName), format("Symbol '%s' not found.", symbolName));
 			uint symbolAddress = symbolResolver.getSymbolAddress(symbolName);
 
 			void readInstruction () {
-				stream.position = address;
+				memory.position = address;
 				try {
-					stream.read(instruction.v);
+					memory.read(instruction.v);
 				} catch {
 					assert(0, format("Can't read 4 bytes from address 0x%08X | %s", address, this));
 				}
 			}
 			void writeInstruction() {
-				stream.position = address;
-				stream.write(instruction.v);
+				memory.position = address;
+				memory.write(instruction.v);
 			}
 
 			//writefln("fixAddress: 0x%08X, symbolAddress: 0x%08X", address, symbolAddress);
@@ -110,24 +110,30 @@ class AllegrexAssembler : ISymbolResolver {
 			}
 		}
 	}
-	
-	this() {
-		stream = new SparseMemoryStream;
+
+	/**
+	 * Constructor. Sets the memory stream or creates a new SparseMemoryStream.
+	 *
+	 * @param  memory  Stream to use as memory.
+	 */
+	this(Stream memory = null) {
+		if (memory is null) memory = new SparseMemoryStream;
+		this.memory = memory;
+		reset();
 	}
 
-	this(Stream stream) {
-		this.stream = stream;
-	}
-
+	/**
+	 * Reset the object.
+	 */
 	void reset() {
-		labels = null;
+		labels   = null;
 		segments = null;
-		relocs = [];
+		relocs   = [];
 	}
 
 	void startSegment(string segmentName, uint position) {
 		segments[segmentName] = position;
-		stream.position = position;
+		memory.position = position;
 		//writefln("startSegment('%s')", segmentName);
 	}
 
@@ -207,17 +213,29 @@ class AllegrexAssembler : ISymbolResolver {
 			// Fix empty parameters.
 			if (instructionParams == "") paramMatches ~= "";
 
-			assert(paramMatches.length > 1, format("instruction:'%s'; params:'%s'; pattern:'%s'", instructionName, instructionParams, getPattern(instructionDefinition.fmt)));
-			auto paramValues   = paramMatches[1..$];
+			if (paramMatches.length <= 1) throw(new Exception(std.string.format("instruction:'%s'; params:'%s'; pattern:'%s'", instructionName, instructionParams, getPattern(instructionDefinition.fmt))));
+			auto paramValues = paramMatches[1..$];
 
 			Instruction instruction;
 
 			instruction.v = (instructionDefinition.opcode & instructionDefinition.mask);
 			
 			//writefln("%s", paramTypes.join(""));
+			
+			if (!(paramValues.length >= paramTypes.length)) {
+				throw(new Exception(std.string.format("Invalid instruction format: types[%s], values[%s]", paramTypes, paramValues)));
+			}
+			
+			/*
+			writefln("Invalid instruction format:");
+			writefln("     types[%s]", paramTypes);
+			writefln("     values[%s]", paramValues);
+			*/
 
 			foreach (n; 0..paramTypes.length) {
-				auto paramType = paramTypes[n], paramValue = paramValues[n];
+				auto paramType = paramTypes[n];
+				auto paramValue = paramValues[n];
+
 				uint getRegister() {
 					return cast(uint)Registers.getAlias(paramValue);
 				}
@@ -295,6 +313,45 @@ class AllegrexAssembler : ISymbolResolver {
 		return [];
 	}
 
+	/*struct MatchPattern { string code, value; }
+
+	MatchPattern[] matchPattern(string pattern, string data) {
+		MatchPattern[] result;
+		int dataN, patternN;
+
+		for (int patternN = 0; patternN < pattern.length; patternN++) {
+			switch (pattern[patternN]) {
+				// Matches pattern.
+				case '%': {
+					string patternType;
+					int patternNStart = ++patternN;
+					for (; patternN < pattern.length; pattern++) if (!isalpha(pattern[patternN])) break;
+
+					patternType = pattern[patternNStart..patternN];
+					
+					switch (patternType) {
+						// A register.
+						case "d", "s", "t", "1", "S", "D", "T":
+						break;
+
+						// An immediate value.
+						case "i", "I", "a", "C", "c", "ne", "ni":
+						break;
+					}
+				} break;
+				// Matches spaces and tabs in data.
+				case ' ':
+					while (isspace(data[dataN++])) { }
+				break;
+				// Matches other characters.
+				default:
+					if (data[dataN++] != pattern[n]) throw(new Exception("Pattern doesn't match"));
+				break;
+			}
+		}
+		return result;
+	}*/
+
 	static string[] getParams(string pattern) {
 		auto regexp = new RegExp(r"%\w+", "g");
 		return regexp.match(pattern);
@@ -337,7 +394,7 @@ class AllegrexAssembler : ISymbolResolver {
 		if (labelName != null) {
 			if (labelName.length) {
 				assert((labelName in labels) is null, format("Label '%s' already defined", labelName));
-				labels[labelName] = (PC = cast(uint)stream.position);
+				labels[labelName] = (PC = cast(uint)memory.position);
 			}
 		}
 
@@ -349,7 +406,8 @@ class AllegrexAssembler : ISymbolResolver {
 				switch (parts[1]) {
 					// Sections.
 					case "text", "data": {
-						scope const defaults = ["text" : Memory.mainMemoryAddress, "data" : Memory.mainMemoryAddress | 0x80000]; // FIXME
+						//scope const defaults = ["text" : Memory.mainMemoryAddress, "data" : Memory.mainMemoryAddress | 0x80000]; // FIXME
+						scope const defaults = ["text" : 0x08900000, "data" : 0x08A00000]; // FIXME
 						auto segmentName = strip(parts[1]), segmentAddress = strip(parts[2]);
 
 						startSegment(
@@ -364,7 +422,7 @@ class AllegrexAssembler : ISymbolResolver {
 						while (1) {
 							if ((pos = std.string.indexOf(process, ',')) == -1) pos = process.length;
 							float v = to!(float)(strip(process[0..pos]));
-							stream.write(v);
+							memory.write(v);
 							if (pos >= process.length) break;
 							process = process[pos + 1..$];
 						}
@@ -375,12 +433,12 @@ class AllegrexAssembler : ISymbolResolver {
 						bool is_string;
 						void write_integer(long value) {
 							void doalign(int n) {
-								while ((stream.position % n) != 0) stream.write(cast(ubyte)0);
+								while ((memory.position % n) != 0) memory.write(cast(ubyte)0);
 							}
 							switch (parts[1]) {
-								case "byte": doalign(1); stream.write(cast(byte)value); break;
-								case "half": doalign(2); stream.write(cast(short)value); break;
-								case "word": doalign(4); stream.write(cast(int)value); break;
+								case "byte": doalign(1); memory.write(cast(byte)value); break;
+								case "half": doalign(2); memory.write(cast(short)value); break;
+								case "word": doalign(4); memory.write(cast(int)value); break;
 							}
 						}
 						void token() {
@@ -426,12 +484,12 @@ class AllegrexAssembler : ISymbolResolver {
 				return [];
 			}
 
-			PC = cast(uint)stream.position;
+			PC = cast(uint)memory.position;
 			uint nPC = PC;
 			auto instructions = assembleInternal(nPC, operation);
 			foreach (instruction; instructions) {
-				//writefln("%08X: %08X", stream.position, instruction.v);
-				stream.write(instruction.v);
+				//writefln("%08X: %08X", memory.position, instruction.v);
+				memory.write(instruction.v);
 			}
 			return instructions;
 		}
@@ -445,7 +503,7 @@ class AllegrexAssembler : ISymbolResolver {
 
 	// FIXME: Rename relocate to something like 'address fixing'. Because it's not really relocation.
 	void relocate() {
-		foreach (reloc; relocs) reloc.relocate(stream, this);
+		foreach (reloc; relocs) reloc.relocate(memory, this);
 		relocs = [];
 	}
 
@@ -455,7 +513,7 @@ class AllegrexAssembler : ISymbolResolver {
 	}
 
 	void smartDump() {
-		auto sms = cast(SparseMemoryStream)stream;
+		auto sms = cast(SparseMemoryStream)memory;
 		if (sms) {
 			sms.smartDump();
 		} else {
@@ -464,14 +522,15 @@ class AllegrexAssembler : ISymbolResolver {
 	}
 
 	bool checkMemory(uint offset, ubyte[] data) {
-		auto bpos = stream.position; scope (exit) stream.position = bpos;
-		stream.position = offset;
-		return (cast(ubyte[])stream.readString(data.length) == data);
+		auto bpos = memory.position; scope (exit) memory.position = bpos;
+		memory.position = offset;
+		return (cast(ubyte[])memory.readString(data.length) == data);
 	}
 
 	alias assemble opCall;
 }
 
+/*
 unittest {
 	writefln("Unittesting: " ~ __FILE__ ~ "...");
 
@@ -480,7 +539,7 @@ unittest {
 
 	ReturnType!(assembler.opCall) assembler_(string line) { return instructions = assembler(PC, line); }
 	
-	assembler.startSegment("text", 0x2000); assert((assembler.stream.position == 0x2000));
+	assembler.startSegment("text", 0x2000); assert((assembler.memory.position == 0x2000));
 
 	assembler_("halt"); // Instruction without parameters.
 	assembler_("lui r1, 0x_000F");
@@ -524,8 +583,8 @@ unittest {
 	assembler.relocate();
 
 	// Check relocations.
-	assembler.stream.position = 0x1010;
-	assembler.stream.read(instructions[0].v);
+	assembler.memory.position = 0x1010;
+	assembler.memory.read(instructions[0].v);
 	assert(instructions[0].v == 0x_1042FFFC);
-	
 }
+*/

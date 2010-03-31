@@ -22,6 +22,7 @@ import pspemu.formats.Pbp;
 import pspemu.core.Memory;
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.interpreted.Cpu;
 import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
 import pspemu.core.gpu.impl.GpuOpengl;
@@ -48,7 +49,7 @@ int main(string[] args) {
 	auto controller    = new Controller();
 	auto display       = new PspDisplay(memory);
 	auto gpu           = new Gpu(new GpuOpengl, memory);
-	auto cpu           = new Cpu(memory, gpu, display, controller);
+	auto cpu           = new CpuInterpreted(memory, gpu, display, controller);
 	auto dissasembler  = new AllegrexDisassembler(memory);
 
 	// HLE.

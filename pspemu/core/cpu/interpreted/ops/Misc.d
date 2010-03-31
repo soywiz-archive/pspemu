@@ -1,17 +1,9 @@
-module pspemu.core.cpu.ops.Misc;
+module pspemu.core.cpu.interpreted.ops.Misc;
+import pspemu.core.cpu.interpreted.Utils;
 
 version = STOP_AT_UNKNOWN_INSTRUCTION;
 
-import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Utils;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.Memory;
-
 import pspemu.hle.Syscall;
-import pspemu.hle.Module;
-
-import std.stdio;
 
 // http://pspemu.googlecode.com/svn/branches/old/src/core/cpu.d
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/SPECIAL
@@ -57,15 +49,3 @@ template TemplateCpu_MISC() {
 		registers.pcAdvance(4);
 	}
 }
-
-/*
-unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-	scope cpu       = new Cpu;
-	scope memory    = new Memory;
-	scope registers = new Registers;
-	Instruction instruction = void;
-
-	mixin TemplateCpu_MISC;
-}
-*/

@@ -4,6 +4,7 @@ import pspemu.core.cpu.Assembler;
 import pspemu.utils.SparseMemory;
 
 import std.stdio;
+import std.utf;
 import std.string;
 import std.getopt;
 
@@ -28,7 +29,7 @@ int main(string[] args) {
 	getopt(args,
 		"version", &mipsVersion
 	);
-
+	
 	if (args.length > 1) {
 		foreach (fileName; args[1..$]) {
 			writef("Compiling file '%s'...", fileName);
@@ -40,6 +41,6 @@ int main(string[] args) {
 		help();
 		return -1;
 	}
-	
+
 	return 0;
 }

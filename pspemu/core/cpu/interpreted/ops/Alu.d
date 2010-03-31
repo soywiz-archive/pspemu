@@ -1,8 +1,8 @@
-module pspemu.core.cpu.ops.Alu;
+module pspemu.core.cpu.interpreted.ops.Alu;
 
 private import pspemu.utils.Utils;
 
-private import pspemu.core.cpu.Utils;
+private import pspemu.core.cpu.interpreted.Utils;
 private import pspemu.core.cpu.Registers;
 private import pspemu.core.cpu.Instruction;
 private import pspemu.core.Memory;
@@ -197,86 +197,6 @@ template TemplateCpu_ALU_Utils() {
 			//writefln("base=%08X, data=%08X, pos=%d, size=%d", base, data, pos, size);
 			base &= ~(mask << pos);
 			base |= (data & mask) << pos;
-		}
-	}
-}
-
-unittest {
-	writefln("Unittesting: " ~ __FILE__ ~ "...");
-	scope memory    = new Memory;
-	scope registers = new Registers;
-	Instruction instruction = void;
-
-	mixin TemplateCpu_ALU;
-
-	writefln("  Check ADD");
-	{
-		registers.PC = 0x1000;
-		registers.nPC = 0x1004;
-		registers[2] = 7;
-		registers[3] = 11;
-		instruction.RD = 1;
-		instruction.RS = 2;
-		instruction.RT = 3;
-		OP_ADD();
-		assert(registers[1] == 7 + 11);
-		assert(registers.PC == 0x1004);
-		assert(registers.nPC == 0x1008);
-	}
-
-	writefln("  Check AND");
-	{
-		registers[2] = 0x_FEFFFFFE;
-		registers[3] = 0x_A7B39273;
-		instruction.RD = 1;
-		instruction.RS = 2;
-		instruction.RT = 3;
-		OP_AND();
-		assert(registers[1] == (0x_FEFFFFFE & 0x_A7B39273));
-		assert(registers.nPC == registers.PC + 4);
-	}
-
-	writefln("  Check ANDI");
-	{
-		registers[2] = 0x_FFFFFFFF;
-		instruction.RT = 1;
-		instruction.RS = 2;
-		instruction.IMMU = 0x_FF77;
-		OP_ANDI();
-		assert(registers[1] == (0x_FFFFFFFF & 0x_FF77));
-		assert(registers.nPC == registers.PC + 4);
-	}
-
-	writefln("  Check BITREV");
-	{
-		// php -r"for ($r = '', $n = 0; $n < 32; $n++) $r .= mt_rand(0, 1); printf('0b_%s : 0b_%s,' . chr(10), $r, strrev($r));"
-		// def bin(r, dig=32):return ''.join([str((r >> x) & 1) for x in xrange(dig, -1, -1)])
-		// import random; x = ''.join([str(random.randint(0, 1)) for x in xrange(0, 32)]); print '0b_%s : 0b_%s' % (x, x[::-1])
-		scope expectedList = [
-			// Hand crafted.
-			0b_00000000000000000000000000000000 : 0b_00000000000000000000000000000000,
-			0b_11111111111111111111111111111111 : 0b_11111111111111111111111111111111,
-			0b_10000000000000000000000000000000 : 0b_00000000000000000000000000000001,
-
-			// Random.
-			0b_10110010011111100010101010000011 : 0b_11000001010101000111111001001101,
-			0b_01110101010111100111010110010001 : 0b_10001001101011100111101010101110,
-			0b_10001010010110110111011100101011 : 0b_11010100111011101101101001010001,
-			0b_01101110000110111011101110001010 : 0b_01010001110111011101100001110110,
-			0b_10000110001100101110100111011111 : 0b_11111011100101110100110001100001,
-			0b_11001001000110110011001010111110 : 0b_01111101010011001101100010010011,
-		];
-
-		foreach (a, b; expectedList) {
-			foreach (entry; [[a, b], [b, a]]) {
-				registers[2] = entry[0];
-				instruction.RD = 1;
-				instruction.RT = 2;
-				OP_BITREV();
-				//registers.dump(); writefln("%08X:%08X", entry[0], entry[1]);
-				assert(registers[1] == entry[1]);
-				assert(registers.nPC == registers.PC + 4);
-			}
 		}
 	}
 }

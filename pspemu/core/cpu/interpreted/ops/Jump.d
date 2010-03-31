@@ -1,4 +1,4 @@
-module pspemu.core.cpu.ops.Jump;
+module pspemu.core.cpu.interpreted.ops.Jump;
 
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Instruction;
