@@ -6,7 +6,32 @@ void test_start() {
 	asm {
 		naked;
 
-		push 999;
+		//EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7
+		//add EDI, EDI;
+		//push 999;
+		//shl EDI, 16;
+		//add EAX, 0xFFFFF;
+		//mov [EDI + 4], 0x77777777;
+		//mov [ECX + 0], [ECX + 4];
+		//push int ptr [ECX + 4];
+		
+		label:;
+		//mov EDX, 0x77777777;
+		//jne test_end;
+		add EAX, 8;
+		/*
+		cmp EAX, EDI;
+		cmp EDI, EAX;
+		*/
+		//cmp EAX, E;
+		/*
+		call EAX;
+		call ECX;
+		call EDX;
+		call EBX;
+		call ESP;
+		call EDI;
+		*/
 		
 		/*
 		mov [EAX + 4], EAX;

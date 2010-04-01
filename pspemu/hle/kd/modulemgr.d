@@ -122,6 +122,26 @@ struct SceKernelSMOption {
 	uint    attribute;
 }
 
+struct SceModuleInfo {
+	ushort modattribute;
+	ubyte  modversion[2];
+	char   modname[27];
+	char   terminal;
+	void*  gp_value;
+	void*  ent_top;
+	void*  ent_end;
+	void*  stub_top;
+	void*  stub_end;
+}
+
+enum PspModuleInfoAttr {
+	PSP_MODULE_USER			= 0,
+	PSP_MODULE_NO_STOP		= 0x0001,
+	PSP_MODULE_SINGLE_LOAD	= 0x0002,
+	PSP_MODULE_SINGLE_START	= 0x0004,
+	PSP_MODULE_KERNEL		= 0x1000,
+};
+
 static this() {
 	mixin(Module.registerModule("ModuleMgrForUser"));
 	mixin(Module.registerModule("ModuleMgrForKernel"));

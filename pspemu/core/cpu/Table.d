@@ -48,6 +48,7 @@ alias InstructionDefinition array;
  * %C - code (for syscall)
  * %? - Indicates vmmul special exception
  */
+
 const PspInstructions = [
 	/* MIPS instructions */
 	array( "add",                0x00000020, 0xFC0007FF, "%d, %s, %t", ADDR_TYPE_NONE, 0 ),
