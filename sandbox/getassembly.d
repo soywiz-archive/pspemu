@@ -15,10 +15,12 @@ void test_start() {
 		//mov [ECX + 0], [ECX + 4];
 		//push int ptr [ECX + 4];
 		
-		label:;
 		//mov EDX, 0x77777777;
 		//jne test_end;
-		add EAX, 8;
+		label2:;
+		je test_end;
+		ret;
+		//add EAX, 8;
 		/*
 		cmp EAX, EDI;
 		cmp EDI, EAX;
