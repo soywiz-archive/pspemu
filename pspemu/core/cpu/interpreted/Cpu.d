@@ -72,6 +72,15 @@ class CpuInterpreted : public Cpu {
 			// Process interrupts if there are pending interrupts
 			if (interrupts.InterruptFlag) interrupts.process();
 
+			if (runningState != RunningState.RUNNING) waitUntilResume();
+			
+			if (registers.PAUSED) {
+				interrupts.queue(Interrupts.Type.THREAD0);
+				sleep(0);
+				//writefln("paused!");
+				continue;
+			}
+
 			if (checkBreakpoints) {
 				breakPointPrevPC = registers.PC;
 				if (traceStep) {
@@ -80,8 +89,6 @@ class CpuInterpreted : public Cpu {
 				}
 			}
 
-			if (runningState != RunningState.RUNNING) waitUntilResume();
-			
 			instruction.v = memory.read32(registers.PC);
 			lastValidPC = registers.PC;
 			mixin(genSwitch(PspInstructions));

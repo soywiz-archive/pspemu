@@ -85,9 +85,19 @@ class sceAudio_driver : Module {
 		auto cchannel = channels[channel];
 
 		version (DISABLE_SOUND) {
+			bool playing = true;
+			(new Thread({
+				sleep(200);
+				playing = false;
+			})).start();
+
 			// @TODO: Disabled:
 			return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
-				"sceAudioOutputPannedBlocking (disabled)"
+				"sceAudioOutputPannedBlocking (disabled)", (PspThread pausedThread) {
+					if (!playing) {
+						pausedThread.resumeAndReturn(0);
+					}
+				}
 			);
 		//} else if (true) {
 			//return 0;

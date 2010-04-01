@@ -194,7 +194,6 @@ const PspInstructions = [
 	array("trunc.w.s",   0x4600000D, 0xFFFF003F,"%D, %S", ADDR_TYPE_NONE, 0 ),
 
 	/* VPU instructions */
-	/+
 	array( "bvf",         0x49000000, 0xFFE30000, "%Zc, %O" , ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B ),
 	array( "bvfl",        0x49020000, 0xFFE30000, "%Zc, %O" , ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B ),
 	array( "bvt",         0x49010000, 0xFFE30000, "%Zc, %O" , ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B ),
@@ -203,10 +202,13 @@ const PspInstructions = [
 	array( "lv.s",        0xC8000000, 0xFC000000, "%Xs, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "lvl.q",       0xD4000000, 0xFC000002, "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "lvr.q",       0xD4000002, 0xFC000002, "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
+	// prxtool had problems with that.
 	array( "mfv",         0x48600000, 0xFFE0FF80, "%t, %zs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	array( "mfvc",        0x48600000, 0xFFE0FF00, "%t, %2d" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	array( "mfvc",        0x48600080, 0xFFE0FF80, "%t, %2d" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "mtv",         0x48E00000, 0xFFE0FF80, "%t, %zs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	array( "mtvc",        0x48E00000, 0xFFE0FF00, "%t, %2d" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	array( "mtvc",        0x48E00080, 0xFFE0FF80, "%t, %2d" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
 	array( "sv.q",        0xF8000000, 0xFC000002, "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "sv.s",        0xE8000000, 0xFC000000, "%Xs, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "svl.q",       0xF4000000, 0xFC000002, "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
@@ -237,6 +239,9 @@ const PspInstructions = [
 	array( "vcmovt.q",    0xD2A08080, 0xFFF88080, "%zq, %yq, %v3" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcmovt.s",    0xD2A00000, 0xFFF88080, "%zs, %ys, %v3" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcmovt.t",    0xD2A08000, 0xFFF88080, "%zt, %yt, %v3" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	
+	// Problems.
+	/+
 	array( "vcmp.p",      0x6C000080, 0xFF8080F0, "%Zn, %yp, %xp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcmp.p",      0x6C000080, 0xFFFF80F0, "%Zn, %yp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcmp.p",      0x6C000080, 0xFFFFFFF0, "%Zn" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
@@ -249,6 +254,7 @@ const PspInstructions = [
 	array( "vcmp.t",      0x6C008000, 0xFF8080F0, "%Zn, %yt, %xt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcmp.t",      0x6C008000, 0xFFFF80F0, "%Zn, %yt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcmp.t",      0x6C008000, 0xFFFFFFF0, "%Zn" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	+/
 	array( "vcos.p",      0xD0130080, 0xFFFF8080, "%zp, %yp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcos.q",      0xD0138080, 0xFFFF8080, "%zq, %yq" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vcos.s",      0xD0130000, 0xFFFF8080, "%zs, %ys" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
@@ -458,7 +464,6 @@ const PspInstructions = [
 	array( "vsub.q",      0x60808080, 0xFF808080, "%zq, %yq, %xq" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vsub.s",      0x60800000, 0xFF808080, "%zs, %ys, %xs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vsub.t",      0x60808000, 0xFF808080, "%zt, %yt, %xt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	array( "vsync",       0xFFFF0000, 0xFFFF0000, "%I" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vsync",       0xFFFF0320, 0xFFFFFFFF, "" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vt4444.q",    0xD0598080, 0xFFFF8080, "%zq, %yq" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "vt5551.q",    0xD05A8080, 0xFFFF8080, "%zq, %yq" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
@@ -476,5 +481,18 @@ const PspInstructions = [
 	array( "vzero.t",     0xD0068000, 0xFFFFFF80, "%zt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	array( "mfvme",       0x68000000, 0xFC000000, "%t, %i", ADDR_TYPE_NONE, 0 ),
 	array( "mtvme",       0xb0000000, 0xFC000000, "%t, %i", ADDR_TYPE_NONE, 0 ),
-	+/
 ];
+
+/*
+struct IsaEntry {
+	string name;
+	string format;
+}
+
+const AllegrexIsa = [
+	IsaEntry("VIDT", "110100:00:000:0:0011:two:0000000:one:vd"),
+];
+
+import pspemu.core.cpu.Switch;
+//pragma(msg, genSwitch(PspInstructions));
+*/

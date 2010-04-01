@@ -27,8 +27,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * Number of vertical blank pulses up to now
 	 */
 	uint sceDisplayGetVcount() {
-		unimplemented();
-		return 0;
+		return cpu.display.VBLANK_COUNT;
 	}
 
 	/**

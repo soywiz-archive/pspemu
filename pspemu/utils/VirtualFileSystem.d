@@ -309,8 +309,8 @@ class FileSystem : VFS {
 		flushChildren();
 	}
 	Stream implOpen(string name, FileMode mode, int attr) {
-		//return new std.stream.File(full_name ~ "/" ~ name, mode);
-		return new std.stream.BufferedFile(full_name ~ "/" ~ name, mode);
+		return new std.stream.File(full_name ~ "/" ~ name, mode);
+		//return new std.stream.BufferedFile(full_name ~ "/" ~ name, mode);
 	}
 }
 

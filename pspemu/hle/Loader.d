@@ -1,6 +1,6 @@
 module pspemu.hle.Loader;
 
-//version = DEBUG_LOADER;
+version = DEBUG_LOADER;
 //version = ALLOW_UNIMPLEMENTED_NIDS;
 //version = LOAD_DWARF_INFORMATION;
 
@@ -404,6 +404,10 @@ class Loader : IDebugSource {
 		return new SliceStream(memory, getRelocatedAddress(from), getRelocatedAddress(to));
 	}
 
+	Stream getMemorySlice(uint from, uint to) {
+		return new SliceStream(memory, (from), (to));
+	}
+
 	void load() {
 		allocatePartitionBlock();
 
@@ -417,10 +421,11 @@ class Loader : IDebugSource {
 		version (DEBUG_LOADER) writefln("Imports (0x%08X-0x%08X):", moduleInfo.importsStart, moduleInfo.importsEnd);
 
 		uint[][string] unimplementedNids;
-		
+	
 		while (!importsStream.eof) {
 			auto moduleImport     = read!(ModuleImport)(importsStream);
-			auto moduleImportName = moduleImport.name ? readStringz(memory, getRelocatedAddress(moduleImport.name)) : "<null>";
+			//writefln("%08X", moduleImport.name);
+			auto moduleImportName = moduleImport.name ? readStringz(memory, moduleImport.name) : "<null>";
 			//assert(moduleImport.entry_size == moduleImport.sizeof);
 			version (DEBUG_LOADER) {
 				writefln("  '%s'", moduleImportName);
@@ -428,8 +433,8 @@ class Loader : IDebugSource {
 			}
 			try {
 				moduleImports ~= moduleImport;
-				auto nidStream  = getMemorySliceRelocated(moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
-				auto callStream = getMemorySliceRelocated(moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
+				auto nidStream  = getMemorySlice(moduleImport.nidAddress , moduleImport.nidAddress  + moduleImport.func_count * 4);
+				auto callStream = getMemorySlice(moduleImport.callAddress, moduleImport.callAddress + moduleImport.func_count * 8);
 				//writefln("%08X", moduleImport.callAddress);
 				
 				auto pspModule = nullOnException(moduleManager[moduleImportName]);

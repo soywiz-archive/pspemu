@@ -18,94 +18,38 @@ import pspemu.core.gpu.GpuState;
 import pspemu.core.gpu.GpuImpl;
 import pspemu.core.gpu.Utils;
 
-class Texture {
-	GLuint gltex;
-	
-	this() {
-		glGenTextures(1, &gltex);
-	}
-
-	~this() {
-		glDeleteTextures(1, &gltex);
-	}
-
-	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState textureState) {
-		int rowWidth = textureState.rwidth;
-		int pitch    = (rowWidth - 16) / 4;
-		int bxc      = rowWidth / 16;
-		int byc      = textureState.height / 8;
-
-		uint* src = cast(uint*)inData.ptr;
-		
-		auto ydest = outData.ptr;
-		for (int by = 0; by < byc; by++) {
-			auto xdest = ydest;
-			for (int bx = 0; bx < bxc; bx++) {
-				auto dest = cast(uint*)xdest;
-				for (int n = 0; n < 8; n++, dest += pitch) {
-					*(dest++) = *(src++);
-					*(dest++) = *(src++);
-					*(dest++) = *(src++);
-					*(dest++) = *(src++);
-				}
-				xdest += 16;
-			}
-			ydest += rowWidth * 8;
-		}
-	}
-
-	void update(Memory memory, ref TextureState textureState) {
-		auto inData = (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize];
-		auto pformat = GpuOpengl.PixelFormats[textureState.format];
-
-		glActiveTexture(GL_TEXTURE0);
-		bind();
-
-		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pformat.size);
-
-		auto outData = inData;
-
-		if (textureState.swizzled) {
-			outData = new ubyte[inData.length];
-			//outData[] = 0xFF;
-			unswizzle(inData, outData, textureState);
-		}
-
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			pformat.internal,
-			textureState.width,
-			textureState.height,
-			0,
-			pformat.external,
-			pformat.opengl,
-			outData.ptr
-		);
-		//glCheckError();
-		
-		//std.file.write("demodemo", data[0..(textureState.width * textureState.height) * cast(uint)pformat.size]);
-		
-		//writefln("%d, %d, %d");
-		writefln("update(%d):%08X,%s, %d", gltex, inData.ptr, textureState, (textureState.width * textureState.height) * cast(uint)pformat.size);
-	}
-
-	void bind() {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, gltex);
-	}
-}
-
 class GpuOpengl : GpuImplAbstract {
 	mixin OpenglBase;
 	mixin OpenglUtils;
 
 	/// Previous state to check changes in the new state and perform new operations.
 	GpuState prevState;
+	glProgram program;
 
+	glUniform gla_tex;
+	glUniform gla_clut;
+	glUniform gla_clutOffset;
+	glUniform gla_clutUse;
+	glUniform gla_textureUse;
+	
 	void init() {
 		openglInit();
 		openglPostInit();
+		program = new glProgram();
+		program.attach(new glFragmentShader(import("shader.fragment")));
+		program.attach(new glVertexShader(import("shader.vertex")));
+		program.link();
+		//program.use();
+
+		/*
+		gla_tex          = program.getUniform("tex");
+		gla_clut         = program.getUniform("clut");
+		gla_clutOffset   = program.getUniform("clutOffset");
+		gla_clutUse      = program.getUniform("clutUse");
+		gla_textureUse   = program.getUniform("textureUse");
+		*/
+
+		//program.use(0);
 	}
 
 	void reset() {
@@ -556,6 +500,91 @@ template OpenglBase() {
 	}
 }
 
+class Clut {
+}
+
+class Texture {
+	GLuint gltex;
+	
+	this() {
+		glGenTextures(1, &gltex);
+	}
+
+	~this() {
+		glDeleteTextures(1, &gltex);
+	}
+
+	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState textureState) {
+		int rowWidth = textureState.rwidth;
+		int pitch    = (rowWidth - 16) / 4;
+		int bxc      = rowWidth / 16;
+		int byc      = textureState.height / 8;
+
+		uint* src = cast(uint*)inData.ptr;
+		
+		auto ydest = outData.ptr;
+		for (int by = 0; by < byc; by++) {
+			auto xdest = ydest;
+			for (int bx = 0; bx < bxc; bx++) {
+				auto dest = cast(uint*)xdest;
+				for (int n = 0; n < 8; n++, dest += pitch) {
+					*(dest++) = *(src++);
+					*(dest++) = *(src++);
+					*(dest++) = *(src++);
+					*(dest++) = *(src++);
+				}
+				xdest += 16;
+			}
+			ydest += rowWidth * 8;
+		}
+	}
+
+	void update(Memory memory, ref TextureState textureState) {
+		auto inData = (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize];
+		auto pformat = GpuOpengl.PixelFormats[textureState.format];
+
+		glActiveTexture(GL_TEXTURE0);
+		bind();
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pformat.size);
+
+		auto outData = inData;
+
+		if (textureState.swizzled) {
+			outData = new ubyte[inData.length];
+			//outData[] = 0xFF;
+			unswizzle(inData, outData, textureState);
+		}
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			pformat.internal,
+			textureState.width,
+			textureState.height,
+			0,
+			pformat.external,
+			pformat.opengl,
+			outData.ptr
+		);
+		//glCheckError();
+		
+		//std.file.write("demodemo", data[0..(textureState.width * textureState.height) * cast(uint)pformat.size]);
+		
+		//writefln("%d, %d, %d");
+		writefln("update(%d):%08X,%s, %d", gltex, inData.ptr, textureState, (textureState.width * textureState.height) * cast(uint)pformat.size);
+	}
+
+	void invalidate() {
+		// @TODO
+	}
+
+	void bind() {
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, gltex);
+	}
+}
+
 extern (Windows) {
 	bool  SetPixelFormat(HDC, int, PIXELFORMATDESCRIPTOR*);
 	bool  SwapBuffers(HDC);
@@ -570,6 +599,7 @@ extern (Windows) {
 
 pragma(lib, "gdi32.lib");
 
+/*
 version (unittest) {
 	import core.thread;
 }
@@ -582,3 +612,4 @@ unittest {
 	})).start();
 }
 version (TEST_GPUOPENGL) static void main() {}
+*/

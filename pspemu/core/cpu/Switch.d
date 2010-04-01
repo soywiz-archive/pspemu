@@ -1,7 +1,7 @@
 module pspemu.core.cpu.Switch;
 
 import pspemu.core.cpu.Instruction;
-import pspemu.utils.Assertion;
+//import pspemu.utils.Assertion;
 
 import std.stdio, std.traits;
 
@@ -112,6 +112,7 @@ static pure nothrow {
 	}
 }
 
+/*
 unittest {
 	static const testList = [
 		InstructionDefinition("add"      , 0x00000020, 0xFC0007FF),
@@ -158,3 +159,4 @@ unittest {
 		assertTrue(("unk"  in called) !is null, "Check an unknown/invalid instruction was detected");
 	}
 }
+*/

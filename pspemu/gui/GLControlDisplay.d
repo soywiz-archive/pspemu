@@ -82,6 +82,7 @@ class GLControlDisplay : GLControl {
 					//GC.collect();
 
 					cpu.interrupts.queue(Interrupts.Type.VBLANK);
+					display.VBLANK_COUNT++;
 					while (true) {
 						if (performanceCounter - backPerformanceCounter >= delay) break;
 						GC.minimize();

@@ -318,24 +318,27 @@ class Builder {
 		$this->rcc = dirname(__FILE__) . '\\rcc\\rcc.exe';
 		$this->exe = $exe;
 		$this->objects_folder = dirname(__FILE__) . '/objects';
+		
+		$common_flags = "-Jresources -Jpspemu/core/gpu/impl -Idev/dmd2/import";
+		
 		switch (strtolower($profile)) {
 			case 'debug':
 				//$this->flags = "-Jresources -Idev\dmd2\import -g -version=DFL_EXE -debug -L/exet:nt/su:console:4.0";
 				//$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
-				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
+				$this->flags = "{$common_flags} -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
 			case 'release':
-				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -O -version=DFL_EXE -release -L/exet:nt/su:windows:4.0";
+				$this->flags = "{$common_flags} -noboundscheck -O -version=DFL_EXE -release -L/exet:nt/su:windows:4.0";
 			break;
 			default:
 				echo "Unknown profile {$profile}. Selecting 'normal'.";
 			case 'assembler':
 			case 'normal':
-				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
+				$this->flags = "{$common_flags} -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
 			case 'test':
 				//$this->flags = "-Jresources -Idev\dmd2\import -g -O -version=DFL_EXE -debug -unittest -L/exet:nt/su:console:4.0";
-				$this->flags = "-Jresources -Idev\dmd2\import -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
+				$this->flags = "{$common_flags} -noboundscheck -g -O -version=DFL_EXE -release -L/exet:nt/su:console:4.0";
 			break;
 		}
 	}

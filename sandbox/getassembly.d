@@ -17,9 +17,12 @@ void test_start() {
 		
 		//mov EDX, 0x77777777;
 		//jne test_end;
-		label2:;
-		je test_end;
-		ret;
+		//label2:;
+		//je test_end;
+		//ret;
+		
+		setl DL;
+		
 		//add EAX, 8;
 		/*
 		cmp EAX, EDI;

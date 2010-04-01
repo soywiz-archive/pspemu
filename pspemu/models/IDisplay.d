@@ -25,7 +25,9 @@ abstract class Display {
 	//bool frameLimiting = false;
 
 	Info info;
-	
+
+	uint VBLANK_COUNT;
+
 	uint fpsCounter;
 
 	/**
@@ -33,7 +35,9 @@ abstract class Display {
 	 */
 	abstract void* frameBufferPointer();
 
-	void reset() { }
+	void reset() {
+		VBLANK_COUNT = 0;
+	}
 
 	int frameBufferPixelFormat() { return info.pixelformat; }
 

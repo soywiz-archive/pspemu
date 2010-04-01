@@ -179,6 +179,9 @@ class EmiterX86 : Emiter {
 		write1(displacement);
 	}
 
+	void PUSHF() { write1(0x9C); }
+	void POPF() { write1(0x9D); }
+
 	// TRAP DEBUGGGER
 	// http://faydoc.tripod.com/cpu/int3.htm
 	// Very useful for debugging generated code.
@@ -198,12 +201,20 @@ class EmiterX86 : Emiter {
 		write4(v);
 	}
 
+	void SETL_EAX() {
+		MOV(Register32.EAX, 0);
+		write1(0x0F);
+		write1(0x9C);
+		write1(0xC2);
+	}
+
 	// CALL label; JMP label;
 	//void CALL(int relative_addr) { write1(0xE8); write4(relative_addr); }
 
 	void CALL(Label* label) { write1(0xE8); createLabelPlaceholderHere(label, LabelPlaceholder.Type.Relative); write4(0); }
 	void JMP (Label* label) { write1(0xE9); createLabelPlaceholderHere(label, LabelPlaceholder.Type.Relative); write4(0); }
 	void JNE (Label* label) { write1(0x0F); write1(0x85); createLabelPlaceholderHere(label, LabelPlaceholder.Type.Relative); write4(0); }
+	void JGE (Label* label) { write1(0x0F); write1(0x8D); createLabelPlaceholderHere(label, LabelPlaceholder.Type.Relative); write4(0); }
 	void JE  (uint v) { write1(0x0F); write1(0x84); write4(v); }
 	
 	void CALL(Register32 reg) { write1(0xFF); write1(0xD0 | (reg << 0)); }

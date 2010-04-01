@@ -14,11 +14,8 @@ final class Registers {
 	];
 	enum Fcsr { Rint = 0, Cast, Ceil, Floor }
 
+	bool PAUSED;
 	uint PC, nPC;    // Program Counter
-	union {
-		struct { uint LO, HI; }  // HIgh, LOw for multiplications and divisions.
-		ulong HILO;
-	}
 	uint IC;         // Interrupt controller
 	Fcsr FCSR;       // Floating point Control / Status register
 	bool CC;         // Control Word (Floating point? C1)
@@ -35,6 +32,14 @@ final class Registers {
 		}
 	}
 	union { uint[32] RF; float[32] F; } // Floating point registers.
+	union {
+		struct { uint LO, HI; }  // HIgh, LOw for multiplications and divisions.
+		ulong HILO;
+	}
+	union {
+		struct { float[4 * 4 * 8] VF; }
+		struct { float[4 * 4][8]  VF_MATRIX; }
+	}
 
 	static class FP {
 		protected static int[string] aliases;

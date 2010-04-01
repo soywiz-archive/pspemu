@@ -2406,6 +2406,13 @@ class glVertexShader : glShader {
 	this(string program) { super(GL_VERTEX_SHADER, program); }
 }
 
+/*
+class glGeometryShader : glShader {
+	this() { super(GL_GEOMETRY_SHADER); }
+	this(string program) { super(GL_GEOMETRY_SHADER, program); }
+}
+*/
+
 class glProgram {
 	GLuint id;
 	char[] error;

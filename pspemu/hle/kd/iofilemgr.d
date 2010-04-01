@@ -253,12 +253,14 @@ class IoFileMgrForKernel : Module {
 	SceUID sceIoOpen(/*const*/ string file, int flags, SceMode mode) {
 		try {
 			//writefln("opening...'%s/%s'", fscurdir, file);
-			FileMode fmode;
+			FileMode fmode = FileMode.In;
 
-			if (mode & PSP_O_RDONLY) fmode |= FileMode.In;
-			if (mode & PSP_O_WRONLY) fmode |= FileMode.Out;
-			if (mode & PSP_O_APPEND) fmode |= FileMode.Append;
-			if (mode & PSP_O_CREAT ) fmode |= FileMode.OutNew;
+			if (flags & PSP_O_RDONLY) fmode |= FileMode.In;
+			if (flags & PSP_O_WRONLY) fmode |= FileMode.Out;
+			if (flags & PSP_O_APPEND) fmode |= FileMode.Append;
+			if (flags & PSP_O_CREAT ) fmode |= FileMode.OutNew;
+			
+			//writefln("FMODE: %08X", fmode);
 			
 			auto stream = new SliceStream(locateParentAndUpdateFile(file).open(file, fmode, 0777), 0);
 			openedStreams[stream] = true;
@@ -403,7 +405,8 @@ class IoFileMgrForKernel : Module {
 		}
 		
 		try {
-			auto fentry   = locateParentAndUpdateFile(file)[file];
+			locateParentAndUpdateFile(file).flush();
+			auto fentry = locateParentAndUpdateFile(file)[file];
 			
 			{
 				stat.st_mode = 0;

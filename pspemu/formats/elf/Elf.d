@@ -300,7 +300,7 @@ class Elf {
 					break;
 					
 					case Reloc.Type.MipsGpRel16: {
-						Logger.log(Logger.Level.WARNING, "Loader", "Reloc.Type.MipsGpRel16: %08X", instruction.v);
+						Logger.log(Logger.Level.WARNING, "Loader", "Reloc.Type.MipsGpRel16: %08X -> %08X", offset, instruction.v);
 					} break;
 				} // switch
 				

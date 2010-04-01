@@ -500,7 +500,9 @@ class PspThread {
 	void switchToThisThread() {
 		if (paused) {
 			executeHlePausedEnterCallback();
+			threadManager.cpu.registers.PAUSED = true;
 		} else {
+			threadManager.cpu.registers.PAUSED = false;
 			if (threadManager.currentThread != this) {
 				if (threadManager.currentThread) threadManager.currentThread.switchFrom();
 				this.switchTo();
@@ -520,6 +522,7 @@ class PspThread {
 		this.pausedName     = pausedName;
 		this.pausedCallback = pausedCallback;
 		this.paused = true;
+		threadManager.cpu.registers.PAUSED = true;
 		//this.switchToOtherThread();
 
 		threadManager.threadManForUser.avoidAutosetReturnValue();
