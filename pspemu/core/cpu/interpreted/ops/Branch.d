@@ -13,7 +13,7 @@ static pure nothrow string BRANCH(Likely likely, Link link, string condition) {
 	string r;
 	r ~= "if (" ~ condition ~ ") {";
 		if (link) r ~= "	registers[31] = registers.nPC + 4;";
-	r ~= "	registers.pcAdvance(instruction.OFFSET << 2);";
+	r ~= "	registers.pcAdvance(instruction.OFFSET2);";
 	r ~= "} else {";
 		if (likely) {
 			r ~= "	registers.PC  = registers.nPC + 4;";

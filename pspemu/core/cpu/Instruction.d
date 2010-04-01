@@ -68,6 +68,8 @@ struct Instruction {
 
 		uint JUMP2() { return JUMP << 2; }
 		uint JUMP2(uint v) { JUMP = v >> 2; return v; }
+		
+		int OFFSET2() { return IMM * 4; }
 
 		// LSB/MSB
 		struct { mixin(bitfields!(

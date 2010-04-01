@@ -58,7 +58,18 @@ static pure nothrow {
 	string callFunction(string opname) {
 		//return "OP_" ~ process_name(opname) ~ "();";
 		string funcName = "OP_" ~ process_name(opname);
-		return "static if (is(ReturnType!(" ~ funcName ~ ") : string)) { mixin(" ~ funcName ~ "); } else {" ~ funcName ~ "();}";
+		return (
+			"static if (__traits(compiles, " ~ funcName ~ ")) {"
+				"static if (is(ReturnType!(" ~ funcName ~ ") : string)) {"
+					"mixin(" ~ funcName ~ ");"
+				"} else {" ~
+					funcName ~ "();"
+				"}"
+			"} else {"
+				"OP_UNK();"
+			"}"
+		);
+		//r ~= "mixin(\"if (__traits(compiles, " ~ ilist[0].name ~ ")) { } else { }\");";
 	}
 
 	// Generate a set of switch for decoding instructions.

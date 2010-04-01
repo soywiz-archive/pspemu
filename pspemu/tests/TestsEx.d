@@ -1,5 +1,7 @@
 module pspemu.tests.TestsEx;
 
+//version = USE_CPU_DYNAREC;
+
 import std.stream, std.stdio, core.thread, std.file;
 
 import std.c.windows.windows;
@@ -23,8 +25,12 @@ import pspemu.core.cpu.Interrupts;
 import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
 
-import pspemu.core.cpu.interpreted.Cpu;
-import pspemu.core.cpu.dynarec.Cpu;
+version (USE_CPU_DYNAREC) {
+	import pspemu.core.cpu.dynarec.Cpu;
+} else {
+	import pspemu.core.cpu.interpreted.Cpu;
+}
+
 import pspemu.core.gpu.impl.GpuOpengl;
 
 import pspemu.hle.Module;
@@ -45,72 +51,74 @@ class PspDisplay : Display {
 	}
 }
 
-void test_dynarec() {
-	uint[32] registers;
-	auto emiter = new EmiterMipsToX86();
-	
-	alias EmiterMipsToX86.MipsRegisters MipsRegisters;
-	
-	//emiter.INT3();
-	emiter.MIPS_LOAD_REGISTER_TABLE(cast(uint)registers.ptr);
+version (USE_CPU_DYNAREC) {
+	void test_dynarec() {
+		uint[32] registers;
+		auto emiter = new EmiterMipsToX86();
+		
+		alias EmiterMipsToX86.MipsRegisters MipsRegisters;
+		
+		//emiter.INT3();
+		emiter.MIPS_LOAD_REGISTER_TABLE(cast(uint)registers.ptr);
 
-	//emiter.MIPS_LOAD_REGISTER(EmiterX86.Register32.EAX, 17);
-	//emiter.MIPS_ADDU(1, 2, 3);
-	emiter.MIPS_LI(MipsRegisters.T0, 128);
+		//emiter.MIPS_LOAD_REGISTER(EmiterX86.Register32.EAX, 17);
+		//emiter.MIPS_ADDU(1, 2, 3);
+		emiter.MIPS_LI(MipsRegisters.T0, 128);
 
-	auto loop_color = emiter.createLabelAndSetHere();
+		auto loop_color = emiter.createLabelAndSetHere();
 
-	emiter.MIPS_LI(MipsRegisters.A0, 0x04000000);
-	emiter.MIPS_LI(MipsRegisters.A1, 0x88000);
-	
-	auto loop_write = emiter.createLabelAndSetHere();
+		emiter.MIPS_LI(MipsRegisters.A0, 0x04000000);
+		emiter.MIPS_LI(MipsRegisters.A1, 0x88000);
+		
+		auto loop_write = emiter.createLabelAndSetHere();
 
-	emiter.MIPS_ADDIU(MipsRegisters.A0, MipsRegisters.A0, 1);
-	emiter.MIPS_ADDIU(MipsRegisters.A1, MipsRegisters.A1, -1);
-	emiter.MIPS_SB(MipsRegisters.T0, MipsRegisters.A0, 0);
-	
-	emiter.MIPS_PREPARE_CMP(MipsRegisters.A1, MipsRegisters.ZR);
-	emiter.MIPS_NOP();
-	emiter.MIPS_BNE(loop_write);
+		emiter.MIPS_ADDIU(MipsRegisters.A0, MipsRegisters.A0, 1);
+		emiter.MIPS_ADDIU(MipsRegisters.A1, MipsRegisters.A1, -1);
+		emiter.MIPS_SB(MipsRegisters.T0, MipsRegisters.A0, 0);
+		
+		emiter.MIPS_PREPARE_CMP(MipsRegisters.A1, MipsRegisters.ZR);
+		emiter.MIPS_NOP();
+		emiter.MIPS_BNE(loop_write);
 
-	emiter.MIPS_ADDIU(MipsRegisters.T0, MipsRegisters.T0, -1);
+		emiter.MIPS_ADDIU(MipsRegisters.T0, MipsRegisters.T0, -1);
 
-	emiter.MIPS_PREPARE_CMP(MipsRegisters.T0, MipsRegisters.ZR);
-	emiter.MIPS_NOP();
-	emiter.MIPS_BNE(loop_color);
-	
-	/*
-	auto loop_write = emiter.createLabelAndSetHere();
-	emiter.JMP(loop_write);
-	*/
-	
-	emiter.RET();
+		emiter.MIPS_PREPARE_CMP(MipsRegisters.T0, MipsRegisters.ZR);
+		emiter.MIPS_NOP();
+		emiter.MIPS_BNE(loop_color);
+		
+		/*
+		auto loop_write = emiter.createLabelAndSetHere();
+		emiter.JMP(loop_write);
+		*/
+		
+		emiter.RET();
 
-	std.file.write("test.bin", emiter.writedCode);
+		std.file.write("test.bin", emiter.writedCode);
 
-	emiter.execute();
-	for (int n = 0; n < 32; n++) {
-		writefln("r%d = %08X | %d", n, registers[n], registers[n]);
+		emiter.execute();
+		for (int n = 0; n < 32; n++) {
+			writefln("r%d = %08X | %d", n, registers[n], registers[n]);
+		}
+
+		/*
+		li t0, 128
+
+		loop_color:
+			li a0, 0x04000000
+			li a1, 0x88000
+			loop_write:
+				addiu a0, a0, 1
+				addiu a1, a1, -1
+				sb t0, 0(a0)
+			bne a1, zr, loop_write
+			nop
+		addi t0, t0, 1
+		syscall 0x2147 ; sceDisplay.sceDisplayWaitVblankStart
+		j loop_color
+		nop
+
+		*/
 	}
-
-/*
-li t0, 128
-
-loop_color:
-	li a0, 0x04000000
-	li a1, 0x88000
-	loop_write:
-		addiu a0, a0, 1
-		addiu a1, a1, -1
-		sb t0, 0(a0)
-	bne a1, zr, loop_write
-	nop
-addi t0, t0, 1
-syscall 0x2147 ; sceDisplay.sceDisplayWaitVblankStart
-j loop_color
-nop
-
-*/
 }
 
 void main() {
@@ -121,7 +129,11 @@ void main() {
 	auto controller    = new Controller();
 	auto display       = new PspDisplay(memory);
 	auto gpu           = new Gpu(new GpuOpengl, memory);
-	auto cpu           = new CpuInterpreted(memory, gpu, display, controller);
+	version (USE_CPU_DYNAREC) {
+		auto cpu       = new CpuDynaRec(memory, gpu, display, controller);
+	} else {
+		auto cpu       = new CpuInterpreted(memory, gpu, display, controller);
+	}
 	auto dissasembler  = new AllegrexDisassembler(memory);
 
 	// HLE.
@@ -129,8 +141,13 @@ void main() {
 	auto loader        = new Loader(cpu, moduleManager);
 	auto syscall       = new Syscall(cpu, moduleManager);
 
-	cpu.errorHandler = (Cpu cpu, Object error) {
-	};
+	cpu.errorHandler = (Cpu cpu, Object error) { };
+	
+	// Test
+	version (USE_CPU_DYNAREC) {
+		loader.loadAndExecute("tests_ex/simple/loop2.asm");
+		return;
+	}
 
 	int totalFailed = 0, totalExecuted = 0;
 	foreach (DirEntry e; dirEntries("tests_ex", SpanMode.breadth)) {

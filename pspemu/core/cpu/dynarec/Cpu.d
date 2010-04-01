@@ -11,6 +11,7 @@ import pspemu.core.Memory;
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Interrupts;
 import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Disassembler;
 import pspemu.core.cpu.Table;
 import pspemu.core.cpu.Switch;
 import pspemu.core.cpu.interpreted.Utils;
@@ -114,10 +115,16 @@ class EmiterMipsToX86 : EmiterX86 {
 		MIPS_LOAD_REGISTER(Register32.EAX, rs);
 		if (offset != 0) ADD_EAX(cast(int)offset);
 		PUSH(Register32.EAX);
-
-		CALL(createLabelToFunction(&MEMORY_WRITE_8));
-
+		{
+			CALL(createLabelToFunction(&MEMORY_WRITE_8));
+		}
 		ADD(Register32.ESP, 8);
+	}
+
+	void MIPS_SYSCALL(uint code) {
+		PUSH(code);
+		CALL(createLabelToFunction(&SYSCALL));
+		ADD(Register32.ESP, 4);
 	}
 
 	void MIPS_PREPARE_CMP(MipsRegisters rs, MipsRegisters rt) {
@@ -129,10 +136,25 @@ class EmiterMipsToX86 : EmiterX86 {
 	void MIPS_BNE(Label* label) {
 		JNE(label);
 	}
+
+	void MIPS_J(Label* label) {
+		JMP(label);
+	}
 }
 
-extern(C) void MEMORY_WRITE_8(uint addr, ubyte value) {
-	//writefln("WRITE(%08X) <- %02X", addr, value);
+//static Memory lastMemory;
+//static ISyscall lastSyscall;
+static Cpu lastCpu;
+
+static extern(C) void MEMORY_WRITE_8(uint addr, ubyte value) {
+	writefln("WRITE(%08X) <- %02X", addr, value);
+	//lastCpu.memory[addr] = value;
+	lastCpu.memory.write8(addr, value);
+}
+
+static extern(C) void SYSCALL(uint code) {
+	writefln("SYSCALL %08X", code);
+	lastCpu.syscall(code);
 }
 
 class InstructionMarker {
@@ -149,6 +171,10 @@ class InstructionMarker {
 	bool marked(uint PC) {
 		return (PC in marks) !is null;
 	}
+
+	void reset() {
+		marks = null;
+	}
 }
 
 class CpuDynaRec : Cpu {
@@ -156,57 +182,209 @@ class CpuDynaRec : Cpu {
 		super(memory, gpu, display, controller);
 	}
 
+	alias EmiterMipsToX86.MipsRegisters Register;
+
 	struct InstructionInfo {
 		uint PC;
-		InstructionDefinition instructionDefinition;
+		//InstructionDefinition instructionDefinition;
 		Instruction instruction;
-		bool isJump() {
-			return instructionDefinition.addrtype != ADDR_TYPE_NONE;
+		bool isJump, jumpAlways, isLikely, jumpLink, isEndOfBranch;
+		uint jumpAddress;
+
+		enum Likely { NO, YES }
+		enum Link   { NO, YES }
+
+		void set(uint PC, uint v) {
+			this.PC = PC; instruction.v = v;
 		}
-		bool isEndOfBranch() {
-			if (!isJump) return false;
-			// @TODO Check conditional!
-			return true;
-		}
-		bool isLikely() {
-			// @TODO Check likely!
-			return false;
-		}
-		void parse(uint PC, uint v) {
-			this.PC = PC;
-			instruction.v = v;
-		}
-		uint jumpAddress() {
-			switch (instructionDefinition.addrtype) {
-				default: return -1;
-				case ADDR_TYPE_16: return PC + instruction.IMMU;
-				case ADDR_TYPE_26: return instruction.JUMP2;
+
+		void parseJumps() {
+			void OP_UNK() {
+				isJump = jumpAlways = isLikely = jumpLink = isEndOfBranch = false;
+				jumpAddress = -1;
+				//writefln("UNK");
 			}
+			
+			static pure nothrow string BRANCH(Likely likely, Link link, string alwaysCondition) {
+				return (
+					"isJump = true;"
+					"isLikely = " ~ (likely ? "true" : "false") ~ ";"
+					"jumpLink   = " ~ (link ? "true" : "false") ~ ";"
+					"jumpAlways = " ~ alwaysCondition ~ ";"
+					//"isEndOfBranch = " ~ alwaysCondition ~ ";" // To optimize!
+					"isEndOfBranch = false;"
+					"jumpAddress = PC + instruction.OFFSET2 + 4;"
+				);
+			}
+			static pure nothrow string BRANCH_S(Likely likely, string condition) { return BRANCH(likely, Link.NO, condition); }
+
+			void OP_BEQ () { mixin(BRANCH(Likely.NO , Link.NO , "instruction.RS == instruction.RT")); }
+			void OP_BEQL() { mixin(BRANCH(Likely.YES, Link.NO , "instruction.RS == instruction.RT")); }
+			void OP_BGEZ  () { mixin(BRANCH(Likely.NO , Link.NO , "instruction.RS == 0")); }
+			void OP_BGEZAL() { mixin(BRANCH(Likely.NO , Link.YES, "instruction.RS == 0")); }
+			void OP_BGEZL () { mixin(BRANCH(Likely.YES, Link.NO , "instruction.RS == 0")); }
+			void OP_BGTZ () { mixin(BRANCH(Likely.NO , Link.NO , "false")); }
+			void OP_BGTZL() { mixin(BRANCH(Likely.YES, Link.NO , "false")); }
+			void OP_BLEZ () { mixin(BRANCH(Likely.NO , Link.NO , "instruction.RS == 0")); }
+			void OP_BLEZL() { mixin(BRANCH(Likely.YES, Link.NO , "instruction.RS == 0")); }
+			void OP_BLTZ   () { mixin(BRANCH(Likely.NO , Link.NO , "false")); }
+			void OP_BLTZL  () { mixin(BRANCH(Likely.YES, Link.NO , "false")); }
+			void OP_BLTZAL () { mixin(BRANCH(Likely.NO , Link.YES, "false")); }
+			void OP_BLTZALL() { mixin(BRANCH(Likely.YES, Link.YES, "false")); }
+			void OP_BNE () { mixin(BRANCH(Likely.NO , Link.NO , "false")); }
+			void OP_BNEL() { mixin(BRANCH(Likely.YES, Link.NO , "false")); }
+
+			void OP_BC1F () { mixin(BRANCH_S(Likely.NO,  "false")); }
+			void OP_BC1FL() { mixin(BRANCH_S(Likely.YES, "false")); }
+			void OP_BC1T () { mixin(BRANCH_S(Likely.NO,  "false")); }
+			void OP_BC1TL() { mixin(BRANCH_S(Likely.YES, "false")); }
+
+			void OP_J() { isJump = true; jumpAlways = true; isEndOfBranch = true; jumpAddress = instruction.JUMP2; }
+			void OP_JR() { isJump = true; jumpAlways = true; isEndOfBranch = true; jumpAddress = -1; }
+			void OP_JAL() { isJump = true; jumpAlways = true; isEndOfBranch = false; jumpAddress = instruction.JUMP2; }
+			void OP_JALR() { isJump = true; jumpAlways = true; isEndOfBranch = false; jumpAddress = -1; }
+
+			mixin(genSwitch(PspInstructions));
+		}
+		
+		void emitNonDelayed(EmiterMipsToX86 emiter) {
+			void OP_UNK() { writefln("Unknown instruction 0x%08X at 0x%08X", instruction.v, PC); }
+			void OP_LUI() {
+				writefln("LUI r%d, %04X", instruction.RT, cast(ushort)instruction.IMMU);
+				emiter.MIPS_LUI(cast(Register)instruction.RT, cast(ushort)instruction.IMMU);
+			}
+			void OP_ORI() {
+				writefln("ORI r%d, r%d, %04X", instruction.RT, instruction.RS, cast(ushort)instruction.IMMU);
+				emiter.MIPS_ORI(cast(Register)instruction.RT, cast(Register)instruction.RS, cast(ushort)instruction.IMMU);
+			}
+			void OP_ADDI() {
+				writefln("ADDI r%d, r%d, %d", instruction.RT, instruction.RS, cast(short)instruction.IMM);
+				emiter.MIPS_ADDIU(cast(Register)instruction.RT, cast(Register)instruction.RS, cast(int)instruction.IMM);
+			}
+			alias OP_ADDI OP_ADDIU;
+			void OP_SB() {
+				writefln("SB r%d, %d(r%d)", instruction.RT, cast(short)instruction.OFFSET, instruction.RS);
+				emiter.MIPS_SB(cast(Register)instruction.RT, cast(Register)instruction.RS, cast(ushort)instruction.OFFSET);
+			}
+			void OP_SYSCALL() {
+				writefln("SYSCALL 0x%08X", instruction.CODE);
+				emiter.MIPS_SYSCALL(instruction.CODE);
+			}
+			void OP_SLL() {
+				writefln("Not implemented SLL!");
+			}
+			mixin(genSwitch(PspInstructions));
+		}
+		
+		void emitPreDelayed(EmiterMipsToX86 emiter, Emiter.Label* label) {
+			if (jumpAlways) {
+				return;
+			}
+
+			void OP_UNK() {
+				writefln("CMP r%d, r%d", instruction.RS, instruction.RT);
+				emiter.MIPS_PREPARE_CMP(cast(Register)instruction.RS, cast(Register)instruction.RT);
+			}
+			void OP_J() {
+			}
+			mixin(genSwitch(PspInstructions));
+		}
+
+		void emitPostDelayed(EmiterMipsToX86 emiter, Emiter.Label* label) {
+			void OP_UNK() {
+				writefln("Unknown jump!");
+			}
+			void OP_BNE() {
+				emiter.MIPS_BNE(label);
+			}
+			void OP_J() {
+				emiter.MIPS_J(label);
+			}
+			mixin(genSwitch(PspInstructions));
 		}
 	}
 
 	void analyzeFunction(uint PC) {
 		InstructionMarker explored = new InstructionMarker;
-		InstructionInfo instructionInfo;
+		InstructionInfo instructionInfo, delayedInstructionInfo;
 		bool[uint] branchesToExplore;
-		bool[uint] labels;
-		branchesToExplore[PC] = true;
+		auto emiter = new EmiterMipsToX86;
+		Emiter.Label*[uint] labels;
+		uint StartPC = PC;
 		
-		while (branchesToExplore.length) {
-			PC = branchesToExplore.keys[0];
-			labels[PC] = true;
-			branchesToExplore.remove(PC);
-			for (;; PC++) {
-				if (explored.marked(PC)) break;
-				explored.mark(PC);
-				instructionInfo.parse(PC, memory.read32(PC));
+		enum Pass { ANALYZE = 0, EMIT = 1 }
+		
+		//emiter.INT3(); // Debugger
+		emiter.MIPS_LOAD_REGISTER_TABLE(cast(uint)&registers.R[0]);
 
-				if (instructionInfo.isJump) {
-					branchesToExplore[instructionInfo.jumpAddress] = true;
+		// Two passes.
+		foreach (pass; [Pass.ANALYZE, Pass.EMIT]) {
+			branchesToExplore[StartPC] = true;
+			explored.reset();
+			while (branchesToExplore.length) {
+				// Extract a PC to start processing.
+				PC = branchesToExplore.keys[0]; branchesToExplore.remove(PC);
+
+				// If we are analyzing and we didn't set this address. We will create a label for it.
+				if (pass == Pass.ANALYZE) {
+					if ((PC in labels) is null) {
+						labels[PC] = emiter.createLabel;
+					}
 				}
 
-				if (instructionInfo.isEndOfBranch) break;
+				for (; !explored.marked(PC); PC += 4) {
+					explored.mark(PC);
+
+					if (pass == Pass.EMIT) {
+						if (PC in labels) {
+							emiter.setLabelHere(labels[PC]);
+						}
+					}
+
+					instructionInfo.set(PC, memory.read32(PC));
+					instructionInfo.parseJumps();
+
+					if (pass == Pass.EMIT) {
+						//writefln("EMIT:%08X", PC);
+						// Jump.
+						if (instructionInfo.isJump) {
+							Emiter.Label* label = labels[instructionInfo.jumpAddress];
+
+							//auto dis = new AllegrexDisassembler(memory); writefln(":::%s", dis.dissasm(PC, memory));
+
+							instructionInfo.emitPreDelayed(emiter, label);
+							delayedInstructionInfo.set(PC + 4, memory.read32(PC + 4));
+							delayedInstructionInfo.emitNonDelayed(emiter);
+							instructionInfo.emitPostDelayed(emiter, label);
+							PC += 4;
+						}
+						// No jump.
+						else {
+							instructionInfo.emitNonDelayed(emiter);
+						}
+					}
+
+					if (instructionInfo.isJump) {
+						//writefln(" EXP: %08X", instructionInfo.jumpAddress);
+						branchesToExplore[instructionInfo.jumpAddress] = true;
+					}
+
+					if (instructionInfo.isEndOfBranch) {
+						break;
+					}
+				}
 			}
 		}
+		
+		//std.file.write("test.bin", emiter.writedCode);
+		lastCpu = this;
+		//lastMemory  = memory;
+		//lastSyscall = syscall;
+		emiter.execute();
+	}
+
+	void execute(uint count) {
+		analyzeFunction(registers.PC);
+		throw(new Exception("Oh, noes!"));
 	}
 }

@@ -1,6 +1,7 @@
 module pspemu.exe.Pspemu;
 
 //version = TRACE_FROM_BEGINING;
+//version = USE_CPU_DYNAREC;
 
 import std.stream, std.stdio, core.thread;
 
@@ -22,10 +23,15 @@ import pspemu.formats.Pbp;
 import pspemu.core.Memory;
 import pspemu.core.cpu.Registers;
 import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.interpreted.Cpu;
 import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
 import pspemu.core.gpu.impl.GpuOpengl;
+
+version (USE_CPU_DYNAREC) {
+	import pspemu.core.cpu.dynarec.Cpu;
+} else {
+	import pspemu.core.cpu.interpreted.Cpu;
+}
 
 import pspemu.hle.Module;
 import pspemu.hle.Loader;
@@ -49,7 +55,11 @@ int main(string[] args) {
 	auto controller    = new Controller();
 	auto display       = new PspDisplay(memory);
 	auto gpu           = new Gpu(new GpuOpengl, memory);
-	auto cpu           = new CpuInterpreted(memory, gpu, display, controller);
+	version (USE_CPU_DYNAREC) {
+		auto cpu       = new CpuDynaRec(memory, gpu, display, controller);
+	} else {
+		auto cpu       = new CpuInterpreted(memory, gpu, display, controller);
+	}
 	auto dissasembler  = new AllegrexDisassembler(memory);
 
 	// HLE.

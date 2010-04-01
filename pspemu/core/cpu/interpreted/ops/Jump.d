@@ -58,7 +58,7 @@ template TemplateCpu_JUMP_Utils() {
 		string JUMP() {
 			return q{
 				registers.PC  = registers.nPC;
-				registers.nPC = (registers.PC & 0x_F0000000) | (instruction.JUMP << 2);
+				registers.nPC = (registers.PC & 0x_F0000000) | instruction.JUMP2;
 			};
 		}
 		string JUMPR() {
