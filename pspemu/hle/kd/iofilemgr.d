@@ -60,7 +60,12 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x1117C65F, sceIoRmdir));
 	}
 
-	bool[Stream] openedStreams;
+	Stream[SceUID] openedStreams;
+
+	Stream getStreamFromFD(SceUID uid) {
+		if ((uid in openedStreams) is null) throw(new Exception(std.string.format("No file opened with FD/UID(%d)", uid)));
+		return openedStreams[uid];
+	}
 
 	/** 
 	  * Reads an entry from an opened file descriptor.
@@ -204,9 +209,9 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error
 	 */
 	int sceIoClose(SceUID fd) {
-		auto stream = reinterpret!(Stream)(fd);
-		if (stream is null) return -1;
-		openedStreams.remove(stream);
+		if (fd < 0) return -1;
+		auto stream = getStreamFromFD(fd);
+		openedStreams.remove(fd);
 		stream.flush();
 		stream.close();
 		return 0;
@@ -252,19 +257,16 @@ class IoFileMgrForKernel : Module {
 	 */
 	SceUID sceIoOpen(/*const*/ string file, int flags, SceMode mode) {
 		try {
-			//writefln("opening...'%s/%s'", fscurdir, file);
-			FileMode fmode = FileMode.In;
+			FileMode fmode;
 
 			if (flags & PSP_O_RDONLY) fmode |= FileMode.In;
 			if (flags & PSP_O_WRONLY) fmode |= FileMode.Out;
 			if (flags & PSP_O_APPEND) fmode |= FileMode.Append;
 			if (flags & PSP_O_CREAT ) fmode |= FileMode.OutNew;
 			
-			//writefln("FMODE: %08X", fmode);
-			
-			auto stream = new SliceStream(locateParentAndUpdateFile(file).open(file, fmode, 0777), 0);
-			openedStreams[stream] = true;
-			return cast(SceUID)cast(void *)stream;
+			SceUID fd = 0; foreach (fd_cur; openedStreams.keys) if (fd < fd_cur) fd = fd_cur; fd++;
+			openedStreams[fd] = locateParentAndUpdateFile(file).open(file, fmode, 0777);
+			return fd;
 		} catch (Object o) {
 			writefln("sceIoOpen exception: %s", o);
 			return -1;
@@ -286,9 +288,9 @@ class IoFileMgrForKernel : Module {
 	 * @return The number of bytes read
 	 */
 	int sceIoRead(SceUID fd, void* data, SceSize size) {
-		auto stream = reinterpret!(Stream)(fd);
-		if (stream is null) return -1;
+		if (fd < 0) return -1;
 		if (data is null) return -1;
+		auto stream = getStreamFromFD(fd);
 		try {
 			return stream.read((cast(ubyte *)data)[0..size]);
 		} catch (Object o) {
@@ -312,9 +314,9 @@ class IoFileMgrForKernel : Module {
 	 * @return The number of bytes written
 	 */
 	int sceIoWrite(SceUID fd, /*const*/ void* data, SceSize size) {
-		auto stream = reinterpret!(Stream)(fd);
-		if (stream is null) return -1;
+		if (fd < 0) return -1;
 		if (data is null) return -1;
+		auto stream = getStreamFromFD(fd);
 
 		// Less than 256 MB.
 		if (stream.position >= 256 * 1024 * 1024) {
@@ -345,18 +347,9 @@ class IoFileMgrForKernel : Module {
 	 * @return The position in the file after the seek. 
 	 */
 	SceOff sceIoLseek(SceUID fd, SceOff offset, int whence) {
-		auto stream = reinterpret!(Stream)(fd);
-		static if (0) {
-			writef("posBefore(%d) | ", stream.position);
-			switch (whence) {
-				case SEEK_SET: stream.position = offset; break;
-				case SEEK_CUR: stream.position = stream.position + offset; break;
-				case SEEK_END: stream.position = stream.size + offset; break;
-			}
-			writef("posAfter(%d) | ", stream.position);
-		} else {
-			stream.seek(offset, cast(SeekPos)whence);
-		}
+		if (fd < 0) return -1;
+		auto stream = getStreamFromFD(fd);
+		stream.seek(offset, cast(SeekPos)whence);
 		return stream.position;
 	}
 

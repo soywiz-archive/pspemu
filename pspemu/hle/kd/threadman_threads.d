@@ -30,6 +30,11 @@ template ThreadManForUser_Threads() {
 		mixin(registerd!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
 	}
 
+	PspThread getThreadFromId(SceUID thid) {
+		if ((thid in threadManager.createdThreads) is null) throw(new Exception(std.string.format("No thread with THID/UID(%d)", thid)));
+		return threadManager.createdThreads[thid];
+	}
+
 	/**
 	 * Create a thread
 	 *
@@ -49,7 +54,13 @@ template ThreadManForUser_Threads() {
 	 * @return UID of the created thread, or an error code.
 	 */
 	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
-		auto pspThread = threadManager.createThread();
+		auto pspThread = new PspThread(threadManager);
+
+		SceUID thid = 0; foreach (thid_cur; threadManager.createdThreads.keys) if (thid < thid_cur) thid = thid_cur; thid++;
+
+		threadManager.createdThreads[thid] = pspThread;
+		
+		pspThread.thid = thid;
 
 		pspThread.name = cast(string)pspThread.info.name[0..name.length];
 
@@ -75,7 +86,7 @@ template ThreadManForUser_Threads() {
 			RA = 0x08000200; // sceKernelExitDeleteThread
 		}
 
-		return reinterpret!(SceUID)(pspThread);
+		return thid;
 	}
 
 	/**
@@ -86,7 +97,8 @@ template ThreadManForUser_Threads() {
 	 * @param argp   - Pointer to the arguments.
 	 */
 	int sceKernelStartThread(SceUID thid, SceSize arglen, void* argp) {
-		auto pspThread = reinterpret!(PspThread)(thid);
+		if (thid < 0) return -1;
+		auto pspThread = getThreadFromId(thid);
 		if (pspThread is null) {
 			writefln("sceKernelStartThread: Null");
 			return -1;
@@ -116,7 +128,9 @@ template ThreadManForUser_Threads() {
 	 * @return < 0 on error.
 	 */
 	int sceKernelDeleteThread(SceUID thid) {
-		auto pspThread = reinterpret!(PspThread)(thid);
+		if (thid < 0) return -1;
+		auto pspThread = getThreadFromId(thid);
+		threadManager.createdThreads.remove(thid);
 		if (pspThread is null) {
 			throw(new Exception("Invalid sceKernelDeleteThread"));
 			return -1;
@@ -171,8 +185,8 @@ template ThreadManForUser_Threads() {
 	  * @return 0 if successful, otherwise the error code.
 	  */
 	int sceKernelChangeThreadPriority(SceUID thid, int priority) {
-		auto pspThread = cast(PspThread)cast(void *)thid;
-		if (pspThread is null) return -1;
+		if (thid < 0) return -1;
+		auto pspThread = getThreadFromId(thid);
 		pspThread.info.currentPriority = priority;
 		return 0;
 	}
@@ -199,8 +213,15 @@ template ThreadManForUser_Threads() {
 	 * @return < 0 on error.
 	 */
 	int sceKernelWaitThreadEnd(SceUID thid, SceUInt* timeout) {
-		unimplemented();
-		return -1;
+		unimplemented_notice(); return 0;
+
+		if (thid < 0) return -1;
+		auto threadToWait = getThreadFromId(thid);
+
+		// @TODO implement timeout
+		return threadManager.currentThread.pauseAndYield("sceKernelWaitThreadEnd", (PspThread pausedThread) {
+			if (!threadToWait.alive) pausedThread.resumeAndReturn(0);
+		});
 	}
 
 	/**
@@ -258,7 +279,8 @@ template ThreadManForUser_Threads() {
 	 * @return 0 if successful, otherwise the error code.
 	 */
 	int sceKernelReferThreadStatus(SceUID thid, SceKernelThreadInfo* info) {
-		auto thread = reinterpret!(PspThread)(thid);
+		if (thid < 0) return -1;
+		auto thread = getThreadFromId(thid);
 		if (thread is null) return -1;
 		if (info   is null) return -2;
 
@@ -282,7 +304,7 @@ template ThreadManForUser_Threads() {
 	 * @return The thread id of the calling thread.
 	 */
 	SceUID sceKernelGetThreadId() {
-		return reinterpret!(SceUID)(threadManager.currentThread);
+		return threadManager.currentThread.thid;
 	}
 
 	/**
@@ -321,7 +343,7 @@ class PspThreadManager {
 
 	PspThread currentThread;
 	PspThread[] threadRunningList;
-	bool[PspThread] createdThreads;
+	PspThread[SceUInt] createdThreads;
 
 	PspThread getNextThread(bool doThrow = false) {
 		uint threadPreemptCount = -1;
@@ -394,23 +416,14 @@ class PspThreadManager {
 		pspThread.info.threadPreemptCount = threadMinPreemptCount;
 		threadRunningList ~= pspThread;
 	}
-
-	PspThread createThread() {
-		auto pspThread = new PspThread(this);
-		createdThreads[pspThread] = true;
-		return pspThread;
-	}
-
-	void removeThread(PspThread pspThread) {
-		createdThreads.remove(pspThread);
-		pspThread.exit();
-	}
 }
 
 /**
  * A Thread in Psp machine.
  */
 class PspThread {
+	uint thid;
+
 	/**
 	 * Thread Manager associate to this thread.
 	 */
@@ -569,7 +582,6 @@ class PspThread {
 		}
 		alive = false;
 		paused = true;
-		threadManager.createdThreads.remove(this);
 		deleteStack();
 		//pauseAndYield();
 	}

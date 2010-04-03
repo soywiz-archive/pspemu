@@ -135,6 +135,7 @@ class DisplayForm : Form, IMessageFilter {
 			interval = 2000;
 			tick ~= (Timer sender, EventArgs ea) {
 				lastFps = cast(real)cpu.display.fpsCounter / 2.0;
+				if (lastFps == 0) lastFps = std.math.NaN(0);
 				updateTitle();
 				display.fpsCounter = 0;
 			};

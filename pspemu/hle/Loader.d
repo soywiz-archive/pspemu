@@ -516,7 +516,8 @@ class Loader : IDebugSource {
 			syscall 0x2071   ; sceKernelExitThread
 		");
 
-		auto pspThread = reinterpret!(PspThread)(threadManForUser.sceKernelCreateThread("Main Thread", PC, 32, 0x8000, 0, null));
+		auto thid = threadManForUser.sceKernelCreateThread("Main Thread", PC, 32, 0x8000, 0, null);
+		auto pspThread = threadManForUser.getThreadFromId(thid);
 		with (pspThread) {
 			registers.pcSet = PC;
 			registers.GP = GP;
@@ -528,7 +529,7 @@ class Loader : IDebugSource {
 			memory.position = registers.SP;
 			memory.writeString("ms0:/PSP/GAME/virtual/EBOOT.PBP\0");
 		}
-		threadManForUser.sceKernelStartThread(reinterpret!(SceUID)(pspThread), 0, null);
+		threadManForUser.sceKernelStartThread(thid, 0, null);
 		pspThread.switchToThisThread();
 
 		Logger.log(Logger.Level.DEBUG, "Loader", "PC: %08X", cpu.registers.PC);
