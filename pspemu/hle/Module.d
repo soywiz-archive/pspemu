@@ -165,6 +165,7 @@ abstract class Module {
 
 	abstract void initNids();
 	void initModule() { }
+	void shutdownModule() { }
 	
 	template Parameters() {
 		ulong param64(int n) { return cpu.registers[4 + n + 0] | (cpu.registers[4 + n + 1] << 32); }
@@ -270,6 +271,7 @@ class ModuleManager {
 
 	void reset() {
 		Logger.log(Logger.Level.DEBUG, "ModuleManager", "reset()");
+		foreach (loadedModule; loadedModules) loadedModule.shutdownModule();
 		loadedModules = null;
 		getCurrentThreadName = null;
 	}

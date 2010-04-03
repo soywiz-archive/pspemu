@@ -118,6 +118,7 @@ ulong readVarInt(Stream stream) {
 	return v;
 }
 
+void swap(T)(ref T a, ref T b) { auto c = a; a = b; b = c; }
 T min(T)(T l, T r) { return (l < r) ? l : r; }
 T max(T)(T l, T r) { return (l > r) ? l : r; }
 

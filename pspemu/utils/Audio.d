@@ -3,11 +3,30 @@ module pspemu.utils.Audio;
 import std.c.windows.windows;
 import std.contracts;
 import std.stdio;
+import core.thread;
+
+import pspemu.utils.Utils;
 
 pragma(lib, "winmm.lib");
 
 alias HANDLE HWAVEOUT;
 alias uint MMRESULT;
+
+align(1) struct WaveFile {
+	char[4] ChunkID = "RIFF";
+	uint    ChunkSize;
+	char[4] Format  = "WAVE";
+	char[4] Subchunk1ID  = "fmt ";
+	uint    Subchunk1Size;
+	ushort  AudioFormat = 1; // PCM
+	ushort  NumChannels = 2;
+	uint    SampleRatio = 40100;
+	uint    ByteRate = 40100 * 2 * (16 / 8);
+	ushort  BlockAlign = 2 * (16 / 8);
+	ushort  BitsPerSample = 16;
+	char[4] Subchunk2ID = "data";
+	uint    Subchunk2Size;
+}
 
 struct WAVEFORMATEX {
 	WORD wFormatTag; 
@@ -110,6 +129,7 @@ extern (Windows) {
 	MMRESULT waveOutPrepareHeader(HWAVEOUT hwo, WAVEHDR* pwh, UINT cbwh);
 	MMRESULT waveOutWrite(HWAVEOUT hwo, WAVEHDR* pwh, UINT cbwh);
 	MMRESULT waveOutGetPosition(HWAVEOUT hwo, MMTIME* pmmt, UINT cbmmt);
+	MMRESULT waveOutClose(HWAVEOUT hwo);
 }
 
 T enforcemm(T)(T errno, int line = __LINE__, string file = __FILE__) {
@@ -117,51 +137,157 @@ T enforcemm(T)(T errno, int line = __LINE__, string file = __FILE__) {
 	return errno;
 }
 
+/*
+static const CALLBACK_FUNCTION = 0x00030000;
+static const WOM_OPEN  = 0x3BB;
+static const WOM_CLOSE = 0x3BC;
+static const WOM_DONE  = 0x3BD;
+*/
+
 class Audio {
-	HWAVEOUT waveOutHandle;
+	class Channel {
+		uint playingPosition;
+		uint samplesCount;
+		short samples[44100 * 2];
+		uint samplesLeft() { return samplesCount - playingPosition; }
+		bool isPlaying() { return (samplesLeft == 0); }
+		
+		void wait() {
+			while (isPlaying) Sleep(1);
+		}
+	
+		void set(short[] samplesToWrite, int numchannels, float volumeLeft = 1.0, float volumeRight = 1.0) {
+			switch (numchannels) {
+				case 1:
+					for (int n = 0, m = 0; n < samplesToWrite.length; n++, m += 2) {
+						samples[m + 0] = cast(short)(cast(float)samplesToWrite[n] * volumeLeft);
+						samples[m + 1] = cast(short)(cast(float)samplesToWrite[n] * volumeRight);
+					}
+				break;
+				case 2:
+					for (int m = 0; m < samplesToWrite.length; m += 2) {
+						samples[m + 0] = cast(short)(cast(float)samplesToWrite[m + 0] * volumeLeft);
+						samples[m + 1] = cast(short)(cast(float)samplesToWrite[m + 1] * volumeRight);
+					}
+				break;
+				default: throw(new Exception(std.string.format("Only supported 1 and 2 numchannels for channel not %d.", numchannels)));
+			}
+			playingPosition = 0;
+			samplesCount = samplesToWrite.length;
+		}
+	}
+	
+	Channel[8] channels;
+	//short[0x40] mixedBuffer;
+	//int[220 * 2] tempBuffer;
+	short[220 * 2 * 2] buffer;
+	short[] bufferFront, bufferBack;
+	bool _running = true;
+	uint playingPos;
+	Thread thread;
+
+	HWAVEOUT      waveOutHandle;
 	WAVEFORMATEX  pcmwf;
 	WAVEHDR	      wavehdr;
 	MMTIME        mmtime;
-	float[]       currentBuffer;
 
 	this() {
-		pcmwf.wFormatTag		= WAVE_FORMAT_IEEE_FLOAT; 
-		pcmwf.nChannels			= 2;
-		pcmwf.wBitsPerSample	= float.sizeof * 8;
-		pcmwf.nBlockAlign		= cast(ushort)(pcmwf.nChannels * pcmwf.wBitsPerSample / 8);
-		pcmwf.nSamplesPerSec    = 44100;
-		//pcmwf.nSamplesPerSec    = 22050;
-		pcmwf.nAvgBytesPerSec	= pcmwf.nSamplesPerSec * pcmwf.nBlockAlign; 
-		pcmwf.cbSize			= 0;
-		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
+		bufferFront = buffer[0..buffer.length / 2];
+		bufferBack  = buffer[buffer.length / 2..$];
+		for (int n = 0; n < channels.length; n++) channels[n] = new Channel;
+		(thread = new Thread(&playThread)).start();
 	}
 
-	void write(int channel, float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
-		bool REPEAT_ALWAYS = true;
-		currentBuffer = buffer;
+	void stop() {
+		_running = false;
+	}
+
+	void playThread() {
+		pcmwf.wFormatTag      = WAVE_FORMAT_PCM; 
+		pcmwf.nChannels       = 2;
+		pcmwf.wBitsPerSample  = 16;
+		pcmwf.nBlockAlign     = 2 * short.sizeof;
+		pcmwf.nSamplesPerSec  = 44100;
+		pcmwf.nAvgBytesPerSec = pcmwf.nSamplesPerSec * pcmwf.nBlockAlign; 
+		pcmwf.cbSize          = 0;
+		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
+
 		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
 		wavehdr.lpData          = cast(LPSTR)buffer.ptr;
-		wavehdr.dwBufferLength  = buffer.length * buffer[0].sizeof;
+		wavehdr.dwBufferLength  = buffer.length * short.sizeof;
 		wavehdr.dwBytesRecorded = 0;
 		wavehdr.dwUser          = 0;
-		wavehdr.dwLoops         = REPEAT_ALWAYS ? -1 : 0;
+		wavehdr.dwLoops         = -1;
 		enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
 		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
-		//writefln("writtingChannel(%d)", channel);
+
+		void mix() {
+			int[220 * 2] bufferTemp;
+			int[int] channelsEndings;
+			int playingChannels;
+
+			foreach (channel; channels) {
+				int channelMixLen = min(channel.samplesCount - channel.playingPosition, bufferTemp.length);
+				
+				if (channelMixLen) {
+					for (int n = 0; n < channelMixLen; n++) {
+						bufferTemp[n] += channel.samples[channel.playingPosition + n];
+					}
+					channel.playingPosition += channelMixLen;
+					playingChannels++;
+					if ((channelMixLen in channelsEndings) is null) channelsEndings[channelMixLen] = 1; else channelsEndings[channelMixLen]++;
+				}
+			}
+
+			static if (1) {
+				struct Slice { int numSamples, numChannels; }
+				Slice[] channelCountSlices;
+				int backPos = 0;
+				int numChannels = playingChannels;
+				foreach (pos; channelsEndings.keys.sort) {
+					int count = channelsEndings[pos];
+					channelCountSlices ~= Slice(pos - backPos, numChannels);
+					backPos = pos;
+					numChannels -= count;
+				}
+				channelCountSlices ~= Slice(bufferTemp.length - backPos, 0);
+
+				int m = 0;
+				foreach (slice; channelCountSlices) {
+					if (slice.numChannels) {
+						for (int n = 0; n < slice.numSamples; n++) bufferBack[m + n] = cast(short)(bufferTemp[m + n]);
+					} else {
+						bufferBack[m..m + slice.numSamples][] = 0;
+					}
+					m += slice.numSamples;
+				}
+			} else {
+				if (playingChannels) {
+					for (int n = 0; n < bufferBack.length; n++) {
+						bufferBack[n] = cast(short)(bufferTemp[n] / playingChannels);
+					}
+				} else {
+					bufferBack[] = 0;
+				}
+			}
+
+			swap(bufferFront, bufferBack);
+		}
+
+		try {
+			while (_running) {
+				mix();
+				Sleep(5);
+			}
+		} catch (Object o) {
+			writefln("Audio.playThread: %s", o);
+		} finally {
+			enforcemm(waveOutClose(waveOutHandle));
+		}
 	}
 
-	void wait() {
-		while (position < currentBuffer.length / pcmwf.nChannels) Sleep(1);
-	}
-
-	void writeWait(int channel, float[] buffer, float volumeleft = 1.0, float volumeright = 1.0) {
-		write(channel, buffer, volumeleft, volumeright);
-		wait();
-	}
-
-	uint position() {
-		MMTIME mmtime = MMTIME(TIME_SAMPLES);
-		enforcemm(waveOutGetPosition(waveOutHandle, &mmtime, mmtime.sizeof));
-		return mmtime.u.sample;
+	void writeWait(int channel, int numchannels, short[] samples, float volumeleft = 1.0, float volumeright = 1.0) {
+		channels[channel].set(samples, numchannels, volumeleft, volumeright);
+		channels[channel].wait();
 	}
 }

@@ -213,15 +213,23 @@ template ThreadManForUser_Threads() {
 	 * @return < 0 on error.
 	 */
 	int sceKernelWaitThreadEnd(SceUID thid, SceUInt* timeout) {
-		unimplemented_notice(); return 0;
-
+		//unimplemented_notice(); return 0;
 		if (thid < 0) return -1;
-		auto threadToWait = getThreadFromId(thid);
 
 		// @TODO implement timeout
-		return threadManager.currentThread.pauseAndYield("sceKernelWaitThreadEnd", (PspThread pausedThread) {
-			if (!threadToWait.alive) pausedThread.resumeAndReturn(0);
-		});
+		try {
+			return threadManager.currentThread.pauseAndYield("sceKernelWaitThreadEnd", (PspThread pausedThread) {
+				try {
+					auto threadToWait = getThreadFromId(thid);
+					if (!threadToWait || !threadToWait.alive) throw(new Exception("sceKernelWaitThreadEnd.end"));
+				} catch {
+					pausedThread.resumeAndReturn(0);
+				}
+			});
+		} catch (Object o) {
+			writefln("sceKernelWaitThreadEnd: %s", o);
+			return -1;
+		}
 	}
 
 	/**

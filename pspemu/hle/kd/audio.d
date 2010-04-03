@@ -3,7 +3,7 @@ module pspemu.hle.kd.audio; // kd/audio.prx (sceAudio_Driver)
 //debug = DEBUG_AUDIO;
 //debug = DEBUG_SYSCALL;
 
-version = DISABLE_SOUND;
+//version = DISABLE_SOUND;
 
 import std.c.windows.windows;
 
@@ -48,6 +48,10 @@ class sceAudio_driver : Module {
 
 	void initModule() {
 		audio = new Audio;
+	}
+
+	void shutdownModule() {
+		audio.stop();
 	}
 
 	int freeChannelIndex() {
@@ -107,24 +111,15 @@ class sceAudio_driver : Module {
 			float toFloat(short sample) { return cast(float)sample / cast(float)(0x8000 - 1); }
 			
 			auto samples_short = (cast(short*)buf)[0..cchannel.dataCount];
-			auto samples_float = new float[cchannel.samplecount * 2];
-			if (cchannel.numchannels == 1) {
-				for (int n = 0; n < samples_short.length; n++) {
-					samples_float[n * 2 + 0] = toFloat(samples_short[n]) * leftvol;
-					samples_float[n * 2 + 1] = toFloat(samples_short[n]) * rightvol;
-				}
-			} else {
-				for (int n = 0; n < samples_short.length; n += 2) {
-					samples_float[n + 0] = toFloat(samples_short[n + 0]) * leftvol;
-					samples_float[n + 1] = toFloat(samples_short[n + 1]) * rightvol;
-				}
-			}
-			
-			//writefln("numchannels:%d", cchannel.numchannels);
 
 			bool playing = true;
 			(new Thread({
-				audio.writeWait(channel, samples_float, volumef(leftvol), volumef(rightvol));
+				//if (channel == 0)
+				try {
+					audio.writeWait(channel, cchannel.numchannels, samples_short, volumef(leftvol), volumef(rightvol));
+				} catch (Object o) {
+					writefln("sceAudioOutputPannedBlocking: %s", o);
+				}
 				playing = false;
 			})).start();
 

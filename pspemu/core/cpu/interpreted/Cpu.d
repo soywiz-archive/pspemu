@@ -1,6 +1,7 @@
 module pspemu.core.cpu.interpreted.Cpu;
 
 const uint THREAD0_CALL_MASK = 0xFFFF;
+//const uint THREAD0_CALL_MASK = 0xFFF;
 
 //debug = DEBUG_GEN_SWITCH;
 

@@ -3,12 +3,16 @@
 // http://www.fmod.org/index.php/download#FMODMini
 // http://www.planet-source-code.com/vb/scripts/ShowCode.asp?txtCodeId=4422&lngWId=3
 
+import core.thread;
 import std.stdio;
 import std.math;
 import std.contracts;
 import std.c.windows.windows;
 
 pragma(lib, "winmm.lib");
+
+T min(T)(T a, T b) { return (a < b) ? a : b; }
+T max(T)(T a, T b) { return (a > b) ? a : b; }
 
 alias HANDLE HWAVEOUT;
 alias uint MMRESULT;
@@ -121,94 +125,112 @@ T enforcemm(T)(T errno, int line = __LINE__, string file = __FILE__) {
 	return errno;
 }
 
+enum {
+	WAVE_FORMAT_QUERY = 0x00000001,
+	WAVE_ALLOWSYNC    = 0x00000002,
+	CALLBACK_FUNCTION = 0x00030000,
+}
+static const WOM_OPEN  = 0x3BB;
+static const WOM_CLOSE = 0x3BC;
+static const WOM_DONE  = 0x3BD;
+
+static int value = 0;
+
+__gshared static int[] messages;
+
+
 class Audio {
-	HWAVEOUT waveOutHandle;
+	class Channel {
+		uint playingPosition;
+		uint samplesCount;
+		short samples[44100 * 2];
+		uint samplesLeft() { return samplesCount - playingPosition; }
+		bool isPlaying() { return (samplesLeft == 0); }
+	
+		void set(short[] samplesToWrite, float volumeLeft = 1.0, float volumeRight = 1.0) {
+			playingPosition = 0;
+			samplesCount = samplesToWrite.length;
+			for (int n = 0; n < samplesToWrite.length; n += 2) {
+				samples[n + 0] = cast(short)(cast(float)samplesToWrite[n + 0] * volumeLeft);
+				samples[n + 1] = cast(short)(cast(float)samplesToWrite[n + 1] * volumeRight);
+			}
+		}
+	}
+	
+	Channel[8] channels;
+	//short[0x40] mixedBuffer;
+	int[220 * 2] tempBuffer;
+	short[220 * 2 * 2] buffer;
+	bool _running = true;
+	uint playingPos;
+	Thread thread;
+
+	HWAVEOUT      waveOutHandle;
 	WAVEFORMATEX  pcmwf;
 	WAVEHDR	      wavehdr;
 	MMTIME        mmtime;
 
 	this() {
-		pcmwf.wFormatTag		= WAVE_FORMAT_IEEE_FLOAT; 
-		pcmwf.nChannels			= 2;
-		pcmwf.wBitsPerSample	= float.sizeof * 8;
-		pcmwf.nBlockAlign		= cast(ushort)(pcmwf.nChannels * pcmwf.wBitsPerSample / 8);
-		pcmwf.nSamplesPerSec	= 44100;
-		pcmwf.nAvgBytesPerSec	= pcmwf.nSamplesPerSec * pcmwf.nBlockAlign; 
-		pcmwf.cbSize			= 0;
-		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
+		for (int n = 0; n < channels.length; n++) channels[n] = new Channel;
+		(thread = new Thread(&playThread)).start();
 	}
 
-	void writeBuffer(float[] buffer) {
+	void stop() {
+		_running = false;
+	}
+
+	void playThread() {
+		pcmwf.wFormatTag      = WAVE_FORMAT_PCM; 
+		pcmwf.nChannels       = 2;
+		pcmwf.wBitsPerSample  = 16;
+		pcmwf.nBlockAlign     = 2 * short.sizeof;
+		pcmwf.nSamplesPerSec  = 44100;
+		pcmwf.nAvgBytesPerSec = pcmwf.nSamplesPerSec * pcmwf.nBlockAlign; 
+		pcmwf.cbSize          = 0;
+		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
+
 		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
 		wavehdr.lpData          = cast(LPSTR)buffer.ptr;
-		wavehdr.dwBufferLength  = buffer.length * buffer[0].sizeof;
-		wavehdr.dwBytesRecorded = 0;
-		wavehdr.dwUser          = 0;
-		wavehdr.dwLoops         = 0;
-		enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
-		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
-	}
-
-	void writeBufferBlock(float[] buffer) {
-		writeBuffer(buffer);
-		while (position < buffer.length / pcmwf.nChannels) {
-			Sleep(1);
-		}
-	}
-
-	uint position() {
-		MMTIME mmtime = MMTIME(TIME_SAMPLES);
-		enforcemm(waveOutGetPosition(waveOutHandle, &mmtime, mmtime.sizeof));
-		return mmtime.u.sample;
-	}
-}
-
-void simpleTest() {
-	HWAVEOUT      waveOutHandle;
-	WAVEFORMATEX  pcmwf;
-	WAVEHDR	      wavehdr;
-	float[]       buffer;
-	MMTIME        mmtime;
-
-	// ========================================================================================================
-	// INITIALIZE WAVEOUT
-	// ========================================================================================================
-	{
-		pcmwf.wFormatTag		= WAVE_FORMAT_IEEE_FLOAT; 
-		pcmwf.nChannels			= 2;
-		pcmwf.wBitsPerSample	= float.sizeof * 8;
-		pcmwf.nBlockAlign		= cast(ushort)(pcmwf.nChannels * pcmwf.wBitsPerSample / 8);
-		pcmwf.nSamplesPerSec	= 44100;
-		pcmwf.nAvgBytesPerSec	= pcmwf.nSamplesPerSec * pcmwf.nBlockAlign; 
-		pcmwf.cbSize			= 0;
-
-		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
-	}
-	{
-		buffer = new float[44100 * 2];
-		
-		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
-		wavehdr.lpData          = cast(LPSTR)buffer.ptr;
-		wavehdr.dwBufferLength  = buffer.length * buffer[0].sizeof;
+		wavehdr.dwBufferLength  = buffer.length * short.sizeof;
 		wavehdr.dwBytesRecorded = 0;
 		wavehdr.dwUser          = 0;
 		wavehdr.dwLoops         = -1;
-
 		enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
+		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
+
+		bool bufferToggle = false;
+
+		void mix() {
+			tempBuffer[] = 0;
+
+			for (int ch = 0; ch < channels.length; ch++) {
+				auto channel = channels[ch];
+				int channelMixLen = min(channel.samplesCount - channel.playingPosition, tempBuffer.length);
+				//writefln("%d", channelMixLen);
+				for (int n = 0; n < channelMixLen; n++) {
+					//writefln("%d", n);
+					tempBuffer[n] += channel.samples[channel.playingPosition + n];
+				}
+				channel.playingPosition += channelMixLen;
+			}
+			for (int n = 0; n < tempBuffer.length; n++) {
+				buffer[tempBuffer.length * bufferToggle + n] = cast(short)(tempBuffer[n] / channels.length);
+			}
+			
+			bufferToggle = !bufferToggle;
+		}
+
+		while (_running) {
+			mix();
+			Sleep(5);
+		}
 	}
 
-	for (int n = 0; n < buffer.length; n += 2) {
-		buffer[n + 0] = sin((cast(float)n) / 20);
-		buffer[n + 1] = cos((cast(float)n) / 20);
-	}
 
-	enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
-
-	for (int n = 0; n < 10; n++) {
-		Sleep(100);
-		mmtime.wType = TIME_SAMPLES;
-		enforcemm(waveOutGetPosition(waveOutHandle, &mmtime, mmtime.sizeof));
-		writefln("%d", mmtime.u.sample);
+	void writeBufferBlock(short[] buffer, int channel = 0) {
+		//writeBuffer(buffer);
+		//while (blocked) Sleep(1);
+		channels[channel].set(buffer);
 	}
 }
 
@@ -239,14 +261,25 @@ void fmodTest() {
 	//assert(0);
 }
 
-void main() {
+void test() {
 	//simpleTest();
 	//fmodTest();
 	auto audio = new Audio;
-	auto buffer = new float[44100 * 2];
+	auto buffer = new short[41100 * 2];
 	for (int n = 0; n < buffer.length; n += 2) {
-		buffer[n + 0] = sin((cast(float)n) / 20);
-		buffer[n + 1] = cos((cast(float)n) / 10);
+		buffer[n + 0] = cast(short)(sin((cast(float)n) / 20) * cast(float)0x7FFF);
+		buffer[n + 1] = cast(short)(cos((cast(float)n) / 10) * cast(float)0x7FFF);
 	}
-	audio.writeBufferBlock(buffer);
+	audio.writeBufferBlock(buffer, 0);
+
+	for (int n = 0; n < buffer.length; n += 2) {
+		buffer[n + 0] = cast(short)(sin((cast(float)n) / 40) * cast(float)0x7FFF);
+		buffer[n + 1] = cast(short)(cos((cast(float)n) / 40) * cast(float)0x7FFF);
+	}
+	audio.writeBufferBlock(buffer, 1);
+}
+
+void main() {
+	test();
+	writefln("end! [%s]:%d", messages, messages.length);
 }

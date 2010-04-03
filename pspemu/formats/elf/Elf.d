@@ -240,7 +240,11 @@ class Elf {
 			memory.position = position;
 			memory.write(data);
 			return data;
-		}	
+		}
+		
+		if ((baseAddress & 0xFFFF) != 0) {
+			throw(new Exception("Relocation base address not aligned to 64K"));
+		}
 
 		foreach (sectionHeader; sectionHeaders) {
 			// Filter sections we don't have to reloc.
@@ -265,11 +269,13 @@ class Elf {
 				switch (reloc.type) { default: throw(new Exception(std.string.format("RELOC: unknown reloc type '%02X'", reloc.type)));
 					// LUI
 					case Reloc.Type.MipsHi16: { 
-						regs[instruction.RT] ~= offset;
+						//regs[instruction.RT] ~= offset;
+						instruction.IMMU = instruction.IMMU + (baseAddress >> 16);
 					} break;
 					
 					// ADDI, ORI ...
 					case Reloc.Type.MipsLo16: {
+						/*
 						uint reg = instruction.RS;
 						uint vlo = ((instruction.v & 0x0000FFFF) ^ 0x00008000) - 0x00008000;
 						
@@ -287,6 +293,7 @@ class Elf {
 						regs[reg].length = 0;
 						
 						instruction.v = (instruction.v & ~0x0000FFFF) | ((baseAddress + vlo) & 0x0000FFFF);
+						*/
 					} break;
 					
 					// J, JAL
@@ -344,7 +351,7 @@ class Elf {
 
 	void writeToMemory(Stream stream, uint baseAddress = 0) {
 		if (needsRelocation) {
-			baseAddress += 0x08900000;
+			baseAddress += 0x_0890_0000;
 		}
 		
 		relocationAddress = baseAddress;
