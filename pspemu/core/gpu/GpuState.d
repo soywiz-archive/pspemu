@@ -2,14 +2,16 @@ module pspemu.core.gpu.GpuState;
 
 import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
-import pspemu.core.gpu.Utils;
+import pspemu.utils.Math;
 
-struct Clut {
+struct ClutState {
 	uint address;
 	PixelFormats format;
 	uint shift;
 	uint mask;
 	uint start;
+
+	int colorEntrySize() { return PixelFormatSize(format, 1); }
 }
 
 struct ScreenBuffer {
@@ -18,31 +20,25 @@ struct ScreenBuffer {
 	PixelFormats format = PixelFormats.GU_PSM_8888;
 	uint address(uint _address) { return this._address = (0x04_000000 | _address); }
 	uint address() { return this._address; }
-	uint pixelSize() { return TextureState.textureSizeMul[format]; }
+	uint pixelSize() { return PixelFormatSizeMul[format]; }
 	ubyte[] row(void* ptr, int row) {
-		int rowsize = width * pixelSize;
+		int rowsize = PixelFormatSize(format, width);
 		return ((cast(ubyte *)ptr) + rowsize * row)[0..rowsize];
 	}
 }
 
 struct TextureState {
-	static const auto textureSizeMul = [2, 2, 2, 4, 1, 1, 2, 4, 4, 4, 4];
-	static const auto textureSizeDiv = [1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1];
-
 	uint address;
 	uint width, height;
 	uint size;
 	PixelFormats format;
 	bool swizzled;
 
-	uint sizePixels(uint count) in {
-		assert((format >= 0 && format) < (textureSizeMul.length));
-	} body {
-		return (count * textureSizeMul[format]) / textureSizeDiv[format];
-	}
-
-	uint rwidth() { return sizePixels(width); }
+	uint rwidth() { return PixelFormatSize(format, width); }
+	//uint rwidth() { return width; }
 	uint totalSize() { return rwidth * height; }
+	bool hasPalette() { return (format >= PixelFormats.GU_PSM_T4 && format <= PixelFormats.GU_PSM_T32); }
+	uint paletteRequiredComponents() { return hasPalette ? (1 << (4 + (format - PixelFormats.GU_PSM_T4))) : 0; }
 }
 
 struct LightState {
@@ -112,7 +108,7 @@ static struct GpuState {
 	UV   textureScale, textureOffset;
 
 	TextureState[8] textures;
-	Clut clut;
+	ClutState clut;
 
 	Rect scissor;
 	int faceCullingOrder;

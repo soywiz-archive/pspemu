@@ -64,18 +64,16 @@ class CpuInterpreted : public Cpu {
 		// Will execute instructions until count reach zero or an exception is thrown.
 		//writefln("Execute: %08X", count);
 		while (count--) {
-			// Process IRQ (Interrupt ReQuest)
-
-			// Add a THREAD Interrupt (to switch threads)
-			if ((count & THREAD0_CALL_MASK) == 0) interrupts.queue(Interrupts.Type.THREAD0);
+			// Equeue a THREAD Interrupt (to switch threads)
+			if (registers.PAUSED || ((count & THREAD0_CALL_MASK) == 0)) interrupts.queue(Interrupts.Type.THREAD0);
 			
 			// Process interrupts if there are pending interrupts
+			// Process IRQ (Interrupt ReQuest)
 			if (interrupts.InterruptFlag) interrupts.process();
 
 			if (runningState != RunningState.RUNNING) waitUntilResume();
 			
 			if (registers.PAUSED) {
-				interrupts.queue(Interrupts.Type.THREAD0);
 				sleep(0);
 				//writefln("paused!");
 				continue;

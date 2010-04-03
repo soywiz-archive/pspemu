@@ -7,6 +7,22 @@ import pspemu.utils.Utils;
 
 import pspemu.core.Memory;
 
+static const auto PixelFormatSizeMul = [2, 2, 2, 4, 1, 1, 2, 4, 4, 4, 4];
+static const auto PixelFormatSizeDiv = [1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1];
+
+/*
+enum PixelFormats {
+	// Display, Texture, Palette
+	GU_PSM_5650 = 0, GU_PSM_5551 = 1, GU_PSM_4444 = 2, GU_PSM_8888 = 3,
+	// Texture Only
+	GU_PSM_T4 = 4, GU_PSM_T8 = 5, GU_PSM_T16 = 6, GU_PSM_T32 = 7, GU_PSM_DXT1 = 8, GU_PSM_DXT3 = 9, GU_PSM_DXT5 = 10
+}
+*/
+
+uint PixelFormatSize(PixelFormats format, uint count = 1) {
+	return (count * PixelFormatSizeMul[format]) / PixelFormatSizeDiv[format];
+}
+
 struct Colorf {
 	union {
 		struct { float[4] rgba = [0.0, 0.0, 0.0, 1.0]; }

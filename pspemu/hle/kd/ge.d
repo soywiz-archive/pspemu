@@ -2,6 +2,9 @@ module pspemu.hle.kd.ge; // kd/ge.prx (sceGE_Manager)
 
 //debug = DEBUG_SYSCALL;
 
+import core.thread;
+
+import pspemu.hle.kd.threadman;
 import pspemu.hle.Module;
 import pspemu.core.gpu.Gpu;
 import pspemu.core.gpu.DisplayList;
@@ -58,19 +61,6 @@ class sceGe_driver : Module {
 	 */
 	int sceGeGetMtx(int type, void *matrix) {
 		unimplemented();
-		return 0;
-	}
-
-	/**
-	 * Wait for syncronisation of a list.
-	 *
-	 * @param qid - The queue ID of the list to sync.
-	 * @param syncType - Specifies the condition to wait on.  One of ::PspGeSyncType.
-	 * 
-	 * @return ???
-	 */
-	int sceGeListSync(int qid, int syncType) {
-		cpu.gpu.sceGeListSync(cast(DisplayList*)qid, syncType);
 		return 0;
 	}
 
@@ -186,6 +176,30 @@ class sceGe_driver : Module {
 	}
 
 	/**
+	 * Wait for syncronisation of a list.
+	 *
+	 * @param qid - The queue ID of the list to sync.
+	 * @param syncType - Specifies the condition to wait on.  One of ::PspGeSyncType.
+	 * 
+	 * @return ???
+	 */
+	int sceGeListSync(int qid, int syncType) {
+		bool waiting = true;
+		(new Thread({
+			cpu.gpu.sceGeListSync(cast(DisplayList*)qid, syncType);
+			waiting = false;
+		})).start();
+
+		return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
+			"sceGeListSync", (PspThread pausedThread) {
+				if (!waiting) {
+					pausedThread.resumeAndReturn(0);
+				}
+			}
+		);
+	}
+
+	/**
 	 * Wait for drawing to complete.
 	 * 
 	 * @param syncType - Specifies the condition to wait on.  One of ::PspGeSyncType.
@@ -193,8 +207,19 @@ class sceGe_driver : Module {
 	 * @return ???
 	 */
 	int sceGeDrawSync(int syncType) {
-		cpu.gpu.sceGeDrawSync(syncType);
-		return 0;
+		bool waiting = true;
+		(new Thread({
+			cpu.gpu.sceGeDrawSync(syncType);
+			waiting = false;
+		})).start();
+
+		return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
+			"sceGeDrawSync", (PspThread pausedThread) {
+				if (!waiting) {
+					pausedThread.resumeAndReturn(0);
+				}
+			}
+		);
 	}
 }
 

@@ -67,11 +67,12 @@ class GLControlDisplay : GLControl {
 					if (update || updateOnce) {
 						updateOnce = false;
 
+						glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)GpuOpengl.PixelFormats[display.frameBufferPixelFormat].size);
 						glDrawPixels(
 							display.frameBufferSize.width,
 							display.frameBufferSize.height,
-							GL_RGBA,
-							GpuOpengl.PixelFormats[display.frameBufferPixelFormat & 3].opengl,
+							GpuOpengl.PixelFormats[display.frameBufferPixelFormat].external,
+							GpuOpengl.PixelFormats[display.frameBufferPixelFormat].opengl,
 							display.frameBufferPointer
 						);
 

@@ -39,7 +39,23 @@ struct InfiniteLoop(int maxCount = 512/*, string file = __FILE__, int line = __L
 }
 
 void changeAfter(T)(T* var, int microseconds, T value) {
-	(new Thread({ sleep(microseconds / 1000); *var = value; })).start();
+	(new Thread({
+		static if (true) {
+			sleep(microseconds / 1000);
+		} else {
+			long frequency; QueryPerformanceFrequency(&frequency);
+			long counter() {
+				long value = void;
+				QueryPerformanceCounter(&value);
+				return value;
+			}
+			long startCounter = counter;
+			while ((((counter - startCounter) * 1000 * 1000) / frequency) < cast(long)microseconds) {
+				sleep(0);
+			}
+		}
+		*var = value;
+	})).start();
 }
 
 static const changeAfterTimerPausedMicroseconds = "bool paused = true; changeAfter(&paused, delay, false);";
@@ -198,8 +214,18 @@ class CircularList(Type, bool CheckAvailable = true) {
 
 alias CircularList Queue;
 
+extern (Windows) BOOL SwitchToThread();
+
 void sleep(uint ms) {
-	Sleep(ms);
+	static if (true) {
+		Sleep(ms);
+	} else {
+		if (ms == 0) {
+			SwitchToThread();
+		} else {
+			Sleep(ms);
+		}
+	}
 }
 
 class TaskQueue {

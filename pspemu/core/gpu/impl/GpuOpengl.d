@@ -8,6 +8,8 @@ import std.c.windows.windows;
 import std.windows.syserror;
 import std.stdio;
 
+import pspemu.utils.Utils;
+
 import std.contracts;
 
 import pspemu.utils.OpenGL;
@@ -16,7 +18,7 @@ import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
 import pspemu.core.gpu.GpuState;
 import pspemu.core.gpu.GpuImpl;
-import pspemu.core.gpu.Utils;
+import pspemu.utils.Math;
 
 class GpuOpengl : GpuImplAbstract {
 	mixin OpenglBase;
@@ -58,6 +60,9 @@ class GpuOpengl : GpuImplAbstract {
 
 	void startDisplayList() {
 		// Here we should invalidate texture cache? and recheck hashes of the textures?
+		foreach (texture; textureCache) {
+			texture.markForRecheck = true;
+		}
 	}
 
 	void endDisplayList() {
@@ -72,6 +77,14 @@ class GpuOpengl : GpuImplAbstract {
 	}
 
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags) {
+		/*
+		static if (1) {
+			writefln("type:%d, vertexcount:%d, flags:%d", type, vertexList.length, flags);
+			writefln("  %s", vertexList[0]);
+			writefln("  %s", vertexList[1]);
+		}
+		*/
+	
 		void putVertex(ref VertexState vertex) {
 			if (flags.hasTexture ) glTexCoord2f(vertex.u, vertex.v);
 			if (flags.hasColor   ) glColor4f(vertex.r, vertex.g, vertex.b, vertex.a);
@@ -136,8 +149,7 @@ class GpuOpengl : GpuImplAbstract {
 	void frameLoad(void* buffer) {
 		//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
 		glDrawPixels(
-			state.drawBuffer.width,
-			272,
+			state.drawBuffer.width, 272,
 			PixelFormats[state.drawBuffer.format].external,
 			PixelFormats[state.drawBuffer.format].opengl,
 			buffer
@@ -151,6 +163,8 @@ class GpuOpengl : GpuImplAbstract {
 
 	void frameStore(void* buffer) {
 		//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
+		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)PixelFormats[state.drawBuffer.format].size);
+		//writefln("%d, %d", state.drawBuffer.width, 272);
 		glReadPixels(
 			0, 0, // x, y
 			state.drawBuffer.width, 272, // w, h
@@ -162,6 +176,44 @@ class GpuOpengl : GpuImplAbstract {
 			int m = 271 - n;
 			state.drawBuffer.row(buffer, n)[] = state.drawBuffer.row(&buffer_temp, m)[];
 		}
+
+		/*
+		glReadPixels(
+			0, 0, // x, y
+			512, 272, // w, h
+			GL_RGBA,
+			GL_UNSIGNED_INT_8_8_8_8,
+			&buffer_temp
+		);
+
+		align(1) static struct TGA_HEADER {
+			byte  identsize;          // size of ID field that follows 18 byte header (0 usually)
+			byte  colourmaptype;      // type of colour map 0=none, 1=has palette
+			byte  imagetype;          // type of image 0=none,1=indexed,2=rgb,3=grey,+8=rle packed
+
+			short colourmapstart;     // first colour map entry in palette
+			short colourmaplength;    // number of colours in palette
+			byte  colourmapbits;      // number of bits per palette entry 15,16,24,32
+
+			short xstart;             // image x origin
+			short ystart;             // image y origin
+			short width;              // image width in pixels
+			short height;             // image height in pixels
+			byte  bits;               // image bits per pixel 8,16,24,32
+			byte  descriptor;         // image descriptor bits (vh flip bits)
+		}
+
+		TGA_HEADER header;
+		with (header) {
+			imagetype = 2;
+			width = 512;
+			height = 272;
+			bits = 32;
+			descriptor = (1 << 5);
+		}
+		
+		std.file.write("temp_buf.tga", TA(header) ~ buffer_temp);
+		*/
 	}
 }
 
@@ -176,18 +228,22 @@ template OpenglUtils() {
 	static const uint[] LogicalOperationTranslate = [GL_CLEAR, GL_AND, GL_AND_REVERSE, GL_COPY, GL_AND_INVERTED, GL_NOOP, GL_XOR, GL_OR, GL_NOR, GL_EQUIV, GL_INVERT, GL_OR_REVERSE, GL_COPY_INVERTED, GL_OR_INVERTED, GL_NAND, GL_SET];
 
 	Texture[uint] textureCache;
+	//Clut[uint] clutCache;
 	
 	void glEnableDisable(int type, bool enable) {
 		if (enable) glEnable(type); else glDisable(type);
 	}
 
-	Texture getTexture(TextureState tbuffer) {
-		if ((tbuffer.address in textureCache) is null) {
-			Texture texture = new Texture();
-			texture.update(state.memory, tbuffer);
-			textureCache[tbuffer.address] = texture;
+	Texture getTexture(TextureState textureState, ClutState clutState) {
+		Texture texture = void;
+		if ((textureState.address in textureCache) is null) {
+			texture = new Texture();
+			textureCache[textureState.address] = texture;
+		} else {
+			texture = textureCache[textureState.address];
 		}
-		return textureCache[tbuffer.address];
+		texture.update(state.memory, textureState, clutState);
+		return texture;
 	}
 
 	void drawBegin() {
@@ -230,7 +286,7 @@ template OpenglUtils() {
 			
 			if (state.textureMappingEnabled) {
 				glEnable(GL_TEXTURE_2D);
-				getTexture(state.textures[0]).bind();
+				getTexture(state.textures[0], state.clut).bind();
 				//writefln("tex0:%s", state.textures[0]);
 
 				glEnable(GL_CLAMP_TO_EDGE);
@@ -359,9 +415,10 @@ template OpenglUtils() {
 		PixelFormat(  2, 4, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV),
 		PixelFormat(  2, 4, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV),
 		PixelFormat(  4, 4, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV),
-		PixelFormat(0.5, 1, GL_RED,  GL_UNSIGNED_BYTE),
-		PixelFormat(  1, 1, GL_RED,  GL_UNSIGNED_BYTE),
-		PixelFormat(  2, 4, GL_RGBA, GL_UNSIGNED_SHORT),
+		PixelFormat(0.5, 1, GL_COLOR_INDEX, GL_COLOR_INDEX4_EXT),
+		PixelFormat(  1, 1, GL_COLOR_INDEX, GL_COLOR_INDEX8_EXT),
+		PixelFormat(  2, 4, GL_COLOR_INDEX, GL_COLOR_INDEX16_EXT),
+		//PixelFormat(  4, 4, COLOR_INDEX, GL_COLOR_INDEX32_EXT), // Not defined.
 		PixelFormat(  4, 4, GL_RGBA, GL_UNSIGNED_INT),
 		PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT),
 		PixelFormat(  4, 4, GL_RGBA, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT),
@@ -500,18 +557,109 @@ template OpenglBase() {
 	}
 }
 
-class Clut {
-}
-
 class Texture {
 	GLuint gltex;
+	bool markForRecheck;
+	bool refreshAnyway;
+	uint textureHash, clutHash;
+	alias GpuOpengl.PixelFormat PixelFormat;
 	
 	this() {
 		glGenTextures(1, &gltex);
+		markForRecheck = true;
+		refreshAnyway = true;
 	}
 
 	~this() {
 		glDeleteTextures(1, &gltex);
+	}
+
+	void bind() {
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, gltex);
+	}
+
+	void update(Memory memory, ref TextureState textureState, ref ClutState clutState) {
+		if (!markForRecheck && !refreshAnyway) return;
+		
+		ubyte[] emptyBuffer;
+
+		auto textureData = textureState.address ? (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize] : emptyBuffer;
+		auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
+	
+		if (markForRecheck) {
+			markForRecheck = false;
+
+			auto currentTextureHash = std.zlib.crc32(textureState.address, textureData);
+			if (currentTextureHash != textureHash) {
+				textureHash = currentTextureHash;
+				refreshAnyway = true;
+			}
+
+			auto currentClutHash = std.zlib.crc32(clutState.address, clutData);
+			if (currentClutHash != clutHash) {
+				clutHash = currentClutHash;
+				refreshAnyway = true;
+			}
+		}
+		
+		if (refreshAnyway) {
+			refreshAnyway = false;
+			updateActually(textureData, clutData, textureState, clutState);
+		}
+	}
+
+	void updateActually(ubyte[] textureData, ubyte[] clutData, ref TextureState textureState, ref ClutState clutState) {
+		auto texturePixelFormat = GpuOpengl.PixelFormats[textureState.format];
+		auto clutPixelFormat    = GpuOpengl.PixelFormats[clutState.format];
+		PixelFormat* pixelFormat;
+
+		glActiveTexture(GL_TEXTURE0);
+		bind();
+
+		// Unswizzle texture.
+		if (textureState.swizzled) {
+			auto textureDataUnswizzled = new ubyte[textureData.length];
+			unswizzle(textureData, textureDataUnswizzled, textureState);
+			textureData = textureDataUnswizzled;
+		}
+
+		if (textureState.hasPalette) {
+			auto textureDataWithPaletteApplied = new ubyte[PixelFormatSize(clutState.format, textureState.width * textureState.height)];
+			applyPalette(textureData, clutData, textureDataWithPaletteApplied.ptr, textureState, clutState);
+			textureData = textureDataWithPaletteApplied;
+			pixelFormat = cast(PixelFormat *)&clutPixelFormat;
+		} else {
+			pixelFormat = cast(PixelFormat *)&texturePixelFormat;
+		}
+
+		// @TODO: Check this!
+		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pixelFormat.size);
+		switch (textureState.format) {
+			case PixelFormats.GU_PSM_5650:
+				glPixelStorei(GL_UNPACK_ROW_LENGTH, cast(int)(pixelFormat.size * textureState.width));
+			break;
+			default:
+			case PixelFormats.GU_PSM_5551:
+			case PixelFormats.GU_PSM_4444:
+			case PixelFormats.GU_PSM_8888:
+				glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			break;
+		}
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			pixelFormat.internal,
+			textureState.width,
+			textureState.height,
+			0,
+			pixelFormat.external,
+			pixelFormat.opengl,
+			textureData.ptr
+		);
+
+		//writefln("update(%d) :: %08X, %s, %d", gltex, textureData.ptr, textureState, textureState.totalSize);
 	}
 
 	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState textureState) {
@@ -539,49 +687,29 @@ class Texture {
 		}
 	}
 
-	void update(Memory memory, ref TextureState textureState) {
-		auto inData = (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize];
-		auto pformat = GpuOpengl.PixelFormats[textureState.format];
-
-		glActiveTexture(GL_TEXTURE0);
-		bind();
-
-		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pformat.size);
-
-		auto outData = inData;
-
-		if (textureState.swizzled) {
-			outData = new ubyte[inData.length];
-			//outData[] = 0xFF;
-			unswizzle(inData, outData, textureState);
+	static void applyPalette(ubyte[] textureData, ubyte[] clutData, ubyte* textureDataWithPaletteApplied, ref TextureState textureState, ref ClutState clutState) {
+		uint clutEntrySize = clutState.colorEntrySize;
+		void writeValue(uint index) {
+			textureDataWithPaletteApplied[0..clutEntrySize] = (clutData.ptr + index * clutEntrySize)[0..clutEntrySize];
+			textureDataWithPaletteApplied += clutEntrySize;
 		}
-
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			pformat.internal,
-			textureState.width,
-			textureState.height,
-			0,
-			pformat.external,
-			pformat.opengl,
-			outData.ptr
-		);
-		//glCheckError();
-		
-		//std.file.write("demodemo", data[0..(textureState.width * textureState.height) * cast(uint)pformat.size]);
-		
-		//writefln("%d, %d, %d");
-		writefln("update(%d):%08X,%s, %d", gltex, inData.ptr, textureState, (textureState.width * textureState.height) * cast(uint)pformat.size);
-	}
-
-	void invalidate() {
-		// @TODO
-	}
-
-	void bind() {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, gltex);
+		switch (textureState.format) {
+			case PixelFormats.GU_PSM_T4:
+				foreach (indexes; textureData) {
+					writeValue((indexes >> 0) & 0xF);
+					writeValue((indexes >> 4) & 0xF);
+				}
+			break;
+			case PixelFormats.GU_PSM_T8:
+				foreach (index; textureData) writeValue(index);
+			break;
+			case PixelFormats.GU_PSM_T16:
+				foreach (index; cast(ushort[])textureData) writeValue(index);
+			break;
+			case PixelFormats.GU_PSM_T32:
+				foreach (index; cast(uint[])textureData) writeValue(index);
+			break;
+		}
 	}
 }
 

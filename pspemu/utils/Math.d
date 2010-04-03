@@ -1,4 +1,4 @@
-module pspemu.core.gpu.Utils;
+module pspemu.utils.Math;
 
 version = VERSION_SSE_OPS;
 

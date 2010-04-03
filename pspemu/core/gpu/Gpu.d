@@ -10,12 +10,12 @@ import core.thread;
 import std.stdio;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Math;
 import pspemu.utils.Logger;
 
 import pspemu.core.Memory;
 import pspemu.core.gpu.Commands;
 import pspemu.core.gpu.Types;
-import pspemu.core.gpu.Utils;
 import pspemu.core.gpu.GpuState;
 import pspemu.core.gpu.GpuImpl;
 import pspemu.core.gpu.DisplayList;
