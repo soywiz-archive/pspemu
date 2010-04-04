@@ -1,6 +1,6 @@
 module pspemu.hle.Loader;
 
-version = DEBUG_LOADER;
+//version = DEBUG_LOADER;
 //version = ALLOW_UNIMPLEMENTED_NIDS;
 //version = LOAD_DWARF_INFORMATION;
 

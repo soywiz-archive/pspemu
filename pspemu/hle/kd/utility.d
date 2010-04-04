@@ -9,6 +9,8 @@ class sceUtility : Module {
 		mixin(registerd!(0xD4B95FFB, sceUtilitySavedataUpdate));
 		mixin(registerd!(0x8874DBE0, sceUtilitySavedataGetStatus));
 		mixin(registerd!(0xA5DA2406, sceUtilityGetSystemParamInt));
+		mixin(registerd!(0x5EEE6548, sceUtilityCheckNetParam));
+		mixin(registerd!(0x434D4B3A, sceUtilityGetNetParam));
 	}
 
 	/**
@@ -69,6 +71,36 @@ class sceUtility : Module {
 		unimplemented();
 		return -1;
 	}
+
+	/**
+	 * Check existance of a Net Configuration
+	 *
+	 * @param id - id of net Configuration (1 to n)
+	 * @return 0 on success, 
+	 */
+	int sceUtilityCheckNetParam(int id) {
+		unimplemented_notice();
+		return -1;
+	}
+
+	/**
+	 * Get Net Configuration Parameter
+	 *
+	 * @param conf - Net Configuration number (1 to n)
+	 * (0 returns valid but seems to be a copy of the last config requested)
+	 * @param param - which parameter to get
+	 * @param data - parameter data
+	 * @return 0 on success, 
+	 */
+	int sceUtilityGetNetParam(int conf, int param, netData *data) {
+		unimplemented_notice();
+		return -1;
+	}
+}
+
+union netData {
+	u32 asUint;
+	char asString[128];
 }
 
 /+

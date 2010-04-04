@@ -15,13 +15,26 @@ void test_start() {
 		//mov [ECX + 0], [ECX + 4];
 		//push int ptr [ECX + 4];
 		
+		push int ptr [ECX + 4];
+		
 		//mov EDX, 0x77777777;
 		//jne test_end;
 		//label2:;
 		//je test_end;
 		//ret;
 		
-		setl DL;
+		//mov [EAX+256], 0x77777777;
+		//jnge test_end;
+		//push [EDI+256];
+		//xor EAX, EDI;
+		
+		/*
+		or AX, 0x7777;
+		and AX, 0x7777;
+		xor AX, 0x7777;
+		*/
+		
+		//setl DL;
 		
 		//add EAX, 8;
 		/*

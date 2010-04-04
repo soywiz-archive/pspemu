@@ -64,12 +64,13 @@ template ThreadManForUser_Threads() {
 
 		pspThread.name = cast(string)pspThread.info.name[0..name.length];
 
-		pspThread.info.size         = pspThread.info.sizeof;
 		pspThread.info.name[0..name.length] = name[0..name.length];
-		pspThread.info.stackSize    = stackSize;
 		pspThread.info.currentPriority = pspThread.info.initPriority = initPriority;
-		pspThread.info.entry        = entry;
-		pspThread.info.attr         = attr;
+		pspThread.info.size      = pspThread.info.sizeof;
+		pspThread.info.stackSize = stackSize;
+		pspThread.info.entry     = entry;
+		pspThread.info.attr      = attr;
+		pspThread.info.status    = PspThreadStatus.PSP_THREAD_STOPPED;
 
 		// Set stack.
 		pspThread.createStack(moduleManager.get!(SysMemUserForUser));
@@ -105,6 +106,7 @@ template ThreadManForUser_Threads() {
 		}
 		pspThread.registers.A0 = arglen;
 		pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
+		pspThread.info.status  = PspThreadStatus.PSP_THREAD_RUNNING;
 		threadManager.addToRunningList(pspThread);
 
 		// NOTE: It's mandatory to switch immediately to this thread, because the new thread
@@ -595,6 +597,15 @@ class PspThread {
 	}
 }
 
+enum PspThreadStatus {
+	PSP_THREAD_RUNNING = 1,
+	PSP_THREAD_READY   = 2,
+	PSP_THREAD_WAITING = 4,
+	PSP_THREAD_SUSPEND = 8,
+	PSP_THREAD_STOPPED = 16, // Before startThread
+	PSP_THREAD_KILLED  = 32, // Thread manager has killed the thread (stack overflow)
+}
+
 struct SceKernelThreadInfo {
 	/** Size of the structure */
 	SceSize     size;
@@ -603,7 +614,7 @@ struct SceKernelThreadInfo {
 	/** Thread attributes */
 	SceUInt     attr;
 	/** Thread status */
-	int     	status;
+	PspThreadStatus status;
 	/** Thread entry point */
 	SceKernelThreadEntry    entry;
 	/** Thread stack pointer */

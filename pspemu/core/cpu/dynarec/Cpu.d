@@ -21,6 +21,8 @@ import pspemu.core.cpu.interpreted.Utils;
 import pspemu.core.cpu.dynarec.ops.Alu;
 import pspemu.core.cpu.dynarec.ops.Memory;
 
+extern (Windows) uint IsDebuggerPresent();
+
 class EmiterMipsToX86 : EmiterX86 {
 	enum MipsRegisters : uint {
 		// +00 +01 +02 +03 +04 +05 +06 +07
@@ -30,48 +32,55 @@ class EmiterMipsToX86 : EmiterX86 {
 		    T8, T9, K0, K1, GP, SP, FP, RA, // +24
 	}
 
-	void execute(uint offset = 0) {
-		writeLabels();
-		auto func = buffer.ptr + offset;
-		//asm { int 3; }
-		asm { mov EAX, func; call EAX; }
-	}
-
-	void execute(uint registers, uint offset = 0) {
-		writeLabels();
-		auto func = buffer.ptr + offset;
-		//asm { int 3; }
-		asm { mov ECX, registers; mov EAX, func; call EAX; }
-	}
+	/*
 	
-	void execute(Registers registers, Label* label = null) {
-		execute(cast(uint)&registers.R, (label !is null) ? label.address : 0);
-	}
+	Registers:
+		GPR: 4*32
+		HI, LO
+		CMP1, CMP2
+		FPR: 4*32
+	*/
 
-	void MIPS_LOAD_REGISTER_TABLE(uint register_table) {
-		MOV(Register32.ECX, register_table);
+	static void executeCode(Registers registers, void* codePointer) {
+		uint registersInt = cast(uint)&registers.R;
+		auto func = cast(uint)codePointer;
+		asm {
+			push EBX;
+				mov EBX, registersInt;
+				mov EAX, func;
+				call EAX;
+			pop EBX;
+		}
 	}
 
 	byte MIPS_GET_DISPLACEMENT(MipsRegisters mipsRegister) {
-		return cast(byte)(4 * (mipsRegister & 31));
+		return cast(byte)(4 * (0 + (mipsRegister & 31)));
+	}
+	
+	Memory32 MIPS_GET_REGISTER(MipsRegisters mipsRegister) {
+		return Memory32(Register32.EBX, MIPS_GET_DISPLACEMENT(mipsRegister));
+	}
+
+	Memory32 MIPS_GET_CMP(int count) {
+		return Memory32(Register32.EBX, 4 * (32 + count));
 	}
 
 	void MIPS_LOAD_REGISTER(Register32 x32RegTo, MipsRegisters mipsRegFrom) {
 		if (mipsRegFrom == 0) {
 			MOV(x32RegTo, 0);
 		} else {
-			MOV_FROMPTR(Register32.ECX, x32RegTo, MIPS_GET_DISPLACEMENT(mipsRegFrom));
+			MOV(x32RegTo, MIPS_GET_REGISTER(mipsRegFrom));
 		}
 	}
 
 	void MIPS_STORE_REGISTER(Register32 x32RegFrom, MipsRegisters mipsRegTo) {
 		if (mipsRegTo == 0) return;
-		MOV_TOPTR(Register32.ECX, x32RegFrom, MIPS_GET_DISPLACEMENT(mipsRegTo));
+		MOV(MIPS_GET_REGISTER(mipsRegTo), x32RegFrom);
 	}
 
 	void MIPS_STORE_REGISTER_VALUE(uint value, MipsRegisters mipsRegTo) {
 		if (mipsRegTo == 0) return;
-		MOV_TOPTR(Register32.ECX, value, MIPS_GET_DISPLACEMENT(mipsRegTo));
+		MOV(MIPS_GET_REGISTER(mipsRegTo), value);
 	}
 
 	void MIPS_LI(MipsRegisters rt, uint value) {
@@ -85,14 +94,12 @@ class EmiterMipsToX86 : EmiterX86 {
 	mixin Cpu_Memory_Emiter;
 
 	void MIPS_SYSCALL(uint PC, uint code) {
-		PUSH(Register32.ECX);
 		{
 			PUSH(code);
 			PUSH(PC);
 			CALL(createLabelToFunction(&SYSCALL));
 			ADD(Register32.ESP, 8);
 		}
-		POP(Register32.ECX);
 		RET();
 	}
 
@@ -103,12 +110,10 @@ class EmiterMipsToX86 : EmiterX86 {
 	}
 
 	void MIPS_TICK(uint PC, uint count = 1) {
-		PUSH(Register32.ECX);
 		PUSH(PC);
 		PUSH(count);
 		CALL(createLabelToFunction(&SYSTEM_TICK));
 		ADD(Register32.ESP, 8);
-		POP(Register32.ECX);
 		CMP(Register32.EAX, 0);
 		JE(1);
 		RET();
@@ -140,19 +145,35 @@ static extern(C) {
 
 		if (lastCpu.runningState != RunningState.RUNNING) lastCpu.waitUntilResume();
 
+		if (lastCpu.registers.PAUSED) {
+			while (lastCpu.registers.PAUSED) {
+				lastCpu.interrupts.queue(Interrupts.Type.THREAD0);
+				if (lastCpu.interrupts.InterruptFlag) lastCpu.interrupts.process();
+				sleep(0);
+			}
+			return true;
+		}
+
 		//std.c.stdio.printf("%08X\n", PC);
 		return false;
 	}
 
-	void MEMORY_WRITE_8(uint addr, ubyte value) {
-		//writefln("WRITE(%08X) <- %02X", addr, value);
-		//lastCpu.memory[addr] = value;
-		lastCpu.memory.write8(addr, value);
+	void MEMORY_WRITE_SB(uint addr, ubyte value) { lastCpu.memory.write8 (addr, value); }
+	void MEMORY_WRITE_SH(uint addr, ubyte value) { lastCpu.memory.write16(addr, value); }
+	void MEMORY_WRITE_SW(uint addr, ubyte value) { lastCpu.memory.write32(addr, value); }
+
+	uint MEMORY_READ_LB(uint addr) { return cast(int)cast(byte)lastCpu.memory.read8(addr); }
+	uint MEMORY_READ_LH(uint addr) { return cast(int)cast(short)lastCpu.memory.read16(addr); }
+	uint MEMORY_READ_LBU(uint addr) { return cast(uint)lastCpu.memory.read8(addr); }
+	uint MEMORY_READ_LHU(uint addr) { return cast(uint)lastCpu.memory.read16(addr); }
+	uint MEMORY_READ_LW(uint addr) { return cast(int)lastCpu.memory.read32(addr); }
+	
+	void JUMP_PC(uint PC) {
+		lastCpu.registers.pcSet = PC;
 	}
 
 	void SYSCALL(uint PC, uint code) {
-		lastCpu.registers.PC  = PC + 4;
-		lastCpu.registers.nPC = PC + 8;
+		lastCpu.registers.pcSet = PC + 4;
 		//writefln("SYSCALL PC(%08X) -> CODE(%08X)", PC, code);
 		lastCpu.syscall(code);
 	}
@@ -186,18 +207,25 @@ class UnknownOperationException : Exception {
 	}
 }
 
+template SimplifyInstructionAccess() {
+	Register RS() { return cast(Register)instruction.RS; }
+	Register RT() { return cast(Register)instruction.RT; }
+	Register RD() { return cast(Register)instruction.RD; }
+	ushort IMMU() { return cast(ushort)instruction.IMMU; }
+	int    IMM () { return cast(int)instruction.IMM; }
+	ubyte  POS () { return cast(ubyte)instruction.POS; }
+}
+
 class CpuDynaRec : Cpu {
-	this(Memory memory, Gpu gpu, Display display, IController controller) {
-		super(memory, gpu, display, controller);
-	}
-
 	alias EmiterMipsToX86.MipsRegisters Register;
+	alias EmiterX86.Register32 Register32;
 
-	struct InstructionInfo {
+	struct InstructionInfo {		
 		uint PC;
 		//InstructionDefinition instructionDefinition;
 		Instruction instruction;
 		bool isJump, jumpAlways, isLikely, jumpLink, isEndOfBranch;
+		bool follow;
 		uint jumpAddress;
 		bool inDelayedBranch;
 		int count = 0;
@@ -209,12 +237,15 @@ class CpuDynaRec : Cpu {
 			this.PC = PC; instruction.v = v;
 		}
 
+		mixin SimplifyInstructionAccess;
+
 		void parseJumps() {
 			auto instruction = this.instruction;
 			
 			static pure nothrow string BRANCH(Likely likely, Link link, string alwaysCondition) {
 				return (
 					"isJump = true;"
+					"follow = true;"
 					"isLikely = " ~ (likely ? "true" : "false") ~ ";"
 					"jumpLink   = " ~ (link ? "true" : "false") ~ ";"
 					"jumpAlways = " ~ alwaysCondition ~ ";"
@@ -225,15 +256,15 @@ class CpuDynaRec : Cpu {
 			}
 			static pure nothrow string BRANCH_S(Likely likely, string condition) { return BRANCH(likely, Link.NO, condition); }
 
-			void OP_BEQ    () { mixin(BRANCH(Likely.NO , Link.NO , "instruction.RS == instruction.RT")); }
-			void OP_BEQL   () { mixin(BRANCH(Likely.YES, Link.NO , "instruction.RS == instruction.RT")); }
-			void OP_BGEZ   () { mixin(BRANCH(Likely.NO , Link.NO , "instruction.RS == 0")); }
-			void OP_BGEZAL () { mixin(BRANCH(Likely.NO , Link.YES, "instruction.RS == 0")); }
-			void OP_BGEZL  () { mixin(BRANCH(Likely.YES, Link.NO , "instruction.RS == 0")); }
+			void OP_BEQ    () { mixin(BRANCH(Likely.NO , Link.NO , "RS == RT")); }
+			void OP_BEQL   () { mixin(BRANCH(Likely.YES, Link.NO , "RS == RT")); }
+			void OP_BGEZ   () { mixin(BRANCH(Likely.NO , Link.NO , "RS == 0")); }
+			void OP_BGEZAL () { mixin(BRANCH(Likely.NO , Link.YES, "RS == 0")); }
+			void OP_BGEZL  () { mixin(BRANCH(Likely.YES, Link.NO , "RS == 0")); }
 			void OP_BGTZ   () { mixin(BRANCH(Likely.NO , Link.NO , "false")); }
 			void OP_BGTZL  () { mixin(BRANCH(Likely.YES, Link.NO , "false")); }
-			void OP_BLEZ   () { mixin(BRANCH(Likely.NO , Link.NO , "instruction.RS == 0")); }
-			void OP_BLEZL  () { mixin(BRANCH(Likely.YES, Link.NO , "instruction.RS == 0")); }
+			void OP_BLEZ   () { mixin(BRANCH(Likely.NO , Link.NO , "RS == 0")); }
+			void OP_BLEZL  () { mixin(BRANCH(Likely.YES, Link.NO , "RS == 0")); }
 			void OP_BLTZ   () { mixin(BRANCH(Likely.NO , Link.NO , "false")); }
 			void OP_BLTZL  () { mixin(BRANCH(Likely.YES, Link.NO , "false")); }
 			void OP_BLTZAL () { mixin(BRANCH(Likely.NO , Link.YES, "false")); }
@@ -246,13 +277,13 @@ class CpuDynaRec : Cpu {
 			void OP_BC1T   () { mixin(BRANCH_S(Likely.NO,  "false")); }
 			void OP_BC1TL  () { mixin(BRANCH_S(Likely.YES, "false")); }
 
-			void OP_J   () { isJump = true; jumpAlways = true; isEndOfBranch = true ; jumpAddress = instruction.JUMP2; }
-			void OP_JR  () { isJump = true; jumpAlways = true; isEndOfBranch = true ; jumpAddress = -1; }
-			void OP_JAL () { isJump = true; jumpAlways = true; isEndOfBranch = false; jumpAddress = instruction.JUMP2; }
-			void OP_JALR() { isJump = true; jumpAlways = true; isEndOfBranch = false; jumpAddress = -1; }
+			void OP_J   () { isJump = true; jumpAlways = true; isEndOfBranch = true ; jumpAddress = instruction.JUMP2; follow = true; }
+			void OP_JR  () { isJump = true; jumpAlways = true; isEndOfBranch = true ; jumpAddress = -1; follow = false; }
+			void OP_JAL () { isJump = true; jumpAlways = true; isEndOfBranch = false; jumpAddress = instruction.JUMP2; follow = false; }
+			void OP_JALR() { isJump = true; jumpAlways = true; isEndOfBranch = false; jumpAddress = -1; follow = false; }
 
 			void OP_UNK() {
-				isJump = jumpAlways = isLikely = jumpLink = isEndOfBranch = false;
+				follow = isJump = jumpAlways = isLikely = jumpLink = isEndOfBranch = false;
 				jumpAddress = -1;
 				//writefln("UNK");
 			}
@@ -264,6 +295,8 @@ class CpuDynaRec : Cpu {
 		void emitNonDelayed(EmiterMipsToX86 emiter) {
 			auto instruction = this.instruction;
 			auto inDelayedBranch = this.inDelayedBranch;
+			
+			mixin SimplifyInstructionAccess;
 
 			void OP_UNK() {
 				throw(new UnknownOperationException(PC, "Unknown instruction"));
@@ -279,7 +312,7 @@ class CpuDynaRec : Cpu {
 			}
 			mixin(genSwitch(PspInstructions));
 		}
-
+		
 		/*
 			Non Likely branches:
 				- Executes always delayed slot before branch.
@@ -288,95 +321,150 @@ class CpuDynaRec : Cpu {
 				- When no branches, skips delayed slot.
 		*/
 		
-		void emitPreDelayed(EmiterMipsToX86 emiter, Emiter.Label* label) {
-			emiter.MIPS_TICK(PC, count); count = 0;
-
-			if (jumpAlways) {
-				//emiter.PUSHF();
-				return;
+		void emitBranchFalse(EmiterMipsToX86 emiter, Emiter.Label* labelFalse) {
+			void CompareBase() {
+				if (isLikely) {
+					emiter.MOV(Register32.EAX, emiter.MIPS_GET_REGISTER(RS));
+				} else {
+					emiter.MOV(Register32.EAX, emiter.MIPS_GET_CMP(0));
+				}
+				emiter.CMP(Register32.EAX, Register32.ECX);
 			}
-
-			void OP_UNK() {
-				debug (DEBUG_DYNA_CODE_GEN) writefln("CMP r%d, r%d", instruction.RS, instruction.RT);
-				emiter.MIPS_PREPARE_CMP(cast(Register)instruction.RS, cast(Register)instruction.RT);
-				//emiter.PUSHF();
+			void CompareNormal() {
+				if (isLikely) {
+					emiter.MOV(Register32.ECX, emiter.MIPS_GET_REGISTER(RT)); // @TODO: This instruciton is likely to be broken.
+				} else {
+					emiter.MOV(Register32.ECX, emiter.MIPS_GET_CMP(1));
+				}
+				CompareBase();
 			}
-
-			void OP_J() {
+			void CompareZero() {
+				emiter.MOV(Register32.ECX, 0);
+				CompareBase();
 			}
-
-			mixin(genSwitch(PspInstructions));
-		}
-
-		void emitPostDelayed(EmiterMipsToX86 emiter, Emiter.Label* label) {
-			if (jumpAlways) {
-				emiter.JMP(label);
-				return;
-			}
-			
-			//emiter.POPF();
 
 			void OP_UNK() {
 				throw(new UnknownOperationException(PC, "Unknown jump"));
 				//debug (DEBUG_DYNA_CODE_GEN) writefln("Unknown jump!");
 			}
-			void OP_BNE() {
-				emiter.JNE(label);
-			}
-			void OP_J() {
-				emiter.JMP(label);
-			}
-			void OP_BGEZ() {
-				emiter.JGE(label);
-			}
+			// Invert jumps.
+			void OP_BEQ () { CompareNormal(); emiter.JNE (labelFalse); } alias OP_BEQ OP_BEQL;
+			void OP_BNE () { CompareNormal(); emiter.JE  (labelFalse); }
+			void OP_BGEZ() { CompareZero  (); emiter.JNGE(labelFalse); }
 			mixin(genSwitch(PspInstructions));
 		}
-	}
-
-	struct CodeBlock {
-		EmiterMipsToX86 emiter;
-		Emiter.Label*[uint] labels;
-		uint from, to;
 		
-		void execute(Registers registers, uint PC) {
-			emiter.execute(registers, labels[PC]);
+		void emitPreDelayed(uint PC, uint JumpPC, EmiterMipsToX86 emiter, Emiter.Label* labelTrue, Emiter.Label* labelFalse) {
+			emiter.MIPS_TICK(PC, count); count = 0;
+
+			if (!jumpAlways) {
+				if (isLikely) {
+					emitBranchFalse(emiter, labelFalse);
+				} else {
+					emiter.MOV(Register32.EAX, emiter.MIPS_GET_REGISTER(RS)); emiter.MOV(emiter.MIPS_GET_CMP(0), Register32.EAX);
+					emiter.MOV(Register32.EAX, emiter.MIPS_GET_REGISTER(RT)); emiter.MOV(emiter.MIPS_GET_CMP(1), Register32.EAX);
+				}
+			}
+		}
+
+		void emitPostDelayed(uint PC, uint JumpPC, EmiterMipsToX86 emiter, Emiter.Label* labelTrue, Emiter.Label* labelFalse) {
+			if (!jumpAlways) {
+				if (!isLikely) emitBranchFalse(emiter, labelFalse);
+			}
+			
+			void OP_UNK() {
+				if (jumpAddress == -1) {
+					throw(new Exception("emitPostDelayed unknown address?"));
+				} else {
+					emiter.JMP(labelTrue);
+				}
+			}
+			
+			string Link() { return q{
+				emiter.MOV(emiter.MIPS_GET_REGISTER(Register.RA), PC + 8);
+			}; }
+			
+			string JumpRegister() { return q{
+				emiter.PUSH(emiter.MIPS_GET_REGISTER(RS));
+				emiter.CALL(&JUMP_PC);
+				emiter.ADD(Register32.ESP, 4);
+				emiter.RET();
+			}; }
+			
+			string JumpAddress() { return q{
+				emiter.PUSH(JumpPC);
+				emiter.CALL(&JUMP_PC);
+				emiter.ADD(Register32.ESP, 4);
+				emiter.RET();
+			}; }
+			
+			void OP_J() {
+				emiter.JMP(labelTrue);
+			}
+			void OP_JAL() { mixin(Link ~ JumpAddress); }
+			void OP_JALR() { mixin(Link ~ JumpRegister); }
+			void OP_JR() { mixin(JumpRegister); }
+			mixin(genSwitch(PspInstructions));
+			
 		}
 	}
-	
-	CodeBlock*[uint] globalLabels;
 
-	CodeBlock[uint] codeBlocks;
+	EmiterMipsToX86[uint] emiters;
+	
+	void*[] instructionMapScratchPad;
+	void*[] instructionMapMainMemory;
+
+	this(Memory memory, Gpu gpu, Display display, IController controller) {
+		instructionMapScratchPad = new void*[0x_4000 / 4];
+		instructionMapMainMemory = new void*[0x_2000000 / 4];
+		super(memory, gpu, display, controller);
+	}
+
+	void** instructionMapForAddressPointer(uint PspAddress) {
+		PspAddress &= 0x7FFFFFFF;
+		if (PspAddress >= 0x00010000 && PspAddress < 0x00014000) return &instructionMapScratchPad[(PspAddress - 0x00010000) >> 2];
+		if (PspAddress >= 0x08000000 && PspAddress < 0x0A000000) return &instructionMapMainMemory[(PspAddress - 0x08000000) >> 2];
+		//throw(new Exception(std.string.format("CpuDynaRec.instructionMapForAddress:Invalid Address 0x%08X", PspAddress)));
+		return null;
+	}
+
+	void* getInstructionMapForAddress(uint PspAddress) {
+		auto ptrPtr = instructionMapForAddressPointer(PspAddress);
+		return (ptrPtr !is null) ? *ptrPtr : null;
+	}
+	
+	void setInstructionMapForAddress(uint PspAddress, void* HostAddress) {
+		auto ptrPtr = instructionMapForAddressPointer(PspAddress);
+		if (ptrPtr == null) throw(new Exception(std.string.format("CpuDynaRec.setInstructionMapForAddress:Invalid Address 0x%08X", PspAddress)));
+		*ptrPtr = HostAddress;
+	}
 
 	void reset() {
-		globalLabels = null;
-		codeBlocks = null;
+		instructionMapScratchPad[] = null;
+		instructionMapMainMemory[] = null;
+		emiters = null;
 		super.reset();
 	}
 
-	/*CodeBlock* locateLabel(uint PC) {
-		writefln("locateLabel");
-		foreach (cPC, ref codeBlock; codeBlocks) {
-			//writefln("  locateLabel(%08X, %08X-%08X)", PC, codeBlock.from, codeBlock.to);
-			if (PC >= codeBlock.from && PC < codeBlock.to) {
-				return &codeBlocks[cPC];
-			}
-		}
-		return null;
-	}*/
-
 	void executePC(uint PC) {
-		//auto block = locateLabel(PC);
-		CodeBlock** block = (PC in globalLabels);
+		auto ptr = getInstructionMapForAddress(PC);
 		
 		// Miss.
-		if (block is null) {
-			analyzeFunction(PC);
-			//block = locateLabel(PC);
-			block = (PC in globalLabels);
+		if (ptr is null) {
+			try {
+				analyzeFunction(PC);
+			} catch (Object o) {
+				writefln("CpuDynaRec.analyzeFunction: %s", o);
+				throw(o);
+			}
+			ptr = getInstructionMapForAddress(PC);
 		}
 		
-		(*block).execute(registers, PC);
+		EmiterMipsToX86.executeCode(registers, ptr);
 	}
+
+	bool addBreakPointWhenStart = true;
+	//bool addBreakPointWhenStart = false;
 
 	void analyzeFunction(uint PC) {
 		InstructionMarker explored = new InstructionMarker;
@@ -392,14 +480,24 @@ class CpuDynaRec : Cpu {
 			return labels[PC];
 		}
 		
-		//emiter.MIPS_LOAD_REGISTER_TABLE(cast(uint)&registers.R[0]);
-
+		bool moreToExplore() { return branchesToExplore.length > 0; }
+		uint extractToExplore() {
+			uint PC = branchesToExplore.keys[0]; branchesToExplore.remove(PC);
+			return PC;
+		}
+		void addToExplore(uint PC) {
+			if (PC != -1) {
+				branchesToExplore[PC] = true;
+			}
+		}
+		
 		try {
-			branchesToExplore[StartPC] = true;
+			addToExplore(StartPC);
 			explored.reset();
-			while (branchesToExplore.length) {
+			while (moreToExplore) {
 				// Extract a PC to start processing.
-				PC = branchesToExplore.keys[0]; branchesToExplore.remove(PC);
+				PC = extractToExplore;
+				
 				if (PC < minPC) minPC = PC;
 
 				for (; !explored.marked(PC); PC += 4) {
@@ -407,24 +505,29 @@ class CpuDynaRec : Cpu {
 
 					emiter.setLabelHere(getLabel(PC));
 
-					//if (PC == StartPC) emiter.INT3(); // Debugger
+					if (addBreakPointWhenStart && (PC == StartPC)) {
+						if (IsDebuggerPresent()) emiter.INT3(); // Debugger
+						emiter.MOV(Register32.EDX, PC); // Just for debugging.
+					}
+
+					debug (DEBUG_DYNA_CODE_GEN) writefln("EMIT:%08X", PC);
 
 					instructionInfo.set(PC, memory.read32(PC));
 					instructionInfo.parseJumps();
 
-					debug (DEBUG_DYNA_CODE_GEN) writefln("EMIT:%08X", PC);
 					// Jump.
 					if (instructionInfo.isJump) {
-						Emiter.Label* label = getLabel(instructionInfo.jumpAddress);
+						auto labelTrue = getLabel(instructionInfo.jumpAddress);
+						auto labelFalse = getLabel(PC + 8);
 
 						//auto dis = new AllegrexDisassembler(memory); writefln(":::%s", dis.dissasm(PC, memory));
 
-						instructionInfo.emitPreDelayed(emiter, label);
+						instructionInfo.emitPreDelayed(PC, instructionInfo.jumpAddress, emiter, labelTrue, labelFalse);
 						labels[PC + 4] = emiter.createLabelAndSetHere();
 						delayedInstructionInfo.set(PC + 4, memory.read32(PC + 4));
 						delayedInstructionInfo.inDelayedBranch = true;
 						delayedInstructionInfo.emitNonDelayed(emiter);
-						instructionInfo.emitPostDelayed(emiter, label);
+						instructionInfo.emitPostDelayed(PC, instructionInfo.jumpAddress, emiter, labelTrue, labelFalse);
 						PC += 4;
 					}
 					// No jump.
@@ -432,9 +535,9 @@ class CpuDynaRec : Cpu {
 						instructionInfo.emitNonDelayed(emiter);
 					}
 
-					if (instructionInfo.isJump) {
+					if (instructionInfo.isJump && instructionInfo.follow) {
 						debug (DEBUG_DYNA_CODE_GEN) writefln(" EXP: %08X", instructionInfo.jumpAddress);
-						branchesToExplore[instructionInfo.jumpAddress] = true;
+						addToExplore(instructionInfo.jumpAddress);
 					}
 
 					if (instructionInfo.isEndOfBranch) {
@@ -451,30 +554,33 @@ class CpuDynaRec : Cpu {
 			));
 		}
 		
+		emiter.writeLabels();
+		
 		foreach (cPC, label; labels) {
+			switch (label.type) {
+				case Emiter.Label.Type.Internal:
+					if ((cPC != -1) && (label.address != -1)) {
+						setInstructionMapForAddress(cPC, emiter.buffer.ptr + label.address);
+					}
+				break;
+				case Emiter.Label.Type.External:
+					//throw(new Exception("Label.External"));
+				break;
+			}
 			//writefln("LABEL: %08X", cPC);
 		}
 		
-		codeBlocks[minPC] = CodeBlock(emiter, labels.rehash, minPC, maxPC);
-		codeBlocks = codeBlocks.rehash;
-
-		CodeBlock* block = minPC in codeBlocks;
-		
-		foreach (cPC, label; labels) {
-			//writefln("LABEL: %08X", cPC);
-			globalLabels[cPC] = block;
-		}
-		
-		globalLabels = globalLabels.rehash;
+		emiters[minPC] = emiter;
 	}
 
 	void execute(uint count) {
 		lastCpu = this;
 
-		while (true) {
-			//writefln("execute: %08X", registers.PC);
-			
-			executePC(registers.PC);
+		try {
+			while (true) executePC(registers.PC);
+		} catch (Object o) {
+			writefln("CpuDynaRec.execute: %s", o);
+			throw(o);
 		}
 	}
 }

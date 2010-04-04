@@ -9,6 +9,7 @@ import std.c.time;
 import std.c.stdio;
 import std.c.stdlib;
 import std.c.time;
+import std.md5;
 
 // BUG: Can't aliase directly std.random.Mt19937 because it's a template struct and currently it doesn't work with cast.
 alias void SceKernelUtilsMt19937Context;
@@ -26,6 +27,7 @@ class UtilsForUser : Module {
 		mixin(registerd!(0xB435DEC5, sceKernelDcacheWritebackInvalidateAll));
 		mixin(registerd!(0x3EE30821, sceKernelDcacheWritebackRange));
 		mixin(registerd!(0x91E4F6A7, sceKernelLibcClock));
+		mixin(registerd!(0xC8186A58, sceKernelUtilsMd5Digest));
 	}
 
 	/** 
@@ -132,6 +134,27 @@ class UtilsForUser : Module {
 		return -1;
 		*/
 		return cast(clock_t)cpu.registers.CLOCKS; // @TODO: It's the thread CLOCK not the global CLOCK!
+	}
+
+	/**
+	  * Function to perform an MD5 digest of a data block.
+	  *
+	  * @param data - Pointer to a data block to make a digest of.
+	  * @param size - Size of the data block.
+	  * @param digest - Pointer to a 16byte buffer to store the resulting digest
+	  *
+	  * @return < 0 on error.
+	  */
+	int sceKernelUtilsMd5Digest(u8 *data, u32 size, u8 *digest) {
+		if (data   is null) return -1;
+		if (digest is null) return -1;
+		MD5_CTX context;
+		ubyte[16] _digest;
+		context.start();
+		context.update(data[0..size]);
+		context.finish(_digest);
+		digest[0..16] = _digest;
+		return 0;
 	}
 }
 

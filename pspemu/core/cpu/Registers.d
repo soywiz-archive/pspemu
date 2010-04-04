@@ -31,11 +31,12 @@ final class Registers {
 			uint  T8, T9, K0, K1, GP, SP, _FP, RA; // +24
 		}
 	}
-	union { uint[32] RF; float[32] F; } // Floating point registers.
 	union {
 		struct { uint LO, HI; }  // HIgh, LOw for multiplications and divisions.
 		ulong HILO;
 	}
+	uint CMP[2]; // Used for dynarec.
+	union { uint[32] RF; float[32] F; } // Floating point registers.
 	union {
 		struct { float[4 * 4 * 8] VF; }
 		struct { float[4 * 4][8]  VF_MATRIX; }

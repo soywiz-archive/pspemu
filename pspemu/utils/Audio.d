@@ -181,6 +181,9 @@ class Audio {
 	//short[0x40] mixedBuffer;
 	//int[220 * 2] tempBuffer;
 	short[220 * 2 * 2] buffer;
+	//short[440 * 2 * 2] buffer;
+	
+	int[] bufferTemp;
 	short[] bufferFront, bufferBack;
 	bool _running = true;
 	uint playingPos;
@@ -194,6 +197,7 @@ class Audio {
 	this() {
 		bufferFront = buffer[0..buffer.length / 2];
 		bufferBack  = buffer[buffer.length / 2..$];
+		bufferTemp  = new int[buffer.length / 2];
 		for (int n = 0; n < channels.length; n++) channels[n] = new Channel;
 		(thread = new Thread(&playThread)).start();
 	}
@@ -222,9 +226,9 @@ class Audio {
 		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
 
 		void mix() {
-			int[220 * 2] bufferTemp;
 			int[int] channelsEndings;
 			int playingChannels;
+			bufferTemp[] = 0;
 
 			foreach (channel; channels) {
 				int channelMixLen = min(channel.samplesCount - channel.playingPosition, bufferTemp.length);
