@@ -238,18 +238,58 @@ class DisplayForm : Form, IMessageFilter {
 				add("&Gamepad");
 			});
 			add("-");
+			add("Ignore errors");
+			*/
 			addClick("Take Screenshot...", (MenuItem mi, EventArgs ea) {
+				mixin(emulationScopePauseResume);
+
+				std.date.Date date; date.parse(std.date.toUTCString(std.date.UTCtoLocalTime(std.date.getUTCtime())));
+				string filename = std.string.format("dpspemu screenshot - %04d-%02d-%02d %02d-%02d-%02d.png", date.year, date.month, date.day, date.hour, date.minute, date.second);
+
 				SaveFileDialog fd = new SaveFileDialog;
 				fd.defaultExt = "png";
-				fd.fileName = "screenshot.png";
+				fd.fileName = filename;
 				fd.filter = "PNG files (*.png)|*.png";
+
 				if (fd.showDialog(this) == DialogResult.OK) {
+					scope file = new BufferedFile(fd.fileName, FileMode.OutNew);
+					
+					void writeChunk(string type, ubyte[] data = []) {
+						scope fullData = cast(ubyte[])type[0..4] ~ data;
+						file.write(std.intrinsic.bswap(data.length));
+						file.write(fullData);
+						file.write(std.intrinsic.bswap(std.zlib.crc32(0, fullData)));
+					}
+					
 					//ImageFileFormatProvider["png"].write(bmp, fd.fileName);
+					static struct PNG_IHDR { align(1):
+						uint width;   // 480 big endian
+						uint height;  // 272 big endian
+						ubyte bps   = 8;
+						ubyte ctype = 6;
+						ubyte comp  = 0;
+						ubyte filter = 0;
+						ubyte interlace = 0;
+					}
+					alias std.intrinsic.bswap BE;
+					file.write(cast(ubyte[])x"89504E470D0A1A0A");
+					writeChunk("IHDR", TA(PNG_IHDR(BE(480), BE(272))));
+					auto screenData = glc.takeScreenshot();
+					ubyte[] data;
+					int rowsize = 480 * 4;
+					for (int n = 0; n < 272; n++) {
+						data ~= 0;
+						int crow = 271 - n;
+						data ~= screenData[(crow + 0) * rowsize..(crow + 1) * rowsize];
+					}
+					writeChunk("IDAT", cast(ubyte[])std.zlib.compress(data, 9));
+					writeChunk("IEND");
+
+					file.flush();
+					file.close();
 				}
 			});
 			add("-");
-			add("Ignore errors");
-			*/
 			addClick("Frame &limiting", (MenuItem mi, EventArgs ea) {
 				mi.checked = !mi.checked;
 				display.frameLimiting = mi.checked;

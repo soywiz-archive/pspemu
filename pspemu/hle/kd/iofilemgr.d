@@ -33,6 +33,15 @@ class IoFileMgrForKernel : Module {
 	}
 
 	void setVirtualDir(string path) {
+		// No absolute path; Relative path. No starts by '/' nor contains ':'.
+		if ((path[0] != '/') || (path.indexOf(':') == -1)) {
+			path = std.file.getcwd() ~ '/' ~ path;
+			writefln("set absolute!");
+		} else {
+			writefln("path already absolute!");
+		}
+		writefln("setVirtualDir('%s')", path);
+
 		fsroot["ms0:/PSP/GAME"].addChild(new FileSystem(path), "virtual");
 		gameroot = new VFS_Proxy("<gameroot>", fsroot[fscurdir]);
 	}

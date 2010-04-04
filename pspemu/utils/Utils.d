@@ -240,6 +240,17 @@ class TaskQueue {
 	
 	void add(Task task) { synchronized (lock) { tasks ~= task; } }
 	void executeAll() { synchronized (lock) { foreach (task; tasks) task(); tasks.length = 0; } }
+	void addAndWait(Task task) { add(task); waitExecuted(task); }
+	void waitExecuted(Task task) {
+		bool inList;
+		do {
+			synchronized (lock) {
+				inList = false;
+				foreach (ctask; tasks) if (ctask == task) { inList = true; break; }
+			}
+			if (!inList) sleep(1);
+		} while (inList);
+	}
 	void waitEmpty() { while (tasks.length) sleep(1); }
 	alias executeAll opCall;
 }

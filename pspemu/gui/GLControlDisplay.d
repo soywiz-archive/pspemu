@@ -13,6 +13,8 @@ import pspemu.core.gpu.impl.GpuOpengl;
 import pspemu.gui.GLControl;
 import pspemu.models.IDisplay;
 
+import pspemu.utils.Utils;
+
 class GLControlDisplay : GLControl {
 	Display display;
 	Cpu      cpu;
@@ -20,6 +22,21 @@ class GLControlDisplay : GLControl {
 	bool running = true;
 	bool ready = false;
 	//ubyte[] data;
+	
+	TaskQueue externalActions;
+	
+	ubyte[] takeScreenshot() {
+		auto screenData = new ubyte[480 * 272 * 4];
+		externalActions.addAndWait({
+			glReadPixels(
+				0, 0, 480, 272,
+				GL_RGBA,
+				GL_UNSIGNED_BYTE,
+				screenData.ptr
+			);
+		});
+		return screenData;
+	}
 
 	void threadRun() {
 		long backPerformanceCounter, frequency, delay;
@@ -79,6 +96,8 @@ class GLControlDisplay : GLControl {
 						swapBuffers();
 					}
 					
+					externalActions();
+					
 					//GC.minimize();
 					//GC.collect();
 
@@ -130,6 +149,7 @@ class GLControlDisplay : GLControl {
 	this(Cpu cpu, Display display) {
 		this.cpu     = cpu;
 		this.display = display;
+		this.externalActions = new TaskQueue;
 	}
 	
 	override void onHandleCreated(EventArgs ea) {
