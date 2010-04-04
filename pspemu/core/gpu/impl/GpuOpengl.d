@@ -273,6 +273,7 @@ template OpenglUtils() {
 			glEnableDisable(GL_TEXTURE_2D, state.textureMappingEnabled);
 			if (!state.textureMappingEnabled) return;
 
+			//glEnable(GL_BLEND);
 			glActiveTexture(GL_TEXTURE0);
 			glMatrixMode(GL_TEXTURE);
 			glLoadIdentity();
@@ -580,32 +581,35 @@ class Texture {
 	}
 
 	void update(Memory memory, ref TextureState textureState, ref ClutState clutState) {
-		if (!markForRecheck && !refreshAnyway) return;
+		if (markForRecheck || refreshAnyway) {
+			ubyte[] emptyBuffer;
+
+			auto textureData = textureState.address ? (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize] : emptyBuffer;
+			auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
 		
-		ubyte[] emptyBuffer;
+			if (markForRecheck) {
+				markForRecheck = false;
 
-		auto textureData = textureState.address ? (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize] : emptyBuffer;
-		auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
-	
-		if (markForRecheck) {
-			markForRecheck = false;
+				auto currentTextureHash = std.zlib.crc32(textureState.address, textureData);
+				if (currentTextureHash != textureHash) {
+					textureHash = currentTextureHash;
+					refreshAnyway = true;
+				}
 
-			auto currentTextureHash = std.zlib.crc32(textureState.address, textureData);
-			if (currentTextureHash != textureHash) {
-				textureHash = currentTextureHash;
-				refreshAnyway = true;
+				auto currentClutHash = std.zlib.crc32(clutState.address, clutData);
+				if (currentClutHash != clutHash) {
+					clutHash = currentClutHash;
+					refreshAnyway = true;
+				}
 			}
-
-			auto currentClutHash = std.zlib.crc32(clutState.address, clutData);
-			if (currentClutHash != clutHash) {
-				clutHash = currentClutHash;
-				refreshAnyway = true;
+			
+			if (refreshAnyway) {
+				refreshAnyway = false;
+				updateActually(textureData, clutData, textureState, clutState);
+				//writefln("texture updated");
+			} else {
+				//writefln("texture reuse");
 			}
-		}
-		
-		if (refreshAnyway) {
-			refreshAnyway = false;
-			updateActually(textureData, clutData, textureState, clutState);
 		}
 	}
 
@@ -613,21 +617,26 @@ class Texture {
 		auto texturePixelFormat = GpuOpengl.PixelFormats[textureState.format];
 		auto clutPixelFormat    = GpuOpengl.PixelFormats[clutState.format];
 		PixelFormat* pixelFormat;
+		static ubyte[] textureDataUnswizzled, textureDataWithPaletteApplied;
 
 		glActiveTexture(GL_TEXTURE0);
 		bind();
 
 		// Unswizzle texture.
 		if (textureState.swizzled) {
-			auto textureDataUnswizzled = new ubyte[textureData.length];
-			unswizzle(textureData, textureDataUnswizzled, textureState);
-			textureData = textureDataUnswizzled;
+			//writefln("swizzled: %d, %d", textureDataUnswizzled.length, textureData.length);
+			if (textureDataUnswizzled.length < textureData.length) textureDataUnswizzled.length = textureData.length;
+
+			unswizzle(textureData, textureDataUnswizzled[0..textureData.length], textureState);
+			textureData = textureDataUnswizzled[0..textureData.length];
 		}
 
 		if (textureState.hasPalette) {
-			auto textureDataWithPaletteApplied = new ubyte[PixelFormatSize(clutState.format, textureState.width * textureState.height)];
+			int textureSizeWithPaletteApplied = PixelFormatSize(clutState.format, textureState.width * textureState.height);
+			//writefln("palette: %d, %d", textureDataWithPaletteApplied.length, textureSizeWithPaletteApplied);
+			if (textureDataWithPaletteApplied.length < textureSizeWithPaletteApplied) textureDataWithPaletteApplied.length = textureSizeWithPaletteApplied;
 			applyPalette(textureData, clutData, textureDataWithPaletteApplied.ptr, textureState, clutState);
-			textureData = textureDataWithPaletteApplied;
+			textureData = textureDataWithPaletteApplied[0..textureSizeWithPaletteApplied];
 			pixelFormat = cast(PixelFormat *)&clutPixelFormat;
 		} else {
 			pixelFormat = cast(PixelFormat *)&texturePixelFormat;
@@ -700,15 +709,9 @@ class Texture {
 					writeValue((indexes >> 4) & 0xF);
 				}
 			break;
-			case PixelFormats.GU_PSM_T8:
-				foreach (index; textureData) writeValue(index);
-			break;
-			case PixelFormats.GU_PSM_T16:
-				foreach (index; cast(ushort[])textureData) writeValue(index);
-			break;
-			case PixelFormats.GU_PSM_T32:
-				foreach (index; cast(uint[])textureData) writeValue(index);
-			break;
+			case PixelFormats.GU_PSM_T8: foreach (index; textureData) writeValue(index); break;
+			case PixelFormats.GU_PSM_T16: foreach (index; cast(ushort[])textureData) writeValue(index); break;
+			case PixelFormats.GU_PSM_T32: foreach (index; cast(uint[])textureData) writeValue(index); break;
 		}
 	}
 }

@@ -85,10 +85,14 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		debug (DEBUG_ALL_SYSCALLS) { } else { r ~= "debug (DEBUG_SYSCALL)"; }
 		r ~= "{";
 		r ~= ".writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, cpu.registers.PC);";
-		if (parametersPrototypeString.length) {
-			r ~= ".writef(\"" ~ functionName ~ "(" ~ _parametersPrototypeString ~ ")\", " ~ parametersString ~ "); ";
-		} else {
+		debug (DEBUG_ALL_SYSCALLS) {
 			r ~= ".writef(\"" ~ functionName ~ "()\"); ";
+		} else {
+			if (parametersPrototypeString.length) {
+				r ~= ".writef(\"" ~ functionName ~ "(" ~ _parametersPrototypeString ~ ")\", " ~ parametersString ~ "); ";
+			} else {
+				r ~= ".writef(\"" ~ functionName ~ "()\"); ";
+			}
 		}
 		r ~= "}";
 		if (return_value) r ~= "auto retval = ";

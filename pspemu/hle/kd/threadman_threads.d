@@ -217,6 +217,9 @@ template ThreadManForUser_Threads() {
 	int sceKernelWaitThreadEnd(SceUID thid, SceUInt* timeout) {
 		//unimplemented_notice(); return 0;
 		if (thid < 0) return -1;
+		
+		unimplemented_notice();
+		return 0;
 
 		// @TODO implement timeout
 		try {

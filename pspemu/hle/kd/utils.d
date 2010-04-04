@@ -10,9 +10,12 @@ import std.c.stdio;
 import std.c.stdlib;
 import std.c.time;
 import std.md5;
+import std.c.windows.windows;
 
 // BUG: Can't aliase directly std.random.Mt19937 because it's a template struct and currently it doesn't work with cast.
 alias void SceKernelUtilsMt19937Context;
+
+//extern (Windows) ulong GetTickCount64();
 
 class UtilsForUser : Module {
 	void initNids() {
@@ -70,18 +73,23 @@ class UtilsForUser : Module {
 	 * Get the current time of time and time zone information
 	 */
 	int sceKernelLibcGettimeofday(timeval* tp, timezone* tzp) {
-		uint ctime = time(null);
-
+		// Used in: SDL/src/timer/psp/SDL_systimer.c
+	
 		if (tp !is null) {
-			tp.tv_sec  = ctime;
-			tp.tv_usec = 0; // @TODO
+			//auto ms = GetTickCount64();
+			auto ms = GetTickCount();
+			tp.tv_sec  = cast(uint)(ms / 1000);
+			tp.tv_usec = cast(uint)((ms % 1000) * 1000);
 		}
 
 		if (tzp !is null) {
 			// @TODO
+			unimplemented_notice();
 		}
+		
+		//writefln("sceKernelLibcGettimeofday(%d, %d)", tp.tv_sec, tp.tv_usec);
 
-		return ctime;
+		return 0;
 	}
 
 	/** 

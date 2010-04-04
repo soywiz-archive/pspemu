@@ -3,7 +3,7 @@ module pspemu.hle.kd.audio; // kd/audio.prx (sceAudio_Driver)
 //debug = DEBUG_AUDIO;
 //debug = DEBUG_SYSCALL;
 
-//version = DISABLE_SOUND;
+version = DISABLE_SOUND;
 
 import std.c.windows.windows;
 
@@ -90,10 +90,12 @@ class sceAudio_driver : Module {
 
 		version (DISABLE_SOUND) {
 			bool playing = true;
+			/*
 			(new Thread({
 				sleep(200);
 				playing = false;
 			})).start();
+			*/
 
 			// @TODO: Disabled:
 			return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
