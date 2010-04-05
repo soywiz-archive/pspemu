@@ -20,6 +20,7 @@ import pspemu.hle.Module;
 import pspemu.hle.Loader;
 import pspemu.hle.Syscall;
 import pspemu.hle.kd.threadman;
+import pspemu.hle.kd.iofilemgr;
 
 import pspemu.gui.AboutForm;
 
@@ -227,12 +228,6 @@ class DisplayForm : Form, IMessageFilter {
 			add("&Memory viewer...");
 			add("&GE viewer...");
 			add("-");
-			add("Memory &Stick", {
-				add("&Insert");
-				add("&Eject");
-				add("Selected &Path...");
-			});
-			add("-");
 			add("Input", {
 				add("&Keyboard");
 				add("&Gamepad");
@@ -240,6 +235,16 @@ class DisplayForm : Form, IMessageFilter {
 			add("-");
 			add("Ignore errors");
 			*/
+			add("Memory &Stick", {
+				addClick("&Insert", (MenuItem mi, EventArgs ea) {
+					moduleManager.get!(IoFileMgrForKernel).devices["ms0:"].inserted = true;
+				});
+				addClick("&Eject", (MenuItem mi, EventArgs ea) {
+					moduleManager.get!(IoFileMgrForKernel).devices["ms0:"].inserted = false;
+				});
+				//add("Selected &Path...");
+			});
+			add("-");
 			addClick("Take Screenshot...", (MenuItem mi, EventArgs ea) {
 				mixin(emulationScopePauseResume);
 

@@ -4,31 +4,112 @@ debug = DEBUG_SYSCALL;
 
 import std.date;
 
+import pspemu.core.cpu.Interrupts;
+
 import pspemu.hle.Module;
 
 import pspemu.utils.Utils;
 import pspemu.utils.VirtualFileSystem;
 
+class IoDevice : VFS_Proxy {
+	Cpu cpu;
+	string name = "<iodev:unknown>";
+
+	this(Cpu cpu, VFS node) {
+		this.cpu = cpu;
+		super(name, node, null);
+		register();
+	}
+	
+	void register() {
+	}
+	
+	bool present() { return true; }
+	
+	bool inserted() { return false; }
+	bool inserted(bool value) { return false; }
+
+	int sceIoDevctl(uint cmd, ubyte[] inData, ubyte[] outData) {
+		return -1;
+	}
+}
+
+class UmdDevice : IoDevice {
+	this(Cpu cpu, VFS node) { super(cpu, node); }
+}
+
+class MemoryStickDevice : IoDevice {
+	bool _inserted = true;
+	bool[uint] callbacks;
+	string name = "<iodev:mstick>";
+
+	this(Cpu cpu, VFS node) { super(cpu, node); }
+
+	override void register() {
+		writefln("MemoryStickDevice.register");
+		cpu.interrupts.registerCallback(Interrupts.Type.GPIO, delegate void() {
+			writefln("MemoryStickDevice.processGPIO");
+			cpu.queueCallbacks(callbacks.keys);
+		});
+	}
+
+	override bool inserted() { return _inserted; }
+	override bool inserted(bool value) {
+		if (_inserted != value) {
+			_inserted = value;
+			cpu.interrupts.queue(Interrupts.Type.GPIO);
+		}
+		return _inserted;
+	}
+
+	override int sceIoDevctl(uint cmd, ubyte[] inData, ubyte[] outData) {
+		switch (cmd) {
+			case 0x02025806: // MScmIsMediumInserted
+				*(cast(uint*)outData.ptr) = cast(uint)inserted;
+				writefln("MScmIsMediumInserted");
+			break;
+			case 0x02415821: // MScmRegisterMSInsertEjectCallback
+				uint callback = *(cast(uint*)inData.ptr);
+				callbacks[callback] = true;
+				writefln("MScmRegisterMSInsertEjectCallback");
+			break;
+			case 0x02415822: // MScmUnregisterMSInsertEjectCallback
+				uint callback = *(cast(uint*)inData.ptr);
+				callbacks.remove(callback);
+				writefln("MScmUnregisterMSInsertEjectCallback");
+			break;
+			default: // Unknown command
+				writefln("MemoryStickDevice.sceIoDevctl: Unknown command 0x%08X!", cmd);
+				return -1;
+			break;
+		}
+		return 0;
+	}
+}
+
 class IoFileMgrForKernel : Module {
 	VFS fsroot, gameroot;
+	IoDevice[string] devices;
 	string fscurdir;
 
 	void initModule() {
 		fsroot = new VFS("<root>");
 
-		//fsroot["/ms0/PSP/GAME"].addChild(new VFS_Proxy("virtual", new VFS()));
-
-		fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/ms0"), "ms0:");
-		fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash0"), "flash0:");
-		fsroot.addChild(new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash1"), "flash1:");
-		
-		// disc0:
-
+		// Devices.
+		devices["ms0:"   ] = new MemoryStickDevice(this.cpu, new FileSystem(ApplicationPaths.exe ~ "/pspfs/ms0"));
+		devices["flash0:"] = new IoDevice         (this.cpu, new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash0"));
+		devices["flash1:"] = new IoDevice         (this.cpu, new FileSystem(ApplicationPaths.exe ~ "/pspfs/flash0"));
+		devices["umd0:"  ] = new UmdDevice        (this.cpu, new FileSystem(ApplicationPaths.exe ~ "/pspfs/umd0"));
+	
 		// Aliases.
-		fsroot.addChild(fsroot["ms0:"], "ms:");
+		devices["disc0:" ] = devices["umd0:"];
+		devices["ms:"    ] = devices["ms0:"];
+		devices["fatms0:"] = devices["ms0:"];
+
+		// Mount registered devices:
+		foreach (deviceName, device; devices) fsroot.addChild(device, deviceName);
 		
 		fscurdir = "ms0:/PSP/GAME/virtual";
-
 		gameroot = new VFS_Proxy("<gameroot>", fsroot[fscurdir]);
 	}
 
@@ -198,12 +279,11 @@ class IoFileMgrForKernel : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceIoDevctl(string dev, int cmd, void* indata, int inlen, void* outdata, int outlen) {
-		static if (0) {
-			unimplemented();
+		try {
+			return devices[dev].sceIoDevctl(cmd, (cast(ubyte*)indata)[0..inlen], (cast(ubyte*)outdata)[0..outlen]);
+		} catch (Exception e) {
+			writefln("sceIoDevctl: %s", e);
 			return -1;
-		} else {
-			unimplemented_notice();
-			return 0;
 		}
 	}
 
