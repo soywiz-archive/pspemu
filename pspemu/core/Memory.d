@@ -326,7 +326,7 @@ class Memory : Stream {
 	 */
 	template StreamTemplate() {
 		/// Position of the stream.
-		uint streamPosition = 0;
+		ulong streamPosition = 0;
 
 		/**
 		 * Initializes the stream.
@@ -348,7 +348,11 @@ class Memory : Stream {
 			 */
 			size_t readBlock(void *_data, size_t len) {
 				u8 *data = cast(u8*)_data; int rlen = len;
-				while (len-- > 0) *data++ = read8(streamPosition++);
+				try {
+					while (len-- > 0) *data++ = read8(cast(uint)streamPosition++);
+				} catch (Exception e) {
+					return 0;
+				}
 				return rlen;
 			}
 
@@ -362,7 +366,11 @@ class Memory : Stream {
 			 */
 			size_t writeBlock(const void *_data, size_t len) {
 				u8 *data = cast(u8*)_data; int rlen = len;
-				while (len-- > 0) write8(streamPosition++, *data++);
+				try {
+					while (len-- > 0) write8(cast(uint)streamPosition++, *data++);
+				} catch (Exception e) {
+					return 0;
+				}
 				return rlen;
 			}
 
@@ -377,7 +385,8 @@ class Memory : Stream {
 			ulong seek(long offset, SeekPos whence) {
 				switch (whence) {
 					case SeekPos.Current: streamPosition += offset; break;
-					case SeekPos.Set, SeekPos.End: streamPosition = cast(uint)offset; break;
+					case SeekPos.Set: streamPosition = offset; break;
+					case SeekPos.End: streamPosition = 0x10000000 + offset; break;
 				}
 				return streamPosition;
 			}

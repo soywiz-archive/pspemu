@@ -12,6 +12,7 @@ import pspemu.core.cpu.Disassembler;
 
 import pspemu.gui.GLControlDisplay;
 import pspemu.gui.GLControl;
+import pspemu.gui.Utils;
 
 import pspemu.models.IDisplay;
 import pspemu.models.IController;
@@ -23,10 +24,13 @@ import pspemu.hle.kd.threadman;
 import pspemu.hle.kd.iofilemgr;
 
 import pspemu.gui.AboutForm;
+import pspemu.gui.HexEditor;
 
 static const string svnRevision = import("svn.version");
 
 class DisplayForm : Form, IMessageFilter {
+	mixin MenuAdder;
+
 	GLControlDisplay glc;
 	ModuleManager    moduleManager;
 	Loader           loader;
@@ -146,31 +150,9 @@ class DisplayForm : Form, IMessageFilter {
 
 	void attachMenu() {
 		menu = new MainMenu;
-		Menu currentMenu = menu;
 
-		MenuItem addClick(string name, void delegate(MenuItem, EventArgs) registerCallback = null, void delegate() menuGenerateCallback = null) {
-			Menu backMenu = currentMenu;
-
-			MenuItem menuItem = new MenuItem;
-			menuItem.text = name;
-			menuItem.parent = backMenu;
-			if (registerCallback !is null) menuItem.click ~= registerCallback;
-
-			currentMenu = menuItem;
-			{
-				if (menuGenerateCallback !is null) menuGenerateCallback();
-			}
-			currentMenu = backMenu;
-			
-			return menuItem;
-		}
-
-		MenuItem add(string name, void delegate() menuGenerateCallback = null) {
-			return addClick(name, null, menuGenerateCallback);
-		}
-
-		add("&File", {
-			addClick("&Open...", (MenuItem mi, EventArgs ea) {
+		addMenu("&File", {
+			addMenu("&Open...", (MenuItem mi, EventArgs ea) {
 				auto fd = new OpenFileDialog;
 				fd.filter  = "PSP Executable Files (*.pbp;*.elf;*.asm;*.iso;*.cso;*.dax)|*.pbp;*.elf;*.asm;*.iso;*.cso;*.dax|All Files (*.*)|*.*";
 
@@ -188,64 +170,68 @@ class DisplayForm : Form, IMessageFilter {
 					//emulationResumeCount();
 				}
 			});
-			add("-");
-			addClick("&Exit", (MenuItem mi, EventArgs ea) {
+			addMenu("-");
+			addMenu("&Exit", (MenuItem mi, EventArgs ea) {
 				//cpu.stop();
 				this.close();
 				//Application.exit();
 			});
 		});
-		add("&Run", {
-			addClick("&Execute", (MenuItem mi, EventArgs ea) {
+		addMenu("&Run", {
+			addMenu("&Execute", (MenuItem mi, EventArgs ea) {
 				emulationResume();
 			});
-			addClick("&Pause", (MenuItem mi, EventArgs ea) {
+			addMenu("&Pause", (MenuItem mi, EventArgs ea) {
 				emulationPause();
 			});
-			add("-");
-			addClick("&Reset", (MenuItem mi, EventArgs ea) {
+			addMenu("-");
+			addMenu("&Reset", (MenuItem mi, EventArgs ea) {
 				emulationReset();
 			});
-			addClick("&Stop", (MenuItem mi, EventArgs ea) {
+			addMenu("&Stop", (MenuItem mi, EventArgs ea) {
 				emulationStop();
 			});
 			/* // For Debugger
-			add("-");
-			add("Step &Into");
-			add("Step &Over");
-			add("Run to &Cursor");
-			add("Run until &Return");
+			addMenu("-");
+			addMenu("Step &Into");
+			addMenu("Step &Over");
+			addMenu("Run to &Cursor");
+			addMenu("Run until &Return");
 			*/
 			/*
-			add("-");
-			add("S&ave State...");
-			add("&Load State...");
+			addMenu("-");
+			addMenu("S&ave State...");
+			addMenu("&Load State...");
 			*/
 		});
-		add("&Tools", {
+		addMenu("&Tools", {
 			/*
-			add("&Debugger...");
-			add("&Memory viewer...");
-			add("&GE viewer...");
-			add("-");
-			add("Input", {
-				add("&Keyboard");
-				add("&Gamepad");
-			});
-			add("-");
-			add("Ignore errors");
+			addMenu("&Debugger...");
 			*/
-			add("Memory &Stick", {
-				addClick("&Insert", (MenuItem mi, EventArgs ea) {
+			addMenu("&Hex editor...", (MenuItem mi, EventArgs ea) {
+				(new HexViewerForm(cpu.memory)).show();
+			});
+			/*
+			addMenu("&GE viewer...");
+			addMenu("-");
+			addMenu("Input", {
+				addMenu("&Keyboard");
+				addMenu("&Gamepad");
+			});
+			addMenu("-");
+			addMenu("Ignore errors");
+			*/
+			addMenu("Memory &Stick", {
+				addMenu("&Insert", (MenuItem mi, EventArgs ea) {
 					moduleManager.get!(IoFileMgrForKernel).devices["ms0:"].inserted = true;
 				});
-				addClick("&Eject", (MenuItem mi, EventArgs ea) {
+				addMenu("&Eject", (MenuItem mi, EventArgs ea) {
 					moduleManager.get!(IoFileMgrForKernel).devices["ms0:"].inserted = false;
 				});
-				//add("Selected &Path...");
+				//addMenu("Selected &Path...");
 			});
-			add("-");
-			addClick("Take Screenshot...", (MenuItem mi, EventArgs ea) {
+			addMenu("-");
+			addMenu("Take Screenshot...", (MenuItem mi, EventArgs ea) {
 				mixin(emulationScopePauseResume);
 
 				std.date.Date date; date.parse(std.date.toUTCString(std.date.UTCtoLocalTime(std.date.getUTCtime())));
@@ -294,17 +280,17 @@ class DisplayForm : Form, IMessageFilter {
 					file.close();
 				}
 			});
-			add("-");
-			addClick("Frame &limiting", (MenuItem mi, EventArgs ea) {
+			addMenu("-");
+			addMenu("Frame &limiting", (MenuItem mi, EventArgs ea) {
 				mi.checked = !mi.checked;
 				display.frameLimiting = mi.checked;
 			}).checked = true;
 		});
-		add("&Help", {
-			addClick("&Website", (MenuItem mi, EventArgs ea) {
+		addMenu("&Help", {
+			addMenu("&Website", (MenuItem mi, EventArgs ea) {
 				ShellExecuteA(null, "open", "http://pspemu.soywiz.com/", null, null, SW_SHOWNORMAL);
 			});
-			addClick("&About...", (MenuItem mi, EventArgs ea) {
+			addMenu("&About...", (MenuItem mi, EventArgs ea) {
 				string str = std.string.format(
 					"D PSP Emulator\n"
 					"soywiz 2008,2010\n"
