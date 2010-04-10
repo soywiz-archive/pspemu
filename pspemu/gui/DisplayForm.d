@@ -24,7 +24,8 @@ import pspemu.hle.kd.threadman;
 import pspemu.hle.kd.iofilemgr;
 
 import pspemu.gui.AboutForm;
-import pspemu.gui.HexEditor;
+import pspemu.gui.HexEditorForm;
+import pspemu.gui.Registers;
 
 static const string svnRevision = import("svn.version");
 
@@ -209,7 +210,10 @@ class DisplayForm : Form, IMessageFilter {
 			addMenu("&Debugger...");
 			*/
 			addMenu("&Hex editor...", (MenuItem mi, EventArgs ea) {
-				(new HexViewerForm(cpu.memory)).show();
+				(new HexEditorForm(cpu.memory)).show();
+			});
+			addMenu("&Registers...", (MenuItem mi, EventArgs ea) {
+				(new RegisterViewerForm(cpu.registers)).show();
 			});
 			/*
 			addMenu("&GE viewer...");
@@ -218,9 +222,9 @@ class DisplayForm : Form, IMessageFilter {
 				addMenu("&Keyboard");
 				addMenu("&Gamepad");
 			});
-			addMenu("-");
 			addMenu("Ignore errors");
 			*/
+			addMenu("-");
 			addMenu("Memory &Stick", {
 				addMenu("&Insert", (MenuItem mi, EventArgs ea) {
 					moduleManager.get!(IoFileMgrForKernel).devices["ms0:"].inserted = true;

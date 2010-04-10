@@ -227,7 +227,7 @@ template OpenglUtils() {
 	static const uint[] BlendFuncDstTranslate     = [GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA ];	
 	static const uint[] LogicalOperationTranslate = [GL_CLEAR, GL_AND, GL_AND_REVERSE, GL_COPY, GL_AND_INVERTED, GL_NOOP, GL_XOR, GL_OR, GL_NOR, GL_EQUIV, GL_INVERT, GL_OR_REVERSE, GL_COPY_INVERTED, GL_OR_INVERTED, GL_NAND, GL_SET];
 
-	Texture[uint] textureCache;
+	Texture[string] textureCache;
 	//Clut[uint] clutCache;
 	
 	void glEnableDisable(int type, bool enable) {
@@ -236,11 +236,12 @@ template OpenglUtils() {
 
 	Texture getTexture(TextureState textureState, ClutState clutState) {
 		Texture texture = void;
-		if ((textureState.address in textureCache) is null) {
+		string hash = textureState.toString ~ clutState.toString;
+		if ((hash in textureCache) is null) {
 			texture = new Texture();
-			textureCache[textureState.address] = texture;
+			textureCache[hash] = texture;
 		} else {
-			texture = textureCache[textureState.address];
+			texture = textureCache[hash];
 		}
 		texture.update(state.memory, textureState, clutState);
 		return texture;
@@ -585,7 +586,8 @@ class Texture {
 			ubyte[] emptyBuffer;
 
 			auto textureData = textureState.address ? (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize] : emptyBuffer;
-			auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
+			//auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
+			auto clutData    = clutState.address ? clutState.data : emptyBuffer;
 		
 			if (markForRecheck) {
 				markForRecheck = false;
@@ -618,6 +620,9 @@ class Texture {
 		auto clutPixelFormat    = GpuOpengl.PixelFormats[clutState.format];
 		PixelFormat* pixelFormat;
 		static ubyte[] textureDataUnswizzled, textureDataWithPaletteApplied;
+
+		writefln("Updated: %s", textureState);
+		if (textureState.hasPalette) writefln("  %s", clutState);
 
 		glActiveTexture(GL_TEXTURE0);
 		bind();
@@ -655,7 +660,7 @@ class Texture {
 				glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			break;
 		}
-
+		
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,

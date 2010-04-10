@@ -122,9 +122,9 @@ void swap(T)(ref T a, ref T b) { auto c = a; a = b; b = c; }
 T min(T)(T l, T r) { return (l < r) ? l : r; }
 T max(T)(T l, T r) { return (l > r) ? l : r; }
 
-static pure nothrow string tos(T)(T v, int base = 10) {
+static pure nothrow string tos(T)(T v, int base = 10, int pad = 0) {
 	if (v == 0) return "0";
-	const digits = "0123456789abdef";
+	const digits = "0123456789abcdef";
 	assert(base <= digits.length);
 	string r;
 	long vv = cast(long)v;
@@ -134,6 +134,7 @@ static pure nothrow string tos(T)(T v, int base = 10) {
 		r = digits[cast(uint)(vv) % base] ~ r;
 		vv /= base;
 	}
+	while (r.length < pad) r = '0' ~ r;
 	if (sign) r = "-" ~ r;
 	return r;
 }

@@ -4,14 +4,32 @@ import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
 import pspemu.utils.Math;
 
+struct RGBA8888 {
+	union {
+		uint color;
+		struct { ubyte r, g, b, a; }
+	}
+	static assert(this.sizeof == 4);
+}
+
+/*RGBA8888[] decode(PixelFormats format) {
+}*/
+
 struct ClutState {
 	uint address;
 	PixelFormats format;
 	uint shift;
 	uint mask;
 	uint start;
+	ubyte[] data;
 
 	int colorEntrySize() { return PixelFormatSize(format, 1); }
+	int blocksSize(int num_blocks) {
+		return PixelFormatSize(format, num_blocks * 8);
+	}
+	string toString() {
+		return std.string.format("ClutState(addr=%08X, format=%d, shift=%d, mask=%d, start=%d)", address, format, shift, mask, start);
+	}
 }
 
 struct ScreenBuffer {
@@ -39,6 +57,9 @@ struct TextureState {
 	uint totalSize() { return rwidth * height; }
 	bool hasPalette() { return (format >= PixelFormats.GU_PSM_T4 && format <= PixelFormats.GU_PSM_T32); }
 	uint paletteRequiredComponents() { return hasPalette ? (1 << (4 + (format - PixelFormats.GU_PSM_T4))) : 0; }
+	string toString() {
+		return std.string.format("TextureState(addr=%08X, size(%dx%d), size=%d, format=%d, swizzled=%d)", address, width, height, size, format, swizzled);
+	}
 }
 
 struct LightState {
@@ -108,6 +129,7 @@ static struct GpuState {
 	UV   textureScale, textureOffset;
 
 	TextureState[8] textures;
+	ClutState uploadedClut;
 	ClutState clut;
 
 	Rect scissor;

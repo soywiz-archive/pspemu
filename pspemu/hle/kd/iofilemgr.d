@@ -115,11 +115,11 @@ class IoFileMgrForKernel : Module {
 
 	void setVirtualDir(string path) {
 		// No absolute path; Relative path. No starts by '/' nor contains ':'.
-		if ((path[0] != '/') || (path.indexOf(':') == -1)) {
-			path = std.file.getcwd() ~ '/' ~ path;
+		if ((path[0] == '/') || (path.indexOf(':') != -1)) {
 			writefln("set absolute!");
 		} else {
 			writefln("path already absolute!");
+			path = std.file.getcwd() ~ '/' ~ path;
 		}
 		writefln("setVirtualDir('%s')", path);
 
