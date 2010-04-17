@@ -15,6 +15,11 @@ class sceCtrl_driver : Module {
 		mixin(registerd!(0x1F803938, sceCtrlReadBufferPositive));
 		mixin(registerd!(0x3A622550, sceCtrlPeekBufferPositive));
 		mixin(registerd!(0x0B588501, sceCtrlReadLatch));
+		mixin(registerd!(0xA7144800, sceCtrlSetIdleCancelThresholdFunction));
+	}
+
+	void sceCtrlSetIdleCancelThresholdFunction() {
+		unimplemented();
 	}
 
 	void readBufferedFrames(SceCtrlData* pad_data, int count = 1, bool positive = true) {

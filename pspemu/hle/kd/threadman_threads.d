@@ -28,6 +28,10 @@ template ThreadManForUser_Threads() {
 		mixin(registerd!(0x383F7BCC, sceKernelTerminateDeleteThread));
 		mixin(registerd!(0x71BC9871, sceKernelChangeThreadPriority));
 		mixin(registerd!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
+		mixin(registerd!(0xD59EAD2F, sceKernelWakeupThread));
+		mixin(registerd!(0x9944F31F, sceKernelSuspendThread));
+		mixin(registerd!(0x840E8133, sceKernelWaitThreadEndCB));
+		mixin(registerd!(0x94AA61EE, sceKernelGetThreadCurrentPriority));
 	}
 
 	PspThread getThreadFromId(SceUID thid) {
@@ -238,6 +242,43 @@ template ThreadManForUser_Threads() {
 	}
 
 	/**
+	 * Wake a thread previously put into the sleep state.
+	 *
+	 * @param thid - UID of the thread to wake.
+	 *
+	 * @return Success if >= 0, an error if < 0.
+	 */
+	int sceKernelWakeupThread(SceUID thid) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Suspend a thread.
+	 *
+	 * @param thid - UID of the thread to suspend.
+	 *
+	 * @return Success if >= 0, an error if < 0.
+	 */
+	int sceKernelSuspendThread(SceUID thid) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Wait until a thread has ended and handle callbacks if necessary.
+	 *
+	 * @param thid - Id of the thread to wait for.
+	 * @param timeout - Timeout in microseconds (assumed).
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelWaitThreadEndCB(SceUID thid, SceUInt *timeout) {
+		unimplemented();
+		return -1;
+	}
+		
+	/**
 	 * Delay the current thread by a specified number of microseconds
 	 *
 	 * @param delay - Delay in microseconds.
@@ -348,6 +389,16 @@ template ThreadManForUser_Threads() {
 		return threadManager.currentThread.pauseAndYield("sceKernelSleepThreadCB", (PspThread pausedThread) {
 			processCallbacks();
 		});
+	}
+
+	/**
+	 * Get the current priority of the thread you are in.
+	 *
+	 * @return The current thread priority
+	 */
+	int sceKernelGetThreadCurrentPriority() {
+		unimplemented();
+		return 0;
 	}
 }
 

@@ -75,10 +75,10 @@ template TemplateCpu_ALU() {
 	auto OP_SEB() { mixin(CE("$rd = SEB(cast(ubyte )$rt);")); }
 	auto OP_SEH() { mixin(CE("$rd = SEH(cast(ushort)$rt);")); }
 
-	// ROTR -- Rotate Word Right
-	// ROTV -- Rotate Word Right Variable
-	auto OP_ROTR() { mixin(CE("$rd = ROTR($rt, $ps);")); }
-	auto OP_ROTV() { mixin(CE("$rd = ROTR($rt, $rs);")); }
+	// ROTR  -- Rotate Word Right
+	// ROTRV -- Rotate Word Right Variable
+	auto OP_ROTR () { mixin(CE("$rd = ROTR($rt, $ps);")); }
+	auto OP_ROTRV() { mixin(CE("$rd = ROTR($rt, $rs);")); }
 
 	// SLL(V) - Shift Word Left Logical (Variable)
 	// SRA(V) - Shift Word Right Arithmetic (Variable)

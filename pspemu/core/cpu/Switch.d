@@ -17,7 +17,6 @@ import std.stdio, std.traits;
 static pure nothrow {
 
 	// Return n tabs.
-	string indent(uint n, string s = "") { string r; int m = n; while (m-- > 0) r ~= "\t"; return r ~ s; }
 	string process_name(string s) {
 		string r;
 		foreach (c; s) {
@@ -42,7 +41,7 @@ static pure nothrow {
 	// Obtains the common mask of a set of instructions.
 	uint getCommonMask(InstructionDefinition[] ilist, uint _mask = 0x_FFFFFFFF) {
 		uint mask = _mask;
-		foreach (i; ilist) mask &= i.mask;
+		foreach (i; ilist) mask &= i.opcode.mask;
 		return mask;
 	}
 
@@ -56,7 +55,6 @@ static pure nothrow {
 	 * Returns a string with a call to that function if not. (void)
 	 */
 	string callFunction(string opname) {
-		//return "OP_" ~ process_name(opname) ~ "();";
 		string funcName = "OP_" ~ process_name(opname);
 		return (
 			"static if (__traits(compiles, " ~ funcName ~ ")) {"
@@ -69,94 +67,42 @@ static pure nothrow {
 				"OP_UNK();"
 			"}"
 		);
-		//r ~= "mixin(\"if (__traits(compiles, " ~ ilist[0].name ~ ")) { } else { }\");";
 	}
 
 	// Generate a set of switch for decoding instructions.
 	string genSwitch(InstructionDefinition[] ilist, string processor = "callFunction", uint _mask = 0x_FFFFFFFF, int level = 0) {
 		string r = "";
 		
-		//static assert (level > 16);
+		assert (level < 16);
 		
 		if (ilist.length == 0) {
 			// ""
 		} else if (ilist.length == 1) {
-			//r = indent(level, prefix ~ process_name(ilist[0].name) ~ "(); return;\n");
-			r = indent(level, "{mixin(" ~ processor ~ "(\"" ~ ilist[0].name ~ "\"));}\n");
-			//r ~= "mixin(\"if (__traits(compiles, " ~ ilist[0].name ~ ")) { } else { }\");";
-			//r = indent(level, "{mixin(" ~ processor ~ "(__traits(identifier, " ~ ilist[0].name ~ ")));}\n");
+			r = "{mixin(" ~ processor ~ "(\"" ~ ilist[0].name ~ "\"));}";
 		} if (ilist.length > 1) {
-			InstructionDefinition[512] ci; int ci_len = ilist.length;
+			InstructionDefinition[512] ci; int ci_len;
 
 			uint[] cvalues;
 
 			uint mask = getCommonMask(cast(InstructionDefinition[])ilist, _mask);
-			r ~= indent(level + 0, "switch (instruction.v & " ~ getString(mask) ~ ") {\n");
+			r ~= "switch (instruction.v & " ~ getString(mask) ~ ") {";
 			foreach (i; ilist) {
-				uint cvalue = i.opcode & mask; if (inArray(cvalues, cvalue)) continue;
+				uint cvalue = i.opcode.value & mask;
+				if (inArray(cvalues, cvalue)) continue;
 
-				r ~= indent(level + 1, "case " ~ getString(cvalue) ~ ":\n");
+				r ~= "case " ~ getString(cvalue) ~ ":";
 				ci_len = 0;
 				foreach (i2; ilist) {
-					if ((i.opcode & mask) == (i2.opcode & mask)) ci[ci_len++] = i2;
+					if ((i.opcode.value & mask) == (i2.opcode.value & mask)) ci[ci_len++] = i2;
 				}
 				r ~= genSwitch(ci[0..ci_len], processor, ~mask, level + 2);
-				r ~= indent(level + 1, "break;\n");
+				r ~= "break;";
 				
 				cvalues ~= cvalue;
 			}
-			r ~= indent(level + 1, "default:{mixin(" ~ processor ~ "(\"unk\"));}\n");
-			r ~= indent(level + 0, "}\n");
+			r ~= "default:{mixin(" ~ processor ~ "(\"unk\"));}\n";
+			r ~= "}";
 		}
 		return r;
 	}
 }
-
-/*
-unittest {
-	static const testList = [
-		InstructionDefinition("add"      , 0x00000020, 0xFC0007FF),
-		InstructionDefinition("addi"     , 0x20000000, 0xFC000000),
-		InstructionDefinition("test"     , 0x27000000, 0x0F000000),
-	];
-
-	// Check indentation function.
-	assertTrue(indent(2, "Test") == "\t\tTest", "Checks indentation");
-
-	// Check getString function.
-	assertTrue(getString(0) == "0x_00000000", "Checks 0 value");
-	assertTrue(getString(0x15) == "0x_00000015", "Checks unsigned integer");
-	assertTrue(getString(-0x999) == "0x_FFFFF667", "Checks signed");
-
-	// Check process_name function.
-	assertTrue(process_name("floor.w.s") == "FLOOR_W_S", "Checks process_name conversion");
-	
-	// Check inArray function.
-	assertTrue(inArray([1, 2, 3], 3) == true , "Checks inArray with 3 items");
-	assertTrue(inArray([-1, 1  ], 0) == false, "Checks inArray with 2 items");
-	assertTrue(inArray([       ], 0) == false, "Checks inArray with 0 items");
-
-	// Check getCommonMask function.
-	assertTrue(getCommonMask(testList[0..2]) == 0xFC000000, "getCommonMask check 1");
-	assertTrue(getCommonMask(testList[0..3]) == 0x0C000000, "getCommonMask check 2");
-
-	// Check genSwitch function.
-	{
-		Instruction instruction;
-
-		bool[string] called;
-
-		static string setCalledArray(string opname) { return "called[\"" ~ (opname) ~ "\"] = true;"; }
-
-		void EXECUTE() { mixin(genSwitch(testList[0..2], "setCalledArray")); }
-
-		instruction.v = 0x_00000020; EXECUTE(); // ADD
-		instruction.v = 0x_20000000; EXECUTE(); // ADDI
-		instruction.v = 0x_30000020; EXECUTE(); // UNK
-
-		assertTrue(("add"  in called) !is null, "Check ADD was called");
-		assertTrue(("addi" in called) !is null, "Check ADDI was called");
-		assertTrue(("unk"  in called) !is null, "Check an unknown/invalid instruction was detected");
-	}
-}
-*/

@@ -6,17 +6,84 @@ import std.stdio, std.string, std.bitmanip;
 enum { INSTR_TYPE_NONE = 0, INSTR_TYPE_PSP = 1, INSTR_TYPE_B = 2, INSTR_TYPE_JUMP = 4, INSTR_TYPE_JAL = 8, INSTR_TYPE_BRANCH = INSTR_TYPE_B | INSTR_TYPE_JUMP | INSTR_TYPE_JAL }
 enum { ADDR_TYPE_NONE = 0, ADDR_TYPE_16 = 1, ADDR_TYPE_26 = 2, ADDR_TYPE_REG = 3 }
 
+struct ValueMask {
+	string format;
+	uint value, mask;
+	
+	static ValueMask opCall(uint value, uint mask) {
+		ValueMask ret;
+		ret.format = "<unknown>";
+		ret.value = value;
+		ret.mask  = mask;
+		return ret;
+	}
+	
+	bool opCmp(ValueMask that) {
+		return (this.value == that.value) && (this.mask == that.mask);
+	}
+	
+	static ValueMask opCall(string format) {
+		ValueMask ret;
+		string[] parts;
+		ret.format = format;
+		int start, total;
+		for (int n = 0; n <= format.length; n++) {
+			if ((n == format.length) || (format[n] == ':')) {
+				parts ~= format[start..n];
+				start = n + 1;
+			}
+		}
+		void alloc(uint count) {
+			ret.value <<= count;
+			ret.mask  <<= count;
+			total += count;
+		}
+		void set(uint value, uint mask) {
+			ret.value |= value;
+			ret.mask  |= mask;
+		}
+		foreach (part; parts) {
+			switch (part) {
+				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft": alloc(5); break;
+				case "fcond": alloc(4 ); break;
+				case "imm16": alloc(16); break;
+				case "imm26": alloc(26); break;
+				default:
+					if ((part[0] != '0') && (part[0] != '1')) {
+						assert(0, "Unknown identifier");
+					} else {
+						for (int n = 0; n < part.length; n++) {
+							alloc(1);
+							if (part[n] == '0') {
+								set(0, 1);
+							} else if (part[n] == '1') {
+								set(1, 1);
+							} else {
+								//pragma(msg, part);
+								assert(0);
+								set(0, 0);
+							}
+						}
+					}
+				break;
+			}
+		}
+		assert(total == 32);
+		return ret;
+	}
+}
+
 struct InstructionDefinition {
 	string  name;
-	uint    opcode;
-	uint    mask;
 
+	ValueMask opcode;
+	
 	string  fmt;
 	uint    addrtype;
 	uint    type;
 
 	string toString() {
-		return format("InstructionDefinition('%s', %08X, %08X, '%s', %s, %s)", name, opcode, mask, fmt, addrtype, type);
+		return format("InstructionDefinition('%s', %08X, %08X, '%s', %s, %s)", name, opcode.value, opcode.mask, fmt, addrtype, type);
 	}
 }
 

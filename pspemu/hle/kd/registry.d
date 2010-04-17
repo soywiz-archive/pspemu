@@ -10,7 +10,6 @@ import pspemu.utils.VirtualFileSystem;
 
 class sceReg : Module {
 	void initNids() {
-		writefln("NIDS!");
 		mixin(registerd!(0x92E41280, sceRegOpenRegistry));
 		mixin(registerd!(0x39461B4D, sceRegFlushRegistry));
 		mixin(registerd!(0x1D8A762E, sceRegOpenCategory));

@@ -38,10 +38,16 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0xBC6FEBC5, sceKernelReferSemaStatus));
 		mixin(registerd!(0x812346E4, sceKernelClearEventFlag));
 		mixin(registerd!(0x402FCF22, sceKernelWaitEventFlag));
+		mixin(registerd!(0x328C546A, sceKernelWaitEventFlagCB));
 		mixin(registerd!(0x30FD48F0, sceKernelPollEventFlag));
 		mixin(registerd!(0x369ED59D, sceKernelGetSystemTimeLow));
+		mixin(registerd!(0xA66B0120, sceKernelReferEventFlagStatus));
 	}
-
+	
+	void sceKernelReferEventFlagStatus() {
+		unimplemented();
+	}
+	
 	/**
 	 * Process callbacks in sceKernel*ThreadCB() methods.
 	 */
@@ -109,16 +115,31 @@ class ThreadManForUser : Module {
 		}
 
 		/** 
-		  * Wait for an event flag for a given bit pattern.
-		  *
-		  * @param evid - The event id returned by sceKernelCreateEventFlag.
-		  * @param bits - The bit pattern to poll for.
-		  * @param wait - Wait type, one or more of ::PspEventFlagWaitTypes or'ed together
-		  * @param outBits - The bit pattern that was matched.
-		  * @param timeout  - Timeout in microseconds
-		  * @return < 0 On error
-		  */
+		 * Wait for an event flag for a given bit pattern.
+		 *
+		 * @param evid - The event id returned by sceKernelCreateEventFlag.
+		 * @param bits - The bit pattern to poll for.
+		 * @param wait - Wait type, one or more of ::PspEventFlagWaitTypes or'ed together
+		 * @param outBits - The bit pattern that was matched.
+		 * @param timeout  - Timeout in microseconds
+		 * @return < 0 On error
+		 */
 		int sceKernelWaitEventFlag(int evid, u32 bits, u32 wait, u32 *outBits, SceUInt *timeout) {
+			unimplemented();
+			return -1;
+		}
+
+		/** 
+		 * Wait for an event flag for a given bit pattern with callback.
+		 *
+		 * @param evid - The event id returned by sceKernelCreateEventFlag.
+		 * @param bits - The bit pattern to poll for.
+		 * @param wait - Wait type, one or more of ::PspEventFlagWaitTypes or'ed together
+		 * @param outBits - The bit pattern that was matched.
+		 * @param timeout  - Timeout in microseconds
+		 * @return < 0 On error
+		 */
+		int sceKernelWaitEventFlagCB(int evid, u32 bits, u32 wait, u32 *outBits, SceUInt *timeout) {
 			unimplemented();
 			return -1;
 		}

@@ -127,37 +127,20 @@ struct TVector(Type, int Size = 4) {
 
 		extern (C) {
 			// Internal operations.
-			CTVector opAdd(CTVector that) { mixin(genSimpleVectorInternalOp("addps")); }
-			CTVector opSub(CTVector that) { mixin(genSimpleVectorInternalOp("subps")); }
-			CTVector opMul(CTVector that) { mixin(genSimpleVectorInternalOp("mulps")); }
-			CTVector opDiv(CTVector that) { mixin(genSimpleVectorInternalOp("divps")); }
+			CTVector opBinary(string op:"+")(CTVector that) { mixin(genSimpleVectorInternalOp("addps")); }
+			CTVector opBinary(string op:"-")(CTVector that) { mixin(genSimpleVectorInternalOp("subps")); }
+			CTVector opBinary(string op:"*")(CTVector that) { mixin(genSimpleVectorInternalOp("mulps")); }
+			CTVector opBinary(string op:"/")(CTVector that) { mixin(genSimpleVectorInternalOp("divps")); }
 			
 			// External operations.
-			CTVector opAdd(Type that) { mixin(genSimpleVectorExternalOp("addps")); }
-			CTVector opSub(Type that) { mixin(genSimpleVectorExternalOp("subps")); }
-			CTVector opMul(Type that) { mixin(genSimpleVectorExternalOp("mulps")); }
-			CTVector opDiv(Type that) { mixin(genSimpleVectorExternalOp("divps")); }
+			CTVector opBinary(string op:"+")(Type that) { mixin(genSimpleVectorExternalOp("addps")); }
+			CTVector opBinary(string op:"-")(Type that) { mixin(genSimpleVectorExternalOp("subps")); }
+			CTVector opBinary(string op:"*")(Type that) { mixin(genSimpleVectorExternalOp("mulps")); }
+			CTVector opBinary(string op:"/")(Type that) { mixin(genSimpleVectorExternalOp("divps")); }
 		}
 	} else {
-		static string genSimpleVectorInternalOp(string op) {
-			return "Type[Size] rv = void; for (int n = 0; n < rv.length; n++) rv[n] = this.v[n] " ~ op ~ " that.v[n]; return CTVector(rv);";
-		}
-
-		static string genSimpleVectorExternalOp(string op) {
-			return "Type[Size] v = void; for (int n = 0; n < v.length; n++) v[n] = this.v[n] " ~ op ~ " that; return CTVector(v);";
-		}
-
-		// Internal operations.
-		CTVector opAdd(CTVector that) { mixin(genSimpleVectorInternalOp("+")); }
-		CTVector opSub(CTVector that) { mixin(genSimpleVectorInternalOp("-")); }
-		CTVector opMul(CTVector that) { mixin(genSimpleVectorInternalOp("*")); }
-		CTVector opDiv(CTVector that) { mixin(genSimpleVectorInternalOp("/")); }
-
-		// External operations.
-		CTVector opAdd(Type that) { mixin(genSimpleVectorExternalOp("+")); }
-		CTVector opSub(Type that) { mixin(genSimpleVectorExternalOp("-")); }
-		CTVector opMul(Type that) { mixin(genSimpleVectorExternalOp("*")); }
-		CTVector opDiv(Type that) { mixin(genSimpleVectorExternalOp("/")); }
+		CTVector opBinary(string op)(CTVector that) { mixin("Type[Size] rv = void; for (int n = 0; n < rv.length; n++) rv[n] = this.v[n] " ~ op ~ " that.v[n]; return CTVector(rv);"); }
+		CTVector opBinary(string op)(Type that    ) { mixin("Type[Size] v  = void; for (int n = 0; n < v.length ; n++) v [n] = this.v[n] " ~ op ~ " that; return CTVector(v);"); }
 	}
 
 	Type[] opSlice() { return v; }

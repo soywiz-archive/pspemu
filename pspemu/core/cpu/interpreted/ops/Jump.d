@@ -45,15 +45,13 @@ template TemplateCpu_JUMP() {
 	}
 
 	// JALR -- Jump and link register
-	auto OP_JALR() { mixin(LINK ~ JUMPR); }
+	auto OP_JALR() { mixin(LINK("instruction.RD") ~ JUMPR); }
 }
 
 template TemplateCpu_JUMP_Utils() {
 	static pure nothrow {
-		string LINK() {
-			return q{
-				registers.RA = registers.nPC + 4;
-			};
+		string LINK(string reg = "31") {
+			return "registers.R[" ~ reg ~ "] = registers.nPC + 4;";
 		}
 		string JUMP() {
 			return q{

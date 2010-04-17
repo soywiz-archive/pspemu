@@ -218,7 +218,7 @@ class AllegrexAssembler : ISymbolResolver {
 
 			Instruction instruction;
 
-			instruction.v = (instructionDefinition.opcode & instructionDefinition.mask);
+			instruction.v = (instructionDefinition.opcode.value & instructionDefinition.opcode.mask);
 			
 			//writefln("%s", paramTypes.join(""));
 			

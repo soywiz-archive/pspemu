@@ -10,8 +10,7 @@ class sceRtc : Module {
 		mixin(registerd!(0x57726BC1, sceRtcGetDayOfWeek));
 		mixin(registerd!(0x26D25A5D, sceRtcTickAddMicroseconds));
 	}
-	
-	
+
 	/**
 	 * Get the resolution of the tick counter
 	 *

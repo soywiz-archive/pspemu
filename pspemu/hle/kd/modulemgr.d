@@ -10,6 +10,21 @@ class ModuleMgrForUser : Module {
 		mixin(registerd!(0x50F0C1EC, sceKernelStartModule));
 		mixin(registerd!(0xD1FF982A, sceKernelStopModule));
 		mixin(registerd!(0x2E0911AA, sceKernelUnloadModule));
+		mixin(registerd!(0xD8B73127, sceKernelGetModuleIdByAddressFunction));
+		mixin(registerd!(0xF0A26395, sceKernelGetModuleIdFunction));
+		mixin(registerd!(0x8F2DF740, ModuleMgrForUser_8F2DF740));
+	}
+	
+	void sceKernelGetModuleIdByAddressFunction() {
+		unimplemented();
+	}
+
+	void sceKernelGetModuleIdFunction() {
+		unimplemented();
+	}
+
+	void ModuleMgrForUser_8F2DF740() {
+		unimplemented();
 	}
 
 	/**

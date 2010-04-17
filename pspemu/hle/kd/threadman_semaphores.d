@@ -15,6 +15,7 @@ template ThreadManForUser_Semaphores() {
 		mixin(registerd!(0x28B6489C, sceKernelDeleteSema));
 		mixin(registerd!(0x3F53E640, sceKernelSignalSema));
 		mixin(registerd!(0x4E3A1105, sceKernelWaitSema));
+		mixin(registerd!(0x6D212BAC, sceKernelWaitSemaCB));
 		mixin(registerd!(0x58B1F937, sceKernelPollSema));
 	}
 
@@ -114,6 +115,25 @@ template ThreadManForUser_Semaphores() {
 				pausedThread.resumeAndReturn(0);
 			}
 		});
+	}
+	
+	/**
+	 * Lock a semaphore a handle callbacks if necessary.
+	 *
+	 * @par Example:
+	 * @code
+	 * sceKernelWaitSemaCB(semaid, 1, 0);
+	 * @endcode
+	 *
+	 * @param semaid - The sema id returned from sceKernelCreateSema
+	 * @param signal - The value to wait for (i.e. if 1 then wait till reaches a signal state of 1)
+	 * @param timeout - Timeout in microseconds (assumed).
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelWaitSemaCB(SceUID semaid, int signal, SceUInt *timeout) {
+		unimplemented();
+		return -1;
 	}
 
 	/**

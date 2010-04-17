@@ -40,9 +40,10 @@ template TemplateCpu_BRANCH() {
 	// Branches if the register is greater than or equal to zero and saves the return address in $31
 	// if $s >= 0 .pcAdvance (offset << 2)); else .pcAdvance (4);
 	// if $s >= 0 $31 = PC + 8 (or nPC + 4); advance_pc (offset << 2)); else .pcAdvance (4);
-	auto OP_BGEZ  () { mixin(BRANCH(Likely.NO , Link.NO , "(cast(int)registers[instruction.RS]) >= 0")); }
-	auto OP_BGEZAL() { mixin(BRANCH(Likely.NO , Link.YES, "(cast(int)registers[instruction.RS]) >= 0")); }
-	auto OP_BGEZL () { mixin(BRANCH(Likely.YES, Link.NO , "(cast(int)registers[instruction.RS]) >= 0")); }
+	auto OP_BGEZ   () { mixin(BRANCH(Likely.NO , Link.NO , "(cast(int)registers[instruction.RS]) >= 0")); }
+	auto OP_BGEZL  () { mixin(BRANCH(Likely.YES, Link.NO , "(cast(int)registers[instruction.RS]) >= 0")); }
+	auto OP_BGEZAL () { mixin(BRANCH(Likely.NO , Link.YES, "(cast(int)registers[instruction.RS]) >= 0")); }
+	auto OP_BGEZALL() { mixin(BRANCH(Likely.YES, Link.YES, "(cast(int)registers[instruction.RS]) >= 0")); }
 
 	// BGTZ -- Branch on greater than zero
 	// Branches if the register is greater than zero

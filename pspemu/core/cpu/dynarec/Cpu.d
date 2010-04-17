@@ -260,6 +260,7 @@ class CpuDynaRec : Cpu {
 			void OP_BEQL   () { mixin(BRANCH(Likely.YES, Link.NO , "RS == RT")); }
 			void OP_BGEZ   () { mixin(BRANCH(Likely.NO , Link.NO , "RS == 0")); }
 			void OP_BGEZAL () { mixin(BRANCH(Likely.NO , Link.YES, "RS == 0")); }
+			void OP_BGEZALL() { mixin(BRANCH(Likely.YES, Link.YES, "RS == 0")); }
 			void OP_BGEZL  () { mixin(BRANCH(Likely.YES, Link.NO , "RS == 0")); }
 			void OP_BGTZ   () { mixin(BRANCH(Likely.NO , Link.NO , "false")); }
 			void OP_BGTZL  () { mixin(BRANCH(Likely.YES, Link.NO , "false")); }
@@ -289,7 +290,7 @@ class CpuDynaRec : Cpu {
 			}
 
 			count++;
-			mixin(genSwitch(PspInstructions));
+			mixin(genSwitch(PspInstructions_BCU));
 		}
 		
 		void emitNonDelayed(EmiterMipsToX86 emiter) {

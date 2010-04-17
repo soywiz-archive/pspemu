@@ -9,12 +9,7 @@ T max(T)(T a, T b) { return (a > b) ? a : b; }
 // http://msdn.microsoft.com/en-us/library/ff485923(v=VS.85).aspx
 class RichTextBoxEx : RichTextBox {
 	bool readOnly(bool set) {
-		if (created) {
-			SendMessageA(handle, EM_SETREADONLY, cast(WPARAM)set, 0);
-			//Edit_SetReadOnly(handle, set);
-		} else {
-			writefln("aaaaaaaaaaaaaa");
-		}
+		SendMessageA(handle, EM_SETREADONLY, cast(WPARAM)set, 0);
 		return set;
 	}
 	int getLineIndex(int line) {
