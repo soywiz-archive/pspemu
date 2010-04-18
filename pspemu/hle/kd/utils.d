@@ -31,6 +31,7 @@ class UtilsForUser : Module {
 		mixin(registerd!(0x3EE30821, sceKernelDcacheWritebackRange));
 		mixin(registerd!(0x91E4F6A7, sceKernelLibcClock));
 		mixin(registerd!(0xC8186A58, sceKernelUtilsMd5Digest));
+		mixin(registerd!(0x840259F1, sceKernelUtilsSha1Digest));
 	}
 
 	/** 
@@ -163,6 +164,20 @@ class UtilsForUser : Module {
 		context.finish(_digest);
 		digest[0..16] = _digest;
 		return 0;
+	}
+
+	/**
+	 * Function to SHA1 hash a data block.
+	 * 
+	 * @param data - The data to hash.
+	 * @param size - The size of the data.
+	 * @param digest - Pointer to a 20 byte array for storing the digest
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelUtilsSha1Digest(u8* data, u32 size, u8* digest) {
+		unimplemented();
+		return -1;
 	}
 }
 

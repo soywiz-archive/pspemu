@@ -21,6 +21,13 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
 		mixin(registerd!(0x8EB9EC49, sceDisplayWaitVblankCB));
 		mixin(registerd!(0x36CDFADE, sceDisplayWaitVblank));
+		mixin(registerd!(0x46F186C3, sceDisplayWaitVblankStartCB));
+		mixin(registerd!(0x773DD3A3, sceDisplayGetCurrentHcount));
+	}
+
+	// @TODO: Unknown.
+	void sceDisplayGetCurrentHcount() {
+		unimplemented();
 	}
 
 	/**
@@ -44,6 +51,14 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		});
 
 		return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart");
+	}
+
+	/**
+	 * Wait for vertical blank start with callback
+	 */
+	int sceDisplayWaitVblankStartCB() {
+		unimplemented();
+		return -1;
 	}
 
 	/**

@@ -25,9 +25,35 @@ class sceGe_driver : Module {
 		mixin(registerd!(0x5FB86AB0, sceGeListDeQueue));
 		mixin(registerd!(0xB448EC0D, sceGeBreak));
 		mixin(registerd!(0x4C06E472, sceGeContinue));
+		mixin(registerd!(0x438A385A, sceGeSaveContext));
+		mixin(registerd!(0x0BF608FB, sceGeRestoreContext));
 	}
 
 	PspGeCallbackData[] callbackDataList;
+	
+	/**
+	 * Save the GE's current state.
+	 *
+	 * @param context - Pointer to a ::PspGeContext.
+	 *
+	 * @return ???
+	 */
+	int sceGeSaveContext(PspGeContext* context) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Restore a previously saved GE context.
+	 *
+	 * @param context - Pointer to a ::PspGeContext.
+	 *
+	 * @return ???
+	 */
+	int sceGeRestoreContext(PspGeContext* context) {
+		unimplemented();
+		return -1;
+	}
 
 	// @TODO: Unknown prototype
 	void sceGeBreak() {

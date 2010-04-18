@@ -6,6 +6,26 @@ class LoadCoreForKernel : Module {
 	void initNids() {
 		mixin(registerd!(0xD8779AC6, sceKernelIcacheClearAll));
 		mixin(registerd!(0xCF8A41B1, sceKernelFindModuleByName));
+
+		mixin(registerd!(0xACE23476, sceKernelCheckPspConfig));
+		mixin(registerd!(0xBF983EF2, sceKernelProbeExecutableObject));
+		mixin(registerd!(0xCCE4A157, sceKernelFindModuleByUID));
+	}
+
+	// @TODO: Unknown.
+	void sceKernelCheckPspConfig() { unimplemented(); }
+	void sceKernelProbeExecutableObject() { unimplemented(); }
+
+	/**
+	 * Find a module by it's UID.
+	 *
+	 * @param modid - The UID of the module.
+	 *
+	 * @return Pointer to the ::SceModule structure if found, otherwise NULL.
+	 */
+	SceModule* sceKernelFindModuleByUID(SceUID modid) {
+		unimplemented();
+		return null;
 	}
 
 	/**

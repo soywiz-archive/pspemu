@@ -148,6 +148,20 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0xE3EB004C, sceIoDread));
 		mixin(registerd!(0x06A70004, sceIoMkdir));
 		mixin(registerd!(0x1117C65F, sceIoRmdir));
+
+		mixin(registerd!(0x89AA9906, sceIoOpenAsync));
+		mixin(registerd!(0x71B19E77, sceIoLseekAsync));
+		mixin(registerd!(0xFF5940B6, sceIoCloseAsync));
+		mixin(registerd!(0xA0B5A7C2, sceIoReadAsync));
+		mixin(registerd!(0xB293727F, sceIoChangeAsyncPriority));
+		mixin(registerd!(0xE23EEC33, sceIoWaitAsync));
+		mixin(registerd!(0x3251EA56, sceIoPollAsync));
+		
+		mixin(registerd!(0x63632449, sceIoIoctl));
+
+		mixin(registerd!(0x3C54E908, sceIoReopen));
+		mixin(registerd!(0x8E982A74, sceIoAddDrv));
+		mixin(registerd!(0xC7F35804, sceIoDelDrv));
 	}
 
 	Stream[SceUID] openedStreams;
@@ -547,6 +561,166 @@ class IoFileMgrForKernel : Module {
 		unimplemented();
 		return -1;
 	}
+
+	/**
+	 * Open or create a file for reading or writing (asynchronous)
+	 *
+	 * @param file - Pointer to a string holding the name of the file to open
+	 * @param flags - Libc styled flags that are or'ed together
+	 * @param mode - File access mode.
+	 * @return A non-negative integer is a valid fd, anything else an error
+	 */
+	SceUID sceIoOpenAsync(string file, int flags, SceMode mode) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Reposition read/write file descriptor offset (asynchronous)
+	 *
+	 * @param fd - Opened file descriptor with which to seek
+	 * @param offset - Relative offset from the start position given by whence
+	 * @param whence - Set to SEEK_SET to seek from the start of the file, SEEK_CUR
+	 * seek from the current position and SEEK_END to seek from the end.
+	 *
+	 * @return < 0 on error. Actual value should be passed returned by the ::sceIoWaitAsync call.
+	 */
+	int sceIoLseekAsync(SceUID fd, SceOff offset, int whence) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Delete a descriptor (asynchronous)
+	 *
+	 * @param fd - File descriptor to close
+	 * @return < 0 on error
+	 */
+	int sceIoCloseAsync(SceUID fd) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Read input (asynchronous)
+	 *
+	 * @par Example:
+	 * @code
+	 * bytes_read = sceIoRead(fd, data, 100);
+	 * @endcode
+	 *
+	 * @param fd - Opened file descriptor to read from
+	 * @param data - Pointer to the buffer where the read data will be placed
+	 * @param size - Size of the read in bytes
+	 * 
+	 * @return < 0 on error.
+	 */
+	int sceIoReadAsync(SceUID fd, void *data, SceSize size) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Change the priority of the asynchronous thread.
+	 *
+	 * @param fd - The opened fd on which the priority should be changed.
+	 * @param pri - The priority of the thread.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceIoChangeAsyncPriority(SceUID fd, int pri) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Wait for asyncronous completion.
+	 * 
+	 * @param fd - The file descriptor which is current performing an asynchronous action.
+	 * @param res - The result of the async action.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceIoWaitAsync(SceUID fd, SceInt64* res) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Poll for asyncronous completion.
+	 * 
+	 * @param fd - The file descriptor which is current performing an asynchronous action.
+	 * @param res - The result of the async action.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceIoPollAsync(SceUID fd, SceInt64 *res) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Perform an ioctl on a device.
+	 *
+	 * @param fd - Opened file descriptor to ioctl to
+	 * @param cmd - The command to send to the device
+	 * @param indata - A data block to send to the device, if NULL sends no data
+	 * @param inlen - Length of indata, if 0 sends no data
+	 * @param outdata - A data block to receive the result of a command, if NULL receives no data
+	 * @param outlen - Length of outdata, if 0 receives no data
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceIoIoctl(SceUID fd, uint cmd, void* indata, int inlen, void* outdata, int outlen) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Reopens an existing file descriptor.
+	 *
+	 * @param file - The new file to open.
+	 * @param flags - The open flags.
+	 * @param mode - The open mode.
+	 * @param fd - The old filedescriptor to reopen
+	 *
+	 * @return < 0 on error, otherwise the reopened fd.
+	 */
+	int sceIoReopen(string file, int flags, SceMode mode, SceUID fd) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Adds a new IO driver to the system.
+	 * @note This is only exported in the kernel version of IoFileMgr
+	 * 
+	 * @param drv - Pointer to a filled out driver structure
+	 * @return < 0 on error.
+	 *
+	 * @par Example:
+	 * @code
+	 * PspIoDrvFuncs host_funcs = { ... };
+	 * PspIoDrv host_driver = { "host", 0x10, 0x800, "HOST", &host_funcs };
+	 * sceIoDelDrv("host");
+	 * sceIoAddDrv(&host_driver);
+	 * @endcode
+	 */
+	int sceIoAddDrv(PspIoDrv* drv) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Deletes a IO driver from the system.
+	 * @note This is only exported in the kernel version of IoFileMgr
+	 *
+	 * @param drv_name - Name of the driver to delete.
+	 * @return < 0 on error
+	 */
+	int sceIoDelDrv(string drv_name) {
+		unimplemented();
+		return -1;
+	}
 }
 
 class IoFileMgrForUser : IoFileMgrForKernel {
@@ -668,6 +842,68 @@ struct SceIoDirent {
 }
 
 enum : uint { PSP_SEEK_SET, PSP_SEEK_CUR, PSP_SEEK_END }
+
+/** Structure passed to the init and exit functions of the io driver system */
+struct PspIoDrvArg {
+	/** Pointer to the original driver which was added */
+	PspIoDrv* drv;
+	/** Pointer to a user defined argument (if written by the driver will preseve across calls */
+	void* arg;
+}
+
+/** Structure passed to the file functions of the io driver system */
+struct PspIoDrvFileArg {
+	/** Unknown */
+	u32 unk1;
+	/** The file system number, e.g. if a file is opened as host5:/myfile.txt this field will be 5 */
+	u32 fs_num;
+	/** Pointer to the driver structure */
+	PspIoDrvArg *drv;
+	/** Unknown, again */
+	u32 unk2;
+	/** Pointer to a user defined argument, this is preserved on a per file basis */
+	void *arg;
+}
+
+/** Structure to maintain the file driver pointers */
+struct PspIoDrvFuncs { extern (C):
+	int function(PspIoDrvArg* arg) IoInit;
+	int function(PspIoDrvArg* arg) IoExit;
+
+	int function(PspIoDrvFileArg* arg, char* file, int flags, SceMode mode) IoOpen;
+	int function(PspIoDrvFileArg* arg) IoClose;
+	int function(PspIoDrvFileArg* arg, char* data, int len) IoRead;
+	int function(PspIoDrvFileArg* arg, const char* data, int len) IoWrite;
+	SceOff function(PspIoDrvFileArg* arg, SceOff ofs, int whence) IoLseek;
+	int function(PspIoDrvFileArg* arg, uint cmd, void* indata, int inlen, void* outdata, int outlen) IoIoctl;
+	int function(PspIoDrvFileArg* arg, const char* name) IoRemove;
+	int function(PspIoDrvFileArg* arg, const char* name, SceMode mode) IoMkdir;
+	int function(PspIoDrvFileArg* arg, const char* name) IoRmdir;
+	int function(PspIoDrvFileArg* arg, const char* dirname) IoDopen;
+	int function(PspIoDrvFileArg* arg) IoDclose;
+	int function(PspIoDrvFileArg* arg, SceIoDirent* dir) IoDread;
+	int function(PspIoDrvFileArg* arg, const char* file, SceIoStat* stat) IoGetstat;
+	int function(PspIoDrvFileArg* arg, const char* file, SceIoStat* stat, int bits) IoChstat;
+	int function(PspIoDrvFileArg* arg, const char* oldname, const char* newname) IoRename;
+	int function(PspIoDrvFileArg* arg, const char* dir) IoChdir;
+	int function(PspIoDrvFileArg* arg) IoMount;
+	int function(PspIoDrvFileArg* arg) IoUmount;
+	int function(PspIoDrvFileArg* arg, const char* devname, uint cmd, void* indata, int inlen, void* outdata, int outlen) IoDevctl;
+	int function(PspIoDrvFileArg* arg) IoUnk21;
+}
+
+struct PspIoDrv {
+	/** The name of the device to add */
+	const char* name;
+	/** Device type, this 0x10 is for a filesystem driver */
+	u32 dev_type;
+	/** Unknown, set to 0x800 */
+	u32 unk2;
+	/** This seems to be the same as name but capitalised :/ */
+	const char* name2;
+	/** Pointer to a filled out functions table */
+	PspIoDrvFuncs* funcs;
+}
 
 static this() {
 	mixin(Module.registerModule("IoFileMgrForUser"));

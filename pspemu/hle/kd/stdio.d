@@ -7,6 +7,8 @@ class StdioForUser : Module {
 		mixin(registerd!(0x172D316E, sceKernelStdin));
 		mixin(registerd!(0xA6BAB2E9, sceKernelStdout));
 		mixin(registerd!(0xF78BA90A, sceKernelStderr));
+		mixin(registerd!(0x98220F3E, sceKernelStdoutReopen));
+		mixin(registerd!(0xFB5380C5, sceKernelStderrReopen));
 	}
 
 	/**
@@ -29,6 +31,34 @@ class StdioForUser : Module {
 	 * @return The stderr fileno
 	 */
 	SceUID sceKernelStderr() { return STDERR; }
+
+	/** 
+	 * Function reopen the stdout file handle to a new file
+	 *
+	 * @param file - The file to open.
+	 * @param flags - The open flags 
+	 * @param mode - The file mode
+	 * 
+	 * @return < 0 on error.
+	 */
+	int sceKernelStdoutReopen(string file, int flags, SceMode mode) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Function reopen the stderr file handle to a new file
+	 *
+	 * @param file - The file to open.
+	 * @param flags - The open flags 
+	 * @param mode - The file mode
+	 * 
+	 * @return < 0 on error.
+	 */
+	int sceKernelStderrReopen(string file, int flags, SceMode mode) {
+		unimplemented();
+		return -1;
+	}
 }
 
 class StdioForKernel : StdioForUser {

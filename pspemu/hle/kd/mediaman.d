@@ -9,6 +9,69 @@ class sceUmdUser : Module {
 		mixin(registerd!(0x46EBB729, sceUmdCheckMedium));
 		mixin(registerd!(0xE83742BA, sceUmdDeactivate));
 		mixin(registerd!(0x4A9E5E29, sceUmdWaitDriveStatCB));
+		mixin(registerd!(0x8EF08FCE, sceUmdWaitDriveStat));
+
+		mixin(registerd!(0x20628E6F, sceUmdGetErrorStat));
+		mixin(registerd!(0x56202973, sceUmdWaitDriveStatWithTimer));
+		mixin(registerd!(0xAEE7404D, sceUmdRegisterUMDCallBack));
+		mixin(registerd!(0xBD2BDE07, sceUmdUnRegisterUMDCallBack));
+	}
+
+	/** 
+	 * Register a callback for the UMD drive
+	 * @note Callback is of type UmdCallback
+	 *
+	 * @param cbid - A callback ID created from sceKernelCreateCallback
+	 * @return < 0 on error
+	 * @par Example:
+	 * @code
+	 * int umd_callback(int unknown, int event)
+	 * {
+	 *      //do something
+	 * }     
+	 * int cbid = sceKernelCreateCallback("UMD Callback", umd_callback, NULL);
+	 * sceUmdRegisterUMDCallBack(cbid);
+	 * @endcode
+	 */
+	int sceUmdRegisterUMDCallBack(int cbid) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Un-register a callback for the UMD drive
+	 *
+	 * @param cbid - A callback ID created from sceKernelCreateCallback
+	 *
+	 * @return < 0 on error
+	 */
+	int sceUmdUnRegisterUMDCallBack(int cbid) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Get the error code associated with a failed event
+	 *
+	 * @return < 0 on error, the error code on success
+	 */
+	int sceUmdGetErrorStat() {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Wait for the UMD drive to reach a certain state
+	 *
+	 * @param stat - One or more of ::pspUmdState
+	 *
+	 * @param timeout - Timeout value in microseconds
+	 *
+	 * @return < 0 on error
+	 */
+	int sceUmdWaitDriveStatWithTimer(int stat, uint timeout) {
+		unimplemented();
+		return -1;
 	}
 
 	/** 
@@ -31,6 +94,18 @@ class sceUmdUser : Module {
 	 * @return < 0 on error
 	 */
 	int sceUmdDeactivate(int unit, string drive) {
+		unimplemented();
+		return -1;
+	}
+
+	/** 
+	 * Wait for the UMD drive to reach a certain state
+	 *
+	 * @param stat - One or more of ::pspUmdState
+	 *
+	 * @return < 0 on error
+	 */
+	int sceUmdWaitDriveStat(int stat) {
 		unimplemented();
 		return -1;
 	}

@@ -11,6 +11,7 @@ class InterruptManager : Module {
 	void initNids() {
 		mixin(registerd!(0xCA04A2B9, sceKernelRegisterSubIntrHandler));
 		mixin(registerd!(0xFB8E22EC, sceKernelEnableSubIntr));
+		mixin(registerd!(0xD61E6961, sceKernelReleaseSubIntrHandler));
 	}
 
 	/** 
@@ -37,6 +38,19 @@ class InterruptManager : Module {
 	 * @return < 0 on error.
 	 */
 	int sceKernelEnableSubIntr(int intno, int no) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Release a sub interrupt handler.
+	 * 
+	 * @param intno - The interrupt number to register.
+	 * @param no - The sub interrupt handler number
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceKernelReleaseSubIntrHandler(int intno, int no) {
 		unimplemented();
 		return -1;
 	}

@@ -6,6 +6,28 @@ class sceHprm : Module {
 	void initNids() {
 		mixin(registerd!(0x1910B327, sceHprmPeekCurrentKey));
 		mixin(registerd!(0x208DB1BD, sceHprmIsRemoteExist));
+		mixin(registerd!(0x7E69EDA4, sceHprmIsHeadphoneExist));
+		mixin(registerd!(0x219C58F1, sceHprmIsMicrophoneExist));
+	}
+
+	/**
+	 * Determines whether the headphones are plugged in.
+	 *
+	 * @return 1 if the headphones are plugged in, else 0.
+	 */
+	int sceHprmIsHeadphoneExist() {
+		unimplemented_notice();
+		return 0;
+	}
+
+	/** 
+	 * Determines whether the microphone is plugged in.
+	 *
+	 * @return 1 if the microphone is plugged in, else 0.
+	 */
+	int sceHprmIsMicrophoneExist() {
+		unimplemented_notice();
+		return 0;
 	}
 
 	/** 

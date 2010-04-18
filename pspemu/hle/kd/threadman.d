@@ -42,8 +42,44 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0x30FD48F0, sceKernelPollEventFlag));
 		mixin(registerd!(0x369ED59D, sceKernelGetSystemTimeLow));
 		mixin(registerd!(0xA66B0120, sceKernelReferEventFlagStatus));
+
+		mixin(registerd!(0xEDBA5844, sceKernelDeleteCallback));
+		mixin(registerd!(0x349D6D6C, sceKernelCheckCallback));
+		mixin(registerd!(0x82BC5777, sceKernelGetSystemTimeWide));
 	}
-	
+
+	/**
+	 * Delete a callback
+	 *
+	 * @param cb - The UID of the specified callback
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelDeleteCallback(SceUID cb) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Check callback ?
+	 *
+	 * @return Something or another
+	 */
+	int sceKernelCheckCallback() {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get the system time (wide version)
+	 *
+	 * @return The system time
+	 */
+	SceInt64 sceKernelGetSystemTimeWide() {
+		unimplemented();
+		return 0;
+	}
+
 	void sceKernelReferEventFlagStatus() {
 		unimplemented();
 	}

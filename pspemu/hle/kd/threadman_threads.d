@@ -32,11 +32,24 @@ template ThreadManForUser_Threads() {
 		mixin(registerd!(0x9944F31F, sceKernelSuspendThread));
 		mixin(registerd!(0x840E8133, sceKernelWaitThreadEndCB));
 		mixin(registerd!(0x94AA61EE, sceKernelGetThreadCurrentPriority));
+		mixin(registerd!(0x75156E8F, sceKernelResumeThread));
 	}
 
 	PspThread getThreadFromId(SceUID thid) {
 		if ((thid in threadManager.createdThreads) is null) throw(new Exception(std.string.format("No thread with THID/UID(%d)", thid)));
 		return threadManager.createdThreads[thid];
+	}
+
+	/**
+	 * Resume a thread previously put into a suspended state with ::sceKernelSuspendThread.
+	 *
+	 * @param thid - UID of the thread to resume.
+	 *
+	 * @return Success if >= 0, an error if < 0.
+	 */
+	int sceKernelResumeThread(SceUID thid) {
+		unimplemented();
+		return -1;
 	}
 
 	/**

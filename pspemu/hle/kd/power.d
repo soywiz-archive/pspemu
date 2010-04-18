@@ -10,6 +10,7 @@ class scePower : Module {
 		mixin(registerd!(0x87440F5E, scePowerIsPowerOnline));
 		mixin(registerd!(0x0AFD0D8B, scePowerIsBatteryExist));
 		mixin(registerd!(0x1E490401, scePowerIsBatteryCharging));
+		mixin(registerd!(0xB4432BC8, scePowerGetBatteryChargingStatus));
 		mixin(registerd!(0xD3075926, scePowerIsLowBattery));
 		mixin(registerd!(0x2085D15D, scePowerGetBatteryLifePercent));
 		mixin(registerd!(0x8EFB3FA2, scePowerGetBatteryLifeTime));
@@ -23,6 +24,8 @@ class scePower : Module {
 		mixin(registerd!(0x737486F2, scePowerSetClockFrequency));
 		mixin(registerd!(0x843FBF43, scePowerSetCpuClockFrequency));
 		mixin(registerd!(0xB8D7B3FB, scePowerSetBusClockFrequency));
+		mixin(registerd!(0xDFA8BAF8, scePowerUnregisterCallback));
+		mixin(registerd!(0xFDB5BFE9, scePowerGetCpuClockFrequencyInt));
 	}
 
 	// http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/HLE/modules150/scePower.java
@@ -83,6 +86,14 @@ class scePower : Module {
 	 * @return 1 if battery charging, 0 if battery not charging, < 0 on error.
 	 */
 	int scePowerIsBatteryCharging() {
+		unimplemented();
+		return -1;
+	}
+	
+	/**
+	 * Get the status of the battery charging
+	 */
+	int scePowerGetBatteryChargingStatus() {
 		unimplemented();
 		return -1;
 	}
@@ -233,6 +244,26 @@ class scePower : Module {
 	int scePowerSetBusClockFrequency(int busfreq) {
 		this.busfreq = busfreq;
 		return 0;
+	}
+
+	/**
+	 * Unregister Power Callback Function
+	 *
+	 * @param slot - slot of the callback
+	 *
+	 * @return 0 on success, < 0 on error.
+	 */
+	int scePowerUnregisterCallback(int slot) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get CPU Frequency as Integer
+	 * @return frequency as int
+	 */
+	int scePowerGetCpuClockFrequencyInt() {
+		return cpufreq;
 	}
 }
 

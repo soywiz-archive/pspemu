@@ -370,7 +370,7 @@ switch ($profile) {
 	break;
 }
 
-if (0) {
+if (1) {
 	$builder->incrementalBuild();
 } else {
 	$builder->fullBuild();

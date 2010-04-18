@@ -8,9 +8,71 @@ class sceUtility : Module {
 		mixin(registerd!(0x9790B33C, sceUtilitySavedataShutdownStart));
 		mixin(registerd!(0xD4B95FFB, sceUtilitySavedataUpdate));
 		mixin(registerd!(0x8874DBE0, sceUtilitySavedataGetStatus));
+
 		mixin(registerd!(0xA5DA2406, sceUtilityGetSystemParamInt));
+		mixin(registerd!(0x34B78343, sceUtilityGetSystemParamString));
+
 		mixin(registerd!(0x5EEE6548, sceUtilityCheckNetParam));
 		mixin(registerd!(0x434D4B3A, sceUtilityGetNetParam));
+
+		mixin(registerd!(0x2A2B3DE0, sceUtilityLoadModuleFunction));
+		mixin(registerd!(0xE49BFE92, sceUtilityUnloadModuleFunction));
+
+		mixin(registerd!(0x2AD8E239, sceUtilityMsgDialogInitStart));
+		mixin(registerd!(0x67AF3428, sceUtilityMsgDialogShutdownStart));
+		mixin(registerd!(0x95FC253B, sceUtilityMsgDialogUpdate));
+		mixin(registerd!(0x9A1C91D7, sceUtilityMsgDialogGetStatus));
+	}
+
+	/**
+	 * Create a message dialog
+	 *
+	 * @param params - dialog parameters
+	 * @return 0 on success
+	 */
+	int sceUtilityMsgDialogInitStart(pspUtilityMsgDialogParams* params) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Remove a message dialog currently active.  After calling this
+	 * function you need to keep calling GetStatus and Update until
+	 * you get a status of 4.
+	 */
+	void sceUtilityMsgDialogShutdownStart() {
+		unimplemented();
+	}
+
+	/**
+	 * Refresh the GUI for a message dialog currently active
+	 *
+	 * @param n - unknown, pass 1
+	 */
+	void sceUtilityMsgDialogUpdate(int n) {
+		unimplemented();
+	}
+
+	/**
+	 * Get the current status of a message dialog currently active.
+	 *
+	 * @return 2 if the GUI is visible (you need to call sceUtilityMsgDialogGetStatus).
+	 * 3 if the user cancelled the dialog, and you need to call sceUtilityMsgDialogShutdownStart.
+	 * 4 if the dialog has been successfully shut down.
+	 */
+	int sceUtilityMsgDialogGetStatus() {
+		unimplemented();
+		return -1;
+	}
+
+	// @TODO: Unknown
+	void sceUtilityLoadModuleFunction() {
+		unimplemented();
+	}
+
+	// @TODO: Unknown
+	void sceUtilityUnloadModuleFunction() {
+		unimplemented();
 	}
 
 	/**
@@ -20,8 +82,21 @@ class sceUtility : Module {
 	 * @param value - pointer to integer value to place result in
 	 * @return 0 on success, PSP_SYSTEMPARAM_RETVAL_FAIL on failure
 	 */
-	int sceUtilityGetSystemParamInt( int id, int *value ) {
-		unimplemented_notice();
+	int sceUtilityGetSystemParamInt(int id, int* value) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get String System Parameter
+	 *
+	 * @param id - which parameter to get
+	 * @param str - char * buffer to place result in
+	 * @param len - length of str buffer
+	 * @return 0 on success, PSP_SYSTEMPARAM_RETVAL_FAIL on failure
+	 */
+	int sceUtilityGetSystemParamString(int id, char* str, int len) {
+		unimplemented();
 		return -1;
 	}
 
@@ -101,6 +176,51 @@ class sceUtility : Module {
 union netData {
 	u32 asUint;
 	char asString[128];
+}
+
+enum pspUtilityMsgDialogMode {
+	PSP_UTILITY_MSGDIALOG_MODE_ERROR = 0, /* Error message */
+	PSP_UTILITY_MSGDIALOG_MODE_TEXT /* String message */
+}
+
+enum pspUtilityMsgDialogOption {
+	PSP_UTILITY_MSGDIALOG_OPTION_ERROR = 0, /* Error message (why two flags?) */
+	PSP_UTILITY_MSGDIALOG_OPTION_TEXT = 0x00000001, /* Text message (why two flags?) */
+	PSP_UTILITY_MSGDIALOG_OPTION_YESNO_BUTTONS = 0x00000010,	/* Yes/No buttons instead of 'Cancel' */
+	PSP_UTILITY_MSGDIALOG_OPTION_DEFAULT_NO  = 0x00000100	/* Default position 'No', if not set will default to 'Yes' */
+}
+
+enum pspUtilityMsgDialogPressed {
+	PSP_UTILITY_MSGDIALOG_RESULT_UNKNOWN1 = 0,
+	PSP_UTILITY_MSGDIALOG_RESULT_YES,
+	PSP_UTILITY_MSGDIALOG_RESULT_NO,
+	PSP_UTILITY_MSGDIALOG_RESULT_BACK
+}
+
+/**
+ * Structure to hold the parameters for a message dialog
+**/
+struct pspUtilityMsgDialogParams {
+    pspUtilityDialogCommon base;
+    int unknown;
+	pspUtilityMsgDialogMode mode;
+	uint errorValue;
+    /** The message to display (may contain embedded linefeeds) */
+    char message[512];
+	pspUtilityMsgDialogOption options;
+	pspUtilityMsgDialogPressed buttonPressed;
+}
+
+struct pspUtilityDialogCommon {
+	uint size;	/** Size of the structure */
+	int language;		/** Language */
+	int buttonSwap;		/** Set to 1 for X/O button swap */
+	int graphicsThread;	/** Graphics thread priority */
+	int accessThread;	/** Access/fileio thread priority (SceJobThread) */
+	int fontThread;		/** Font thread priority (ScePafThread) */
+	int soundThread;	/** Sound thread priority */
+	int result;			/** Result */
+	int reserved[4];	/** Set to 0 */
 }
 
 /+

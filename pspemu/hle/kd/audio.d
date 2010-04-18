@@ -44,6 +44,11 @@ class sceAudio_driver : Module {
 		mixin(registerd!(0xCB2E439E, sceAudioSetChannelDataLen));
 		mixin(registerd!(0x95FD0C2D, sceAudioChangeChannelConfig));
 		mixin(registerd!(0xB7E1D8E7, sceAudioChangeChannelVolume));
+
+		mixin(registerd!(0x01562BA3, sceAudioOutput2ReserveFunction));
+		mixin(registerd!(0x2D53F36E, sceAudioOutput2OutputBlockingFunction));
+		mixin(registerd!(0x43196845, sceAudioOutput2ReleaseFunction));
+		mixin(registerd!(0xB011922F, sceAudioGetChannelRestLengthFunction));
 	}
 
 	void initModule() {
@@ -66,6 +71,26 @@ class sceAudio_driver : Module {
 	}
 
 	static float volumef(int shortval) { return (cast(float)shortval) / cast(float)0xFFFF; }
+
+	// @TODO: Unknown.
+	void sceAudioOutput2ReserveFunction() {
+		unimplemented();
+	}
+
+	// @TODO: Unknown.
+	void sceAudioOutput2OutputBlockingFunction() {
+		unimplemented();
+	}
+
+	// @TODO: Unknown.
+	void sceAudioOutput2ReleaseFunction() {
+		unimplemented();
+	}
+
+	// @TODO: Unknown.
+	void sceAudioGetChannelRestLengthFunction() {
+		unimplemented();
+	}
 
 	/**
 	  * Output panned audio of the specified channel (blocking)

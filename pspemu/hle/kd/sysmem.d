@@ -36,6 +36,24 @@ class SysMemUserForUser : Module {
 		mixin(registerd!(0xF919F628, sceKernelTotalFreeMemSize));
 		mixin(registerd!(0xB6D61D02, sceKernelFreePartitionMemory));
 		mixin(registerd!(0x3FC9AE6A, sceKernelDevkitVersion));
+		mixin(registerd!(0x13A5ABEF, sceKernelPrintf));
+		mixin(registerd!(0x7591C7DB, sceKernelSetCompiledSdkVersion));
+		mixin(registerd!(0xF77D77CB, sceKernelSetCompilerVersion));
+	}
+
+	// @TODO: Unknown.
+	void sceKernelSetCompiledSdkVersion(uint param) {
+		writefln("sceKernelSetCompiledSdkVersion: 0x%08X", param);
+	}
+
+	// @TODO: Unknown.
+	void sceKernelSetCompilerVersion(uint param) {
+		writefln("sceKernelSetCompilerVersion: 0x%08X", param);
+	}
+
+	// @TODO: Unknown.
+	void sceKernelPrintf(char* text) {
+		unimplemented();
 	}
 
 	/**
@@ -130,6 +148,7 @@ class sceSuspendForKernel : Module {
 	void initNids() {
 		mixin(registerd!(0xEADB1BD7, sceKernelPowerLock));
 		mixin(registerd!(0x3AEE7261, sceKernelPowerUnlock));
+		mixin(registerd!(0x090CCB3F, sceKernelPowerTick));
 	}
 
 	// @TODO: Unknown.
@@ -141,12 +160,26 @@ class sceSuspendForKernel : Module {
 	void sceKernelPowerUnlock() {
 		unimplemented();
 	}
+
+	// @TODO: Unknown.
+	void sceKernelPowerTick() {
+		unimplemented();
+	}
 }
 
 class sceSuspendForUser : sceSuspendForKernel {
 }
 
 class KDebugForKernel : Module {
+	void initNids() {
+		mixin(registerd!(0x7CEB2C09, sceKernelRegisterKprintfHandler));
+		mixin(registerd!(0x84F370BC, Kprintf));
+	}
+
+	void sceKernelRegisterKprintfHandler() { unimplemented(); }
+	void Kprintf(string format, ...) {
+		unimplemented();
+	}
 }
 
 /** Specifies the type of allocation used for memory blocks. */

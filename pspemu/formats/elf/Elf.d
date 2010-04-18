@@ -72,6 +72,14 @@ class Elf {
 
 		// Check the size of the struct.
 		static assert(this.sizeof == 10 * 4);
+		
+		string toString() {
+			// SHeader(type=00000003, f=00, addr=00000000, off=00080C18, size=0003CF, link=00, info=00, aa=01, esize=00, name=03C5)
+			return std.string.format(
+				"SHeader(type=%08X, f=%02X, addr=%08X, off=%08X, size=%06X, link=%02X, info=%02X, aa=%02X, esize=%02X, name=%04X)",
+				type, flags, address, offset, size, link, info, addralign, entsize, name
+			);
+		}
 	}
 
 	enum ModuleNids : uint {
@@ -181,23 +189,28 @@ class Elf {
 
 	void extractSectionHeaderNames() {
 		auto stringTableStream = SectionStream(sectionHeaderStringTable);
+		//foreach (sectionHeader; sectionHeaders) writefln("%s", sectionHeader);
 		stringTable = cast(char[])stringTableStream.readString(cast(uint)stringTableStream.size);
 		sectionHeaderNames = [];
 		string szToString(char *str) { return cast(string)str[0..std.c.string.strlen(str)]; }
 		foreach (sectionHeader; sectionHeaders) {
 			auto name = szToString(stringTable.ptr + sectionHeader.name);
-			//writefln("---'%s'", sectionHeader.name);
+			//writefln("---'%08X'", sectionHeader.name);
 			sectionHeaderNames ~= name;
 			sectionHeadersNamed[name] = sectionHeader;
 		}
 	}
 
 	ref SectionHeader sectionHeaderStringTable() {
-		foreach (ref sectionHeader; sectionHeaders) {
+		int sectionHeaderIndex = -1;
+		foreach (currentSectionHeaderIndex, ref sectionHeader; sectionHeaders) {
+			//writefln("sectionHeader.type:%d", sectionHeader.type);
 			if (sectionHeader.type == SectionHeader.Type.STRTAB) {
-				return sectionHeader;
+				sectionHeaderIndex = currentSectionHeaderIndex;
 			}
 		}
+		if (sectionHeaderIndex != -1) return sectionHeaders[sectionHeaderIndex];
+		
 		foreach (ref sectionHeader; sectionHeaders) {
 			//writefln("%08X", sectionHeader.offset);
 			auto stream = SectionStream(sectionHeader);
