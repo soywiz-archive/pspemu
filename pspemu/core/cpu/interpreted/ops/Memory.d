@@ -75,14 +75,14 @@ template TemplateCpu_MEMORY_Utils() {
 	static pure nothrow {
 		string LOAD(uint size, bool signed) {
 			return (
-				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ tos(size) ~ ")memory.read" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET);" ~
+				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ tos(size) ~ ")memory.read" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET * " ~ tos(1) ~ ");" ~
 				"registers.pcAdvance(4);"
 			);
 		}
 
 		string STORE(uint size) {
 			return (
-				"memory.write" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET, cast(u" ~ tos(size) ~ ")registers[instruction.RT]);" ~
+				"memory.write" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET * " ~ tos(1) ~ ", cast(u" ~ tos(size) ~ ")registers[instruction.RT]);" ~
 				"registers.pcAdvance(4);"
 			);
 		}

@@ -202,14 +202,19 @@ class Elf {
 	}
 
 	ref SectionHeader sectionHeaderStringTable() {
-		int sectionHeaderIndex = -1;
+		//int sectionHeaderIndex = -1;
 		foreach (currentSectionHeaderIndex, ref sectionHeader; sectionHeaders) {
 			//writefln("sectionHeader.type:%d", sectionHeader.type);
+			//writefln("%s", sectionHeader);
 			if (sectionHeader.type == SectionHeader.Type.STRTAB) {
-				sectionHeaderIndex = currentSectionHeaderIndex;
+				if (sectionHeader.name < sectionHeader.size) {
+					return sectionHeader;
+				}
+				//sectionHeaderIndex = currentSectionHeaderIndex;
+				//writefln("--------");
 			}
 		}
-		if (sectionHeaderIndex != -1) return sectionHeaders[sectionHeaderIndex];
+		//if (sectionHeaderIndex != -1) return sectionHeaders[sectionHeaderIndex];
 		
 		foreach (ref sectionHeader; sectionHeaders) {
 			//writefln("%08X", sectionHeader.offset);

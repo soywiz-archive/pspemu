@@ -129,7 +129,7 @@ abstract class Emiter {
 class EmiterX86 : Emiter {
 	enum Register32 : ubyte { EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7 }
 	enum Register16 : ubyte {  AX = 0,  CX = 1,  DX = 2,  BX = 3,  SP = 4,  BP = 5,  SI = 6,  DI = 7 }
-	//enum Register8  : ubyte {  AL = 0,  CL = 1,  DL = 2,  BL = 3 }
+	enum Register8  : ubyte {  AL = 0,  CL = 1,  DL = 2,  BL = 3,  AH = 4,  CH = 5,  DH = 6,  BH = 7 }
 	static struct Memory32 { Register32 register; int offset; bool isBits8() { return cast(int)cast(byte)offset == offset; } }
 
 	void write16bits() { write1(0x66); }
@@ -180,7 +180,7 @@ class EmiterX86 : Emiter {
 	void MOV(Memory32 mem, ubyte  value) { write1(0xC6); writeMemory32(mem); write1(value); }
 	void MOV(Memory32 mem, ushort value) { write16bits(); write1(0xC7); writeMemory32(mem); write2(value); }
 	void MOV(Memory32 mem, uint   value) { write1(0xC7); writeMemory32(mem); write4(value); }
-
+	
 	// RET; RET n;
 	void RET() { write1(0xC3); }
 	void RET(short value) { write1(0xC2); write2(value); }
@@ -248,7 +248,14 @@ class EmiterX86 : Emiter {
 
 	// MOV EAX, [EAX + 4]; MOV [EAX + 4], EAX;
 	void MOV(Register32 reg, Memory32 mem) { write1(0x8B); writeMemory32(mem, reg); }
+	void MOV(Memory32 mem, Register16 reg) { write16bits(); MOV(mem, cast(Register32)reg); }
 	void MOV(Memory32 mem, Register32 reg) { write1(0x89); writeMemory32(mem, reg); }
+	
+	void MOV(Memory32 mem, Register8 reg) {
+		assert(mem.offset == 0);
+		write1(0x88);
+		write1(cast(ubyte)((mem.register << 0) | (reg << 3)));
+	}
 }
 
 unittest {

@@ -49,7 +49,7 @@ class MemoryStickDevice : IoDevice {
 		writefln("MemoryStickDevice.register");
 		cpu.interrupts.registerCallback(Interrupts.Type.GPIO, delegate void() {
 			writefln("MemoryStickDevice.processGPIO");
-			cpu.queueCallbacks(callbacks.keys);
+			cpu.queueCallbacks(callbacks.keys, []);
 		});
 	}
 

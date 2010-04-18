@@ -15,7 +15,8 @@ void test_start() {
 		//mov [ECX + 0], [ECX + 4];
 		//push int ptr [ECX + 4];
 		
-		push int ptr [ECX + 4];
+		//push int ptr [ECX + 4];
+		mov [EDX+0], EAX;
 		
 		//mov EDX, 0x77777777;
 		//jne test_end;

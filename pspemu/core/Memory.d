@@ -13,8 +13,11 @@ import std.stdio, std.stream, std.string, std.ctype, std.metastrings;
 
 import pspemu.utils.Utils;
 
+import std.c.windows.windows;
+
 version = VERSION_CHECK_MEMORY;    /// Check more memory positions.
 version = VERSION_CHECK_ALIGNMENT; /// Check that read and writes are aligned.
+version = VERSION_VIRTUAL_ALLOC;
 
 /**--------------------------------+
 | Adress                           |
@@ -49,6 +52,12 @@ class InvalidAlignmentException : public MemoryException {
 	}
 }
 
+/*__gshared static Memory lastMemory;
+
+uint lastMemoryUint() {
+	return reinterpret!(uint)(lastMemory);
+}*/
+
 /**
  * Class to handle the memory of the psp.
  * It can be used as a stream too.
@@ -59,29 +68,59 @@ class Memory : Stream {
 	/// Psp Pointer.
 	alias uint Pointer;
 
+	ubyte* baseMemory;
+
 	/// Scartch Pad is a small memory segment of 16KB that has a very fast access.
-	ubyte[] scratchPad ; static const int scratchPadAddress  = 0x00_010000, scratchPadMask  = 0x00003FFF;
+	ubyte[] scratchPad ; static const uint scratchPadAddress  = 0x00_010000, scratchPadMask  = 0x00003FFF; uint scratchPadSize() { return scratchPadMask + 1; }
 
 	/// Frame Buffer is a integrated memory segment of 2MB for the GPU.
 	/// GPU can also access main memory, but slowly.
-	ubyte[] frameBuffer; static const int frameBufferAddress = 0x04_000000, frameBufferMask = 0x001FFFFF;
+	ubyte[] frameBuffer; static const uint frameBufferAddress = 0x04_000000, frameBufferMask = 0x001FFFFF; uint frameBufferSize() { return frameBufferMask + 1; }
 
 	/// Main Memory is a big physical memory of 16MB for fat and 32MB for slim.
 	/// Currently it only supports fat 16MB.
-	ubyte[] mainMemory ; static const int mainMemoryAddress  = 0x08_000000, mainMemoryMask  = 0x01FFFFFF;
-
+	ubyte[] mainMemory ; static const uint mainMemoryAddress  = 0x08_000000, mainMemoryMask  = 0x01FFFFFF; uint mainMemorySize() { return mainMemoryMask + 1; }
+	
 	/**
 	 * Constructor.
 	 * It allocates all the physical memory segments and set the stream properties of the memory.
 	 */
 	public this() {
-		// +3 for safety.
-		this.scratchPad  = new ubyte[0x_4000    + 3];
-		this.frameBuffer = new ubyte[0x_200000  + 3];
-		this.mainMemory  = new ubyte[0x_2000000 + 3];
-		// reset(); // D already sets all the new ubyte arrays to 0.
+		version (VERSION_VIRTUAL_ALLOC) {
+			baseMemory = cast(ubyte*)0x10000000;
+		
+			VirtualAlloc(baseMemory + scratchPadAddress , scratchPadSize , MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);	
+			VirtualAlloc(baseMemory + frameBufferAddress, frameBufferSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);	
+			VirtualAlloc(baseMemory + mainMemoryAddress , mainMemorySize , MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);	
+
+			this.scratchPad  = (baseMemory + scratchPadAddress )[0..scratchPadSize];
+			this.frameBuffer = (baseMemory + frameBufferAddress)[0..frameBufferSize];
+			this.mainMemory  = (baseMemory + mainMemoryAddress )[0..mainMemorySize];
+
+			//.writefln("scratchPad:%08X", cast(uint)(baseMemory + scratchPadAddress ));
+		} else {
+			// +3 for safety.
+			this.scratchPad  = new ubyte[0x_4000    + 3];
+			this.frameBuffer = new ubyte[0x_200000  + 3];
+			this.mainMemory  = new ubyte[0x_2000000 + 3];
+			// reset(); // D already sets all the new ubyte arrays to 0.
+		}
 
 		this.streamInit();
+		//lastMemory = this; .writefln("%08X", lastMemoryUint);
+	}
+	
+	~this() {
+		version (VERSION_VIRTUAL_ALLOC) {
+			void free(ubyte[] v) {
+				VirtualFree(v.ptr, v.length, MEM_DECOMMIT);
+				VirtualFree(v.ptr, 0, MEM_RELEASE);
+			}
+
+			free(scratchPad);
+			free(frameBuffer);
+			free(mainMemory);
+		}
 	}
 
 	/**

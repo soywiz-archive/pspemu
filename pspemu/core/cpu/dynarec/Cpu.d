@@ -24,6 +24,8 @@ import pspemu.core.cpu.dynarec.ops.Memory;
 extern (Windows) uint IsDebuggerPresent();
 
 class EmiterMipsToX86 : EmiterX86 {
+	Memory memory;
+
 	enum MipsRegisters : uint {
 		// +00 +01 +02 +03 +04 +05 +06 +07
 		    ZR, AT, V0, V1, A0, A1, A2, A3, // +00
@@ -475,6 +477,8 @@ class CpuDynaRec : Cpu {
 		Emiter.Label*[uint] labels;
 		uint StartPC = PC;
 		uint maxPC = 0x00000000, minPC = 0xFFFFFFFF;
+		
+		emiter.memory = memory;
 		
 		Emiter.Label* getLabel(uint PC) {
 			if ((PC in labels) is null) labels[PC] = emiter.createLabel();

@@ -116,8 +116,12 @@ abstract class Cpu : PspHardwareComponent, IDebugSource {
 		try { execute(); } catch (HaltException he) { }
 	}
 	
-	void queueCallbacks(uint[] callbacks) {
-		writefln("queueCallbacks(%s)", callbacks);
+	void queueCallbacks(uint[] callbacks, uint[] params = []) {
+		assert(callbacks.length <= 1);
+		if (callbacks.length == 1) {
+			writefln("queueCallbacks(%s)", callbacks);
+			//callbacks[0]
+		}
 	}
 
 	mixin BreakPointStuff;
