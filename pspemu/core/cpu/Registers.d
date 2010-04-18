@@ -19,7 +19,6 @@ final class Registers {
 	uint IC;         // Interrupt controller
 	Fcsr FCSR;       // Floating point Control / Status register
 	bool CC;         // Control Word (Floating point? C1)
-	uint CLOCKS;
 	uint[] CallStack;
 	union {
 		uint[32] R;      // GPR | General Purpose Registers
@@ -36,6 +35,7 @@ final class Registers {
 		ulong HILO;
 	}
 	uint CMP[2]; // Used for dynarec.
+	uint CLOCKS;
 	union { uint[32] RF; float[32] F; } // Floating point registers.
 	union {
 		struct { float[4 * 4 * 8] VF; }

@@ -94,21 +94,17 @@ abstract class Emiter {
 	/**
 	 * Write methods for several sizes.
 	 */
-	void writem(T)(T d) {
-		if (bufferPosition + T.sizeof >= this.buffer.length) {
+	void writem(Type)(Type d) {
+		if (bufferPosition + Type.sizeof >= this.buffer.length) {
 			this.buffer.length = this.buffer.length * 2;
 		}
-		*cast(T*)&buffer[bufferPosition] = d;
-		bufferPosition += T.sizeof;
+		*cast(Type*)&buffer[bufferPosition] = d;
+		bufferPosition += Type.sizeof;
 	}
 	alias writem!(ubyte ) write1;
 	alias writem!(ushort) write2;
 	alias writem!(uint  ) write4;
 	
-	/*void write1(uint v) {
-		write1(cast(ubyte)v);
-	}*/
-
 	uint execute() {
 		auto func = cast(uint function())cast(void *)buffer.ptr;
 		writeLabels();
@@ -134,22 +130,23 @@ class EmiterX86 : Emiter {
 
 	void write16bits() { write1(0x66); }
 
+	void refMemory32(Memory32 mem, ubyte base = 0x00) {
+		if (mem.isBits8) {
+			write1(base | 0x70 | mem.register);
+			write1(cast(byte)mem.offset);
+		} else {
+			write1(base | 0xB0 | mem.register);
+			write4(mem.offset);
+		}
+	}
+
 	// PUSH EAX; PUSH AX; PUSH 1; PUSH 999;
 	// POP EAX; POP AX;
 	void PUSH(Register32 reg) { write1(0x50 | reg); }
 	void PUSH(Register16 reg) { write16bits(); PUSH(cast(Register32)reg); }
 	void PUSH(ubyte value   ) { write1(0x6A); write1(value); }
 	void PUSH(uint  value   ) { write1(0x68); write4(value); }
-	void PUSH(Memory32 mem  ) {
-		write1(0xFF);
-		if (mem.isBits8) {
-			write1(0x70 | mem.register);
-			write1(cast(byte)mem.offset);
-		} else {
-			write1(0xB0 | mem.register);
-			write4(mem.offset);
-		}
-	}
+	void PUSH(Memory32 mem  ) { write1(0xFF); refMemory32(mem); }
 	void POP(Register32 reg) { write1(0x58 | reg); }
 	void POP(Register16 reg) { write16bits(); POP(cast(Register32)reg); }
 
@@ -209,6 +206,13 @@ class EmiterX86 : Emiter {
 		write1(0x39);
 		write1(cast(ubyte)(0xC0 | (l << 0) | (r << 3)));
 	}
+	
+	// CMP [EAX+8], 0x77777777
+	void CMP(Memory32 mem, uint value) {
+		write1(0x81);
+		refMemory32(mem, 0x08);
+		write4(value);
+	}
 
 	// CMP EAX, 1000
 	void CMP(Register32 l, uint v) {
@@ -245,6 +249,15 @@ class EmiterX86 : Emiter {
 	void AND(Register32 regTo, Register32 regFrom) { write1(0x21); write1(cast(ubyte)(0xC0 | (regTo << 0) | (regFrom << 3))); }
 	void XOR(Register32 regTo, Register32 regFrom) { write1(0x31); write1(cast(ubyte)(0xC0 | (regTo << 0) | (regFrom << 3))); }
 
+	void DIV(Register32 reg) {
+		write1(0xF7);
+		write1(cast(ubyte)(0xF0 | reg));
+	}
+
+	void IDIV(Register32 reg) {
+		write1(0xF7);
+		write1(cast(ubyte)(0xF8 | reg));
+	}
 
 	// MOV EAX, [EAX + 4]; MOV [EAX + 4], EAX;
 	void MOV(Register32 reg, Memory32 mem) { write1(0x8B); writeMemory32(mem, reg); }

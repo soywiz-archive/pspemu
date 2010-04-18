@@ -52,12 +52,6 @@ class InvalidAlignmentException : public MemoryException {
 	}
 }
 
-/*__gshared static Memory lastMemory;
-
-uint lastMemoryUint() {
-	return reinterpret!(uint)(lastMemory);
-}*/
-
 /**
  * Class to handle the memory of the psp.
  * It can be used as a stream too.
@@ -67,19 +61,41 @@ class Memory : Stream {
 
 	/// Psp Pointer.
 	alias uint Pointer;
+	
+	static struct Segment {
+		uint address, mask, size;
+		uint low, high;
+		static Segment opCall(uint address, uint size) {
+			Segment ret;
+			{
+				ret.address = address;
+				ret.mask    = size - 1;
+				ret.size    = size;
+				ret.low     = address;
+				ret.high    = address + size;
+			}
+			return ret;
+		}
+	}
+
+	static struct Segments {
+		const scratchPad  = Segment(0x00_010000, 0x00004000);
+		const frameBuffer = Segment(0x04_000000, 0x00200000);
+		const mainMemory  = Segment(0x08_000000, 0x02000000);
+	}
 
 	ubyte* baseMemory;
 
 	/// Scartch Pad is a small memory segment of 16KB that has a very fast access.
-	ubyte[] scratchPad ; static const uint scratchPadAddress  = 0x00_010000, scratchPadMask  = 0x00003FFF; uint scratchPadSize() { return scratchPadMask + 1; }
+	ubyte[] scratchPad ;
 
 	/// Frame Buffer is a integrated memory segment of 2MB for the GPU.
 	/// GPU can also access main memory, but slowly.
-	ubyte[] frameBuffer; static const uint frameBufferAddress = 0x04_000000, frameBufferMask = 0x001FFFFF; uint frameBufferSize() { return frameBufferMask + 1; }
+	ubyte[] frameBuffer;
 
 	/// Main Memory is a big physical memory of 16MB for fat and 32MB for slim.
 	/// Currently it only supports fat 16MB.
-	ubyte[] mainMemory ; static const uint mainMemoryAddress  = 0x08_000000, mainMemoryMask  = 0x01FFFFFF; uint mainMemorySize() { return mainMemoryMask + 1; }
+	ubyte[] mainMemory ;
 	
 	/**
 	 * Constructor.
@@ -88,26 +104,27 @@ class Memory : Stream {
 	public this() {
 		version (VERSION_VIRTUAL_ALLOC) {
 			baseMemory = cast(ubyte*)0x10000000;
-		
-			VirtualAlloc(baseMemory + scratchPadAddress , scratchPadSize , MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);	
-			VirtualAlloc(baseMemory + frameBufferAddress, frameBufferSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);	
-			VirtualAlloc(baseMemory + mainMemoryAddress , mainMemorySize , MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);	
 
-			this.scratchPad  = (baseMemory + scratchPadAddress )[0..scratchPadSize];
-			this.frameBuffer = (baseMemory + frameBufferAddress)[0..frameBufferSize];
-			this.mainMemory  = (baseMemory + mainMemoryAddress )[0..mainMemorySize];
-
-			//.writefln("scratchPad:%08X", cast(uint)(baseMemory + scratchPadAddress ));
+			string alloc(string name) {
+				// *nix: http://linux.die.net/man/2/mmap
+				return (
+					"VirtualAlloc(baseMemory + Segments." ~ name ~ ".address, Segments." ~ name ~ ".size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);"
+					"this." ~ name ~ " = (baseMemory + Segments." ~ name ~ ".address)[0..Segments." ~ name ~ ".size];"
+				);
+			}
 		} else {
-			// +3 for safety.
-			this.scratchPad  = new ubyte[0x_4000    + 3];
-			this.frameBuffer = new ubyte[0x_200000  + 3];
-			this.mainMemory  = new ubyte[0x_2000000 + 3];
-			// reset(); // D already sets all the new ubyte arrays to 0.
+			string alloc(string name) {
+				return "this." ~ name ~ " = new ubyte[Segments." ~ name ~ ".size];";
+			}
 		}
+		
+		mixin(alloc("scratchPad"));
+		mixin(alloc("frameBuffer"));
+		mixin(alloc("mainMemory"));
+
+		// reset(); // D already sets all the new ubyte arrays to 0.
 
 		this.streamInit();
-		//lastMemory = this; .writefln("%08X", lastMemoryUint);
 	}
 	
 	~this() {
@@ -156,50 +173,54 @@ class Memory : Stream {
 	 * @return A physical PC pointer.
 	 */
 	public void* getPointer(Pointer address) {
-		// Throws a MemoryException for an invalid address.
-		static pure string InvalidAddress() {
-			return "throw(new InvalidAddressException(address));";
-		}
+		version (VERSION_VIRTUAL_ALLOC) {
+			return baseMemory + (address & 0x0FFFFFFF);
+		} else {
+			// Throws a MemoryException for an invalid address.
+			static pure string InvalidAddress() {
+				return "throw(new InvalidAddressException(address));";
+			}
 
-		// If version(VERSION_CHECK_MEMORY), check that the address is in a specified segment or throws an InvalidAddressException.
-		static pure string CheckAddress(string segmentName) {
-			return "version (VERSION_CHECK_MEMORY) if ((address < " ~ segmentName ~ "Address) || (address > (" ~ segmentName ~ "Address | " ~ segmentName ~ "Mask))) " ~ InvalidAddress ~ ";";
-		}
+			// If version(VERSION_CHECK_MEMORY), check that the address is in a specified segment or throws an InvalidAddressException.
+			static pure string CheckAddress(string segmentName) {
+				return "version (VERSION_CHECK_MEMORY) if ((address < Segments." ~ segmentName ~ ".low) || (address >= (Segments." ~ segmentName ~ ".high))) " ~ InvalidAddress ~ ";";
+			}
 
-		// Returns 
-		static pure string ReturnSegment(string segmentName) {
-			return "return &" ~ segmentName ~ "[address & " ~ segmentName ~ "Mask];";
-		}
+			// Returns 
+			static pure string ReturnSegment(string segmentName) {
+				return "return &" ~ segmentName ~ "[address & Segments." ~ segmentName ~ ".mask];";
+			}
 
-		// Check the address in this segment if version(VERSION_CHECK_MEMORY) and returns the host pointer.
-		static pure string CheckAndReturnSegment(string segmentName) {
-			return CheckAddress(segmentName) ~ ReturnSegment(segmentName);
-		}
-		
-		//.writefln("Memory.getPointer(0x%08X)", address);
+			// Check the address in this segment if version(VERSION_CHECK_MEMORY) and returns the host pointer.
+			static pure string CheckAndReturnSegment(string segmentName) {
+				return CheckAddress(segmentName) ~ ReturnSegment(segmentName);
+			}
+			
+			//.writefln("Memory.getPointer(0x%08X)", address);
 
-		address &= 0x1FFFFFFF; // Ignore last 3 bits (cache / kernel)
-		switch (address >> 24) {
-			/////// hp
-			case 0b_00000: mixin(CheckAndReturnSegment("scratchPad")); break;
-			/////// hp
-			case 0b_00100: mixin(CheckAndReturnSegment("frameBuffer")); break;
-			/////// hp
-			case 0b_01000:
-			case 0b_01001:
-			case 0b_01010: // SLIM ONLY
-			case 0b_01011: // SLIM ONLY
-				mixin(CheckAndReturnSegment("mainMemory"));
-			break;
-			/////// hp
-			case 0b_11100: // HW IO1
-			case 0b_11111: // HO IO2
-				mixin(InvalidAddress);
-				//return null;
-			break;
-			default:
-				mixin(InvalidAddress);
-			break;
+			address &= 0x1FFFFFFF; // Ignore last 3 bits (cache / kernel)
+			switch (address >> 24) {
+				/////// hp
+				case 0b_00000: mixin(CheckAndReturnSegment("scratchPad")); break;
+				/////// hp
+				case 0b_00100: mixin(CheckAndReturnSegment("frameBuffer")); break;
+				/////// hp
+				case 0b_01000:
+				case 0b_01001:
+				case 0b_01010: // SLIM ONLY
+				case 0b_01011: // SLIM ONLY
+					mixin(CheckAndReturnSegment("mainMemory"));
+				break;
+				/////// hp
+				case 0b_11100: // HW IO1
+				case 0b_11111: // HO IO2
+					mixin(InvalidAddress);
+					//return null;
+				break;
+				default:
+					mixin(InvalidAddress);
+				break;
+			}
 		}
 	}
 
@@ -227,10 +248,7 @@ class Memory : Stream {
 		auto ptr = cast(ubyte *)_ptr;
 
 		bool between(ubyte[] buffer) { return (ptr >= &buffer[0]) && (ptr < &buffer[$]); }
-
-		string checkMap(string name, uint mapStart) {
-			return "if (between(" ~ name ~ ")) return (ptr - " ~ name ~ ".ptr) + " ~ tos(mapStart) ~ ";";
-		}
+		string checkMap(string name, uint mapStart) { return "if (between(" ~ name ~ ")) return (ptr - " ~ name ~ ".ptr) + " ~ tos(mapStart) ~ ";"; }
 		
 		mixin(checkMap("scratchPad",  0x00010000));
 		mixin(checkMap("frameBuffer", 0x04000000));

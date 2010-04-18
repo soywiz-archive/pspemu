@@ -96,7 +96,7 @@ class sceGe_driver : Module {
 	 * @return A pointer to the base of VRAM.
 	 */
 	uint sceGeEdramGetAddr() {
-		return cpu.memory.frameBufferAddress;
+		return cpu.memory.Segments.frameBuffer.address;
 	}
 
 	/**
@@ -105,7 +105,7 @@ class sceGe_driver : Module {
 	 * @return The size of VRAM (in bytes).
 	 */
 	uint sceGeEdramGetSize() {
-		return cpu.memory.frameBufferMask + 1;
+		return cpu.memory.Segments.frameBuffer.size;
 	}
 
 	/**

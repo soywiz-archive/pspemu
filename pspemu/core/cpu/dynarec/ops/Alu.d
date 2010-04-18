@@ -22,9 +22,25 @@ template Cpu_Alu() {
 
 	// Set Less Than.
 	void OP_SLTU() { emiter.MIPS_SLTU(RD, RS, RT); }
+
+	// Divide.
+	void OP_DIV () { emiter.MIPS_DIV(RS, RT, Sign.Signed); }
+	void OP_DIVU() { emiter.MIPS_DIV(RS, RT, Sign.Unsigned); }
 }
 
 template Cpu_Alu_Emiter() {
+	void MIPS_DIV(MipsRegisters rs, MipsRegisters rt, Sign signed) {
+		MIPS_LOAD_REGISTER(Register32.EAX, rs);
+		MIPS_LOAD_REGISTER(Register32.EDX, rt);
+		if (signed) {
+			IDIV(Register32.EDX);
+		} else {
+			DIV(Register32.EDX);
+		}
+		MOV(MIPS_GET_LOHI(0), Register32.EAX); // Result
+		MOV(MIPS_GET_LOHI(1), Register32.EDX); // Remainder
+	}
+
 	void MIPS_SLL(MipsRegisters rd, MipsRegisters rt, ubyte pos) {
 		if (rd == 0) return;
 		if (rt == 0) {

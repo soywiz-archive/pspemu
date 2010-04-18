@@ -36,6 +36,7 @@ template Cpu_Memory_Emiter() {
 			MIPS_LOAD_REGISTER(Register32.EAX, rs); // Address
 			if (offset != 0) ADD(Register32.EAX, cast(int)offset);
 			MIPS_LOAD_REGISTER(Register32.ECX, rt); // Value
+			//AND(Register32.EAX, 0x0FFFFFFF);
 			ADD(Register32.EAX, cast(uint)cast(void*)memory.baseMemory);
 			switch (size) {
 				case 1: MOV(Memory32(Register32.EAX, 0), Register8.CL); break;

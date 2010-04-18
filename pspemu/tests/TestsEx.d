@@ -75,8 +75,8 @@ void main() {
 	
 	// Test
 	version (USE_CPU_DYNAREC) {
-		//loader.loadAndExecute("tests_ex/simple/loop2.asm"); return;
-		loader.loadAndExecute("demos/minifire.elf"); return;
+		loader.loadAndExecute("tests_ex/simple/loop2.asm"); return;
+		//loader.loadAndExecute("demos/minifire.elf"); return;
 	}
 
 	int totalFailed = 0, totalExecuted = 0;

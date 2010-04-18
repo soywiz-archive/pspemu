@@ -40,6 +40,7 @@ class EmiterMipsToX86 : EmiterX86 {
 		GPR: 4*32
 		HI, LO
 		CMP1, CMP2
+		CLOCKS
 		FPR: 4*32
 	*/
 
@@ -47,11 +48,14 @@ class EmiterMipsToX86 : EmiterX86 {
 		uint registersInt = cast(uint)&registers.R;
 		auto func = cast(uint)codePointer;
 		asm {
+			//push EBP;
 			push EBX;
 				mov EBX, registersInt;
+				//mov EBP, 0;
 				mov EAX, func;
 				call EAX;
 			pop EBX;
+			//pop EBP;
 		}
 	}
 
@@ -63,8 +67,16 @@ class EmiterMipsToX86 : EmiterX86 {
 		return Memory32(Register32.EBX, MIPS_GET_DISPLACEMENT(mipsRegister));
 	}
 
-	Memory32 MIPS_GET_CMP(int count) {
-		return Memory32(Register32.EBX, 4 * (32 + count));
+	Memory32 MIPS_GET_LOHI(int pos) {
+		return Memory32(Register32.EBX, 4 * (32 + 0 + pos));
+	}
+
+	Memory32 MIPS_GET_CMP(int pos) {
+		return Memory32(Register32.EBX, 4 * (32 + 2 + pos));
+	}
+	
+	Memory32 MIPS_GET_CLOCKS() {
+		return Memory32(Register32.EBX, 4 * (32 + 4));
 	}
 
 	void MIPS_LOAD_REGISTER(Register32 x32RegTo, MipsRegisters mipsRegFrom) {
@@ -112,25 +124,74 @@ class EmiterMipsToX86 : EmiterX86 {
 	}
 
 	void MIPS_TICK(uint PC, uint count = 1) {
-		PUSH(PC);
-		PUSH(count);
-		CALL(createLabelToFunction(&SYSTEM_TICK));
-		ADD(Register32.ESP, 8);
-		CMP(Register32.EAX, 0);
-		JE(1);
-		RET();
+		static if (false) {
+			ADD(MIPS_GET_CLOCKS, count);
+			CMP(MIPS_GET_CLOCKS, 0xFFFF);
+			auto label = createLabel;
+			JNGE(label);
+			{
+				MOV(MIPS_GET_CLOCKS, 0);
+				PUSH(PC);
+				CALL(createLabelToFunction(&SYSTEM_TICK_SIMPLE));
+				ADD(Register32.ESP, 4);
+				CMP(Register32.EAX, 0);
+				JE(1);
+				RET();
+			}
+			setLabelHere(label);
+		} else {
+			PUSH(PC);
+			PUSH(count);
+			CALL(createLabelToFunction(&SYSTEM_TICK));
+			ADD(Register32.ESP, 8);
+			CMP(Register32.EAX, 0);
+			JE(1);
+			RET();
+		}
 	}
 }
 
 static Cpu lastCpu;
 
 static extern(C) {
+	bool SYSTEM_TICK_SIMPLE(uint PC) {
+		lastCpu.registers.PC = PC;
+		lastCpu.registers.nPC = PC + 4;
+
+		lastCpu.interrupts.queue(Interrupts.Type.THREAD0);
+
+		if (lastCpu.interrupts.InterruptFlag) {
+			lastCpu.interrupts.process();
+			//writefln("interrupt! %08X", lastCpu.registers.PC);
+		}
+
+		// Break execution.
+		if (PC != lastCpu.registers.PC) {
+			//writefln("changed PC!!! %08X", lastCpu.registers.PC);
+			return true;
+		}
+
+		if (lastCpu.runningState != RunningState.RUNNING) lastCpu.waitUntilResume();
+
+		if (lastCpu.registers.PAUSED) {
+			while (lastCpu.registers.PAUSED) {
+				lastCpu.interrupts.queue(Interrupts.Type.THREAD0);
+				if (lastCpu.interrupts.InterruptFlag) lastCpu.interrupts.process();
+				sleep(0);
+			}
+			return true;
+		}
+
+		//std.c.stdio.printf("%08X\n", PC);
+		return false;
+	}
+
 	bool SYSTEM_TICK(uint COUNT, uint PC) {
 		static uint count = 0;
 		lastCpu.registers.PC = PC;
 		lastCpu.registers.nPC = PC + 4;
 		count += COUNT;
-		if (!(count & 0xFFFF)) {
+		if (count > 0xFFFF) {
 			lastCpu.interrupts.queue(Interrupts.Type.THREAD0);
 			count = 0;
 		}
@@ -248,10 +309,10 @@ class CpuDynaRec : Cpu {
 				return (
 					"isJump = true;"
 					"follow = true;"
-					"isLikely = " ~ (likely ? "true" : "false") ~ ";"
-					"jumpLink   = " ~ (link ? "true" : "false") ~ ";"
+					"isLikely   = " ~ (likely ? "true" : "false") ~ ";"
+					"jumpLink   = " ~ (link   ? "true" : "false") ~ ";"
 					"jumpAlways = " ~ alwaysCondition ~ ";"
-					//"isEndOfBranch = " ~ alwaysCondition ~ ";" // To optimize!
+					//"isEndOfBranch = " ~ alwaysCondition ~ ";" // To optimize! (and avoid exploring wrong code)
 					"isEndOfBranch = false;"
 					"jumpAddress = PC + instruction.OFFSET2 + 4;"
 				);
