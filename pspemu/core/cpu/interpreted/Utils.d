@@ -41,7 +41,9 @@ static pure nothrow {
 					case "hi": add ~= "registers.HI"; break;
 					case "lo": add ~= "registers.LO"; break;
 					case "hl": add ~= "registers.HILO"; break;
-					case "cc": add ~= "registers.CC"; break;
+					case "00": add ~= "registers.FCR0.VALUE"; break;
+					case "cc": add ~= "registers.FCR31.C"; break;
+					case "31": add ~= "registers.FCR31.VALUE"; break;
 					default:
 						replace = false;
 						r ~= s[n];

@@ -37,7 +37,7 @@ class LoadExecForUser : Module {
 	 *
 	 */
 	void sceKernelExitGame() {
-		throw(new Exception("sceKernelExitGame"));
+		throw(new HaltException("sceKernelExitGame"));
 	}
 
 	/**

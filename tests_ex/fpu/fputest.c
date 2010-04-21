@@ -71,11 +71,6 @@ int __attribute__((noinline)) cvtws(float x, int rm) {
 #define CEIL_2  2
 #define FLOOR_3 3
 
-/*
-PASS : 'string:"cvtws(1.1, 2) == 2"' <-> 'string:"cvtws(1.1, 2) == 2"'
-FAIL : 'float:1.000000' <-> 'float:2.000000'
-*/
-
 int main(int argc, char *argv[]) {
 	CHECK_OP(adds(1.0, 1.0), 2.0);
 	CHECK_OP(subs(3.0, 1.0), 2.0);

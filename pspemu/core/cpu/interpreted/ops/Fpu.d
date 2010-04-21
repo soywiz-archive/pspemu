@@ -6,10 +6,10 @@ import pspemu.core.cpu.interpreted.ops.Branch;
 template TemplateCpu_FPU() {
 	// Branch.
 	static pure nothrow string BRANCH_S(Likely likely, string condition) { return BRANCH(likely, Link.NO, condition); }
-	auto OP_BC1F () { mixin(BRANCH_S(Likely.NO,  "!registers.CC")); }
-	auto OP_BC1FL() { mixin(BRANCH_S(Likely.YES, "!registers.CC")); }
-	auto OP_BC1T () { mixin(BRANCH_S(Likely.NO,  "registers.CC")); }
-	auto OP_BC1TL() { mixin(BRANCH_S(Likely.YES, "registers.CC")); }
+	auto OP_BC1F () { mixin(BRANCH_S(Likely.NO,  "!registers.FCR31.C")); }
+	auto OP_BC1FL() { mixin(BRANCH_S(Likely.YES, "!registers.FCR31.C")); }
+	auto OP_BC1T () { mixin(BRANCH_S(Likely.NO,  "registers.FCR31.C")); }
+	auto OP_BC1TL() { mixin(BRANCH_S(Likely.YES, "registers.FCR31.C")); }
 	
 	// Unary operations.
 	auto OP_MOV_S()  { mixin(CE("$fd = $fs;")); }
@@ -34,23 +34,25 @@ template TemplateCpu_FPU() {
 
 	// http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/Allegrex/FpuState.java
 	// http://pspemu.googlecode.com/svn/branches/old/libdoc/MipsInstructionSetReference.pdf
-	// CFC1 -- Move Control Word from/to Floating Point
-	// FIXME! 
-	auto OP_CFC1() { mixin(CE("$rt = $cc;")); }
-	auto OP_CTC1() { mixin(CE("$cc = $rt;")); }
+	// CFC1 -- move Control word from/to floating point (C1)
+	auto OP_CFC1() {
+		switch (instruction.RD) {
+			case  0: mixin(CE("$rt = $00;")); break; // readonly?
+			case 31: mixin(CE("$rt = $31;")); break;
+			default: throw(new Exception(std.string.format("Unsupported CFC1(%d)", instruction.RD)));
+		}
+	}
+	auto OP_CTC1() {
+		switch (instruction.RD) {
+			case 31: mixin(CE("$31 = $rt;")); break;
+			default: throw(new Exception(std.string.format("Unsupported CTC1(%d)", instruction.RD)));
+		}
+	}
 
-	// TODO: Dummy.
-	auto OP_MTC1() {
-		mixin(CE("$Fs = $rt;"));
-		//mixin(CE("$Fs = $rt;"));
-		//mixin(CE("$fs = I_F($rt);"));
-	}
-	auto OP_MFC1() {
-		mixin(CE("$rt = cast(int)$Fs;"));
-		//mixin(CE("$rt = F_I($fs);"));
-	}
+	// MTC1 -- Move word To/From floating point (C1)
+	auto OP_MTC1() { mixin(CE("$Fs = cast(float)$rt;")); }
+	auto OP_MFC1() { mixin(CE("$rt = cast(int  )$Fs;")); }
 	
-
 	// Floating Point Ceiling Convert to Word Fixed Point
 	auto OP_CEIL_W_S () { mixin(CE("$Fd = cast(int)ceil($fs);")); }
 	auto OP_FLOOR_W_S() { mixin(CE("$Fd = cast(int)($fs);")); }
@@ -60,12 +62,12 @@ template TemplateCpu_FPU() {
 	auto OP_CVT_W_S() {
 		// From: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
 		// enum Fcsr { Rint = 0, Cast = 1, Ceil = 2, Floor = 3 }
-		switch (registers.FCSR) {
+		switch (registers.FCR31.RM) {
 			//default:
-			case Registers.Fcsr.Rint : mixin(CE("$Fd = cast(int)rint($fs);"));  break;
-			case Registers.Fcsr.Cast : mixin(CE("$Fd = cast(int)($fs);"));      break;
-			case Registers.Fcsr.Ceil : mixin(CE("$Fd = cast(int)ceil($fs);")); break;
-			case Registers.Fcsr.Floor: mixin(CE("$Fd = cast(int)floor($fs);")); break;
+			case Registers.Fcr31.Type.Rint : mixin(CE("$Fd = cast(int)rint($fs);"));  break;
+			case Registers.Fcr31.Type.Cast : mixin(CE("$Fd = cast(int)($fs);"));      break;
+			case Registers.Fcr31.Type.Ceil : mixin(CE("$Fd = cast(int)ceil($fs);")); break;
+			case Registers.Fcr31.Type.Floor: mixin(CE("$Fd = cast(int)floor($fs);")); break;
 		}
 	}
 

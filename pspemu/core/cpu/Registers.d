@@ -1,6 +1,6 @@
 module pspemu.core.cpu.Registers;
 
-import std.stdio, std.string;
+import std.stdio, std.string, std.bitmanip;
 
 version = VERSION_R0_CHECK;
 
@@ -13,14 +13,41 @@ final class Registers {
 		"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
 	];
 	enum Fcsr : uint { Rint = 0, Cast = 1, Ceil = 2, Floor = 3 }
+	
+	static struct Fcr0 { // readonly
+		union {
+			uint VALUE;
+			struct {
+				ubyte REV;
+				ubyte IMP;
+				ubyte[2] UNK;
+			}
+		}
+		static assert (this.sizeof == 4);
+	}
+	
+	static struct Fcr31 {
+		enum Type : uint { Rint = 0, Cast = 1, Ceil = 2, Floor = 3 }
+		union {
+			uint VALUE;
+
+			struct { mixin(bitfields!(
+				// 0b_0000000_1_1_000000000000000000000_11
+				Type, "RM", 2,
+				uint, "",   21,
+				bool, "C" , 1,
+				bool, "FS", 1,
+				uint, "",   7
+			)); }
+		}
+		static assert (this.sizeof == 4);
+	}
 
 	bool PAUSED;
 	uint PC, nPC;    // Program Counter
 	uint IC;         // Interrupt controller
-	union {
-		Fcsr FCSR;   // Floating point Control / Status register
-		uint CC;     // Control Word (Floating point? C1)
-	}
+	Fcr0  FCR0; // readonly?
+	Fcr31 FCR31;
 	uint[] CallStack;
 	union {
 		uint[32] R;      // GPR | General Purpose Registers
@@ -62,14 +89,14 @@ final class Registers {
 	}
 
 	void copyFrom(Registers that) {
-		this.PC   = that.PC;
-		this.nPC  = that.nPC;
-		this.HILO = that.HILO;
-		this.IC   = that.IC;
-		this.FCSR = that.FCSR;
-		this.CC   = that.CC;
-		this.R [] = that.R [];
-		this.RF[] = that.RF[];
+		this.PC    = that.PC;
+		this.nPC   = that.nPC;
+		this.HILO  = that.HILO;
+		this.IC    = that.IC;
+		this.FCR0  = that.FCR0;
+		this.FCR31 = that.FCR31;
+		this.R []  = that.R [];
+		this.RF[]  = that.RF[];
 		this.CLOCKS   = that.CLOCKS;
 		if (that.CallStack.length) {
 			this.CallStack = that.CallStack.dup;

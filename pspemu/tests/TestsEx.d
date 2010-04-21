@@ -71,7 +71,11 @@ void main() {
 	auto loader        = new Loader(cpu, moduleManager);
 	auto syscall       = new Syscall(cpu, moduleManager);
 
-	cpu.errorHandler = (Cpu cpu, Object error) { };
+	cpu.errorHandler = (Cpu cpu, Object error) {
+		if ((cast(HaltException)error) is null) {
+			writefln("ERROR: %s", error);
+		}
+	};
 	
 	// Test
 	version (USE_CPU_DYNAREC) {

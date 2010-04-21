@@ -183,6 +183,11 @@ const PspInstructions_FPU = [
 	ID( "cvt.s.w",     VM("010001:10100:00000:fs:fd:100000"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 	ID( "cvt.w.s",     VM("010001:10000:00000:fs:fd:100100"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 
+	ID( "mfc1",        VM("010001:00000:rt:c1dr:00000:000000"), "%t, %1",   ADDR_TYPE_NONE, 0 ),
+	ID( "cfc1",        VM("010001:00010:rt:c1cr:00000:000000"), "%t, %p",   ADDR_TYPE_NONE, 0 ),
+	ID( "mtc1",        VM("010001:00100:rt:c1dr:00000:000000"), "%t, %1",   ADDR_TYPE_NONE, 0 ),
+	ID( "ctc1",        VM("010001:00110:rt:c1cr:00000:000000"), "%t, %p",   ADDR_TYPE_NONE, 0 ),
+
 	ID( "c.f.s",       VM(0x46000030, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.un.s",      VM(0x46000031, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.eq.s",      VM(0x46000032, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
@@ -199,11 +204,6 @@ const PspInstructions_FPU = [
 	ID( "c.nge.s",     VM(0x4600003D, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.le.s",      VM(0x4600003E, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.ngt.s",     VM(0x4600003F, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
-
-	ID( "cfc1",        VM(0x44400000, 0xFFE007FF), "%t, %p",     ADDR_TYPE_NONE, 0 ),
-	ID( "ctc1",        VM(0x44c00000, 0xFFE007FF), "%t, %p",     ADDR_TYPE_NONE, 0 ),
-	ID( "mfc1",        VM(0x44000000, 0xFFE007FF), "%t, %1",     ADDR_TYPE_NONE, 0 ),
-	ID( "mtc1",        VM(0x44800000, 0xFFE007FF), "%t, %1",     ADDR_TYPE_NONE, 0 ),
 ];
 
 const PspInstructions_UNGROUPED = [

@@ -44,6 +44,7 @@ struct ValueMask {
 		}
 		foreach (part; parts) {
 			switch (part) {
+				case "c0dr", "c0cr", "c1dr", "c1cr":
 				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft": alloc(5); break;
 				case "fcond": alloc(4 ); break;
 				case "imm16": alloc(16); break;
