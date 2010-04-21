@@ -36,8 +36,8 @@ template TemplateCpu_FPU() {
 	// http://pspemu.googlecode.com/svn/branches/old/libdoc/MipsInstructionSetReference.pdf
 	// CFC1 -- Move Control Word from/to Floating Point
 	// FIXME! 
-	auto OP_CFC1() { mixin(CE("$rt = cast(uint)$cc;")); }
-	auto OP_CTC1() { mixin(CE("$cc = cast(bool)$rt;")); }
+	auto OP_CFC1() { mixin(CE("$rt = $cc;")); }
+	auto OP_CTC1() { mixin(CE("$cc = $rt;")); }
 
 	// TODO: Dummy.
 	auto OP_MTC1() {
@@ -59,11 +59,12 @@ template TemplateCpu_FPU() {
 
 	auto OP_CVT_W_S() {
 		// From: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
+		// enum Fcsr { Rint = 0, Cast = 1, Ceil = 2, Floor = 3 }
 		switch (registers.FCSR) {
-			default:
+			//default:
 			case Registers.Fcsr.Rint : mixin(CE("$Fd = cast(int)rint($fs);"));  break;
 			case Registers.Fcsr.Cast : mixin(CE("$Fd = cast(int)($fs);"));      break;
-			case Registers.Fcsr.Ceil : mixin(CE("$Fd = cast(int)ceil($fs);"));  break;
+			case Registers.Fcsr.Ceil : mixin(CE("$Fd = cast(int)ceil($fs);")); break;
 			case Registers.Fcsr.Floor: mixin(CE("$Fd = cast(int)floor($fs);")); break;
 		}
 	}

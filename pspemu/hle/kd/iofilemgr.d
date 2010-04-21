@@ -46,7 +46,7 @@ class MemoryStickDevice : IoDevice {
 	this(Cpu cpu, VFS node) { super(cpu, node); }
 
 	override void register() {
-		writefln("MemoryStickDevice.register");
+		//writefln("MemoryStickDevice.register");
 		cpu.interrupts.registerCallback(Interrupts.Type.GPIO, delegate void() {
 			writefln("MemoryStickDevice.processGPIO");
 			cpu.queueCallbacks(callbacks.keys, []);
@@ -116,12 +116,12 @@ class IoFileMgrForKernel : Module {
 	void setVirtualDir(string path) {
 		// No absolute path; Relative path. No starts by '/' nor contains ':'.
 		if ((path[0] == '/') || (path.indexOf(':') != -1)) {
-			writefln("set absolute!");
+			//writefln("set absolute!");
 		} else {
-			writefln("path already absolute!");
+			//writefln("path already absolute!");
 			path = std.file.getcwd() ~ '/' ~ path;
 		}
-		writefln("setVirtualDir('%s')", path);
+		//writefln("setVirtualDir('%s')", path);
 
 		fsroot["ms0:/PSP/GAME"].addChild(new FileSystem(path), "virtual");
 		gameroot = new VFS_Proxy("<gameroot>", fsroot[fscurdir]);

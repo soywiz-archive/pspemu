@@ -1,6 +1,6 @@
 module pspemu.tests.TestsEx;
 
-version = USE_CPU_DYNAREC;
+//version = USE_CPU_DYNAREC;
 
 import std.stream, std.stdio, core.thread, std.file;
 

@@ -12,13 +12,15 @@ final class Registers {
 		"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
 		"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
 	];
-	enum Fcsr { Rint = 0, Cast, Ceil, Floor }
+	enum Fcsr : uint { Rint = 0, Cast = 1, Ceil = 2, Floor = 3 }
 
 	bool PAUSED;
 	uint PC, nPC;    // Program Counter
 	uint IC;         // Interrupt controller
-	Fcsr FCSR;       // Floating point Control / Status register
-	bool CC;         // Control Word (Floating point? C1)
+	union {
+		Fcsr FCSR;   // Floating point Control / Status register
+		uint CC;     // Control Word (Floating point? C1)
+	}
 	uint[] CallStack;
 	union {
 		uint[32] R;      // GPR | General Purpose Registers

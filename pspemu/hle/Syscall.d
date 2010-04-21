@@ -59,7 +59,7 @@ class Syscall : ISyscall {
 			} break;
 			case 0x1011: { // void emitFloat(float v)
 				auto vv = cpu.registers.F[12];
-				Logger.log(Logger.Level.INFO, "Syscall", "emitFloat(%d)", vv);
+				Logger.log(Logger.Level.INFO, "Syscall", "emitFloat(%f)", vv);
 				emits ~= std.string.format("float:%f", vv);
 			} break;
 			case 0x1012: { // void emitString(char *v)
