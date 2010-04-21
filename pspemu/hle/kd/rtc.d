@@ -2,6 +2,16 @@ module pspemu.hle.kd.rtc; // kd/rtc.prx (sceRTC_Service)
 
 import pspemu.hle.Module;
 
+import std.date;
+
+// d_time has milliseconds resolution.
+
+static const ulong rtcResolution = 1_000_000; // microseconds
+
+// std.date.getUTCtime has milliseconds resolution. milliseconds -> microseconds
+d_time tick_to_dtime(ulong  tick) { return cast(d_time)(tick / 1_000); }
+ulong  dtime_to_tick(d_time tick) { return (tick * 1_000); }
+
 struct pspTime {
 	ushort year;
 	ushort month;
@@ -9,7 +19,30 @@ struct pspTime {
 	ushort hour;
 	ushort minutes;
 	ushort seconds;
-	uint microseconds;
+	uint   microseconds;
+
+	ulong tick() {
+		auto dtime = std.date.parse(std.string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minutes, seconds));
+		return (cast(ulong)dtime * 1_000) + microseconds;
+	}
+
+	bool parse(ulong tick) {
+		std.date.Date date;
+		
+		date.parse(toUTCString(tick_to_dtime(tick)));
+		
+		year    = cast(ushort)date.year;
+		month   = cast(ushort)date.month;
+		day     = cast(ushort)date.day;
+		hour    = cast(ushort)date.hour;
+		minutes = cast(ushort)date.minute;
+		seconds = cast(ushort)date.second;
+		microseconds = cast(uint)(tick % 1_000_000);
+
+		return true;
+	}
+	
+	static assert (this.sizeof == 16);
 }
 
 
@@ -37,8 +70,8 @@ class sceRtc : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcConvertUtcToLocalTime(u64* tickUTC, u64* tickLocal) {
-		unimplemented();
-		return -1;
+		*tickLocal = dtime_to_tick(std.date.UTCtoLocalTime(tick_to_dtime(*tickUTC)));
+		return 0;
 	}
 
 	/**
@@ -50,8 +83,8 @@ class sceRtc : Module {
 	 * @return 0 on success, <0 on error
 	 */
 	int sceRtcTickAddTicks(ulong* destTick, ulong* srcTick, ulong numTicks) {
-		unimplemented();
-		return -1;
+		*destTick = *srcTick + numTicks;
+		return 0;
 	}
 
 	/**
@@ -62,8 +95,8 @@ class sceRtc : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcGetTick(pspTime* date, ulong* tick) {
-		unimplemented();
-		return -1;
+		*tick = date.tick;
+		return 0;
 	}
 
 	/**
@@ -74,8 +107,8 @@ class sceRtc : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcSetTick(pspTime* date, ulong* tick) {
-		unimplemented();
-		return -1;
+		date.parse(*tick);
+		return 0;
 	}
 
 	/**
@@ -85,8 +118,10 @@ class sceRtc : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcGetCurrentClockLocalTime(pspTime *time) {
-		unimplemented();
-		return -1;
+		ulong currentTick;
+		sceRtcGetCurrentTick(&currentTick);
+		sceRtcSetTick(time, &currentTick);
+		return 0;
 	}
 
 	/**
@@ -95,9 +130,7 @@ class sceRtc : Module {
 	 * @return # of ticks per second
 	 */
 	u32 sceRtcGetTickResolution() {
-		long frequency;
-		std.c.windows.windows.QueryPerformanceFrequency(&frequency);
-		return cast(uint)frequency;
+		return 1_000_000;
 	}
 
 	/**
@@ -108,9 +141,8 @@ class sceRtc : Module {
 	 * @param numMS - number of ms to add
 	 * @return 0 on success, <0 on error
 	 */
-	int sceRtcTickAddMicroseconds(u64* destTick, const u64* srcTick, u64 numMS) {
-		unimplemented();
-		return 0;
+	int sceRtcTickAddMicroseconds(ulong* destTick, ulong* srcTick, ulong numMS) {
+		return sceRtcTickAddTicks(destTick, srcTick, numMS);
 	}
 
 	/**
@@ -119,8 +151,8 @@ class sceRtc : Module {
 	 * @param tick - pointer to u64 to receive tick count
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceRtcGetCurrentTick(u64* tick) {
-		std.c.windows.windows.QueryPerformanceCounter(cast(long *)tick);
+	int sceRtcGetCurrentTick(ulong* tick) {
+		*tick = dtime_to_tick(std.date.getUTCtime);
 		return 0;
 	}
 
@@ -132,8 +164,7 @@ class sceRtc : Module {
 	 * @return # of days in month, <0 on error (?)
 	 */
 	int sceRtcGetDaysInMonth(int year, int month) {
-		unimplemented();
-		return -1;
+		return std.date.daysInMonth(year, month);
 	}
 
 	/**
@@ -145,8 +176,11 @@ class sceRtc : Module {
 	 * @return day of week with 0 representing Monday
 	 */
 	int sceRtcGetDayOfWeek(int year, int month, int day) {
-		unimplemented();
-		return -1;
+		// std.date.weekDay 0-Sunday
+		//std.date.weekDay
+		
+		auto dtime = std.date.parse(std.string.format("%04d-%02d-%02d", year, month, day));
+		return (std.date.weekDay(dtime) + 6) % 7;
 	}
 }
 

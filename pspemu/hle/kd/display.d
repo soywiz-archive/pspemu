@@ -25,6 +25,10 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		mixin(registerd!(0x773DD3A3, sceDisplayGetCurrentHcount));
 	}
 
+	void processCallbacks() {
+		// @TODO
+	}
+
 	// @TODO: Unknown.
 	void sceDisplayGetCurrentHcount() {
 		unimplemented();
@@ -37,10 +41,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		return cpu.display.VBLANK_COUNT;
 	}
 
-	/**
-	 * Wait for vertical blank start
-	 */
-	int sceDisplayWaitVblankStart() {
+	int _sceDisplayWaitVblankStart(bool _processCallbacks) {
 		cpu.display.fpsCounter++;
 		if (!cpu.display.frameLimiting) return 0;
 		
@@ -50,43 +51,44 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 			waitingThread.resumeAndReturn(0);
 		});
 
-		return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart");
+		if (_processCallbacks) {
+			return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart", (PspThread pausedThread) {
+				processCallbacks();
+			});
+		} else {
+			return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart");
+		}
+	}
+
+	/**
+	 * Wait for vertical blank start
+	 */
+	int sceDisplayWaitVblankStart() {
+		return _sceDisplayWaitVblankStart(false);
 	}
 
 	/**
 	 * Wait for vertical blank start with callback
 	 */
 	int sceDisplayWaitVblankStartCB() {
-		unimplemented();
-		return -1;
+		return _sceDisplayWaitVblankStart(true);
 	}
 
 	/**
 	 * Wait for vertical blank with callback
 	 */
 	int sceDisplayWaitVblankCB() {
-		return sceDisplayWaitVblankStart();
-		/*bool vblank = false;
-
-		void changeVblank() {
-			vblank = true;
-			cpu.interrupts.unregisterCallback(Interrupts.Type.VBLANK, &changeVblank);
-		}
-
-		cpu.interrupts.registerCallback(Interrupts.Type.VBLANK, &changeVblank);
-	
-		return threadManForUser.threadManager.currentThread.pauseAndYield("sceDisplayWaitVblankStart", (PspThread pausedThread) {
-			if (vblank) {
-				pausedThread.resumeAndReturn(0);
-			}
-		});*/
+		// @TODO: Fixme!
+		//unimplemented_notice();
+		return sceDisplayWaitVblankStartCB();
 	}
 
 	/**
 	 * Wait for vertical blank
 	 */
 	int sceDisplayWaitVblank() {
-		unimplemented();
+		// @TODO: Fixme!
+		//unimplemented_notice();
 		return sceDisplayWaitVblankStart();
 	}
 

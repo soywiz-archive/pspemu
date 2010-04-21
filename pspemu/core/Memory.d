@@ -173,9 +173,9 @@ class Memory : Stream {
 	 * @return A physical PC pointer.
 	 */
 	public void* getPointer(Pointer address) {
-		version (VERSION_VIRTUAL_ALLOC) {
+		/*version (VERSION_VIRTUAL_ALLOC) {
 			return baseMemory + (address & 0x0FFFFFFF);
-		} else {
+		} else*/ {
 			// Throws a MemoryException for an invalid address.
 			static pure string InvalidAddress() {
 				return "throw(new InvalidAddressException(address));";
