@@ -51,6 +51,8 @@ alias ValueMask VM;
  * %? - Indicates vmmul special exception
 */
 
+// @TODO: ADDR_TYPE could be induced from INSTR_TYPE plus format and could be removed when all the instructions use the Allegrex.isa format.
+// (if an instruction is a B, JUMP or J type, we can check at compile time wether the format has an imm16, imm26 or if it only uses registers)
 const PspInstructions_ALU = [
 	// Arithmetic operations.
 	ID( "add",    VM("000000:rs:rt:rd:00000:100000"), "%d, %s, %t", ADDR_TYPE_NONE, 0 ),
@@ -89,7 +91,7 @@ const PspInstructions_ALU = [
 	ID( "lui",    VM("001111:00000:rt:imm16"       ), "%t, %I",     ADDR_TYPE_NONE, 0 ),
 
 	// Sign Extend (Byte/Half word)
-	ID( "seb",    VM("011111:00000:rt:rd:10000:100000"), "%d, %t", ADDR_TYPE_NONE, 0 ), // op SEB(011111:00000:rt:rd:10000:100001) WRONG? http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex.isa
+	ID( "seb",    VM("011111:00000:rt:rd:10000:100000"), "%d, %t", ADDR_TYPE_NONE, 0 ),
 	ID( "seh",    VM("011111:00000:rt:rd:11000:100000"), "%d, %t", ADDR_TYPE_NONE, 0 ),
 	
 	// Bit Reverse.
@@ -97,63 +99,90 @@ const PspInstructions_ALU = [
 ];
 
 const PspInstructions_BCU = [
+	// Branch on EQuals (Likely)
 	ID( "beq",     VM("000100:rs:rt:imm16"   ), "%s, %t, %O", ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "beql",    VM("010100:rs:rt:imm16"   ), "%s, %t, %O", ADDR_TYPE_16,  INSTR_TYPE_B ),
 
+	// Branch on Greater Equal Zero (And Link) (Likely)
 	ID( "bgez",    VM("000001:rs:00001:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "bgezl",   VM("000001:rs:00011:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "bgezal",  VM("000001:rs:10001:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_JAL ),
 	ID( "bgezall", VM("000001:rs:10011:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_JAL ),
 
+	// Branch on Less Than Zero (And Link) (Likely)
 	ID( "bltz",    VM("000001:rs:00000:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "bltzl",   VM("000001:rs:00010:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "bltzal",  VM("000001:rs:10000:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_JAL ),
 	ID( "bltzall", VM("000001:rs:10010:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_JAL ),
 
+	// Branch on Less Or Equals than Zero (Likely)
 	ID( "blez",    VM("000110:rs:00000:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "blezl",   VM("010110:rs:00000:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 
+	// Branch on Great Or Equals than Zero (Likely)
 	ID( "bgtz",    VM("000111:rs:00000:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "bgtzl",   VM("010111:rs:00000:imm16"), "%s, %O",     ADDR_TYPE_16,  INSTR_TYPE_B ),
 
+	// Branch on Not Equals (Likely)
 	ID( "bne",     VM("000101:rs:rt:imm16"   ), "%s, %t, %O", ADDR_TYPE_16,  INSTR_TYPE_B ),
 	ID( "bnel",    VM("010101:rs:rt:imm16"   ), "%s, %t, %O", ADDR_TYPE_16,  INSTR_TYPE_B ),
 
-	ID( "j",       VM(0x08000000, 0xFC000000), "%j",         ADDR_TYPE_26,  INSTR_TYPE_JUMP ),
-	ID( "jr",      VM(0x00000008, 0xFC1FFFFF), "%J",         ADDR_TYPE_REG, INSTR_TYPE_JUMP ),
-	ID( "jalr",    VM(0x00000009, 0xFC1F07FF), "%J, %d",     ADDR_TYPE_REG, INSTR_TYPE_JAL ),
-	ID( "jal",     VM(0x0C000000, 0xFC000000), "%j",         ADDR_TYPE_26,  INSTR_TYPE_JAL ),
+	// Jump (And Link) (Register)
+	ID( "j",       VM("000010:imm26"         ), "%j",         ADDR_TYPE_26,  INSTR_TYPE_JUMP ),
+	ID( "jr",      VM("000000:rs:00000:00000:00000:001000"), "%J",   ADDR_TYPE_REG, INSTR_TYPE_JUMP ),
+	ID( "jalr",    VM("000000:rs:00000:rd:00000:001001"), "%J, %d",  ADDR_TYPE_REG, INSTR_TYPE_JAL ),
+	ID( "jal",     VM("000011:imm26"         ), "%j",                ADDR_TYPE_26,  INSTR_TYPE_JAL ),
 
-	ID( "bc1f",    VM(0x45000000, 0xFFFF0000), "%O",         ADDR_TYPE_16,  INSTR_TYPE_B ),
-	ID( "bc1fl",   VM(0x45020000, 0xFFFF0000), "%O",         ADDR_TYPE_16,  INSTR_TYPE_B ),
-	ID( "bc1t",    VM(0x45010000, 0xFFFF0000), "%O",         ADDR_TYPE_16,  INSTR_TYPE_B ),
-	ID( "bc1tl",   VM(0x45030000, 0xFFFF0000), "%O",         ADDR_TYPE_16,  INSTR_TYPE_B ),
+	// Branch on C1 (False/True) (Likely)
+	ID( "bc1f",    VM("010001:01000:00000:imm16"), "%O",      ADDR_TYPE_16,  INSTR_TYPE_B ),
+	ID( "bc1t",    VM("010001:01000:00001:imm16"), "%O",      ADDR_TYPE_16,  INSTR_TYPE_B ),
+	ID( "bc1fl",   VM("010001:01000:00010:imm16"), "%O",      ADDR_TYPE_16,  INSTR_TYPE_B ),
+	ID( "bc1tl",   VM("010001:01000:00011:imm16"), "%O",      ADDR_TYPE_16,  INSTR_TYPE_B ),
 ];
 
 const PspInstructions_LSU = [
-	ID( "lb",   VM(0x80000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "lbu",  VM(0x90000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "lh",   VM(0x84000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "lhu",  VM(0x94000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "lw",   VM(0x8C000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "lwl",  VM(0x88000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "lwr",  VM(0x98000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	// Load (Byte/Half word/Word) (Left/Right/Unsigned)
+	ID( "lb",   VM("100000:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lh",   VM("100001:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lw",   VM("100011:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lwl",  VM("100010:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lwr",  VM("100110:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lbu",  VM("100100:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lhu",  VM("100101:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
 
-	ID( "sb",   VM(0xA0000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "sh",   VM(0xA4000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "sw",   VM(0xAC000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "swl",  VM(0xA8000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "swr",  VM(0xB8000000, 0xFC000000), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	// Store (Byte/Half word/Word) (Left/Right)
+	ID( "sb",   VM("101000:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "sh",   VM("101001:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "sw",   VM("101011:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "swl",  VM("101010:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "swr",  VM("101110:rs:rt:imm16"), "%t, %o", ADDR_TYPE_NONE, 0 ),
 
-	ID( "ll",   VM(0xC0000000, 0xFC000000), "%t, %O", ADDR_TYPE_NONE, 0 ),
+	ID( "ll",   VM("110000:rs:rt:imm16"), "%t, %O", ADDR_TYPE_NONE, 0 ),
 
-	ID( "lwc1", VM(0xc4000000, 0xFC000000), "%T, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "swc1", VM(0xe4000000, 0xFC000000), "%T, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "lwc1", VM("110001:rs:ft:imm16"), "%T, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "swc1", VM("111001:rs:ft:imm16"), "%T, %o", ADDR_TYPE_NONE, 0 ),
 ];
 
 const PspInstructions_FPU = [
-	ID( "abs.s",       VM(0x46000005, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
-	ID( "add.s",       VM(0x46000000, 0xFFE0003F), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
+	// Binary Floating Point Unit Operations
+	ID( "add.s",       VM("010001:10000:ft:fs:fd:000000"   ), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
+	ID( "sub.s",       VM("010001:10000:ft:fs:fd:000001"   ), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
+	ID( "mul.s",       VM("010001:10000:ft:fs:fd:000010"   ), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
+	ID( "div.s",       VM("010001:10000:ft:fs:fd:000011"   ), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
+
+	// Unary Floating Point Unit Operations
+	ID( "sqrt.s",      VM("010001:10000:00000:fs:fd:000100"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "abs.s",       VM("010001:10000:00000:fs:fd:000101"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "mov.s",       VM("010001:10000:00000:fs:fd:000110"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "neg.s",       VM("010001:10000:00000:fs:fd:000111"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "round.w.s",   VM("010001:10000:00000:fs:fd:001100"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "trunc.w.s",   VM("010001:10000:00000:fs:fd:001101"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "ceil.w.s",    VM("010001:10000:00000:fs:fd:001110"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "floor.w.s",   VM("010001:10000:00000:fs:fd:001111"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+
+	ID( "cvt.s.w",     VM("010001:10100:00000:fs:fd:100000"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+	ID( "cvt.w.s",     VM("010001:10000:00000:fs:fd:100100"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+
 	ID( "c.f.s",       VM(0x46000030, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.un.s",      VM(0x46000031, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.eq.s",      VM(0x46000032, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
@@ -170,22 +199,11 @@ const PspInstructions_FPU = [
 	ID( "c.nge.s",     VM(0x4600003D, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.le.s",      VM(0x4600003E, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
 	ID( "c.ngt.s",     VM(0x4600003F, 0xFFE007FF), "%S, %T",     ADDR_TYPE_NONE, 0 ),
-	ID( "ceil.w.s",    VM(0x4600000E, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
+
 	ID( "cfc1",        VM(0x44400000, 0xFFE007FF), "%t, %p",     ADDR_TYPE_NONE, 0 ),
 	ID( "ctc1",        VM(0x44c00000, 0xFFE007FF), "%t, %p",     ADDR_TYPE_NONE, 0 ),
-	ID( "cvt.s.w",     VM(0x46800020, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
-	ID( "cvt.w.s",     VM(0x46000024, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
-	ID( "div.s",       VM(0x46000003, 0xFFE0003F), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
-	ID( "floor.w.s",   VM(0x4600000F, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 	ID( "mfc1",        VM(0x44000000, 0xFFE007FF), "%t, %1",     ADDR_TYPE_NONE, 0 ),
-	ID( "mov.s",       VM(0x46000006, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 	ID( "mtc1",        VM(0x44800000, 0xFFE007FF), "%t, %1",     ADDR_TYPE_NONE, 0 ),
-	ID( "mul.s",       VM(0x46000002, 0xFFE0003F), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
-	ID( "neg.s",       VM(0x46000007, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
-	ID( "round.w.s",   VM(0x4600000C, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
-	ID( "sqrt.s",      VM(0x46000004, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
-	ID( "sub.s",       VM(0x46000001, 0xFFE0003F), "%D, %S, %T", ADDR_TYPE_NONE, 0 ),
-	ID( "trunc.w.s",   VM(0x4600000D, 0xFFFF003F), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 ];
 
 const PspInstructions_UNGROUPED = [

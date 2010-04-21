@@ -212,13 +212,15 @@ class Builder {
 	public function compileModules($modules) {
 		if (!count($modules)) return;
 		$linkFilesStr = implode(' ', $this->getFiles($modules));
-		$cmd = "{$this->dmd} {$linkFilesStr} -c -op {$this->flags}";
+		file_put_contents('linkfiles', $linkFilesStr);
+		$cmd = "{$this->dmd} @linkfiles -c -op {$this->flags}";
 		printf("Compiling...%s\n", $linkFilesStr);
 		passthru($cmd, $retval);
 		foreach ($modules as $module) {
 			@$module->moveObjectFromSourcePath();
 			if ($retval != 0) $module->deleteObject();
 		}
+		@unlink('linkfiles');
 		if ($retval != 0) {
 			exit;
 		}
@@ -253,13 +255,15 @@ class Builder {
 			// Build .res
 			echo `{$this->rcc} -32 resources\\psp.rc -oresources\\psp.res`;
 
-			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res {$linkFilesStr}";
+			file_put_contents('linkfiles', $linkFilesStr);
+			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res @linkfiles";
 			//printf("Linking...%s\n", $cmd);
 			$retval = 0;
 			passthru($cmd, $retval);
 			$exeBase = pathinfo($this->exe, PATHINFO_FILENAME);
 			@unlink("{$exeBase}.map");
 			@unlink("{$exeBase}.obj");
+			@unlink("linkfiles");
 			if (($retval == 0) && filesize($this->exe) > 0) {
 				touch($this->exe, $maxTime);
 			} else {
@@ -295,7 +299,8 @@ class Builder {
 		// Build exe.
 		if (@filemtime($this->exe) != $maxTime) {
 			$linkFilesStr = implode(' ', $this->getFilesSortedByDate());
-			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res {$linkFilesStr}";
+			file_put_contents('linkfiles', $linkFilesStr);
+			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res @linkfiles";
 			$retval = 0;
 			echo "Building {$this->exe}...";
 			@unlink($this->exe);
@@ -303,6 +308,7 @@ class Builder {
 			$exeBase = pathinfo($this->exe, PATHINFO_FILENAME);
 			@unlink("{$exeBase}.map");
 			@unlink("{$exeBase}.obj");
+			@unlink("linkfiles");
 			if ($retval != 0) {
 				@unlink($this->exe);
 				exit;
