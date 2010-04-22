@@ -366,24 +366,28 @@ class Elf {
 	}
 
 	uint relocationAddress = 0;
-
-	void writeToMemory(Stream stream, uint baseAddress = 0) {
+	
+	void preWriteToMemory(Stream stream) {
 		if (needsRelocation) {
-			baseAddress += 0x_0890_0000;
+			relocationAddress = 0x_0890_0000;
+		} else {
+			relocationAddress = 0;
 		}
-		
-		relocationAddress = baseAddress;
-		
+	}
+
+	void writeToMemory(Stream stream) {
 		foreach (k, sectionHeader; sectionHeaders) {			
-			stream.position = baseAddress + sectionHeader.address;
-			uint sectionHeaderOffset = cast(uint)stream.position;
+			uint sectionHeaderOffset = cast(uint)(relocationAddress + sectionHeader.address);
 			
 			string typeString = "None";
 			
 			// Section to allocate
 			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
+				Logger.log(Logger.Level.DEBUG, "Loader", "Starting to write to: %08X. SectionHeader: %s", sectionHeaderOffset, sectionHeader);
+
 				bool reserved = true;
 				
+				stream.position = sectionHeaderOffset;
 				switch (sectionHeader.type) {
 					default: reserved = false; typeString = "UNKNOWN"; break;
 					case SectionHeader.Type.PROGBITS: typeString = "PROGBITS"; stream.copyFrom(SectionStream(sectionHeader)); break;

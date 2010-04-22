@@ -378,26 +378,40 @@ class Loader : IDebugSource {
 	}
 
 	void allocatePartitionBlock() {
-		Memory memory = cast(Memory)this.memory;
-
 		// Not a Memory supplied.
-		if (memory is null) {
-			return;
+		if (cast(Memory)this.memory is null) return;
+
+		uint allocateAddress;
+		uint allocateSize    = this.elf.requiredBlockSize;
+		if (this.elf.relocationAddress) {
+			allocateAddress = this.elf.relocationAddress;
+		} else {
+			allocateAddress = getRelocatedAddress(this.elf.suggestedBlockAddress);
 		}
 
 		auto sysMemUserForUser = moduleManager.get!(SysMemUserForUser);
-		//writefln("%08X", memory.getPointer(this.elf.suggestedBlockAddress));
-		auto blockid = sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Program", PspSysMemBlockTypes.PSP_SMEM_Addr, this.elf.requiredBlockSize, this.elf.suggestedBlockAddress);
+		
+		auto blockid = sysMemUserForUser.sceKernelAllocPartitionMemory(2, "Main Program", PspSysMemBlockTypes.PSP_SMEM_Addr, allocateSize, allocateAddress);
 		uint blockaddress = sysMemUserForUser.sceKernelGetBlockHeadAddr(blockid);
 
-		Logger.log(Logger.Level.DEBUG, "Loader", "suggestedBlockAddress:%08X", this.elf.suggestedBlockAddress);
-		Logger.log(Logger.Level.DEBUG, "Loader", "requiredBlockSize:%08X", this.elf.requiredBlockSize);
+		Logger.log(Logger.Level.DEBUG, "Loader", "relocationAddress:%08X", this.elf.relocationAddress);
+		Logger.log(Logger.Level.DEBUG, "Loader", "suggestedBlockAddress(no reloc):%08X", this.elf.suggestedBlockAddress);
+		Logger.log(Logger.Level.DEBUG, "Loader", "allocateAddress:%08X", allocateAddress);
+		Logger.log(Logger.Level.DEBUG, "Loader", "allocateSize:%08X", allocateSize);
 		Logger.log(Logger.Level.DEBUG, "Loader", "allocatedIn:%08X", blockaddress);
-
+		
+		if (this.elf.relocationAddress != 0) {
+			this.elf.relocationAddress = blockaddress;
+		}
 	}
 
 	uint getRelocatedAddress(uint addr) {
-		return addr + elf.relocationAddress;
+		if (addr >= elf.relocationAddress) {
+			Logger.log(Logger.Level.WARNING, "Loader", "Trying to get an already relocated address:%08X", addr);
+			return addr;
+		} else {
+			return addr + elf.relocationAddress;
+		}
 	}
 
 	Stream getMemorySliceRelocated(uint from, uint to) {
@@ -409,9 +423,16 @@ class Loader : IDebugSource {
 	}
 
 	void load() {
-		allocatePartitionBlock();
-
-		this.elf.writeToMemory(memory);
+		this.elf.preWriteToMemory(memory);
+		{
+			allocatePartitionBlock();
+		}
+		try {
+			this.elf.writeToMemory(memory);
+		} catch (Object o) {
+			Logger.log(Logger.Level.CRITICAL, "Loader", "Failed this.elf.writeToMemory : %s", o);
+			throw(o);
+		}
 		readInplace(moduleInfo, elf.SectionStream(".rodata.sceModuleInfo"));
 
 		auto importsStream = getMemorySliceRelocated(moduleInfo.importsStart, moduleInfo.importsEnd);

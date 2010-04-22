@@ -11,6 +11,8 @@ import pspemu.hle.Module;
 import pspemu.utils.Utils;
 import pspemu.utils.VirtualFileSystem;
 
+import pspemu.utils.Logger;
+
 class IoDevice : VFS_Proxy {
 	Cpu cpu;
 	string name = "<iodev:unknown>";
@@ -167,7 +169,10 @@ class IoFileMgrForKernel : Module {
 	Stream[SceUID] openedStreams;
 
 	Stream getStreamFromFD(SceUID uid) {
-		if ((uid in openedStreams) is null) throw(new Exception(std.string.format("No file opened with FD/UID(%d)", uid)));
+		if ((uid in openedStreams) is null) {
+			//throw(new Exception(std.string.format("No file opened with FD/UID(%d)", uid)));
+			Logger.log(Logger.Level.WARNING, "iofilemgr", "No file opened with FD/UID(%d)", uid);
+		}
 		return openedStreams[uid];
 	}
 

@@ -63,17 +63,16 @@ struct SceKernelEventFlagOptParam {
 }
 
 struct SceKernelMppInfo {
-	SceSize 	size;
-	char 	name[32];
-	SceUInt 	attr;
-	int 	bufSize;
-	int 	freeSize;
-	int 	numSendWaitThreads;
-	int 	numReceiveWaitThreads;
+	SceSize  size;
+	char[32] name;
+	SceUInt  attr;
+	int      bufSize;
+	int      freeSize;
+	int      numSendWaitThreads;
+	int      numReceiveWaitThreads;
 }
 
-enum PspKernelErrorCodes
-{
+enum PspKernelErrorCodes {
 	SCE_KERNEL_ERROR_OK	 = 0,	
 	SCE_KERNEL_ERROR_ERROR	 = 0x80020001,	
 	SCE_KERNEL_ERROR_NOTIMP	= 0x80020002,	

@@ -6,6 +6,8 @@ debug = DEBUG_SYSCALL;
 import pspemu.hle.Module;
 public import pspemu.utils.MemorySegment;
 
+import pspemu.utils.Logger;
+
 class SysMemUserForUser : Module {
 	MemorySegment allocStack(uint stackSize, string name, bool fillFF = true) {
 		stackSize &= ~0xF;
@@ -117,13 +119,18 @@ class SysMemUserForUser : Module {
 	 */
 	SceUID sceKernelAllocPartitionMemory(SceUID partitionid, string name, PspSysMemBlockTypes type, SceSize size, /* void* */uint addr) {
 		MemorySegment memorySegment;
+
 		switch (type) {
 			case PspSysMemBlockTypes.PSP_SMEM_Low : memorySegment = pspMemorySegment[partitionid].allocByLow (size, name); break;
 			case PspSysMemBlockTypes.PSP_SMEM_High: memorySegment = pspMemorySegment[partitionid].allocByHigh(size, name); break;
 			case PspSysMemBlockTypes.PSP_SMEM_Addr: memorySegment = pspMemorySegment[partitionid].allocByAddr(addr, size, name); break;
 		}
+
 		if (memorySegment is null) return -1;
-		return cast(SceUID)cast(void *)memorySegment;
+		
+		Logger.log(Logger.Level.DEBUG, "sysmem", "sceKernelAllocPartitionMemory -> (%08X-%08X)", memorySegment.block.low, memorySegment.block.high);
+
+		return reinterpret!(SceUID)(memorySegment);
 	}
 
 	/**

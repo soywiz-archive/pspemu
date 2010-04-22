@@ -24,13 +24,45 @@ template TemplateCpu_FPU() {
 	auto OP_DIV_S() { mixin(CE("$fd = $fs / $ft;")); }
 
 	// CC ops
-	static const QNAN = "isnan($fs) || isnan($ft)";
-	auto OP_C_F_S()   { mixin(CE("$cc = (false);")); }
-	auto OP_C_UN_S()  { mixin(CE("$cc = (" ~ QNAN ~ ");")); }
-	auto OP_C_EQ_S()  { mixin(CE("$cc = ($fs == $ft);")); }
-	auto OP_C_UEQ_S() { mixin(CE("$cc = ($fs != $ft);")); }
-	auto OP_C_LT_S()  { mixin(CE("$cc = ($fs <  $ft); if (" ~ QNAN ~ ") $cc = !$cc;")); }
-	auto OP_C_LE_S()  { mixin(CE("$cc = ($fs <= $ft); if (" ~ QNAN ~ ") $cc = !$cc;")); }
+	// Based on: http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex/FpuState.java
+	string COND_S(int fc02, int fc3) {
+		string r;
+
+		bool fc_unordererd = ((fc02 & 1) != 0);
+		bool fc_equal      = ((fc02 & 2) != 0);
+		bool fc_less       = ((fc02 & 4) != 0);
+		bool fc_inv_qnan   = (fc3 != 0); // @TODO? -- Only used for detecting invalid operations?
+		
+		r ~= "auto s = $fs;";
+		r ~= "auto t = $ft;";
+		r ~= "if (isnan(s) || isnan(t)) {";
+			r ~= "$cc = " ~ (fc_unordererd ? "true" : "false") ~ ";";
+		r ~= "} else {";
+			r ~= "$cc = false";
+			if (fc_equal) r ~= " || (s == t)";
+			if (fc_less ) r ~= " || (s <  t)";
+			r ~= ";";
+		r ~= "}";
+
+		return CE(r);
+	}
+	
+	auto OP_C_F_S()    { mixin(COND_S(0, 0)); }
+	auto OP_C_UN_S()   { mixin(COND_S(1, 0)); }
+	auto OP_C_EQ_S()   { mixin(COND_S(2, 0)); }
+	auto OP_C_UEQ_S()  { mixin(COND_S(3, 0)); }
+	auto OP_C_OLT_S()  { mixin(COND_S(4, 0)); }
+	auto OP_C_ULT_S()  { mixin(COND_S(5, 0)); }
+	auto OP_C_OLE_S()  { mixin(COND_S(6, 0)); }
+	auto OP_C_ULE_S()  { mixin(COND_S(7, 0)); }
+	auto OP_C_SF_S()   { mixin(COND_S(0, 1)); }
+	auto OP_C_NGLE_S() { mixin(COND_S(1, 1)); }
+	auto OP_C_SEQ_S()  { mixin(COND_S(2, 1)); }
+	auto OP_C_NGL_S()  { mixin(COND_S(3, 1)); }
+	auto OP_C_LT_S()   { mixin(COND_S(4, 1)); }
+	auto OP_C_NGE_S()  { mixin(COND_S(5, 1)); }
+	auto OP_C_LE_S()   { mixin(COND_S(6, 1)); }
+	auto OP_C_NGT_S()  { mixin(COND_S(7, 1)); }
 
 	// http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/Allegrex/FpuState.java
 	// http://pspemu.googlecode.com/svn/branches/old/libdoc/MipsInstructionSetReference.pdf
