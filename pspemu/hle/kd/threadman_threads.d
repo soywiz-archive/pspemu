@@ -101,6 +101,7 @@ template ThreadManForUser_Threads() {
 			pcSet(entry);
 			GP = cpu.registers.GP;
 			SP = pspThread.stack.block.high - 0x600;
+			//K0 = pspThread.stack.block.high - 0x600; //?
 			RA = 0x08000200; // sceKernelExitDeleteThread
 		}
 
@@ -232,18 +233,14 @@ template ThreadManForUser_Threads() {
 	 * @return < 0 on error.
 	 */
 	int sceKernelWaitThreadEnd(SceUID thid, SceUInt* timeout) {
-		//unimplemented_notice(); return 0;
 		if (thid < 0) return -1;
 		
-		unimplemented_notice();
-		return 0;
-
 		// @TODO implement timeout
 		try {
 			return threadManager.currentThread.pauseAndYield("sceKernelWaitThreadEnd", (PspThread pausedThread) {
 				try {
 					auto threadToWait = getThreadFromId(thid);
-					if (!threadToWait || !threadToWait.alive) throw(new Exception("sceKernelWaitThreadEnd.end"));
+					if ((threadToWait is null) || !threadToWait.alive) throw(new Exception("sceKernelWaitThreadEnd.end"));
 				} catch {
 					pausedThread.resumeAndReturn(0);
 				}

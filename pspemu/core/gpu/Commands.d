@@ -279,8 +279,24 @@ struct Command {
 	float    float1 () { return reinterpret!(float)(v << 8); }
 	bool     bool1  () { return (v << 8) != 0; }
 
-	T extract(T = uint)(uint displacement, ubyte numberOfBits) {
-		return cast(T)((param24 >> displacement) & ((1 << numberOfBits) - 1));
+	T extract(T = uint, uint displacement = 0, ubyte numberOfBits = 0)() {
+		// Detect mask from type.
+		if (numberOfBits == 0) {
+			return cast(T)((param24 >> displacement) & ((1 << (T.sizeof * 8)) - 1));
+		}
+		// Specified mask.
+		else {
+			return cast(T)((param24 >> displacement) & ((1 << numberOfBits) - 1));
+		}
+	}
+
+	T extractEnum(T, uint displacement = 0)() {
+		return cast(T)((param24 >> displacement) % (T.max + 1));
+	}
+
+	float extractFixedFloat(uint displacement = 0, ubyte numberOfBits = 32)() {
+		uint mask = (1 << numberOfBits) - 1;
+		return cast(float)((param24 >> displacement) & mask) / cast(float)mask;
 	}
 
 	alias V byte3;

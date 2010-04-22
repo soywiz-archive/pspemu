@@ -13,7 +13,7 @@ template Gpu_Draw() {
 		else {
 			gpu.checkLoadFrameBuffer();
 			gpu.impl.clear();
-			gpu.mustStoreFrameBuffer = true;
+			gpu.state.drawBuffer.mustStore = true;
 		}
 	}
 
@@ -130,6 +130,6 @@ template Gpu_Draw() {
 			writefln("gpu.impl.draw Error");
 			throw(o);
 		}
-		gpu.mustStoreFrameBuffer = true;
+		gpu.state.drawBuffer.mustStore = true;
 	}
 }

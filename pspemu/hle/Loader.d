@@ -407,7 +407,9 @@ class Loader : IDebugSource {
 
 	uint getRelocatedAddress(uint addr) {
 		if (addr >= elf.relocationAddress) {
-			Logger.log(Logger.Level.WARNING, "Loader", "Trying to get an already relocated address:%08X", addr);
+			if (elf.relocationAddress > 0) {
+				Logger.log(Logger.Level.WARNING, "Loader", "Trying to get an already relocated address:%08X", addr);
+			}
 			return addr;
 		} else {
 			return addr + elf.relocationAddress;

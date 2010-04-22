@@ -1,7 +1,7 @@
 module pspemu.core.gpu.Gpu;
 
 //debug = DEBUG_GPU_VERBOSE;
-//debug = GPU_UNKNOWN_COMMANDS;
+debug = GPU_UNKNOWN_COMMANDS;
 //debug = GPU_UNKNOWN_COMMANDS_STOP;
 //debug = DEBUG_GPU_SHOW_COMMAND;
 
@@ -57,9 +57,12 @@ class Gpu : PspHardwareComponent {
 	}
 
 	// Utility.
-	static pure string ArrayOperation(string type, int from, int to, string code) {
+	static pure string ArrayOperation(string vtype, int from, int to, string code, int step = 1) {
 		string r;
+		assert(vtype[$ - 1] == 'x');
 		assert (from <= to);
+		
+		auto type = vtype[0..$ - 1];
 
 		// Aliases.
 		r ~= "alias OP_" ~ type ~ "_n ";
@@ -70,7 +73,7 @@ class Gpu : PspHardwareComponent {
 		r ~= ";";
 
 		// Operations.
-		r ~= "auto OP_" ~ type ~ "_n() { uint Index = BaseIndex(Opcode." ~ type ~ tos(from) ~ "); " ~ code ~ "}";
+		r ~= "auto OP_" ~ type ~ "_n() { uint Index = BaseIndex(Opcode." ~ type ~ tos(from) ~ ") / " ~ tos(step) ~ "; " ~ code ~ "}";
 		return r;
 	}
 
@@ -263,7 +266,7 @@ class Gpu : PspHardwareComponent {
 	}
 
 	void* drawBufferAddress() {
-		//writefln("%s", state.drawBuffer);
+		//writefln("%s :: %08X", state.drawBuffer, state.drawBuffer.address);
 		if (state.drawBuffer.address == 0) return null;
 		return memory.getPointer(state.drawBuffer.address);
 	}
@@ -279,15 +282,13 @@ class Gpu : PspHardwareComponent {
 	//void loadFrameBufferActually() { impl.frameLoad(drawBufferAddress); }
 	//void storeFrameBufferActually() { impl.frameStore(drawBufferAddress); }
 
-	bool mustLoadFrameBuffer;
 	void checkLoadFrameBuffer() {
-		if (!mustLoadFrameBuffer) return; else mustLoadFrameBuffer = false;
+		if (!state.drawBuffer.mustLoad) return; else state.drawBuffer.mustLoad = false;
 		loadFrameBuffer();
 	}
 
-	bool mustStoreFrameBuffer;
 	void checkStoreFrameBuffer() {
-		if (!mustStoreFrameBuffer) return; else mustStoreFrameBuffer = false;
+		if (!state.drawBuffer.mustStore) return; else state.drawBuffer.mustStore = false;
 		storeFrameBuffer();
 	}
 

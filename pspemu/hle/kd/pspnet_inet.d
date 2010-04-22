@@ -6,6 +6,8 @@ import pspemu.hle.Module;
 
 struct sockaddr;
 struct in_addr;
+struct fd_set;
+struct timeval;
 
 class sceNetInet_lib : Module {
 	void initNids() {
@@ -26,6 +28,11 @@ class sceNetInet_lib : Module {
 		mixin(registerd!(0x1BDF5D13, sceNetInetInetAton));
 		mixin(registerd!(0xC91142E4, sceNetInetRecvfrom));
 		mixin(registerd!(0x05038FC7, sceNetInetSendto));
+
+		mixin(registerd!(0x162E6FD5, sceNetInetGetsockname));
+		mixin(registerd!(0x5BE8D595, sceNetInetSelect));
+		mixin(registerd!(0xB75D5B0A, sceNetInetInetAddr));
+		mixin(registerd!(0xD0792666, sceNetInetInetNtop));
 	}
 
 	alias uint socklen_t;
@@ -58,6 +65,12 @@ class sceNetInet_lib : Module {
 	int sceNetInetInetAton(string host, in_addr* addr) { unimplemented(); return -1; }
 	size_t sceNetInetRecvfrom(int s, void* buf, size_t flags, int, sockaddr* from, socklen_t* fromlen) { unimplemented(); return -1; }
 	size_t sceNetInetSendto(int s, void* buf, size_t len, int flags, sockaddr* to, socklen_t tolen) { unimplemented(); return -1; }
+	int sceNetInetGetsockname(int socket, sockaddr* address, socklen_t* address_len) { unimplemented(); return -1; }
+	int sceNetInetSelect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* errorfds, timeval* timeout) { unimplemented(); return -1; }
+
+	// FIX.
+	void sceNetInetInetAddr() { unimplemented(); }
+	void sceNetInetInetNtop() { unimplemented(); }
 }
 
 class sceNetInet : sceNetInet_lib {

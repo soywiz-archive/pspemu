@@ -2,6 +2,8 @@ module pspemu.hle.kd.modulemgr; // kd/modulemgr.prx (sceModuleManager)
 
 import pspemu.hle.Module;
 
+debug = DEBUG_SYSCALL;
+
 class ModuleMgrForUser : Module {
 	void initNids() {
 		mixin(registerd!(0xD675EBB8, sceKernelSelfStopUnloadModule));
@@ -66,7 +68,7 @@ class ModuleMgrForUser : Module {
 	 *
 	 * @return The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
 	 */
-	SceUID sceKernelLoadModule(const char *path, int flags, SceKernelLMOption *option) {
+	SceUID sceKernelLoadModule(string path, int flags, SceKernelLMOption* option) {
 		unimplemented();
 		return -1;
 	}

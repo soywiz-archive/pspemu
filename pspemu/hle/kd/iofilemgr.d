@@ -1,6 +1,6 @@
 module pspemu.hle.kd.iofilemgr; // kd/iofilemgr.prx (sceIOFileManager)
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 import std.date;
 
@@ -158,6 +158,7 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0xB293727F, sceIoChangeAsyncPriority));
 		mixin(registerd!(0xE23EEC33, sceIoWaitAsync));
 		mixin(registerd!(0x3251EA56, sceIoPollAsync));
+		mixin(registerd!(0x0FACAB19, sceIoWriteAsync));
 		
 		mixin(registerd!(0x63632449, sceIoIoctl));
 
@@ -563,8 +564,8 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error
 	 */
 	int sceIoRemove(string file) {
-		unimplemented();
-		return -1;
+		unimplemented_notice();
+		return 0;
 	}
 
 	/**
@@ -660,6 +661,20 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error.
 	 */
 	int sceIoPollAsync(SceUID fd, SceInt64 *res) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Write output (asynchronous)
+	 *
+	 * @param fd - Opened file descriptor to write to
+	 * @param data - Pointer to the data to write
+	 * @param size - Size of data to write
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceIoWriteAsync(SceUID fd, void* data, SceSize size) {
 		unimplemented();
 		return -1;
 	}

@@ -3,6 +3,7 @@ module pspemu.hle.kd.registry; // kd/registry.prx (sceRegistry_Service)
 debug = DEBUG_SYSCALL;
 
 import std.string, std.stdio;
+import std.c.windows.windows;
 
 import pspemu.hle.Module;
 
@@ -291,9 +292,21 @@ class RegistryNode : VFS {
 	}
 }
 
+extern (Windows) uint GetSystemDefaultLCID();
+
 class Registry : RegistryNode {
 	this() {
-		this.set("/CONFIG/SYSTEM/XMB", "language", PSP_SYSTEMPARAM_LANGUAGE_ENGLISH);
+		uint language = PSP_SYSTEMPARAM_LANGUAGE_ENGLISH;
+		switch (GetSystemDefaultLCID & 0x1FF) {
+			case 0x07: language = PSP_SYSTEMPARAM_LANGUAGE_GERMAN; break;
+			default:
+			case 0x09: language = PSP_SYSTEMPARAM_LANGUAGE_ENGLISH; break;
+			case 0x0A: language = PSP_SYSTEMPARAM_LANGUAGE_SPANISH; break;
+			case 0x0C: language = PSP_SYSTEMPARAM_LANGUAGE_FRENCH; break;
+			case 0x10: language = PSP_SYSTEMPARAM_LANGUAGE_ITALIAN; break;
+			case 0x11: language = PSP_SYSTEMPARAM_LANGUAGE_JAPANESE; break;
+		}
+		this.set("/CONFIG/SYSTEM/XMB", "language", language);
 		this.set("/CONFIG/SYSTEM/XMB", "button_assign", 0);
 		super("<RegistryRoot>");
 	}

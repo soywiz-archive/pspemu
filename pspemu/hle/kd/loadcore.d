@@ -2,6 +2,8 @@ module pspemu.hle.kd.loadcore; // kd/loadcore.prx (sceLoaderCore):
 
 import pspemu.hle.Module;
 
+debug = DEBUG_SYSCALL;
+
 class LoadCoreForKernel : Module {
 	void initNids() {
 		mixin(registerd!(0xD8779AC6, sceKernelIcacheClearAll));

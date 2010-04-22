@@ -4,16 +4,7 @@ import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
 import pspemu.utils.Math;
 
-struct RGBA8888 {
-	union {
-		uint color;
-		struct { ubyte r, g, b, a; }
-	}
-	static assert(this.sizeof == 4);
-}
-
-/*RGBA8888[] decode(PixelFormats format) {
-}*/
+import std.bitmanip;
 
 struct ClutState {
 	uint address;
@@ -33,11 +24,18 @@ struct ClutState {
 }
 
 struct ScreenBuffer {
-	uint _address = 0;
+	union {
+		uint _address;
+		struct { mixin(bitfields!(
+			uint, "lowAddress" , 24,
+			uint, "highAddress", 8
+		)); }
+	}
 	uint width = 512;
 	PixelFormats format = PixelFormats.GU_PSM_8888;
-	uint address(uint _address) { return this._address = (0x04_000000 | _address); }
-	uint address() { return this._address; }
+	bool mustLoad, mustStore;
+	uint address(uint _address) { return this._address = _address; }
+	uint address() { return (0x04_000000 | this._address); }
 	uint pixelSize() { return PixelFormatSizeMul[format]; }
 	ubyte[] row(void* ptr, int row) {
 		int rowsize = PixelFormatSize(format, width);
@@ -47,18 +45,21 @@ struct ScreenBuffer {
 
 struct TextureState {
 	uint address;
+	uint buffer_width;
 	uint width, height;
 	uint size;
 	PixelFormats format;
 	bool swizzled;
 
-	uint rwidth() { return PixelFormatSize(format, width); }
+	uint rwidth() { return PixelFormatSize(format, buffer_width); }
+	//uint rwidth() { return buffer_width; }
+	//uint rwidth() { return PixelFormatSize(format, width); }
 	//uint rwidth() { return width; }
 	uint totalSize() { return rwidth * height; }
 	bool hasPalette() { return (format >= PixelFormats.GU_PSM_T4 && format <= PixelFormats.GU_PSM_T32); }
 	uint paletteRequiredComponents() { return hasPalette ? (1 << (4 + (format - PixelFormats.GU_PSM_T4))) : 0; }
 	string toString() {
-		return std.string.format("TextureState(addr=%08X, size(%dx%d), size=%d, format=%d, swizzled=%d)", address, width, height, size, format, swizzled);
+		return std.string.format("TextureState(addr=%08X, size(%dx%d), bwidth=%d size=%d, format=%d, swizzled=%d)", address, width, height, buffer_width, size, format, swizzled);
 	}
 }
 
@@ -101,7 +102,7 @@ struct VertexState {
 static struct GpuState {
 	Memory memory;
 
-	ScreenBuffer drawBuffer;
+	ScreenBuffer drawBuffer, depthBuffer;
 
 	uint baseAddress;
 	uint vertexAddress;
@@ -111,6 +112,9 @@ static struct GpuState {
 	Colorf ambientModelColor, diffuseModelColor, specularModelColor;
 	Colorf materialColor;
 	Colorf textureEnviromentColor;
+	
+	Colorf fogColor;
+	float  fogDist, fogEnd;
 
 	// Matrix.
 	Matrix projectionMatrix, worldMatrix, viewMatrix, textureMatrix;
@@ -127,6 +131,7 @@ static struct GpuState {
 	int  textureWrapS, textureWrapT;
 	int  textureEnvMode;
 	UV   textureScale, textureOffset;
+	bool mipmapShareClut;
 
 	TextureState[8] textures;
 	ClutState uploadedClut;
@@ -152,6 +157,18 @@ static struct GpuState {
 	bool logicalOperationEnabled; // Logical Operation Enable (GL_COLOR_LOGIC_OP)
 	bool alphaTestEnabled;        // Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
 	bool lightingEnabled;         // Lighting Enable (GL_LIGHTING)
+	bool fogEnable;               // FOG Enable (GL_FOG)
+
+	bool depthMask;
+	
+	float fogDensity = 0.1;
+	int fogMode;
+	int fogHint;
+	
+	float depthRangeNear = 0.0, depthRangeFar = 1.0;
+	
+	TestFunction alphaTestFunc = TestFunction.GU_ALWAYS;
+	float alphaTestValue;
 	
 	TestFunction depthFunc = TestFunction.GU_ALWAYS;
 
@@ -161,8 +178,8 @@ static struct GpuState {
 	int blendFuncDst;
 
 	TestFunction stencilFuncFunc;
-	int  stencilFuncRef;
-	uint stencilFuncMask;
+	ubyte stencilFuncRef;
+	ubyte stencilFuncMask = 0xFF;
 
 	StencilOperations stencilOperationSfail;
 	StencilOperations stencilOperationDpfail;

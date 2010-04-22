@@ -12,6 +12,7 @@ class sceNetResolver : Module {
 		mixin(registerd!(0x6138194A, sceNetResolverTerm));
 		mixin(registerd!(0x244172AF, sceNetResolverCreate));
 		mixin(registerd!(0x224C5F44, sceNetResolverStartNtoA));
+		mixin(registerd!(0x94523E09, sceNetResolverDelete));
 	}
 
 	/**
@@ -60,6 +61,18 @@ class sceNetResolver : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceNetResolverStartNtoA(int rid, string hostname, in_addr* addr, uint timeout, int retry) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Delete a resolver
+	 *
+	 * @param rid - The resolver to delete
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceNetResolverDelete(int rid) {
 		unimplemented();
 		return -1;
 	}

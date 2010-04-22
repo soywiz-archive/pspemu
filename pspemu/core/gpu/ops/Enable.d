@@ -29,43 +29,41 @@ template Gpu_Enable() {
 	auto OP_LTE() { gpu.state.lightingEnabled = command.bool1; }
 
 	// glDepthMask
-	auto OP_ZMSK() { }
+	auto OP_ZMSK() { gpu.state.depthMask = command.bool1; }
 
+	// Blend Equation and Functions
 	auto OP_ALPHA() {
 		with (gpu.state) {
-			blendFuncSrc  = (command.param24 >> 0) & 0xF;
-			blendFuncDst  = (command.param24 >> 4) & 0xF;
-			blendEquation = (command.param24 >> 8) & 0x03;
+			blendFuncSrc  = command.extract!(int, 0, 4);
+			blendFuncDst  = command.extract!(int, 4, 4);
+			blendEquation = command.extract!(int, 8, 2);
+		}
+	}
+
+	// Alpha TeST Function & Reference Value
+	auto OP_ATST() {
+		with (gpu.state) {
+			alphaTestFunc  = command.extract!(TestFunction, 0, 8)();
+			alphaTestValue = command.extractFixedFloat!(8, 8)();
 		}
 	}
 
 	// Fog enable (GL_FOG)
 	auto OP_FGE() {
 		// ...
+		with (gpu.state) {
+			fogEnable = command.bool1;
+			//fogMode = GL_LINEAR;
+			//fogHint = GL_DONT_CARE;
+			//fogDensity = 0.1;
+		}
 	}
+
+	auto OP_NEARZ() { gpu.state.depthRangeNear = command.extractFixedFloat!(0, 16)(); }
+	auto OP_FARZ () { gpu.state.depthRangeFar = command.extractFixedFloat!(0, 16)(); }
 }
 
 /*
-	case VC.ALPHA: {
-		debug (gpu_debug_verbose) writefln("VC.ALPHA[1]");
-		if (&glBlendEquation !is null) glBlendEquation(BLENDE_T[(param >> 8) & 0x03]);
-
-		debug (gpu_debug_verbose) writefln("VC.ALPHA[2]");
-		if (&glBlendFunc !is null) {
-			glBlendFunc(
-				BLENDF_T_S[(param >> 0) & 0xF],
-				BLENDF_T_S[(param >> 4) & 0xF]
-			);
-		}
-		debug (gpu_debug_verbose) writefln("VC.ALPHA[3]");
-	} break;
-	case VC.FGE: // FoG Enable
-		glEnableDisable(GL_FOG, param);
-		if (!param) break;
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		glFogf(GL_FOG_DENSITY, 0.1f);
-		glHint(GL_FOG_HINT, GL_DONT_CARE);
-	break;
 	//case VC.DTE: break; // DiTher Enable
 	//case VC.AAE: break; // AnitAliasing Enable
 	//case VC.PCE: break; // Patch Cull Enable					

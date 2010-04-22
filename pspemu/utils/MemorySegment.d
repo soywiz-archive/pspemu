@@ -154,12 +154,20 @@ class MemorySegment {
 	}
 
 	void free() {
-		foreach (index, child; parent.childs) {
-			if (child is this) {
-				parent.childs = parent.childs[0..index] ~ parent.childs[index + 1..$];
-				parent = null;
-				return;
+		try {
+			if (parent !is null) {
+				synchronized (parent) {
+					foreach (index, child; parent.childs) {
+						if (child is this) {
+							parent.childs = parent.childs[0..index] ~ parent.childs[index + 1..$];
+							parent = null;
+							return;
+						}
+					}
+				}
 			}
+		} catch (Object o) {
+			writefln("MemorySegment.free: %s", o);
 		}
 	}
 }

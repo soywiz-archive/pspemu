@@ -8,7 +8,8 @@ import std.stdio, std.c.time;
 
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Interrupts;
-import pspemu.core.gpu.impl.GpuOpengl;
+import pspemu.core.gpu.Types;
+import pspemu.core.gpu.impl.GpuOpenglUtils;
 
 import pspemu.gui.GLControl;
 import pspemu.models.IDisplay;
@@ -83,13 +84,17 @@ class GLControlDisplay : GLControl {
 					//if ((update && !cpu.paused) || updateOnce) {
 					if (update || updateOnce) {
 						updateOnce = false;
+						
+						auto pixelFormat = GlPixelFormats[display.frameBufferPixelFormat];
 
-						glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)GpuOpengl.PixelFormats[display.frameBufferPixelFormat].size);
+						glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)pixelFormat.size);
+						//glPixelStorei(GL_UNPACK_ROW_LENGTH, PixelFormatUnpackSize(cast(PixelFormats)display.frameBufferPixelFormat, 512));
+
 						glDrawPixels(
 							display.frameBufferSize.width,
 							display.frameBufferSize.height,
-							GpuOpengl.PixelFormats[display.frameBufferPixelFormat].external,
-							GpuOpengl.PixelFormats[display.frameBufferPixelFormat].opengl,
+							pixelFormat.external,
+							pixelFormat.opengl,
 							display.frameBufferPointer
 						);
 

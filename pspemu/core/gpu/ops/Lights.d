@@ -1,7 +1,8 @@
 module pspemu.core.gpu.ops.Lights;
 
 template Gpu_Lights() {
-	static pure string LightArrayOperation(string type, string code) { return ArrayOperation(type, 0, 3, code); }
+	string LightArrayOperation(string type, string code, int step = 1) { return ArrayOperation(type, 0, 3, code, step); }
+	string LightArrayOperationStep3(string type, string code) { return LightArrayOperation(type, code, 3); }
 
 	// Specular POWer
 	auto OP_SPOW() { gpu.state.specularPower = command.float1; }
@@ -12,7 +13,7 @@ template Gpu_Lights() {
 	//"ALA"			, // 0x|| - Ambient Light Alpha
 
 	// Light Type
-	mixin(LightArrayOperation("LT" , q{
+	mixin(LightArrayOperation("LTx" , q{
 		with (gpu.state.lights[Index]) {
 			type = cast(LightType )((command.param24 >> 8) & 3);
 			kind = cast(LightModel)((command.param24 >> 0) & 3);
@@ -32,29 +33,29 @@ template Gpu_Lights() {
 	}));
 
 	// Light Position (X, Y, Z)
-	mixin(LightArrayOperation("LXP", q{ gpu.state.lights[Index / 3].position.x = command.float1; }));
-	mixin(LightArrayOperation("LYP", q{ gpu.state.lights[Index / 3].position.y = command.float1; }));
-	mixin(LightArrayOperation("LZP", q{ gpu.state.lights[Index / 3].position.z = command.float1; }));
+	mixin(LightArrayOperationStep3("LXPx", q{ gpu.state.lights[Index].position.x = command.float1; }));
+	mixin(LightArrayOperationStep3("LYPx", q{ gpu.state.lights[Index].position.y = command.float1; }));
+	mixin(LightArrayOperationStep3("LZPx", q{ gpu.state.lights[Index].position.z = command.float1; }));
 
 	// spot Light Direction (X, Y, Z)
-	mixin(LightArrayOperation("LXD", q{ gpu.state.lights[Index / 3].spotDirection.x = command.float1; }));
-	mixin(LightArrayOperation("LYD", q{ gpu.state.lights[Index / 3].spotDirection.y = command.float1; }));
-	mixin(LightArrayOperation("LZD", q{ gpu.state.lights[Index / 3].spotDirection.z = command.float1; }));
+	mixin(LightArrayOperationStep3("LXDx", q{ gpu.state.lights[Index].spotDirection.x = command.float1; }));
+	mixin(LightArrayOperationStep3("LYDx", q{ gpu.state.lights[Index].spotDirection.y = command.float1; }));
+	mixin(LightArrayOperationStep3("LZDx", q{ gpu.state.lights[Index].spotDirection.z = command.float1; }));
 	
 	// Light Constant/Linear/Quadratic Attenuation
-	mixin(LightArrayOperation("LCA", q{ gpu.state.lights[Index / 3].attenuation.constant  = command.float1; }));
-	mixin(LightArrayOperation("LLA", q{ gpu.state.lights[Index / 3].attenuation.linear    = command.float1; }));
-	mixin(LightArrayOperation("LQA", q{ gpu.state.lights[Index / 3].attenuation.quadratic = command.float1; }));
+	mixin(LightArrayOperationStep3("LCAx", q{ gpu.state.lights[Index].attenuation.constant  = command.float1; }));
+	mixin(LightArrayOperationStep3("LLAx", q{ gpu.state.lights[Index].attenuation.linear    = command.float1; }));
+	mixin(LightArrayOperationStep3("LQAx", q{ gpu.state.lights[Index].attenuation.quadratic = command.float1; }));
 
 	// SPOT light EXPonent/CUToff
-	mixin(LightArrayOperation("SPOTEXP", q{ gpu.state.lights[Index].spotLightExponent = command.float1; }));
-	mixin(LightArrayOperation("SPOTCUT", q{ gpu.state.lights[Index].spotLightCutoff   = command.float1; }));
+	mixin(LightArrayOperation("SPOTEXPx", q{ gpu.state.lights[Index].spotLightExponent = command.float1; }));
+	mixin(LightArrayOperation("SPOTCUTx", q{ gpu.state.lights[Index].spotLightCutoff   = command.float1; }));
 
 	// Ambient/Diffuse/Specular Light Color
-	mixin(LightArrayOperation("ALC", q{ gpu.state.lights[Index / 3].ambientLightColor.rgb[]  = command.float3[]; }));
-	mixin(LightArrayOperation("DLC", q{ gpu.state.lights[Index / 3].diffuseLightColor.rgb[]  = command.float3[]; }));
-	mixin(LightArrayOperation("SLC", q{ gpu.state.lights[Index / 3].specularLightColor.rgb[] = command.float3[]; }));
+	mixin(LightArrayOperationStep3("ALCx", q{ gpu.state.lights[Index].ambientLightColor.rgb[]  = command.float3[]; }));
+	mixin(LightArrayOperationStep3("DLCx", q{ gpu.state.lights[Index].diffuseLightColor.rgb[]  = command.float3[]; }));
+	mixin(LightArrayOperationStep3("SLCx", q{ gpu.state.lights[Index].specularLightColor.rgb[] = command.float3[]; }));
 
-	// 
-	mixin(LightArrayOperation("LTE", q{ gpu.state.lights[Index].enabled = command.bool1; }));
+	// LighT Enable
+	mixin(LightArrayOperation("LTEx", q{ gpu.state.lights[Index].enabled = command.bool1; }));
 }

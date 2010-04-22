@@ -23,6 +23,10 @@ uint PixelFormatSize(PixelFormats format, uint count = 1) {
 	return (count * PixelFormatSizeMul[format]) / PixelFormatSizeDiv[format];
 }
 
+uint PixelFormatUnpackSize(PixelFormats format, uint count) {
+	return count * 4 * PixelFormatSizeDiv[format] / PixelFormatSizeMul[format];
+}
+
 struct Colorf {
 	union {
 		struct { float[4] rgba = [0.0, 0.0, 0.0, 1.0]; }
