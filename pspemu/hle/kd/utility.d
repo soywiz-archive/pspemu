@@ -22,6 +22,8 @@ class sceUtility : Module {
 		mixin(registerd!(0x67AF3428, sceUtilityMsgDialogShutdownStart));
 		mixin(registerd!(0x95FC253B, sceUtilityMsgDialogUpdate));
 		mixin(registerd!(0x9A1C91D7, sceUtilityMsgDialogGetStatus));
+		
+		mixin(registerd!(0xC629AF26, sceUtilityLoadAvModule));
 	}
 
 	/**
@@ -169,6 +171,19 @@ class sceUtility : Module {
 	 */
 	int sceUtilityGetNetParam(int conf, int param, netData *data) {
 		unimplemented_notice();
+		return -1;
+	}
+
+	/**
+	 * Load an audio/video module (PRX) from user mode.
+	 *
+	 * Available on firmware 2.00 and higher only.
+	 *
+	 * @param module - module number to load (PSP_AV_MODULE_xxx)
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceUtilityLoadAvModule(int _module) {
+		unimplemented();
 		return -1;
 	}
 }

@@ -7,6 +7,7 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 */
 
 //debug = DEBUG_CLEAR_MODE;
+//debug = DEBUG_TEXTURE_UPDATE;
 
 import std.c.windows.windows;
 import std.windows.syserror;
@@ -522,9 +523,11 @@ class Texture {
 		GlPixelFormat* glPixelFormat;
 		static ubyte[] textureDataUnswizzled, textureDataWithPaletteApplied;
 
-		writefln("Updated: %s", textureState);
-		if (textureState.hasPalette) writefln("  %s", clutState);
-
+		debug (DEBUG_TEXTURE_UPDATE) {
+			writefln("Updated: %s", textureState);
+			if (textureState.hasPalette) writefln("  %s", clutState);
+		}
+		
 		glActiveTexture(GL_TEXTURE0);
 		bind();
 

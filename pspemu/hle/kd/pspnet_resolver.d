@@ -13,6 +13,8 @@ class sceNetResolver : Module {
 		mixin(registerd!(0x244172AF, sceNetResolverCreate));
 		mixin(registerd!(0x224C5F44, sceNetResolverStartNtoA));
 		mixin(registerd!(0x94523E09, sceNetResolverDelete));
+		mixin(registerd!(0x629E2FB7, sceNetResolverStartAtoN));
+		mixin(registerd!(0x808F6063, sceNetResolverStop));
 	}
 
 	/**
@@ -73,6 +75,35 @@ class sceNetResolver : Module {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceNetResolverDelete(int rid) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Begin a address to name lookup
+	 *
+	 * @param rid -Resolver id
+	 * @param addr - Pointer to the address to resolve
+	 * @param hostname - Buffer to receive the name
+	 * @param hostname_len - Length of the buffer
+	 * @param timeout - Number of seconds before timeout
+	 * @param retry - Number of retries
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceNetResolverStartAtoN(int rid, in_addr* addr, string hostname, SceSize hostname_len, uint timeout, int retry) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Stop a resolver operation
+	 * 
+	 * @param rid - Resolver id
+	 * 
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceNetResolverStop(int rid) {
 		unimplemented();
 		return -1;
 	}

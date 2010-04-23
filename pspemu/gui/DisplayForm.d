@@ -210,7 +210,11 @@ class DisplayForm : Form, IMessageFilter {
 			addMenu("&Debugger...");
 			*/
 			addMenu("&Hex editor...", (MenuItem mi, EventArgs ea) {
-				(new HexEditorForm(cpu.memory)).show();
+				try {
+					(new HexEditorForm(cpu.memory)).show();
+				} catch (Object o) {
+					writefln("Error Initializing HexEditorForm: %s", o);
+				}
 			});
 			addMenu("&Registers...", (MenuItem mi, EventArgs ea) {
 				(new RegisterViewerForm(cpu.registers)).show();

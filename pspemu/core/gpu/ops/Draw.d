@@ -26,7 +26,7 @@ template Gpu_Draw() {
 	 * Set the current stencil clear value
 	 *
 	 * @param stencil - Set which stencil value to clear with (0-255)
-	**/
+	 **/
 	// void sceGuClearStencil(unsigned int stencil);
 
 	/**

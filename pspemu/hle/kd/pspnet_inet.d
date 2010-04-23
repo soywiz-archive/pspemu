@@ -33,6 +33,11 @@ class sceNetInet_lib : Module {
 		mixin(registerd!(0x5BE8D595, sceNetInetSelect));
 		mixin(registerd!(0xB75D5B0A, sceNetInetInetAddr));
 		mixin(registerd!(0xD0792666, sceNetInetInetNtop));
+		
+		mixin(registerd!(0xE247B6D6, sceNetInetGetpeername));
+
+		mixin(registerd!(0x4CFE4E56, sceNetInetShutdown));
+		mixin(registerd!(0xE30B8C19, sceNetInetInetPton));
 	}
 
 	alias uint socklen_t;
@@ -67,10 +72,13 @@ class sceNetInet_lib : Module {
 	size_t sceNetInetSendto(int s, void* buf, size_t len, int flags, sockaddr* to, socklen_t tolen) { unimplemented(); return -1; }
 	int sceNetInetGetsockname(int socket, sockaddr* address, socklen_t* address_len) { unimplemented(); return -1; }
 	int sceNetInetSelect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* errorfds, timeval* timeout) { unimplemented(); return -1; }
+	int	sceNetInetShutdown(int s, int how) { unimplemented(); return -1; }
 
 	// FIX.
 	void sceNetInetInetAddr() { unimplemented(); }
 	void sceNetInetInetNtop() { unimplemented(); }
+	void sceNetInetGetpeername() { unimplemented(); }
+	void sceNetInetInetPton() { unimplemented(); }
 }
 
 class sceNetInet : sceNetInet_lib {

@@ -8,6 +8,7 @@ class sceWlanDrv : Module {
 	void initNids() {
 		mixin(registerd!(0xD7763699, sceWlanGetSwitchState));
 		mixin(registerd!(0x0C622081, sceWlanGetEtherAddr));
+		mixin(registerd!(0x93440B11, sceWlanDevIsPowerOn));
 	}
 
 	/**
@@ -29,6 +30,16 @@ class sceWlanDrv : Module {
 	 */
 	int sceWlanGetEtherAddr(u8 *etherAddr) {
 		unimplemented();
+		return 0;
+	}
+
+	/**
+	 * Determine if the wlan device is currently powered on
+	 *
+	 * @return 0 if off, 1 if on
+	 */
+	int sceWlanDevIsPowerOn() {
+		unimplemented_notice();
 		return 0;
 	}
 }

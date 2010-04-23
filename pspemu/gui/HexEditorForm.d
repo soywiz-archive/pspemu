@@ -26,7 +26,11 @@ class HexEditorForm : Form {
 	}
 
 	void updateTitle() {
-		text = std.string.format("Hex Viewer :: %s", currentFileName);
+		try {
+			text = std.string.format("Hex Viewer :: %s", currentFileName);
+		} catch {
+			text = "Hex Viewer :: Memory";
+		}
 	}
 
 	void getUpdatedComponents(int lastIndex = 10) {
@@ -193,8 +197,8 @@ class HexEditorForm : Form {
 
 		numberOfViews = 1;
 
-		openFile("gui_test.exe");
-		//openMemory();
+		//openFile("gui_test.exe");
+		openMemory();
 	}
 
 	override void onMouseWheel(MouseEventArgs ea) {

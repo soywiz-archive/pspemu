@@ -373,6 +373,8 @@ class IoFileMgrForKernel : Module {
 			if (flags & PSP_O_APPEND) fmode |= FileMode.Append;
 			if (flags & PSP_O_CREAT ) fmode |= FileMode.OutNew;
 			
+			writefln("Open: Flags:%08X, Mode:%03o, File:'%s'", flags, mode, file);
+			
 			SceUID fd = 0; foreach (fd_cur; openedStreams.keys) if (fd < fd_cur) fd = fd_cur; fd++;
 			openedStreams[fd] = locateParentAndUpdateFile(file).open(file, fmode, 0777);
 			return fd;
