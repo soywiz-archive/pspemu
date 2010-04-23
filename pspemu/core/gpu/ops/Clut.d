@@ -49,9 +49,9 @@ template Gpu_Clut() {
 
 	// Clut MODE
 	auto OP_CMODE() {
-		gpu.state.clut.format = command.extract!(PixelFormats, 0, 2)();
-		gpu.state.clut.shift  = command.extract!(uint, 2, 5)();
-		gpu.state.clut.mask   = command.extract!(uint, 8, 8)();
-		gpu.state.clut.start  = command.extract!(uint, 16, 5)() << 4;
+		gpu.state.clut.format = command.extract!(PixelFormats, 0, 2);
+		gpu.state.clut.shift  = command.extract!(uint, 2, 5);
+		gpu.state.clut.mask   = command.extract!(uint, 8, 8);
+		gpu.state.clut.start  = command.extract!(uint, 16, 5) << 4;
 	}
 }

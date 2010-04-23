@@ -104,11 +104,15 @@ static struct GpuState {
 
 	ScreenBuffer drawBuffer, depthBuffer;
 
+	VertexType vertexType;
+
 	uint baseAddress;
 	uint vertexAddress;
 	uint indexAddress;
-	int  clearFlags;
-	VertexType vertexType;
+
+	ClearBufferMask clearFlags;
+	bool clearingMode;
+
 	Colorf ambientModelColor, diffuseModelColor, specularModelColor;
 	Colorf materialColor;
 	Colorf textureEnviromentColor;
@@ -126,10 +130,10 @@ static struct GpuState {
 	bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
 	int  mipMapLevel;
 	bool textureSwizzled;
-	PixelFormats textureFormat;
-	int  textureFilterMin, textureFilterMag;
-	int  textureWrapS, textureWrapT;
-	int  textureEnvMode;
+	PixelFormats  textureFormat;
+	TextureFilter textureFilterMin, textureFilterMag;
+	WrapMode      textureWrapU, textureWrapV;
+	TextureEffect textureEffect;
 	UV   textureScale, textureOffset;
 	bool mipmapShareClut;
 
@@ -138,8 +142,8 @@ static struct GpuState {
 	ClutState clut;
 
 	Rect scissor;
-	int faceCullingOrder;
-	int shadeModel;
+	FrontFaceDirection frontFaceDirection;
+	ShadingModel shadeModel;
 
 	float[8] morphWeights;
 
@@ -159,24 +163,23 @@ static struct GpuState {
 	bool lightingEnabled;         // Lighting Enable (GL_LIGHTING)
 	bool fogEnable;               // FOG Enable (GL_FOG)
 
-	bool depthMask;
-	
 	float fogDensity = 0.1;
 	int fogMode;
 	int fogHint;
 	
-	float depthRangeNear = 0.0, depthRangeFar = 1.0;
-	
-	TestFunction alphaTestFunc = TestFunction.GU_ALWAYS;
-	float alphaTestValue;
-	
-	TestFunction depthFunc = TestFunction.GU_ALWAYS;
-
 	// Blending.
 	int blendEquation;
 	int blendFuncSrc;
 	int blendFuncDst;
 
+	TestFunction depthFunc = TestFunction.GU_ALWAYS;
+	float depthRangeNear = 0.0, depthRangeFar = 1.0;
+	bool depthMask;
+
+	TestFunction alphaTestFunc = TestFunction.GU_ALWAYS;
+	float alphaTestValue;
+	ubyte alphaTestMask = 0xFF;
+	
 	TestFunction stencilFuncFunc;
 	ubyte stencilFuncRef;
 	ubyte stencilFuncMask = 0xFF;
@@ -185,8 +188,7 @@ static struct GpuState {
 	StencilOperations stencilOperationDpfail;
 	StencilOperations stencilOperationDppass;
 
-	uint fixSrc;
-	uint fixDst;
+	Colorf fixColorSrc, fixColorDst;
 
 	LogicalOperation logicalOperation = LogicalOperation.GU_COPY; // GL_COPY (default)
 }

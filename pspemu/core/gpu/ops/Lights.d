@@ -4,9 +4,79 @@ template Gpu_Lights() {
 	string LightArrayOperation(string type, string code, int step = 1) { return ArrayOperation(type, 0, 3, code, step); }
 	string LightArrayOperationStep3(string type, string code) { return LightArrayOperation(type, code, 3); }
 
+	/**
+	 * Set light parameters
+	 *
+	 * Available light types are:
+	 *   - GU_DIRECTIONAL - Directional light
+	 *   - GU_POINTLIGHT - Single point of light
+	 *   - GU_SPOTLIGHT - Point-light with a cone
+	 *
+	 * Available light components are:
+	 *   - GU_AMBIENT_AND_DIFFUSE
+	 *   - GU_DIFFUSE_AND_SPECULAR
+	 *   - GU_UNKNOWN_LIGHT_COMPONENT
+	 *
+	 * @param light - Light index
+	 * @param type - Light type
+	 * @param components - Light components
+	 * @param position - Light position
+	 **/
+	// void sceGuLight(int light, int type, int components, const ScePspFVector3* position);
+
+	/**
+	 * Set light attenuation
+	 *
+	 * @param light - Light index
+	 * @param atten0 - Constant attenuation factor
+	 * @param atten1 - Linear attenuation factor
+	 * @param atten2 - Quadratic attenuation factor
+	 **/
+	// void sceGuLightAtt(int light, float atten0, float atten1, float atten2);
+
+	/**
+	 * Set light color
+	 *
+	 * Available light components are:
+	 *   - GU_AMBIENT
+	 *   - GU_DIFFUSE
+	 *   - GU_SPECULAR
+	 *   - GU_AMBIENT_AND_DIFFUSE
+	 *   - GU_DIFFUSE_AND_SPECULAR
+	 *
+	 * @param light - Light index
+	 * @param component - Which component to set
+	 * @param color - Which color to use
+	 **/
+	// void sceGuLightColor(int light, int component, unsigned int color);
+
+	/**
+	 * Set spotlight parameters
+	 *
+	 * @param light - Light index
+	 * @param direction - Spotlight direction
+	 * @param exponent - Spotlight exponent
+	 * @param cutoff - Spotlight cutoff angle (in radians)
+	 **/
+	// void sceGuLightSpot(int light, const ScePspFVector3* direction, float exponent, float cutoff);
+
 	// Specular POWer
 	auto OP_SPOW() { gpu.state.specularPower = command.float1; }
-	auto OP_LMODE() { gpu.state.lightModel = cast(LightModel)command.param24; }
+
+	/**
+	 * Set light mode
+	 *
+	 * Available light modes are:
+	 *   - GU_SINGLE_COLOR
+	 *   - GU_SEPARATE_SPECULAR_COLOR
+	 *
+	 * Separate specular colors are used to interpolate the specular component
+	 * independently, so that it can be added to the fragment after the texture color.
+	 *
+	 * @param mode - Light mode to use
+	 **/
+	// void sceGuLightMode(int mode);
+	auto OP_LMODE() { gpu.state.lightModel = command.extractEnum!(LightModel); }
 
 	// pspemu.core.gpu.ops.Colors
 	//"ALC"			, // 0x|| - Ambient Light Color

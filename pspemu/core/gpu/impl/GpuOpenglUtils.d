@@ -40,61 +40,20 @@ template OpenglBase() {
 	HGLRC hrc;
 	uint* bitmapData;
 
-	version (VERSION_GL_BITMAP_RENDERING) {
-		void openglInit() {
-			// http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=41
-			// http://msdn.microsoft.com/en-us/library/ms970768.aspx
-			// http://www.codeguru.com/cpp/g-m/opengl/article.php/c5587
-			// PFD_DRAW_TO_BITMAP
-			HBITMAP hbmpTemp;
-			PIXELFORMATDESCRIPTOR pfd;
-			BITMAPINFO bi;
-			
-			hdc = CreateCompatibleDC(GetDC(null));
+	// http://www.opengl.org/resources/code/samples/win32_tutorial/wglinfo.c
+	void openglInit() {
+		hwnd = CreateOpenGLWindow(512, 272, PFD_TYPE_RGBA, 0);
+		if (hwnd == null) throw(new Exception("Invalid window handle"));
 
-			with (bi.bmiHeader) {
-				biSize        = BITMAPINFOHEADER.sizeof;
-				biBitCount    = 32;
-				biWidth       = 512;
-				biHeight      = 272;
-				biCompression = BI_RGB;
-				biPlanes      = 1;
-			}
+		hdc = GetDC(hwnd);
+		hrc = wglCreateContext(hdc);
+		openglMakeCurrent();
 
-			hbmpTemp = enforce(CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, cast(void **)&bitmapData, null, 0));
-			enforce(SelectObject(hdc, hbmpTemp));
+		glInit();
+		//assert(glActiveTexture !is null);
 
-			with (pfd) {
-				nSize      = pfd.sizeof;
-				nVersion   = 1;
-				dwFlags    = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI;
-				iPixelType = PFD_TYPE_RGBA;
-				cDepthBits = pfd.cColorBits = 32;
-				iLayerType = PFD_MAIN_PLANE;
-			}
-
-			enforce(SetPixelFormat(hdc, enforce(ChoosePixelFormat(hdc, &pfd)), &pfd));
-
-			hrc = enforce(wglCreateContext(hdc));
-			openglMakeCurrent();
-			glInit();
-		}
-	} else {
-		// http://www.opengl.org/resources/code/samples/win32_tutorial/wglinfo.c
-		void openglInit() {
-			hwnd = CreateOpenGLWindow(512, 272, PFD_TYPE_RGBA, 0);
-			if (hwnd == null) throw(new Exception("Invalid window handle"));
-
-			hdc = GetDC(hwnd);
-			hrc = wglCreateContext(hdc);
-			openglMakeCurrent();
-
-			glInit();
-			//assert(glActiveTexture !is null);
-
-			ShowWindow(hwnd, SW_HIDE);
-			//ShowWindow(hwnd, SW_SHOW);
-		}
+		ShowWindow(hwnd, SW_HIDE);
+		//ShowWindow(hwnd, SW_SHOW);
 	}
 
 	void openglMakeCurrent() {
@@ -148,11 +107,12 @@ template OpenglBase() {
 
 		pfd.nSize        = pfd.sizeof;
 		pfd.nVersion     = 1;
-		pfd.dwFlags      = PFD_GENERIC_ACCELERATED | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | flags;
+		pfd.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | flags;
+		pfd.iLayerType   = PFD_MAIN_PLANE;
 		pfd.iPixelType   = type;
 		pfd.cColorBits   = 32;
-		pfd.cDepthBits   = 24;
-		pfd.cStencilBits = 0;
+		pfd.cDepthBits   = 16;
+		pfd.cStencilBits = 8;
 
 		pf = ChoosePixelFormat(hDC, &pfd);
 

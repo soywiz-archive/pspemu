@@ -4,6 +4,7 @@ import std.string;
 import std.bitmanip;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Math;
 
 import pspemu.core.Memory;
 
@@ -79,6 +80,7 @@ struct VertexType {
 
 struct UV {
 	float u, v;
+	Vector uv() { return Vector(u, v); }
 }
 
 struct Rect {
@@ -136,7 +138,7 @@ enum TextureMapMode { GU_TEXTURE_COORDS = 0, GU_TEXTURE_MATRIX = 1, GU_ENVIRONME
 enum TextureLevelMode { GU_TEXTURE_AUTO = 0, GU_TEXTURE_CONST = 1, GU_TEXTURE_SLOPE = 2 }
 enum TextureProjectionMapMode { GU_POSITION = 0, GU_UV = 1, GU_NORMALIZED_NORMAL = 2, GU_NORMAL = 3 }
 enum WrapMode { GU_REPEAT = 0, GU_CLAMP = 1 }
-enum FrontFaceDirection { GU_CW = 0, GU_CCW = 1 }
+enum FrontFaceDirection { GU_CCW = 0, GU_CW = 1 }
 enum TestFunction { GU_NEVER = 0, GU_ALWAYS = 1, GU_EQUAL = 2, GU_NOTEQUAL = 3, GU_LESS = 4, GU_LEQUAL = 5, GU_GREATER = 6, GU_GEQUAL = 7 }
 enum ClearBufferMask { GU_COLOR_BUFFER_BIT = 1, GU_STENCIL_BUFFER_BIT = 2, GU_DEPTH_BUFFER_BIT = 4, GU_FAST_CLEAR_BIT = 16 }
 enum TextureEffect { GU_TFX_MODULATE = 0, GU_TFX_DECAL = 1, GU_TFX_BLEND = 2, GU_TFX_REPLACE = 3, GU_TFX_ADD = 4 }

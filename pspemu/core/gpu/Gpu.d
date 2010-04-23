@@ -30,6 +30,7 @@ import pspemu.core.gpu.ops.Enable;
 import pspemu.core.gpu.ops.Lights;
 import pspemu.core.gpu.ops.Morph;
 import pspemu.core.gpu.ops.Clut;
+import pspemu.core.gpu.ops.Fog;
 
 class Gpu : PspHardwareComponent {
 	Memory   memory;
@@ -103,6 +104,7 @@ class Gpu : PspHardwareComponent {
 		mixin Gpu_Lights;
 		mixin Gpu_Morph;
 		mixin Gpu_Clut;
+		mixin Gpu_Fog;
 
 		mixin({
 			string s;

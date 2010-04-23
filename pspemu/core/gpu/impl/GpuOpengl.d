@@ -1,8 +1,12 @@
 module pspemu.core.gpu.impl.GpuOpengl;
 
-// http://www.opengl.org/resources/code/samples/win32_tutorial/wglinfo.c
+/*
+http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/graphics/VideoEngine.java
+http://code.google.com/p/pspemu/source/browse/branches/old/src/core/gpu.d
+http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.OpenGL/OglDriver_Processing.cpp
+*/
 
-//version = VERSION_GL_BITMAP_RENDERING;
+//debug = DEBUG_CLEAR_MODE;
 
 import std.c.windows.windows;
 import std.windows.syserror;
@@ -72,10 +76,12 @@ class GpuOpengl : GpuImplAbstract {
 
 	void clear() {
 		uint flags = 0;
-		if (state.clearFlags & 0x100) flags |= GL_COLOR_BUFFER_BIT; // target
-		if (state.clearFlags & 0x200) flags |= GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT; // stencil/alpha
-		if (state.clearFlags & 0x400) flags |= GL_DEPTH_BUFFER_BIT; // zbuffer
-		glClear(flags);
+		if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT  ) flags |= GL_COLOR_BUFFER_BIT; // target
+		if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) flags |= GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT; // stencil/alpha
+		if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT  ) flags |= GL_DEPTH_BUFFER_BIT; // zbuffer
+		
+		//glClear(flags);
+		//writefln("clear: %08b", state.clearFlags );
 	}
 
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags) {
@@ -93,8 +99,10 @@ class GpuOpengl : GpuImplAbstract {
 			if (flags.hasNormal  ) glNormal3f(vertex.nx, vertex.ny, vertex.nz);
 			if (flags.hasPosition) glVertex3f(vertex.px, vertex.py, vertex.pz);
 			//writefln("UV(%f, %f)", vertex.u, vertex.v);
-			//writefln("POS(%f, %f, %f)", vertex.px, vertex.py, vertex.pz);
+			debug (DEBUG_CLEAR_MODE) if (state.clearingMode) writefln("POS(%f, %f, %f) : COL(%f, %f, %f, %f)", vertex.px, vertex.py, vertex.pz, vertex.r, vertex.g, vertex.b, vertex.a);
 		}
+		
+		debug (DEBUG_CLEAR_MODE) if (state.clearingMode) writefln("--");
 
 		drawBegin();
 		{
@@ -119,8 +127,9 @@ class GpuOpengl : GpuImplAbstract {
 						{
 							for (int n = 0; n < vertexList.length; n += 2) {
 								VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
-								vertex = v1;
+								vertex = v2;
 								
+								debug (DEBUG_CLEAR_MODE) if (state.clearingMode) writefln("(%f,%f,%f)-(%f,%f,%f)", v1.px, v1.py, v1.pz, v2.px, v2.py, v2.pz);
 								mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
 								mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
 								mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
@@ -234,7 +243,7 @@ template OpenglUtils() {
 			glMatrixMode(GL_TEXTURE);
 			glLoadIdentity();
 			
-			if (state.vertexType.transform2D && (state.textureScale.u == 1 && state.textureScale.v == 1)) {
+			if (state.vertexType.transform2D && (state.textureScale.uv == Vector(1.0, 1.0))) {
 				glScalef(1.0f / state.textures[0].width, 1.0f / state.textures[0].height, 1);
 			} else {
 				glScalef(state.textureScale.u, state.textureScale.v, 1);
@@ -249,11 +258,10 @@ template OpenglUtils() {
 				glEnable(GL_CLAMP_TO_EDGE);
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state.textureFilterMin ? GL_LINEAR : GL_NEAREST);
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state.textureFilterMag ? GL_LINEAR : GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapS);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapU);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapV);
 
-				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEnvMode]);
-
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
 			} else {
 				glDisable(GL_TEXTURE_2D);
 			}
@@ -262,7 +270,8 @@ template OpenglUtils() {
 		void prepareStencil() {
 			if (!glEnableDisable(GL_STENCIL_TEST, state.stencilTestEnabled)) return;
 
-			//writefln("%d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask);
+			//writefln("%d, %d, %d : %d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask, state.stencilOperationSfail, state.stencilOperationDpfail, state.stencilOperationDppass);
+			
 			glStencilFunc(
 				TestTranslate[state.stencilFuncFunc],
 				state.stencilFuncRef,
@@ -283,6 +292,12 @@ template OpenglUtils() {
 
 			glBlendEquation(BlendEquationTranslate[state.blendEquation]);
 			glBlendFunc(BlendFuncSrcTranslate[state.blendFuncSrc], BlendFuncDstTranslate[state.blendFuncDst]);
+			glBlendColor(
+				state.fixColorDst.r,
+				state.fixColorDst.g,
+				state.fixColorDst.b,
+				state.fixColorDst.a
+			);
 		}
 
 		void prepareColors() {
@@ -291,9 +306,13 @@ template OpenglUtils() {
 		}
 
 		void prepareCulling() {
-			if (!glEnableDisable(GL_CULL_FACE, state.backfaceCullingEnabled)) return;
+			if (state.vertexType.transform2D) {
+				glDisable(GL_CULL_FACE);
+			} else {
+				if (!glEnableDisable(GL_CULL_FACE, state.backfaceCullingEnabled)) return;
 
-			glFrontFace(state.faceCullingOrder ? GL_CW : GL_CCW);
+				glFrontFace(state.frontFaceDirection ? GL_CW : GL_CCW);
+			}
 		}
 
 		void prepareScissor() {
@@ -346,37 +365,99 @@ template OpenglUtils() {
 				state.alphaTestValue
 			);
 		}
-		
+
+		// http://www.opengl.org/resources/faq/technical/depthbuffer.htm
 		void prepareDepthTest() {
 			if (!glEnableDisable(GL_DEPTH_TEST, state.depthTestEnabled)) return;
+			glDepthFunc(TestTranslate[state.depthFunc]);
 		}
 		
+		void prepareDepthWrite() {
+			glDepthMask(state.depthMask); if (!state.depthMask) return;
 
-		glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
-		glDepthMask(state.depthMask);
-		glDepthFunc(TestTranslate[state.depthFunc]);
-		glDepthRange(state.depthRangeNear, state.depthRangeFar);
-		//writefln("%d, %f, %f", state.depthFunc, state.depthRangeNear, state.depthRangeFar);
+			//glDepthRange(state.depthRangeNear, state.depthRangeFar);
+			glDepthRange(state.depthRangeFar, state.depthRangeNear);
+		}
+		
+		void prepareFog() {
+			if (!glEnableDisable(GL_FOG, state.fogEnable)) return;
+
+			glFogfv(GL_FOG_COLOR, state.fogColor.pointer);
+			glFogf(GL_FOG_START, state.fogEnd - (1 / state.fogDist));
+			glFogf(GL_FOG_END, state.fogEnd);
+		}
 
 		prepareMatrix();
-		prepareStencil();
-		prepareScissor();
-		prepareBlend();
-		prepareCulling();
-		prepareColors();
-		prepareTexture();
-		prepareLighting();
-		prepareLogicOp();
-		prepareAlphaTest();
-		prepareDepthTest();
+
+		if (state.clearingMode) {
+			bool colorMask, alphaMask;
 		
-		glFogfv(GL_FOG_COLOR, state.fogColor.pointer);
-		glFogf(GL_FOG_START, state.fogEnd - (1 / state.fogDist));
-		glFogf(GL_FOG_END, state.fogEnd);
+            //glGetTexEnvfv(GL_TEXTURE_ENV, GL_RGB_SCALE, clearModeRgbScale, 0);
+            //glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, clearModeTextureEnvMode, 0);
+            //glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
+            //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+			glDisable(GL_BLEND);
+    		glDisable(GL_STENCIL_TEST);
+    		glDisable(GL_LIGHTING);
+    		glDisable(GL_TEXTURE_2D);
+    		glDisable(GL_ALPHA_TEST);
+    		glDisable(GL_FOG);
+    		glDisable(GL_DEPTH_TEST);
+    		glDisable(GL_LOGIC_OP);
+    		glDisable(GL_CULL_FACE);
+			
+			if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT) {
+				colorMask = true;
+			}
+
+			if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) {
+				alphaMask = true;
+        		glEnable(GL_STENCIL_TEST);
+    			glStencilFunc(GL_ALWAYS, 0, 0);
+    			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			} else {
+				glDisable(GL_STENCIL_TEST);
+			}
+
+			if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT) {
+        		//glEnable(GL_DEPTH_TEST);
+        		glDepthMask(true);
+			} else {
+        		glDepthMask(false);
+			}
+
+			glColorMask(colorMask, colorMask, colorMask, alphaMask);
+		} else {
+			prepareColors();
+			glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
+			prepareStencil();
+			prepareScissor();
+			prepareBlend();
+			prepareCulling();
+			prepareTexture();
+			prepareLighting();
+			prepareLogicOp();
+			prepareAlphaTest();
+			prepareDepthTest();
+			prepareDepthWrite();
+			prepareFog();
+
+			glColorMask(true, true, true, false);
+		}
 	}
 	
 	void drawEnd() {
 		prevState = *state;
+		if (state.clearingMode) {
+			/*
+			uint flags = 0;
+			if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT  ) flags |= GL_COLOR_BUFFER_BIT; // target
+			if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) flags |= GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT; // stencil/alpha
+			if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT  ) flags |= GL_DEPTH_BUFFER_BIT; // zbuffer
+			glClear(flags);
+			*/
+		}
 	}
 }
 
