@@ -86,6 +86,7 @@ template Gpu_Depth() {
 	 * @param mask - Mask that is ANDed with both the reference value and stored stencil value when the test is done
 	 **/
 	// void sceGuStencilFunc(int func, int ref, int mask); // OP_STST
+	// sendCommandi(220,func | ((ref & 0xff) << 8) | ((mask & 0xff) << 16));
 	// Stencil Test
 	auto OP_STST() {
 		with (gpu.state) {

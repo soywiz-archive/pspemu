@@ -106,23 +106,15 @@ template OpenglBase() {
 		hDC = GetDC(hWnd);
 
 		// http://msdn.microsoft.com/en-us/library/ms970745.aspx
+		// http://www.gamedev.net/reference/articles/article540.asp
 		pfd.nSize        = pfd.sizeof;
 		pfd.nVersion     = 1;
 		pfd.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | flags;
 		pfd.iLayerType   = PFD_MAIN_PLANE;
-		pfd.iPixelType   = type; // PFD_TYPE_RGBA 
-		/*
+		pfd.iPixelType   = type; // PFD_TYPE_RGBA
 		pfd.cColorBits   = 24;
-		pfd.cDepthBits   = 32;
-		pfd.cStencilBits = 8;
-		*/
-		/*
-		pfd.cColorBits   = 32;
+		//pfd.cDepthBits   = 8;
 		pfd.cDepthBits   = 16;
-		pfd.cStencilBits = 8;
-		*/
-		pfd.cColorBits   = 24;
-		pfd.cDepthBits   = 8;
 		pfd.cStencilBits = 8;
 
 		pf = ChoosePixelFormat(hDC, &pfd);

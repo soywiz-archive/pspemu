@@ -7,9 +7,12 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 */
 
 //debug = DEBUG_CLEAR_MODE;
-//debug = DEBUG_TEXTURE_UPDATE;
+debug = DEBUG_TEXTURE_UPDATE;
 
 //version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY;
+version = VERSION_ENABLED_STATE_CORTOCIRCUIT;
+
+//debug = DEBUG_OUTPUT_DEPTH_AND_STENCIL;
 
 import std.c.windows.windows;
 import std.windows.syserror;
@@ -86,6 +89,7 @@ class GpuOpengl : GpuImplAbstract {
 	}
 
 	void clear() {
+		/*
 		uint flags = 0;
 		if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT  ) flags |= GL_COLOR_BUFFER_BIT; // target
 		if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) flags |= GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT; // stencil/alpha
@@ -93,6 +97,7 @@ class GpuOpengl : GpuImplAbstract {
 		
 		//glClear(flags);
 		//writefln("clear: %08b", state.clearFlags );
+		*/
 	}
 
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags) {
@@ -118,9 +123,9 @@ class GpuOpengl : GpuImplAbstract {
 		drawBegin();
 		{
 			switch (type) {
-				// Special primitive that doesn't have equivalent in OpenGL.
+				// Special primitive that doesn't have equivalent in Open
 				// With two points specify a GL_QUAD.
-				// http://www.opengl.org/registry/specs/ARB/point_sprite.txt
+				// http://www.openorg/registry/specs/ARB/point_sprite.txt
 				// http://cirl.missouri.edu/gpu/glsl_lessons/glsl_geometry_shader/index.html
 				case PrimitiveType.GU_SPRITES:
 					static string spriteVertexInterpolate(string vx, string vy) {
@@ -151,7 +156,7 @@ class GpuOpengl : GpuImplAbstract {
 					}
 					glPopAttrib();
 				break;
-				// Normal primitives that have equivalent in OpenGL.
+				// Normal primitives that have equivalent in Open
 				default: {
 					glBegin(PrimitiveTypeTranslate[type]);
 					{
@@ -186,7 +191,7 @@ class GpuOpengl : GpuImplAbstract {
 		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
 			if (depthBuffer !is null) {
 				glDrawPixels(
-					state.drawBuffer.width, 272,
+					state.depthBuffer.width, 272,
 					GL_DEPTH_COMPONENT,
 					GL_UNSIGNED_BYTE,
 					colorBuffer
@@ -198,6 +203,27 @@ class GpuOpengl : GpuImplAbstract {
 	version (VERSION_GL_BITMAP_RENDERING) {
 	} else {
 		ubyte[4 * 512 * 272] colorBufferTemp;
+	}
+	
+	void outputDepthAndStencil() {
+		scope temp = new ubyte[1024 * 1024];
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glReadPixels(
+			0, 0, // x, y
+			state.drawBuffer.width, 272, // w, h
+			GL_DEPTH_COMPONENT,
+			GL_UNSIGNED_BYTE,
+			temp.ptr
+		);
+		writeBmp8("depth.bmp", temp.ptr, 512, 272, paletteGrayScale);
+		glReadPixels(
+			0, 0, // x, y
+			state.drawBuffer.width, 272, // w, h
+			GL_STENCIL_INDEX,
+			GL_UNSIGNED_BYTE,
+			temp.ptr
+		);
+		writeBmp8("stencil.bmp", temp.ptr, 512, 272, paletteRandom);
 	}
 
 	void frameStore(void* colorBuffer, void* depthBuffer) {
@@ -224,14 +250,16 @@ class GpuOpengl : GpuImplAbstract {
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 				glReadPixels(
 					0, 0, // x, y
-					state.drawBuffer.width, 272, // w, h
+					state.depthBuffer.width, 272, // w, h
 					GL_DEPTH_COMPONENT,
 					GL_UNSIGNED_BYTE,
 					depthBuffer
 				);
 			}
-			
-			//writeBmp8("depth.bmp", depthBuffer, 512, 272);
+		}
+
+		debug (DEBUG_OUTPUT_DEPTH_AND_STENCIL) {
+			outputDepthAndStencil();
 		}
 	}
 }
@@ -307,27 +335,35 @@ template OpenglUtils() {
 
 		if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) {
 			calphaMask = true;
-			/*
+			// Sets to 0x00 the stencil.
 			glEnable(GL_STENCIL_TEST);
-			glStencilFunc(GL_ALWAYS, 0, 0);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-			*/
+			glStencilFunc(GL_ALWAYS, 0, 0xFF); // @TODO @FIXME! : Color should be extracted from the color! (as alpha component)
+			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 		}
 
+		//int i; glGetIntegerv(GL_STENCIL_BITS, &i); writefln("GL_STENCIL_BITS: %d", i);
+
 		if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT) {
-			//glEnable(GL_DEPTH_TEST);
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_ALWAYS);
 			glDepthMask(true);
+			glDepthRange(0.0, 0.0);
+
+			//glDepthRange(0.0, 1.0); // Original value
 		}
 
 		glColorMask(ccolorMask, ccolorMask, ccolorMask, calphaMask);
-		
-		//glClear(GL_DEPTH_BUFFER_BIT);
+
+		//glClearDepth(0.0); glClear(GL_DEPTH_BUFFER_BIT);
+
 		//glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
 	
 	void drawBeginNormal() {
 		void prepareTexture() {
-			if (!glEnableDisable(GL_TEXTURE_2D, state.textureMappingEnabled)) return;
+			if (!glEnableDisable(GL_TEXTURE_2D, state.textureMappingEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 
 			//glEnable(GL_BLEND);
 			glActiveTexture(GL_TEXTURE0);
@@ -341,45 +377,112 @@ template OpenglUtils() {
 			}
 			glTranslatef(state.textureOffset.u, state.textureOffset.v, 0);
 			
-			if (state.textureMappingEnabled) {
-				glEnable(GL_TEXTURE_2D);
-				getTexture(state.textures[0], state.clut).bind();
-				//writefln("tex0:%s", state.textures[0]);
+			glEnable(GL_TEXTURE_2D);
+			getTexture(state.textures[0], state.clut).bind();
+			//writefln("tex0:%s", state.textures[0]);
 
-				glEnable(GL_CLAMP_TO_EDGE);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state.textureFilterMin ? GL_LINEAR : GL_NEAREST);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state.textureFilterMag ? GL_LINEAR : GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapU);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapV);
+			glEnable(GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state.textureFilterMin ? GL_LINEAR : GL_NEAREST);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state.textureFilterMag ? GL_LINEAR : GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapU);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapV);
 
-				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
-			} else {
-				glDisable(GL_TEXTURE_2D);
+			//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
+
+			uint env_mode;
+			// See http://www.opengl.org/sdk/docs/man/xhtml/glTexEnv.xml
+			// http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/graphics/VideoEngine.java
+			/*switch (state.textureEffect) {
+				case TextureEffect.GU_TFX_MODULATE:
+					// Cv = Cp * Cs
+					// Av = Ap * As
+					env_mode = GL_COMBINE;
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+				break;
+				case TextureEffect.GU_TFX_DECAL:
+					env_mode = GL_COMBINE;
+					// Cv = Cs * As + Cp * (1 - As)
+					// Av = Ap
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC2_RGB, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
+
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+				break;
+				case TextureEffect.GU_TFX_BLEND:
+					// Cv = Cc * Cs + Cp * (1 - Cs)
+					// Av = As * Ap
+					env_mode = GL_COMBINE;
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_CONSTANT);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC2_RGB, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_COLOR);
+
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+				break;
+				case TextureEffect.GU_TFX_REPLACE:
+					// Cv = Cs
+					// Av = As
+					env_mode = GL_COMBINE;
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+				break;
+				case TextureEffect.GU_TFX_ADD :
+					// Cv = Cp + Cs
+					// Av = Ap * As
+					env_mode = GL_COMBINE;
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PREVIOUS);
+					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+				break;
 			}
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, env_mode);
+			*/
+			
+			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0); // 2.0 in scale_2x
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
 		}
 		
-		void prepareStencil() {
-			if (!glEnableDisable(GL_STENCIL_TEST, state.stencilTestEnabled)) return;
-
-			//writefln("%d, %d, %d : %d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask, state.stencilOperationSfail, state.stencilOperationDpfail, state.stencilOperationDppass);
-			
-			glStencilFunc(
-				TestTranslate[state.stencilFuncFunc],
-				state.stencilFuncRef,
-				state.stencilFuncMask
-			);
-			//glCheckError();
-
-			glStencilOp(
-				StencilOperationTranslate[state.stencilOperationSfail ],
-				StencilOperationTranslate[state.stencilOperationDpfail],
-				StencilOperationTranslate[state.stencilOperationDppass]
-			);
-			//glCheckError();
-		}
-
 		void prepareBlend() {
-			if (!glEnableDisable(GL_BLEND, state.alphaBlendEnabled)) return;
+			if (!glEnableDisable(GL_BLEND, state.alphaBlendEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 
 			glBlendEquation(BlendEquationTranslate[state.blendEquation]);
 			glBlendFunc(BlendFuncSrcTranslate[state.blendFuncSrc], BlendFuncDstTranslate[state.blendFuncDst]);
@@ -400,8 +503,8 @@ template OpenglUtils() {
 			} else {
 				//auto faces = GL_FRONT;
 				auto faces = GL_FRONT_AND_BACK;
-				// http://www.opengl.org/sdk/docs/man/xhtml/glColorMaterial.xml
-				// http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=238308
+				// http://www.openorg/sdk/docs/man/xhtml/glColorMaterial.xml
+				// http://www.openorg/discussion_boards/ubbthreads.php?ubb=showflat&Number=238308
 				if (glEnableDisable(GL_COLOR_MATERIAL, cast(bool)state.materialColorComponents)) {
 					glMaterialfv(faces, GL_AMBIENT , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
 					glMaterialfv(faces, GL_DIFFUSE , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
@@ -417,19 +520,19 @@ template OpenglUtils() {
 			if (state.vertexType.transform2D) {
 				glDisable(GL_CULL_FACE);
 			} else {
-				if (!glEnableDisable(GL_CULL_FACE, state.backfaceCullingEnabled)) return;
+				if (!glEnableDisable(GL_CULL_FACE, state.backfaceCullingEnabled)) {
+					version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+				}
 
 				glFrontFace(state.frontFaceDirection ? GL_CW : GL_CCW);
 			}
 		}
 
 		void prepareScissor() {
-			if ((state.scissor.x1 <= 0 && state.scissor.y1 <= 0) && (state.scissor.x2 >= 480 && state.scissor.y2 >= 272)) {
-				glDisable(GL_SCISSOR_TEST);
-				return;
+			if (!glEnableDisable(GL_SCISSOR_TEST, !state.scissor.isFull)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
 			}
 
-			glEnable(GL_SCISSOR_TEST);
 			glScissor(
 				state.scissor.x1,
 				272 - state.scissor.y2,
@@ -445,14 +548,18 @@ template OpenglUtils() {
 		// http://jerome.jouvie.free.fr/OpenGl/Tutorials/Tutorial13.php
 		// http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/graphics/VideoEngine.java
 		void prepareLighting() {
-			if (!glEnableDisable(GL_LIGHTING, state.lightingEnabled)) return;
+			if (!glEnableDisable(GL_LIGHTING, state.lightingEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 
 			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, state.lightModel);
 
 			foreach (n, ref light; state.lights) {
 				auto GL_LIGHT_n = GL_LIGHT0 + n;
 
-				if (!glEnableDisable(GL_LIGHT_n, light.enabled)) continue;
+				if (!glEnableDisable(GL_LIGHT_n, light.enabled)) {
+					version (VERSION_ENABLED_STATE_CORTOCIRCUIT) continue;
+				}
 
 				if (light.type == LightType.GU_SPOTLIGHT) {
 					glLightfv(GL_LIGHT_n, GL_SPOT_DIRECTION, light.spotDirection.pointer);
@@ -472,7 +579,9 @@ template OpenglUtils() {
 		}
 		
 		void prepareAlphaTest() {
-			if (!glEnableDisable(GL_ALPHA_TEST, state.alphaTestEnabled)) return;
+			if (!glEnableDisable(GL_ALPHA_TEST, state.alphaTestEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 
 			glAlphaFunc(
 				TestTranslate[state.alphaTestFunc],
@@ -480,21 +589,67 @@ template OpenglUtils() {
 			);
 		}
 
-		// http://www.opengl.org/resources/faq/technical/depthbuffer.htm
+		// http://www.openorg/resources/faq/technical/depthbuffer.htm
 		void prepareDepthTest() {
-			if (!glEnableDisable(GL_DEPTH_TEST, state.depthTestEnabled)) return;
+			//return;
+
+			if (!glEnableDisable(GL_DEPTH_TEST, state.depthTestEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 			glDepthFunc(TestTranslate[state.depthFunc]);
 		}
 		
 		void prepareDepthWrite() {
-			glDepthMask(state.depthMask != 0); if (!state.depthMask) return;
+			//return;
+			
+			glDepthMask(state.depthMask != 0);
+			if (!state.depthMask) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 
 			//glDepthRange(state.depthRangeNear, state.depthRangeFar);
 			glDepthRange(state.depthRangeFar, state.depthRangeNear);
 		}
-		
+
+		void prepareStencil() {
+			//return;
+
+			if (!glEnableDisable(GL_STENCIL_TEST, state.stencilTestEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
+
+			//writefln("%d, %d, %d : %d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask, state.stencilOperationSfail, state.stencilOperationDpfail, state.stencilOperationDppass);
+			/*
+			1, 1, 1 : 0, 0, 2
+			2, 1, 1 : 0, 0, 0
+			*/
+			
+			//if (state.stencilFuncFunc == 2) { outputDepthAndStencil(); assert(0); }
+			
+			glStencilFunc(
+				TestTranslate[state.stencilFuncFunc],
+				state.stencilFuncRef,
+				state.stencilFuncMask
+			);
+			
+			//writefln("glStencilFunc(%d, %d, %d)", TestTranslate[state.stencilFuncFunc], state.stencilFuncRef, state.stencilFuncMask);
+			
+			//glCheckError();
+
+			glStencilOp(
+				StencilOperationTranslate[state.stencilOperationSfail ],
+				StencilOperationTranslate[state.stencilOperationDpfail],
+				StencilOperationTranslate[state.stencilOperationDppass]
+			);
+			//glCheckError();
+			
+			//glStencilMask(0xFFFF);
+		}
+
 		void prepareFog() {
-			if (!glEnableDisable(GL_FOG, state.fogEnabled)) return;
+			if (!glEnableDisable(GL_FOG, state.fogEnabled)) {
+				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
+			}
 
 			glFogfv(GL_FOG_COLOR, state.fogColor.pointer);
 			glFogf(GL_FOG_START, state.fogEnd - (1 / state.fogDist));
@@ -515,8 +670,8 @@ template OpenglUtils() {
 		prepareDepthWrite();
 		prepareFog();
 
-		//glColorMask(state.colorMask[0], state.colorMask[1], state.colorMask[2], state.colorMask[3]);
-		glColorMask(true, true, true, false);
+		//glColorMask(cast(bool)state.colorMask[0], cast(bool)state.colorMask[1], cast(bool)state.colorMask[2], cast(bool)state.colorMask[3]);
+		glColorMask(true, true, true, true);
 		glEnableDisable(GL_LINE_SMOOTH, state.lineSmoothEnabled);
 		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	}
@@ -712,7 +867,7 @@ version (unittest) {
 	import core.thread;
 }
 
-// cls && dmd ..\..\..\utils\opengl.d ..\types.d -version=TEST_GPUOPENGL -unittest -run GpuOpengl.d
+// cls && dmd ..\..\..\utils\opend ..\types.d -version=TEST_GPUOPENGL -unittest -run GpuOpend
 unittest {
 	auto gpuImpl = new GpuOpengl;
 	(new Thread({

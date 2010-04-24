@@ -117,12 +117,12 @@ template Gpu_Colors() {
 	
 	// Pixel MasK Color
 	auto OP_PMSKC() {
-		gpu.state.colorMask[0] = command.extract!(bool,  0, 8);
-		gpu.state.colorMask[1] = command.extract!(bool,  8, 8);
-		gpu.state.colorMask[2] = command.extract!(bool, 16, 8);
+		gpu.state.colorMask[0] = command.extract!(ubyte,  0, 8);
+		gpu.state.colorMask[1] = command.extract!(ubyte,  8, 8);
+		gpu.state.colorMask[2] = command.extract!(ubyte, 16, 8);
 	}
 	// Pixel MasK Alpha
 	auto OP_PMSKA() {
-		gpu.state.colorMask[3] = command.extract!(bool, 0, 8);
+		gpu.state.colorMask[3] = command.extract!(ubyte, 0, 8);
 	}
 }

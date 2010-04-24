@@ -204,7 +204,7 @@ static struct GpuState {
 
 	LogicalOperation logicalOperation = LogicalOperation.GU_COPY; // GL_COPY (default)
 	
-	bool[4] colorMask = [true, true, true, true];
+	ubyte[4] colorMask = [0xFF, 0xFF, 0xFF, 0xFF];
 	
 	//static assert (this.sizeof <= 512);
 }

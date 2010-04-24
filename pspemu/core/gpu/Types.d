@@ -87,6 +87,9 @@ struct UV {
 
 struct Rect {
 	uint x1, y1, x2, y2;
+	bool isFull() {
+		return (x1 <= 0 && y1 <= 0) && (x2 >= 480 && y2 >= 272);
+	}
 }
 
 const auto GU_PI = 3.141593f;

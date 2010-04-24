@@ -191,6 +191,7 @@ template Gpu_Texture() {
 		with (gpu.state) {
 			textureEffect         = command.extractEnum!(TextureEffect, 0);
 			textureColorComponent = command.extractEnum!(TextureColorComponent, 8);
+			//fragment_2x           = command.extract!(bool, 16, 1);
 		}
 	}
 
