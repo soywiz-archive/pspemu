@@ -12,8 +12,10 @@ interface GpuImpl {
 	void clear();
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags);
 	void flush();
-	void frameLoad (void* buffer);
-	void frameStore(void* buffer);
+	void frameLoad (void* colorBuffer, void* depthBuffer);
+	void frameStore(void* colorBuffer, void* depthBuffer);
+	void tsync();
+	void tflush();
 }
 
 abstract class GpuImplAbstract : GpuImpl {

@@ -347,3 +347,65 @@ class ApplicationPaths {
 	static string startup() { return cast(string)Application.startupPath; }
 	static string userAppData() { return cast(string)Application.userAppDataBasePath; }
 }
+
+void writeBmp8(string fileName, void* data, int width, int height) {
+	static struct BITMAPFILEHEADER { align(1):
+		char[2] bfType = "BM";
+		uint    bfSize;
+		ushort  bfReserved1;
+		ushort  bfReserved2;
+		uint    bfOffBits;
+	}
+	
+	static struct BITMAPINFOHEADER { align(1):
+		uint   biSize;
+		int    biWidth;
+		int    biHeight;
+		ushort biPlanes;
+		ushort biBitCount;
+		uint   biCompression;
+		uint   biSizeImage;
+		int    biXPelsPerMeter;
+		int    biYPelsPerMeter;
+		uint   biClrUsed;
+		uint   biClrImportant;
+	}
+
+	static struct RGBQUAD {
+		ubyte rgbBlue;
+		ubyte rgbGreen;
+		ubyte rgbRed;
+		ubyte rgbReserved;
+	}
+
+	BITMAPFILEHEADER h;
+	BITMAPINFOHEADER ih;
+	
+	ih.biSize = ih.sizeof;
+	ih.biWidth = width;
+	ih.biHeight = height;
+	ih.biPlanes = 1;
+	ih.biBitCount = 8;
+	ih.biCompression = 0;
+	ih.biSizeImage = ubyte.sizeof * width * height;
+	ih.biXPelsPerMeter = 0;
+	ih.biYPelsPerMeter = 0;
+	ih.biClrUsed = 256;
+	ih.biClrImportant = 0;
+
+	h.bfOffBits = h.sizeof + ih.sizeof;
+	
+	h.bfSize = h.sizeof + ih.sizeof + RGBQUAD.sizeof * 0x100 + ubyte.sizeof * width * height;
+
+	scope file = new std.stream.File(fileName, FileMode.OutNew);
+	file.write(TA(h));
+	file.write(TA(ih));
+	for (int n = 0; n < 0x100; n++) {
+		RGBQUAD rgba;
+		rgba.rgbRed = rgba.rgbGreen = rgba.rgbBlue = cast(ubyte)n;
+		rgba.rgbReserved = 0xFF;
+		file.write(TA(rgba));
+	}
+	file.write((cast(ubyte*)data)[0..width * height]);
+	file.close();
+}

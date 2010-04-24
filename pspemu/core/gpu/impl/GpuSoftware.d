@@ -32,12 +32,19 @@ class GpuSoftware : GpuImplAbstract {
 		assert(0);
 	}
 
-	void frameLoad(void* buffer) {
+	void frameLoad(void* colorBuffer, void* depthBuffer) {
 		assert(0);
 	}
 
-	void frameStore(void* buffer) {
+	void frameStore(void* colorBuffer, void* depthBuffer) {
 		assert(0);
 	}
 
+	void tflush() {
+		assert(0);
+	}
+
+	void tsync() {
+		assert(0);
+	}
 }

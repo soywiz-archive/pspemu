@@ -48,6 +48,7 @@ struct ValueMask {
 				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft": alloc(5); break;
 				case "fcond": alloc(4 ); break;
 				case "imm16": alloc(16); break;
+				case "imm20": alloc(20); break;
 				case "imm26": alloc(26); break;
 				default:
 					if ((part[0] != '0') && (part[0] != '1')) {

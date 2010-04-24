@@ -1,7 +1,14 @@
 module pspemu.core.gpu.ops.Fog;
 
 template Gpu_Fog() {
-	// void sceGuFog(float near, float far, unsigned int color);
+	/**
+	 * Set current Fog
+	 *
+	 * @param near  - 
+	 * @param far   - 
+	 * @param color - 0x00RRGGBB
+	 **/
+	// void sceGuFog(float near, float far, unsigned int color); // OP_FCOL + OP_FFAR + OP_FDIST
 
 	// Fog COLor
 	auto OP_FCOL() {

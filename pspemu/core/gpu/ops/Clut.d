@@ -10,17 +10,16 @@ template Gpu_Clut() {
 	 * @note Data must be aligned to 1 quad word (16 bytes)
 	 *
 	 * @param num_blocks - How many blocks of 8 entries to upload (32*8 is 256 colors)
-	 * @param cbp - Pointer to palette (16 byte aligned)
-	**/
-	///void sceGuClutLoad(int num_blocks, const void* cbp);
+	 * @param cbp        - Pointer to palette (16 byte aligned)
+	 **/
+	///void sceGuClutLoad(int num_blocks, const void* cbp); // OP_CBP + OP_CBPH + OP_CLOAD
 
 	// Clut Buffer Pointer (High)
 	// Clut LOAD
 	auto OP_CBP () { gpu.state.clut.address = (gpu.state.clut.address & 0xFF000000) | (command.param24 << 0); }
 	auto OP_CBPH() { gpu.state.clut.address = (gpu.state.clut.address & 0x00FFFFFF) | (command.param24 << 8); }
 	auto OP_CLOAD() {
-		// @TODO
-		int num_entries = (command.param24 & 0xFF);
+		ubyte num_entries = command.extract!(ubyte);
 		
 		/*
 		gpu.state.uploadedClut = gpu.state.clut;
@@ -40,18 +39,18 @@ template Gpu_Clut() {
 	 *   - GU_PSM_4444
 	 *   - GU_PSM_8888
 	 *
-	 * @param cpsm - Which pixel format to use for the palette
+	 * @param cpsm  - Which pixel format to use for the palette
 	 * @param shift - Shifts color index by that many bits to the right
-	 * @param mask - Masks the color index with this bitmask after the shift (0-0xFF)
-	 * @param a3 - Unknown, set to 0
-	**/
-	///void sceGuClutMode(uint cpsm, uint shift, uint mask, uint a3);
+	 * @param mask  - Masks the color index with this bitmask after the shift (0-0xFF)
+	 * @param a3    - Unknown, set to 0
+	 **/
+	///void sceGuClutMode(uint cpsm, uint shift, uint mask, uint a3); // OP_CMODE
 
 	// Clut MODE
 	auto OP_CMODE() {
 		gpu.state.clut.format = command.extract!(PixelFormats, 0, 2);
-		gpu.state.clut.shift  = command.extract!(uint, 2, 5);
-		gpu.state.clut.mask   = command.extract!(uint, 8, 8);
+		gpu.state.clut.shift  = command.extract!(uint,  2, 5);
+		gpu.state.clut.mask   = command.extract!(uint,  8, 8);
 		gpu.state.clut.start  = command.extract!(uint, 16, 5) << 4;
 	}
 }

@@ -33,32 +33,11 @@ template Gpu_Special() {
 		gpu.state.drawBuffer.width       = command.extract!(ushort, 0);
 	}
 
-	/**
-	 * Set depth buffer parameters
-	 *
-	 * @param zbp - VRAM pointer where the depthbuffer should start
-	 * @param zbw - The width of the depth-buffer (block-aligned)
-	 *
-	 **/
-	// void sceGuDepthBuffer(void* zbp, int zbw);
-
-	// Depth Buffer Pointer
-	auto OP_ZBP() {
-		gpu.state.depthBuffer.lowAddress = command.param24;
-		gpu.state.depthBuffer.mustLoad   = true;
-	}
-
-	// Depth Buffer Width
-	auto OP_ZBW() {
-		gpu.state.depthBuffer.highAddress = command.extract!(ubyte, 16);
-		gpu.state.depthBuffer.width       = command.extract!(ushort, 0);
-	}
-
-	// texture Pixel Storage Mode
+	// frame buffer Pixel Storage Mode
 	auto OP_PSM() {
 		gpu.state.drawBuffer.format = command.extractEnum!(PixelFormats);
 	}
-	
+
 	/**
 	 * Set what to scissor within the current framebuffer
 	 *
@@ -69,7 +48,7 @@ template Gpu_Special() {
 	 * @param stopX - Right of scissor region
 	 * @param stopY - Bottom of scissor region
 	 **/
-	// void sceGuScissor(int x, int y, int stopX, int stopY); 
+	// void sceGuScissor(int x, int y, int stopX, int stopY); // OP_SCISSOR1 + OP_SCISSOR2
 
 	// SCISSOR start (1)
 	auto OP_SCISSOR1() {
@@ -88,6 +67,33 @@ template Gpu_Special() {
 	}
 
 	/**
+	 * Set current viewport
+	 *
+	 * @par Example: Setup a viewport of size (480,272) with origo at (2048,2048)
+	 * @code
+	 * sceGuViewport(2048,2048,480,272);
+	 * @endcode
+	 *
+	 * @param cx - Center for horizontal viewport
+	 * @param cy - Center for vertical viewport
+	 * @param width - Width of viewport
+	 * @param height - Height of viewport
+	 **/
+	// void sceGuViewport(int cx, int cy, int width, int height); // OP_XSCALE + OP_YSCALE + OP_XPOS + OP_YPOS
+	// sendCommandf(66,(float)(width>>1));
+	// sendCommandf(67,(float)((-height)>>1));
+	// sendCommandf(69,(float)cx);
+	// sendCommandf(70,(float)cy);
+	
+	auto OP_XSCALE() { gpu.state.viewport.sx =  command.float1 * 2; }
+	auto OP_YSCALE() { gpu.state.viewport.sy = -command.float1 * 2; }
+	auto OP_ZSCALE() { gpu.state.viewport.sz = command.extractFixedFloat!(0, 16); }
+
+	auto OP_XPOS  () { gpu.state.viewport.px = command.float1; }
+	auto OP_YPOS  () { gpu.state.viewport.py = command.float1; }
+	auto OP_ZPOS  () { gpu.state.viewport.pz = command.extractFixedFloat!(0, 16); }
+
+	/**
 	 * Set the current face-order (for culling)
 	 *
 	 * This only has effect when culling is enabled (GU_CULL_FACE)
@@ -98,7 +104,7 @@ template Gpu_Special() {
 	 *
 	 * @param order - Which order to use
 	 **/
-	// void sceGuFrontFace(int order);
+	// void sceGuFrontFace(int order); // OP_FFACE
 	auto OP_FFACE() {
 		gpu.state.frontFaceDirection = command.extractEnum!(FrontFaceDirection);
 	}
@@ -112,111 +118,9 @@ template Gpu_Special() {
 	 *
 	 * @param mode - Which mode to use
 	**/
-	// void sceGuShadeModel(int mode);
+	// void sceGuShadeModel(int mode); // OP_SHADE
 	auto OP_SHADE() {
 		gpu.state.shadeModel = command.extractEnum!(ShadingModel);
-	}
-
-	/**
-	 * Select which depth-test function to use
-	 *
-	 * Valid choices for the depth-test are:
-	 *   - GU_NEVER - No pixels pass the depth-test
-	 *   - GU_ALWAYS - All pixels pass the depth-test
-	 *   - GU_EQUAL - Pixels that match the depth-test pass
-	 *   - GU_NOTEQUAL - Pixels that doesn't match the depth-test pass
-	 *   - GU_LESS - Pixels that are less in depth passes
-	 *   - GU_LEQUAL - Pixels that are less or equal in depth passes
-	 *   - GU_GREATER - Pixels that are greater in depth passes
-	 *   - GU_GEQUAL - Pixels that are greater or equal passes
-	 *
-	 * @param function - Depth test function to use
-	 **/
-	// void sceGuDepthFunc(int function);
-	auto OP_ZTST() {
-		gpu.state.depthFunc = command.extractEnum!(TestFunction);
-	}
-
-	/**
-	 * Set the alpha test parameters
-	 * 
-	 * Available comparison functions are:
-	 *   - GU_NEVER
-	 *   - GU_ALWAYS
-	 *   - GU_EQUAL
-	 *   - GU_NOTEQUAL
-	 *   - GU_LESS
-	 *   - GU_LEQUAL
-	 *   - GU_GREATER
-	 *   - GU_GEQUAL
-	 *
-	 * @param func - Specifies the alpha comparison function.
-	 * @param value - Specifies the reference value that incoming alpha values are compared to.
-	 * @param mask - Specifies the mask that both values are ANDed with before comparison.
-	 **/
-	// void sceGuAlphaFunc(int func, int value, int mask);
-	auto OP_ATST() {
-		with (gpu.state) {
-			alphaTestFunc  = command.extractEnum!(TestFunction, 0);
-			alphaTestValue = command.extractFixedFloat!(8, 8);
-			alphaTestMask  = command.extract!(ubyte, 16);
-		}
-	}
-
-	/**
-	 * Set stencil function and reference value for stencil testing
-	 *
-	 * Available functions are:
-	 *   - GU_NEVER
-	 *   - GU_ALWAYS
-	 *   - GU_EQUAL
-	 *   - GU_NOTEQUAL
-	 *   - GU_LESS
-	 *   - GU_LEQUAL
-	 *   - GU_GREATER
-	 *   - GU_GEQUAL
-	 *
-	 * @param func - Test function
-	 * @param ref - The reference value for the stencil test
-	 * @param mask - Mask that is ANDed with both the reference value and stored stencil value when the test is done
-	 **/
-	// void sceGuStencilFunc(int func, int ref, int mask);
-	// Stencil Test
-	auto OP_STST() {
-		with (gpu.state) {
-			stencilFuncFunc = command.extractEnum!(TestFunction, 0);
-			stencilFuncRef  = command.extract!(ubyte,  8);
-			stencilFuncMask = command.extract!(ubyte, 16);
-		}
-	}
-
-	/**
-	 * Set the stencil test actions
-	 *
-	 * Available actions are:
-	 *   - GU_KEEP - Keeps the current value
-	 *   - GU_ZERO - Sets the stencil buffer value to zero
-	 *   - GU_REPLACE - Sets the stencil buffer value to ref, as specified by sceGuStencilFunc()
-	 *   - GU_INCR - Increments the current stencil buffer value
-	 *   - GU_DECR - Decrease the current stencil buffer value
-	 *   - GU_INVERT - Bitwise invert the current stencil buffer value
-	 *
-	 * As stencil buffer shares memory with framebuffer alpha, resolution of the buffer
-	 * is directly in relation.
-	 *
-	 * @param fail - The action to take when the stencil test fails
-	 * @param zfail - The action to take when stencil test passes, but the depth test fails
-	 * @param zpass - The action to take when both stencil test and depth test passes
-	 **/
-	// void sceGuStencilOp(int fail, int zfail, int zpass);
-
-	// Stencil OPeration
-	auto OP_SOP() {
-		with (gpu.state) {
-			stencilOperationSfail  = command.extractEnum!(StencilOperations,  0);
-			stencilOperationDpfail = command.extractEnum!(StencilOperations,  8);
-			stencilOperationDppass = command.extractEnum!(StencilOperations, 16);
-		}
 	}
 
 	/**
@@ -244,7 +148,7 @@ template Gpu_Special() {
 	 *
 	 * @param op - Operation to execute
 	 **/
-	// void sceGuLogicalOp(int op);
+	// void sceGuLogicalOp(int op); // OP_LOP
 	// Logical Operation
 	auto OP_LOP() {
 		gpu.state.logicalOperation = command.extractEnum!(LogicalOperation);
@@ -263,12 +167,68 @@ template Gpu_Special() {
 	 * @param x - Offset (0-4095)
 	 * @param y - Offset (0-4095)
 	 */
-	//void sceGuOffset(unsigned int x, unsigned int y);
-	auto OP_OFFSETX() {
-		command.extract!(uint, 4);
+	//void sceGuOffset(unsigned int x, unsigned int y); // OP_OFFSETX + OP_OFFSETY
+
+	auto OP_OFFSETX() { gpu.state.offsetX = command.extract!(uint, 0, 4); }
+	auto OP_OFFSETY() { gpu.state.offsetY = command.extract!(uint, 0, 4); }
+
+	/**
+	 * Image transfer using the GE
+	 *
+	 * @note Data must be aligned to 1 quad word (16 bytes)
+	 *
+	 * @par Example: Copy a fullscreen 32-bit image from RAM to VRAM
+	 * @code
+	 * sceGuCopyImage(GU_PSM_8888,0,0,480,272,512,pixels,0,0,512,(void*)(((unsigned int)framebuffer)+0x4000000));
+	 * @endcode
+	 *
+	 * @param psm    - Pixel format for buffer
+	 * @param sx     - Source X
+	 * @param sy     - Source Y
+	 * @param width  - Image width
+	 * @param height - Image height
+	 * @param srcw   - Source buffer width (block aligned)
+	 * @param src    - Source pointer
+	 * @param dx     - Destination X
+	 * @param dy     - Destination Y
+	 * @param destw  - Destination buffer width (block aligned)
+	 * @param dest   - Destination pointer
+	 **/
+	// void sceGuCopyImage(int psm, int sx, int sy, int width, int height, int srcw, void* src, int dx, int dy, int destw, void* dest);
+	// sendCommandi(178/*OP_TRXSBP*/,((unsigned int)src) & 0xffffff);
+	// sendCommandi(179/*OP_TRXSBW*/,((((unsigned int)src) & 0xff000000) >> 8)|srcw);
+	// sendCommandi(235/*OP_TRXSPOS*/,(sy << 10)|sx);
+	// sendCommandi(180/*OP_TRXDBP*/,((unsigned int)dest) & 0xffffff);
+	// sendCommandi(181/*OP_TRXDBW*/,((((unsigned int)dest) & 0xff000000) >> 8)|destw);
+	// sendCommandi(236/*OP_TRXDPOS*/,(dy << 10)|dx);
+	// sendCommandi(238/*OP_TRXSIZE*/,((height-1) << 10)|(width-1));
+	// sendCommandi(234/*OP_TRXKICK*/,(psm ^ 0x03) ? 0 : 1);
+
+	// TRansfer X Source (Buffer Pointer/Width)/POSition
+	auto OP_TRXSBP() {
 	}
 
-	auto OP_OFFSETY() {
-		command.extract!(uint, 4);
+	auto OP_TRXSBW() {
+	}
+
+	auto OP_TRXSPOS() {
+	}
+
+	// TRansfer X Destination (Buffer Pointer/Width)/POSition
+	auto OP_TRXDBP() {
+	}
+
+	auto OP_TRXDBW() {
+	}
+	
+	auto OP_TRXDPOS() {
+	}
+
+	auto OP_TRXSIZE() {
+	}
+
+	// TRansfer X KICK
+	auto OP_TRXKICK() {
+		writefln("Unimplemented TRXKICK");
 	}
 }

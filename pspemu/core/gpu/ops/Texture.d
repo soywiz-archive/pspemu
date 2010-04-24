@@ -11,12 +11,17 @@ template Gpu_Texture() {
 	 *   - GU_PSM_5551 - Hicolor, 16-bit
 	 *   - GU_PSM_4444 - Hicolor, 16-bit
 	 *   - GU_PSM_8888 - Truecolor, 32-bit
-	 *   - GU_PSM_T4 - Indexed, 4-bit (2 pixels per byte)
-	 *   - GU_PSM_T8 - Indexed, 8-bit
+	 *   - GU_PSM_T4   - Indexed, 4-bit (2 pixels per byte)
+	 *   - GU_PSM_T8   - Indexed, 8-bit
+	 *   - GU_PSM_T16  - Indexed, 16-bit
+	 *   - GU_PSM_T32  - Indexed, 32-bit
+	 *   - GU_PSM_DXT1 - 
+	 *   - GU_PSM_DXT3 -
+	 *   - GU_PSM_DXT5 -
 	 *
-	 * @param tpsm - Which texture format to use
+	 * @param tpsm    - Which texture format to use
 	 * @param maxmips - Number of mipmaps to use (0-8)
-	 * @param a2 - Unknown, set to 0
+	 * @param a2      - Unknown, set to 0
 	 * @param swizzle - GU_TRUE(1) to swizzle texture-reads
 	 **/
 	// void sceGuTexMode(int tpsm, int maxmips, int a2, int swizzle);
@@ -24,9 +29,9 @@ template Gpu_Texture() {
 	// Texture Mode
 	auto OP_TMODE() {
 		with (gpu.state) {
-			textureSwizzled  = command.extract!(uint, 0, 8) != 0;
-			mipmapShareClut  = command.extract!(uint, 8, 8) == 0;
-			mipMapLevel      = command.extract!(uint, 16, 8);
+			textureSwizzled  =  command.extract!(bool,  0, 8);
+			mipmapShareClut  = !command.extract!(bool,  8, 8);
+			mipMapMaxLevel   =  command.extract!(ubyte, 16, 8);
 		}
 	}
 
@@ -49,10 +54,10 @@ template Gpu_Texture() {
 	 * @param tbw - Texture Buffer Width (block-aligned)
 	 * @param tbp - Texture buffer pointer (16 byte aligned)
 	 **/
-	// void sceGuTexImage(int mipmap, int width, int height, int tbw, const void* tbp);
+	// void sceGuTexImage(int mipmap, int width, int height, int tbw, const void* tbp); // OP_TBP_n, OP_TBW_n, OP_TSIZE_n, OP_TFLUSH
 
 	// Texture Base Pointer
-	mixin (TextureArrayOperation("TBPx", q{
+	mixin (TextureArrayOperation("OP_TBP_n", q{
 		with (gpu.state.textures[Index]) {
 			address &= 0xFF000000;
 			address |= command.param24;
@@ -60,7 +65,7 @@ template Gpu_Texture() {
 	}));
 
 	// Texture Buffer Width.
-	mixin (TextureArrayOperation("TBWx", q{
+	mixin (TextureArrayOperation("OP_TBW_n", q{
 		with (gpu.state.textures[Index]) {
 			buffer_width = command.extract!(uint, 0, 16); // ???
 			address &= 0x00FFFFFF;
@@ -69,7 +74,7 @@ template Gpu_Texture() {
 	}));
 
 	// Texture Size
-	mixin (TextureArrayOperation("TSIZEx", q{
+	mixin (TextureArrayOperation("OP_TSIZE_n", q{
 		with (gpu.state.textures[Index]) {
 			width  = 1 << command.extract!(uint, 0, 8);
 			height = 1 << command.extract!(uint, 8, 8);
@@ -83,11 +88,12 @@ template Gpu_Texture() {
 	 *
 	 * Do this if you have copied/rendered into an area currently in the texture-cache
 	**/
-	// void sceGuTexFlush(void);
+	// void sceGuTexFlush(void); // OP_TFLUSH
 
 	// Texture Flush. NOTE: 'sceGuTexImage' and 'sceGuTexMode' calls TFLUSH.
 	auto OP_TFLUSH() {
 		//writefln("TFLUSH!");
+		gpu.impl.tflush();
 	}
 
 	/**
@@ -96,11 +102,12 @@ template Gpu_Texture() {
 	 * This will stall the rendering pipeline until the current image upload initiated by
 	 * sceGuCopyImage() has completed.
 	 **/
-	// void sceGuTexSync();
+	// void sceGuTexSync(); // OP_TSYNC
 
 	// Texture Sync
 	auto OP_TSYNC() {
 		//writefln("TSYNC!");
+		gpu.impl.tsync();
 	}
 
 	/**
@@ -117,7 +124,7 @@ template Gpu_Texture() {
 	 * @param min - Minimizing filter
 	 * @param mag - Magnifying filter
 	 **/
-	// void sceGuTexFilter(int min, int mag);
+	// void sceGuTexFilter(int min, int mag); // OP_TFLT
 
 	// Texture FiLTer
 	auto OP_TFLT() {
@@ -137,7 +144,7 @@ template Gpu_Texture() {
 	 * @param u - Wrap-mode for the U direction
 	 * @param v - Wrap-mode for the V direction
 	 **/
-	// void sceGuTexWrap(int u, int v);
+	// void sceGuTexWrap(int u, int v); // OP_TWRAP
 
 	// Texture WRAP
 	auto OP_TWRAP() {
@@ -158,31 +165,32 @@ template Gpu_Texture() {
 	 *
 	 * Available apply-modes are: (TFX)
 	 *   - GU_TFX_MODULATE - Cv=Ct*Cf TCC_RGB: Av=Af TCC_RGBA: Av=At*Af
-	 *   - GU_TFX_DECAL - TCC_RGB: Cv=Ct,Av=Af TCC_RGBA: Cv=Cf*(1-At)+Ct*At Av=Af
-	 *   - GU_TFX_BLEND - Cv=(Cf*(1-Ct))+(Cc*Ct) TCC_RGB: Av=Af TCC_RGBA: Av=At*Af
-	 *   - GU_TFX_REPLACE - Cv=Ct TCC_RGB: Av=Af TCC_RGBA: Av=At
-	 *   - GU_TFX_ADD - Cv=Cf+Ct TCC_RGB: Av=Af TCC_RGBA: Av=At*Af
+	 *   - GU_TFX_DECAL    - TCC_RGB: Cv=Ct,Av=Af TCC_RGBA: Cv=Cf*(1-At)+Ct*At Av=Af
+	 *   - GU_TFX_BLEND    - Cv=(Cf*(1-Ct))+(Cc*Ct) TCC_RGB: Av=Af TCC_RGBA: Av=At*Af
+	 *   - GU_TFX_REPLACE  - Cv=Ct TCC_RGB: Av=Af TCC_RGBA: Av=At
+	 *   - GU_TFX_ADD      - Cv=Cf+Ct TCC_RGB: Av=Af TCC_RGBA: Av=At*Af
 	 *
 	 * The fields TCC_RGB and TCC_RGBA specify components that differ between
 	 * the two different component modes.
 	 *
 	 *   - GU_TFX_MODULATE - The texture is multiplied with the current diffuse fragment
-	 *   - GU_TFX_REPLACE - The texture replaces the fragment
-	 *   - GU_TFX_ADD - The texture is added on-top of the diffuse fragment
+	 *   - GU_TFX_REPLACE  - The texture replaces the fragment
+	 *   - GU_TFX_ADD      - The texture is added on-top of the diffuse fragment
 	 *   
 	 * Available component-modes are: (TCC)
-	 *   - GU_TCC_RGB - The texture alpha does not have any effect
+	 *   - GU_TCC_RGB  - The texture alpha does not have any effect
 	 *   - GU_TCC_RGBA - The texture alpha is taken into account
 	 *
 	 * @param tfx - Which apply-mode to use
 	 * @param tcc - Which component-mode to use
 	**/
-	// void sceGuTexFunc(int tfx, int tcc);
+	// void sceGuTexFunc(int tfx, int tcc); // OP_TFUNC
 
 	// Texture enviroment Mode
 	auto OP_TFUNC() {
 		with (gpu.state) {
-			textureEffect = command.extractEnum!(TextureEffect);
+			textureEffect         = command.extractEnum!(TextureEffect, 0);
+			textureColorComponent = command.extractEnum!(TextureColorComponent, 8);
 		}
 	}
 

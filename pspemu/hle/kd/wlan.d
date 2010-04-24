@@ -4,6 +4,8 @@ debug = DEBUG_SYSCALL;
 
 import pspemu.hle.Module;
 
+import std.c.windows.windows;
+
 class sceWlanDrv : Module {
 	void initNids() {
 		mixin(registerd!(0xD7763699, sceWlanGetSwitchState));
@@ -28,8 +30,18 @@ class sceWlanDrv : Module {
 	 * requests 8 so pass it 8 bytes just in case)
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceWlanGetEtherAddr(u8 *etherAddr) {
-		unimplemented();
+	int sceWlanGetEtherAddr(u8* etherAddr) {
+		// http://support.microsoft.com/kb/118623
+		/*
+		NCB Ncb;
+		Ncb.ncb_command = NCBENUM;
+		Ncb.ncb_buffer = (UCHAR *)&lenum;
+		Netbios();
+		*/
+		
+		etherAddr[0..8] = 0xFF;
+		
+		unimplemented_notice();
 		return 0;
 	}
 

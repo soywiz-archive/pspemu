@@ -254,6 +254,8 @@ class Builder {
 
 			// Build .res
 			echo `{$this->rcc} -32 resources\\psp.rc -oresources\\psp.res`;
+			
+			@unlink($this->exe);
 
 			file_put_contents('linkfiles', $linkFilesStr);
 			$cmd = "{$this->dmd} dfl.lib {$this->flags} -of\"{$this->exe}\" resources/psp.res @linkfiles";

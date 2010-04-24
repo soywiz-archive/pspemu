@@ -9,6 +9,8 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 //debug = DEBUG_CLEAR_MODE;
 //debug = DEBUG_TEXTURE_UPDATE;
 
+//version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY;
+
 import std.c.windows.windows;
 import std.windows.syserror;
 import std.stdio;
@@ -73,6 +75,14 @@ class GpuOpengl : GpuImplAbstract {
 	}
 
 	void endDisplayList() {
+	}
+	
+	void tflush() {
+		// ???
+		//foreach (texture; textureCache) texture.markForRecheck = true;
+	}
+	
+	void tsync() {
 	}
 
 	void clear() {
@@ -158,35 +168,70 @@ class GpuOpengl : GpuImplAbstract {
 		glFlush();
 	}
 
-	void frameLoad(void* buffer) {
-		//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
-		glDrawPixels(
-			state.drawBuffer.width, 272,
-			GlPixelFormats[state.drawBuffer.format].external,
-			GlPixelFormats[state.drawBuffer.format].opengl,
-			buffer
-		);
+	// http://hitmen.c02.at/files/yapspd/psp_doc/chap10.html#sec10
+	// @TODO @FIXME - Depth should be swizzled.
+
+	void frameLoad(void* colorBuffer, void* depthBuffer) {
+		//return;
+		if (colorBuffer !is null) {
+			//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
+			glDrawPixels(
+				state.drawBuffer.width, 272,
+				GlPixelFormats[state.drawBuffer.format].external,
+				GlPixelFormats[state.drawBuffer.format].opengl,
+				colorBuffer
+			);
+		}
+		
+		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
+			if (depthBuffer !is null) {
+				glDrawPixels(
+					state.drawBuffer.width, 272,
+					GL_DEPTH_COMPONENT,
+					GL_UNSIGNED_BYTE,
+					colorBuffer
+				);
+			}
+		}
 	}
 	
 	version (VERSION_GL_BITMAP_RENDERING) {
 	} else {
-		ubyte[4 * 512 * 272] buffer_temp;
+		ubyte[4 * 512 * 272] colorBufferTemp;
 	}
 
-	void frameStore(void* buffer) {
-		//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
-		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)GlPixelFormats[state.drawBuffer.format].size);
-		//writefln("%d, %d", state.drawBuffer.width, 272);
-		glReadPixels(
-			0, 0, // x, y
-			state.drawBuffer.width, 272, // w, h
-			GlPixelFormats[state.drawBuffer.format].external,
-			GlPixelFormats[state.drawBuffer.format].opengl,
-			&buffer_temp
-		);
-		for (int n = 0; n < 272; n++) {
-			int m = 271 - n;
-			state.drawBuffer.row(buffer, n)[] = state.drawBuffer.row(&buffer_temp, m)[];
+	void frameStore(void* colorBuffer, void* depthBuffer) {
+		//return;
+		if (colorBuffer !is null) {
+			//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
+			glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)GlPixelFormats[state.drawBuffer.format].size);
+			//writefln("%d, %d", state.drawBuffer.width, 272);
+			glReadPixels(
+				0, 0, // x, y
+				state.drawBuffer.width, 272, // w, h
+				GlPixelFormats[state.drawBuffer.format].external,
+				GlPixelFormats[state.drawBuffer.format].opengl,
+				&colorBufferTemp
+			);
+			for (int n = 0; n < 272; n++) {
+				int m = 271 - n;
+				state.drawBuffer.row(colorBuffer, n)[] = state.drawBuffer.row(&colorBufferTemp, m)[];
+			}
+		}
+
+		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
+			if (depthBuffer !is null) {
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+				glReadPixels(
+					0, 0, // x, y
+					state.drawBuffer.width, 272, // w, h
+					GL_DEPTH_COMPONENT,
+					GL_UNSIGNED_BYTE,
+					depthBuffer
+				);
+			}
+			
+			//writeBmp8("depth.bmp", depthBuffer, 512, 272);
 		}
 	}
 }
@@ -212,16 +257,14 @@ template OpenglUtils() {
 		texture.update(state.memory, textureState, clutState);
 		return texture;
 	}
-
-	void drawBegin() {
+	
+	void drawBeginCommon() {
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
 				glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
 				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-				//writefln("transform");
 			} else {
-				//writefln("no transform");
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
 				glMultMatrixf(state.projectionMatrix.pointer);
 
@@ -236,6 +279,53 @@ template OpenglUtils() {
 			*/
 		}
 
+		prepareMatrix();
+	}
+
+	void drawBeginClear() {
+		bool ccolorMask, calphaMask;
+	
+		//glGetTexEnvfv(GL_TEXTURE_ENV, GL_RGB_SCALE, clearModeRgbScale, 0);
+		//glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, clearModeTextureEnvMode, 0);
+		//glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
+		//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+		glDisable(GL_BLEND);
+		glDisable(GL_STENCIL_TEST);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_FOG);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_LOGIC_OP);
+		glDisable(GL_CULL_FACE);
+		glDepthMask(false);
+		
+		if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT) {
+			ccolorMask = true;
+		}
+
+		if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) {
+			calphaMask = true;
+			/*
+			glEnable(GL_STENCIL_TEST);
+			glStencilFunc(GL_ALWAYS, 0, 0);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			*/
+		}
+
+		if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT) {
+			//glEnable(GL_DEPTH_TEST);
+			glDepthMask(true);
+		}
+
+		glColorMask(ccolorMask, ccolorMask, ccolorMask, calphaMask);
+		
+		//glClear(GL_DEPTH_BUFFER_BIT);
+		//glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	}
+	
+	void drawBeginNormal() {
 		void prepareTexture() {
 			if (!glEnableDisable(GL_TEXTURE_2D, state.textureMappingEnabled)) return;
 
@@ -303,7 +393,24 @@ template OpenglUtils() {
 
 		void prepareColors() {
 			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
-			glColor4fv(state.ambientModelColor.ptr);
+			
+			if (!state.lightingEnabled) {
+				glDisable(GL_COLOR_MATERIAL);
+				glColor4fv(state.ambientModelColor.ptr);
+			} else {
+				//auto faces = GL_FRONT;
+				auto faces = GL_FRONT_AND_BACK;
+				// http://www.opengl.org/sdk/docs/man/xhtml/glColorMaterial.xml
+				// http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=238308
+				if (glEnableDisable(GL_COLOR_MATERIAL, cast(bool)state.materialColorComponents)) {
+					glMaterialfv(faces, GL_AMBIENT , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
+					glMaterialfv(faces, GL_DIFFUSE , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
+					glMaterialfv(faces, GL_SPECULAR, [1.0f, 1.0f, 1.0f, 1.0f].ptr);
+					if (state.materialColorComponents & LightComponents.GU_AMBIENT ) glMaterialfv(faces, GL_AMBIENT,  state.ambientModelColor.ptr);
+					if (state.materialColorComponents & LightComponents.GU_DIFFUSE ) glMaterialfv(faces, GL_DIFFUSE,  state.diffuseModelColor.ptr);
+					if (state.materialColorComponents & LightComponents.GU_SPECULAR) glMaterialfv(faces, GL_SPECULAR, state.specularModelColor.ptr);
+				}
+			}
 		}
 
 		void prepareCulling() {
@@ -336,25 +443,31 @@ template OpenglUtils() {
 		}
 
 		// http://jerome.jouvie.free.fr/OpenGl/Tutorials/Tutorial13.php
+		// http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/graphics/VideoEngine.java
 		void prepareLighting() {
-			return; // @TODO. Temporary disabled.
-
 			if (!glEnableDisable(GL_LIGHTING, state.lightingEnabled)) return;
 
-			for (int n = 0; n < 4; n++) {
-				LightState* light = &state.lights[n];
-				if (!glEnableDisable(GL_LIGHT0 + n, light.enabled)) continue;
+			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, state.lightModel);
 
-				glLightfv(GL_LIGHT0 + n, GL_POSITION , light.position.pointer);
+			foreach (n, ref light; state.lights) {
+				auto GL_LIGHT_n = GL_LIGHT0 + n;
 
-				glLightfv(GL_LIGHT0 + n, GL_AMBIENT  , light.ambientLightColor.pointer);
-				glLightfv(GL_LIGHT0 + n, GL_DIFFUSE  , light.diffuseLightColor.pointer);
-				glLightfv(GL_LIGHT0 + n, GL_SPECULAR , light.specularLightColor.pointer);
+				if (!glEnableDisable(GL_LIGHT_n, light.enabled)) continue;
 
-				// Spot.
-				glLightfv(GL_LIGHT0 + n, GL_SPOT_DIRECTION, light.spotDirection.pointer);
-				glLightfv(GL_LIGHT0 + n, GL_SPOT_EXPONENT , &light.spotLightExponent);
-				glLightfv(GL_LIGHT0 + n, GL_SPOT_CUTOFF   , &light.spotLightCutoff);
+				if (light.type == LightType.GU_SPOTLIGHT) {
+					glLightfv(GL_LIGHT_n, GL_SPOT_DIRECTION, light.spotDirection.pointer);
+					glLightfv(GL_LIGHT_n, GL_SPOT_EXPONENT , &light.spotLightExponent);
+					glLightfv(GL_LIGHT_n, GL_SPOT_CUTOFF   , &light.spotLightCutoff);
+				} else {
+					glLightf(GL_LIGHT_n, GL_SPOT_EXPONENT, 0);
+					glLightf(GL_LIGHT_n, GL_SPOT_CUTOFF, 180);
+				}
+
+				glLightfv(GL_LIGHT_n, GL_POSITION , light.position.pointer);
+
+				//glLightfv(GL_LIGHT_n, GL_AMBIENT  , light.ambientLightColor.pointer);
+				//glLightfv(GL_LIGHT_n, GL_DIFFUSE  , light.diffuseLightColor.pointer);
+				//glLightfv(GL_LIGHT_n, GL_SPECULAR , light.specularLightColor.pointer);
 			}
 		}
 		
@@ -374,77 +487,47 @@ template OpenglUtils() {
 		}
 		
 		void prepareDepthWrite() {
-			glDepthMask(state.depthMask); if (!state.depthMask) return;
+			glDepthMask(state.depthMask != 0); if (!state.depthMask) return;
 
 			//glDepthRange(state.depthRangeNear, state.depthRangeFar);
 			glDepthRange(state.depthRangeFar, state.depthRangeNear);
 		}
 		
 		void prepareFog() {
-			if (!glEnableDisable(GL_FOG, state.fogEnable)) return;
+			if (!glEnableDisable(GL_FOG, state.fogEnabled)) return;
 
 			glFogfv(GL_FOG_COLOR, state.fogColor.pointer);
 			glFogf(GL_FOG_START, state.fogEnd - (1 / state.fogDist));
 			glFogf(GL_FOG_END, state.fogEnd);
 		}
 
-		prepareMatrix();
+		prepareColors();
+		glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
+		prepareStencil();
+		prepareScissor();
+		prepareBlend();
+		prepareCulling();
+		prepareTexture();
+		prepareLighting();
+		prepareLogicOp();
+		prepareAlphaTest();
+		prepareDepthTest();
+		prepareDepthWrite();
+		prepareFog();
+
+		//glColorMask(state.colorMask[0], state.colorMask[1], state.colorMask[2], state.colorMask[3]);
+		glColorMask(true, true, true, false);
+		glEnableDisable(GL_LINE_SMOOTH, state.lineSmoothEnabled);
+		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	}
+
+	void drawBegin() {
+		drawBeginCommon();
 
 		if (state.clearingMode) {
-			bool colorMask, alphaMask;
-		
-            //glGetTexEnvfv(GL_TEXTURE_ENV, GL_RGB_SCALE, clearModeRgbScale, 0);
-            //glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, clearModeTextureEnvMode, 0);
-            //glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
-            //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-			glDisable(GL_BLEND);
-    		glDisable(GL_STENCIL_TEST);
-    		glDisable(GL_LIGHTING);
-    		glDisable(GL_TEXTURE_2D);
-    		glDisable(GL_ALPHA_TEST);
-    		glDisable(GL_FOG);
-    		glDisable(GL_DEPTH_TEST);
-    		glDisable(GL_LOGIC_OP);
-    		glDisable(GL_CULL_FACE);
-			
-			if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT) {
-				colorMask = true;
-			}
-
-			if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) {
-				alphaMask = true;
-        		glEnable(GL_STENCIL_TEST);
-    			glStencilFunc(GL_ALWAYS, 0, 0);
-    			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-			} else {
-				glDisable(GL_STENCIL_TEST);
-			}
-
-			if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT) {
-        		//glEnable(GL_DEPTH_TEST);
-        		glDepthMask(true);
-			} else {
-        		glDepthMask(false);
-			}
-
-			glColorMask(colorMask, colorMask, colorMask, alphaMask);
+			drawBeginClear();
 		} else {
-			prepareColors();
-			glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
-			prepareStencil();
-			prepareScissor();
-			prepareBlend();
-			prepareCulling();
-			prepareTexture();
-			prepareLighting();
-			prepareLogicOp();
-			prepareAlphaTest();
-			prepareDepthTest();
-			prepareDepthWrite();
-			prepareFog();
-
-			glColorMask(true, true, true, false);
+			drawBeginNormal();
 		}
 	}
 	
@@ -598,6 +681,10 @@ class Texture {
 
 	static void applyPalette(ubyte[] textureData, ubyte[] clutData, ubyte* textureDataWithPaletteApplied, ref TextureState textureState, ref ClutState clutState) {
 		uint clutEntrySize = clutState.colorEntrySize;
+		void writeValue2(ubyte value) {
+			textureDataWithPaletteApplied[0..clutEntrySize] = value;
+			textureDataWithPaletteApplied += clutEntrySize;
+		}
 		void writeValue(uint index) {
 			textureDataWithPaletteApplied[0..clutEntrySize] = (clutData.ptr + index * clutEntrySize)[0..clutEntrySize];
 			textureDataWithPaletteApplied += clutEntrySize;
@@ -609,7 +696,11 @@ class Texture {
 					writeValue((indexes >> 4) & 0xF);
 				}
 			break;
-			case PixelFormats.GU_PSM_T8: foreach (index; textureData) writeValue(index); break;
+			case PixelFormats.GU_PSM_T8 :
+				foreach (index; textureData) {
+					writeValue(index);
+				}
+			break;
 			case PixelFormats.GU_PSM_T16: foreach (index; cast(ushort[])textureData) writeValue(index); break;
 			case PixelFormats.GU_PSM_T32: foreach (index; cast(uint[])textureData) writeValue(index); break;
 		}

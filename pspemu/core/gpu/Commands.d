@@ -198,7 +198,7 @@ mixin(defineEnum!("Opcode", ubyte, // VideoCommand
 	"TSIZE6"		, // 0xBE - Texture Size Level 6
 	"TSIZE7"		, // 0xBF - Texture Size Level 7
 	"TMAP"			, // 0xC0 - Texture Projection Map Mode + Texture Map Mode
-	"TEXTURE"		, // 0xC1 - Environment Map Matrix
+	"TEXTURE_ENV_MAP_MATRIX", // 0xC1 - Environment Map Matrix
 	"TMODE"			, // 0xC2 - Texture Mode
 	"TPSM"			, // 0xC3 - Texture Pixel Storage Mode
 	"CLOAD"			, // 0xC4 - CLUT Load

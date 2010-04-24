@@ -35,22 +35,6 @@ template Gpu_Lights() {
 	// void sceGuLightAtt(int light, float atten0, float atten1, float atten2);
 
 	/**
-	 * Set light color
-	 *
-	 * Available light components are:
-	 *   - GU_AMBIENT
-	 *   - GU_DIFFUSE
-	 *   - GU_SPECULAR
-	 *   - GU_AMBIENT_AND_DIFFUSE
-	 *   - GU_DIFFUSE_AND_SPECULAR
-	 *
-	 * @param light - Light index
-	 * @param component - Which component to set
-	 * @param color - Which color to use
-	 **/
-	// void sceGuLightColor(int light, int component, unsigned int color);
-
-	/**
 	 * Set spotlight parameters
 	 *
 	 * @param light - Light index
@@ -60,7 +44,13 @@ template Gpu_Lights() {
 	 **/
 	// void sceGuLightSpot(int light, const ScePspFVector3* direction, float exponent, float cutoff);
 
-	// Specular POWer
+	/**
+	 * Set the specular power for the material
+	 *
+	 * @param power - Specular power
+	 **/
+	// void sceGuSpecular(float power);
+	// Specular POWer (global)
 	auto OP_SPOW() { gpu.state.specularPower = command.float1; }
 
 	/**
@@ -76,17 +66,14 @@ template Gpu_Lights() {
 	 * @param mode - Light mode to use
 	 **/
 	// void sceGuLightMode(int mode);
+	// Light MODE (global)
 	auto OP_LMODE() { gpu.state.lightModel = command.extractEnum!(LightModel); }
 
-	// pspemu.core.gpu.ops.Colors
-	//"ALC"			, // 0x|| - Ambient Light Color
-	//"ALA"			, // 0x|| - Ambient Light Alpha
-
-	// Light Type
-	mixin(LightArrayOperation("LTx" , q{
+	// Light Type (per light)
+	mixin(LightArrayOperation("OP_LT_n" , q{
 		with (gpu.state.lights[Index]) {
-			type = cast(LightType )((command.param24 >> 8) & 3);
-			kind = cast(LightModel)((command.param24 >> 0) & 3);
+			type = command.extractEnum!(LightType, 8);
+			kind = command.extractEnum!(LightModel, 0);
 			switch (type) {
 				case LightType.GU_DIRECTIONAL:
 					position.z = 0.0;
@@ -102,30 +89,46 @@ template Gpu_Lights() {
 		}
 	}));
 
-	// Light Position (X, Y, Z)
-	mixin(LightArrayOperationStep3("LXPx", q{ gpu.state.lights[Index].position.x = command.float1; }));
-	mixin(LightArrayOperationStep3("LYPx", q{ gpu.state.lights[Index].position.y = command.float1; }));
-	mixin(LightArrayOperationStep3("LZPx", q{ gpu.state.lights[Index].position.z = command.float1; }));
+	// Light Position (X, Y, Z) (per light)
+	mixin(LightArrayOperationStep3("OP_LXP_n", q{ gpu.state.lights[Index].position.x = command.float1; }));
+	mixin(LightArrayOperationStep3("OP_LYP_n", q{ gpu.state.lights[Index].position.y = command.float1; }));
+	mixin(LightArrayOperationStep3("OP_LZP_n", q{ gpu.state.lights[Index].position.z = command.float1; }));
 
-	// spot Light Direction (X, Y, Z)
-	mixin(LightArrayOperationStep3("LXDx", q{ gpu.state.lights[Index].spotDirection.x = command.float1; }));
-	mixin(LightArrayOperationStep3("LYDx", q{ gpu.state.lights[Index].spotDirection.y = command.float1; }));
-	mixin(LightArrayOperationStep3("LZDx", q{ gpu.state.lights[Index].spotDirection.z = command.float1; }));
+	// spot Light Direction (X, Y, Z) (per light)
+	mixin(LightArrayOperationStep3("OP_LXD_n", q{ gpu.state.lights[Index].spotDirection.x = command.float1; }));
+	mixin(LightArrayOperationStep3("OP_LYD_n", q{ gpu.state.lights[Index].spotDirection.y = command.float1; }));
+	mixin(LightArrayOperationStep3("OP_LZD_n", q{ gpu.state.lights[Index].spotDirection.z = command.float1; }));
 	
-	// Light Constant/Linear/Quadratic Attenuation
-	mixin(LightArrayOperationStep3("LCAx", q{ gpu.state.lights[Index].attenuation.constant  = command.float1; }));
-	mixin(LightArrayOperationStep3("LLAx", q{ gpu.state.lights[Index].attenuation.linear    = command.float1; }));
-	mixin(LightArrayOperationStep3("LQAx", q{ gpu.state.lights[Index].attenuation.quadratic = command.float1; }));
+	// Light Constant/Linear/Quadratic Attenuation (per light)
+	mixin(LightArrayOperationStep3("OP_LCA_n", q{ gpu.state.lights[Index].attenuation.constant  = command.float1; }));
+	mixin(LightArrayOperationStep3("OP_LLA_n", q{ gpu.state.lights[Index].attenuation.linear    = command.float1; }));
+	mixin(LightArrayOperationStep3("OP_LQA_n", q{ gpu.state.lights[Index].attenuation.quadratic = command.float1; }));
 
-	// SPOT light EXPonent/CUToff
-	mixin(LightArrayOperation("SPOTEXPx", q{ gpu.state.lights[Index].spotLightExponent = command.float1; }));
-	mixin(LightArrayOperation("SPOTCUTx", q{ gpu.state.lights[Index].spotLightCutoff   = command.float1; }));
+	// SPOT light EXPonent/CUToff (per light)
+	mixin(LightArrayOperation("OP_SPOTEXP_n", q{ gpu.state.lights[Index].spotLightExponent = command.float1; }));
+	mixin(LightArrayOperation("OP_SPOTCUT_n", q{ gpu.state.lights[Index].spotLightCutoff   = command.float1; }));
 
-	// Ambient/Diffuse/Specular Light Color
-	mixin(LightArrayOperationStep3("ALCx", q{ gpu.state.lights[Index].ambientLightColor.rgb[]  = command.float3[]; }));
-	mixin(LightArrayOperationStep3("DLCx", q{ gpu.state.lights[Index].diffuseLightColor.rgb[]  = command.float3[]; }));
-	mixin(LightArrayOperationStep3("SLCx", q{ gpu.state.lights[Index].specularLightColor.rgb[] = command.float3[]; }));
+	/**
+	 * Set light color
+	 *
+	 * Available light components are:
+	 *   - GU_AMBIENT
+	 *   - GU_DIFFUSE
+	 *   - GU_SPECULAR
+	 *   - GU_AMBIENT_AND_DIFFUSE
+	 *   - GU_DIFFUSE_AND_SPECULAR
+	 *
+	 * @param light - Light index
+	 * @param component - Which component to set
+	 * @param color - Which color to use
+	 **/
+	// void sceGuLightColor(int light, int component, unsigned int color);
 
-	// LighT Enable
-	mixin(LightArrayOperation("LTEx", q{ gpu.state.lights[Index].enabled = command.bool1; }));
+	// Ambient/Diffuse/Specular Light Color (per light)
+	mixin(LightArrayOperationStep3("OP_ALC_n", q{ gpu.state.lights[Index].ambientLightColor.rgb[]  = command.float3[]; }));
+	mixin(LightArrayOperationStep3("OP_DLC_n", q{ gpu.state.lights[Index].diffuseLightColor.rgb[]  = command.float3[]; }));
+	mixin(LightArrayOperationStep3("OP_SLC_n", q{ gpu.state.lights[Index].specularLightColor.rgb[] = command.float3[]; }));
+
+	// LighT Enable (per light)
+	mixin(LightArrayOperation("OP_LTE_n", q{ gpu.state.lights[Index].enabled = command.bool1; }));
 }

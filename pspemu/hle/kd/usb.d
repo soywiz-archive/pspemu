@@ -9,6 +9,8 @@ class sceUsb : Module {
 		mixin(registerd!(0xAE5DE6AF, sceUsbStart));
 		mixin(registerd!(0x586DB82C, sceUsbActivate));
 		mixin(registerd!(0xC572A9C8, sceUsbDeactivate));
+		mixin(registerd!(0xC2464FA0, sceUsbStop));
+		mixin(registerd!(0xC21645A4, sceUsbGetState));
 	}
 
 	/**
@@ -45,6 +47,30 @@ class sceUsb : Module {
 	 * @return 0 on success
 	 */
 	int sceUsbDeactivate(u32 pid) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Stop a USB driver.
+	 * 
+	 * @param driverName - name of the USB driver to stop
+	 * @param size - Size of arguments to pass to USB driver start
+	 * @param args - Arguments to pass to USB driver start
+	 *
+	 * @return 0 on success
+	 */
+	int sceUsbStop(string driverName, int size, void* args) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get USB state
+	 * 
+	 * @return OR'd PSP_USB_* constants
+	 */
+	int sceUsbGetState() {
 		unimplemented();
 		return -1;
 	}

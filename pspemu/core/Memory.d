@@ -17,7 +17,7 @@ import std.c.windows.windows;
 
 version = VERSION_CHECK_MEMORY;    /// Check more memory positions.
 version = VERSION_CHECK_ALIGNMENT; /// Check that read and writes are aligned.
-version = VERSION_VIRTUAL_ALLOC;
+//version = VERSION_VIRTUAL_ALLOC;
 
 /**--------------------------------+
 | Adress                           |
@@ -119,7 +119,7 @@ class Memory : Stream {
 		}
 		
 		mixin(alloc("scratchPad"));
-		mixin(alloc("frameBuffer"));
+		mixin(alloc("frameBuffer")); // http://hitmen.c02.at/files/yapspd/psp_doc/chap10.html#sec10 // Mirrors?
 		mixin(alloc("mainMemory"));
 
 		// reset(); // D already sets all the new ubyte arrays to 0.

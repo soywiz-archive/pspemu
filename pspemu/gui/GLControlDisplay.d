@@ -1,5 +1,7 @@
 module pspemu.gui.GLControlDisplay;
 
+// http://hitmen.c02.at/files/yapspd/psp_doc/chap10.html
+
 import dfl.all, dfl.internal.winapi;
 
 import core.thread, core.memory;

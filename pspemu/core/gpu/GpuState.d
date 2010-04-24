@@ -99,12 +99,19 @@ struct VertexState {
 	alias n normal;
 }
 
+struct Viewport {
+	float px, py, pz;
+	float sx, sy, sz;
+}
+
 static struct GpuState {
 	Memory memory;
 
 	ScreenBuffer drawBuffer, depthBuffer;
 
 	VertexType vertexType;
+	Viewport viewport;
+	uint offsetX, offsetY;
 
 	uint baseAddress;
 	uint vertexAddress;
@@ -113,9 +120,9 @@ static struct GpuState {
 	ClearBufferMask clearFlags;
 	bool clearingMode;
 
-	Colorf ambientModelColor, diffuseModelColor, specularModelColor;
-	Colorf materialColor;
+	Colorf ambientModelColor, diffuseModelColor, specularModelColor, emissiveModelColor;
 	Colorf textureEnviromentColor;
+	LightComponents materialColorComponents;
 	
 	Colorf fogColor;
 	float  fogDist, fogEnd;
@@ -128,12 +135,13 @@ static struct GpuState {
 	// Textures.
 	// Temporal values.
 	bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
-	int  mipMapLevel;
+	int  mipMapMaxLevel;
 	bool textureSwizzled;
 	PixelFormats  textureFormat;
 	TextureFilter textureFilterMin, textureFilterMag;
 	WrapMode      textureWrapU, textureWrapV;
 	TextureEffect textureEffect;
+	TextureColorComponent textureColorComponent;
 	UV   textureScale, textureOffset;
 	bool mipmapShareClut;
 
@@ -161,7 +169,11 @@ static struct GpuState {
 	bool logicalOperationEnabled; // Logical Operation Enable (GL_COLOR_LOGIC_OP)
 	bool alphaTestEnabled;        // Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
 	bool lightingEnabled;         // Lighting Enable (GL_LIGHTING)
-	bool fogEnable;               // FOG Enable (GL_FOG)
+	bool fogEnabled;              // FOG Enable (GL_FOG)
+	bool ditheringEnabled;
+	bool lineSmoothEnabled;
+	bool colorTestEnabled;
+	bool patchCullEnabled;
 
 	float fogDensity = 0.1;
 	int fogMode;
@@ -174,7 +186,7 @@ static struct GpuState {
 
 	TestFunction depthFunc = TestFunction.GU_ALWAYS;
 	float depthRangeNear = 0.0, depthRangeFar = 1.0;
-	bool depthMask;
+	ushort depthMask;
 
 	TestFunction alphaTestFunc = TestFunction.GU_ALWAYS;
 	float alphaTestValue;
@@ -191,6 +203,10 @@ static struct GpuState {
 	Colorf fixColorSrc, fixColorDst;
 
 	LogicalOperation logicalOperation = LogicalOperation.GU_COPY; // GL_COPY (default)
+	
+	bool[4] colorMask = [true, true, true, true];
+	
+	//static assert (this.sizeof <= 512);
 }
 
 struct PrimitiveFlags {

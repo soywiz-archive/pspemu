@@ -1,5 +1,7 @@
 module pspemu.core.gpu.Gpu;
 
+// http://hitmen.c02.at/files/yapspd/psp_doc/chap11.html
+
 //debug = DEBUG_GPU_VERBOSE;
 debug = GPU_UNKNOWN_COMMANDS;
 //debug = GPU_UNKNOWN_COMMANDS_STOP;
@@ -31,6 +33,8 @@ import pspemu.core.gpu.ops.Lights;
 import pspemu.core.gpu.ops.Morph;
 import pspemu.core.gpu.ops.Clut;
 import pspemu.core.gpu.ops.Fog;
+import pspemu.core.gpu.ops.Dither;
+import pspemu.core.gpu.ops.Depth;
 
 class Gpu : PspHardwareComponent {
 	Memory   memory;
@@ -60,21 +64,22 @@ class Gpu : PspHardwareComponent {
 	// Utility.
 	static pure string ArrayOperation(string vtype, int from, int to, string code, int step = 1) {
 		string r;
-		assert(vtype[$ - 1] == 'x');
-		assert (from <= to);
+		assert(vtype[$ - 2..$] == "_n");
+		assert(vtype[0..3] == "OP_");
+		assert(from <= to);
 		
-		auto type = vtype[0..$ - 1];
+		auto type = vtype[0..$ - 2];
 
 		// Aliases.
-		r ~= "alias OP_" ~ type ~ "_n ";
+		r ~= "alias " ~ type ~ "_n ";
 		for (int n = from; n <= to; n++) {
 			if (n > from) r ~= ", ";
-			r ~= "OP_" ~ type ~ tos(n);
+			r ~= "" ~ type ~ tos(n);
 		}
 		r ~= ";";
 
 		// Operations.
-		r ~= "auto OP_" ~ type ~ "_n() { uint Index = BaseIndex(Opcode." ~ type ~ tos(from) ~ ") / " ~ tos(step) ~ "; " ~ code ~ "}";
+		r ~= "auto " ~ type ~ "_n() { uint Index = BaseIndex(Opcode." ~ type[3..$] ~ tos(from) ~ ") / " ~ tos(step) ~ "; " ~ code ~ "}";
 		return r;
 	}
 
@@ -105,6 +110,8 @@ class Gpu : PspHardwareComponent {
 		mixin Gpu_Morph;
 		mixin Gpu_Clut;
 		mixin Gpu_Fog;
+		mixin Gpu_Dither;
+		mixin Gpu_Depth;
 
 		mixin({
 			string s;
@@ -273,13 +280,19 @@ class Gpu : PspHardwareComponent {
 		return memory.getPointer(state.drawBuffer.address);
 	}
 
+	void* depthBufferAddress() {
+		//writefln("%s :: %08X", state.drawBuffer, state.drawBuffer.address);
+		if (state.depthBuffer.address == 0) return null;
+		return memory.getPointer(state.depthBuffer.address);
+	}
+
 	void externalActionAdd(TaskQueue.Task task) {
 		externalActions.add(task);
 		if (inDrawingThread) externalActions(); else externalActions.waitEmpty();
 	}
 
-	void loadFrameBuffer () { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameLoad (drawBufferAddress); }); }
-	void storeFrameBuffer() { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameStore(drawBufferAddress); }); }
+	void loadFrameBuffer () { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameLoad (drawBufferAddress, depthBufferAddress); }); }
+	void storeFrameBuffer() { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameStore(drawBufferAddress, depthBufferAddress); }); }
 
 	//void loadFrameBufferActually() { impl.frameLoad(drawBufferAddress); }
 	//void storeFrameBufferActually() { impl.frameStore(drawBufferAddress); }

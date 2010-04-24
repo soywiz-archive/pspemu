@@ -8,6 +8,8 @@ import pspemu.utils.Math;
 
 import pspemu.core.Memory;
 
+// http://hitmen.c02.at/files/yapspd/psp_doc/chap27.html#sec27
+
 static const auto PixelFormatSizeMul = [2, 2, 2, 4, 1, 1, 2, 4, 4, 4, 4];
 static const auto PixelFormatSizeDiv = [1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1];
 
