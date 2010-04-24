@@ -63,6 +63,30 @@ struct TextureState {
 	}
 }
 
+struct TextureTransfer {
+	enum TexelSize { BIT_16 = 0, BIT_32 = 1 }
+	
+	uint srcAddress, dstAddress;
+	ushort srcLineWidth, dstLineWidth;
+	ushort srcX, srcY, dstX, dstY;
+	ushort width, height;
+	TexelSize texelSize;
+	
+	string toString() {
+		return std.string.format(
+			"TextureTransfer("
+			"Size(%d, %d) : "
+			"SRC(addr=%08X, w=%d, XY(%d, %d))"
+			"-"
+			"DST(addr=%08X, w=%d, XY(%d, %d))"
+			")",
+			width, height,
+			srcAddress, srcLineWidth, srcX, srcY,
+			dstAddress, dstLineWidth, dstX, dstY
+		);
+	}
+}
+
 struct LightState {
 	struct Attenuation { float constant, linear, quadratic; }
 	bool enabled = false;
@@ -205,7 +229,8 @@ static struct GpuState {
 	LogicalOperation logicalOperation = LogicalOperation.GU_COPY; // GL_COPY (default)
 	
 	ubyte[4] colorMask = [0xFF, 0xFF, 0xFF, 0xFF];
-	
+
+	TextureTransfer textureTransfer;
 	//static assert (this.sizeof <= 512);
 }
 

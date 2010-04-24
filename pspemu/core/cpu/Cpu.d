@@ -1,5 +1,7 @@
 module pspemu.core.cpu.Cpu;
 
+import core.thread;
+
 // Hack. It shoudln't be here.
 // Create a PspHardwareComponents class with all the components there?
 import pspemu.core.gpu.Gpu;
@@ -138,6 +140,8 @@ abstract class Cpu : PspHardwareComponent, IDebugSource {
 	}
 	
 	override void run() {
+		Thread.getThis.priority = +1;
+
 		try {
 			componentInitialized = true;
 			execute();

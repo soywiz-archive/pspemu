@@ -279,4 +279,118 @@ template Gpu_Draw() {
 		}
 		gpu.state.drawBuffer.mustStore = true;
 	}
+
+	/**
+	 * Image transfer using the GE
+	 *
+	 * @note Data must be aligned to 1 quad word (16 bytes)
+	 *
+	 * @par Example: Copy a fullscreen 32-bit image from RAM to VRAM
+	 * @code
+	 * sceGuCopyImage(GU_PSM_8888,0,0,480,272,512,pixels,0,0,512,(void*)(((unsigned int)framebuffer)+0x4000000));
+	 * @endcode
+	 *
+	 * @param psm    - Pixel format for buffer
+	 * @param sx     - Source X
+	 * @param sy     - Source Y
+	 * @param width  - Image width
+	 * @param height - Image height
+	 * @param srcw   - Source buffer width (block aligned)
+	 * @param src    - Source pointer
+	 * @param dx     - Destination X
+	 * @param dy     - Destination Y
+	 * @param destw  - Destination buffer width (block aligned)
+	 * @param dest   - Destination pointer
+	 **/
+	// void sceGuCopyImage(int psm, int sx, int sy, int width, int height, int srcw, void* src, int dx, int dy, int destw, void* dest);
+	// sendCommandi(178/*OP_TRXSBP*/,((unsigned int)src) & 0xffffff);
+	// sendCommandi(179/*OP_TRXSBW*/,((((unsigned int)src) & 0xff000000) >> 8)|srcw);
+	// sendCommandi(235/*OP_TRXSPOS*/,(sy << 10)|sx);
+	// sendCommandi(180/*OP_TRXDBP*/,((unsigned int)dest) & 0xffffff);
+	// sendCommandi(181/*OP_TRXDBW*/,((((unsigned int)dest) & 0xff000000) >> 8)|destw);
+	// sendCommandi(236/*OP_TRXDPOS*/,(dy << 10)|dx);
+	// sendCommandi(238/*OP_TRXSIZE*/,((height-1) << 10)|(width-1));
+	// sendCommandi(234/*OP_TRXKICK*/,(psm ^ 0x03) ? 0 : 1);
+
+	/*struct TextureTransfer {
+		uint srcAddress, dstAddress;
+		ushort srcLineWidth, dstLineWidth;
+		ushort srcX, srcY, dstX, dstY;
+		ushort width, height;
+	}*/
+
+	// TRansfer X Source (Buffer Pointer/Width)/POSition
+	auto OP_TRXSBP() {
+		with (gpu.state.textureTransfer) {
+			srcAddress = (srcAddress & 0xFF000000) | command.extract!(uint, 0, 24);
+		}
+	}
+
+	auto OP_TRXSBW() {
+		with (gpu.state.textureTransfer) {
+			srcAddress = (srcAddress & 0x00FFFFFF) | (command.extract!(uint, 16, 8) << 24);
+			srcLineWidth = command.extract!(ushort, 0, 16);
+			srcX = srcY = 0;
+		}
+	}
+
+	auto OP_TRXSPOS() {
+		with (gpu.state.textureTransfer) {
+			srcX = command.extract!(ushort,  0, 10);
+			srcY = command.extract!(ushort, 10, 10);
+		}
+	}
+
+	// TRansfer X Destination (Buffer Pointer/Width)/POSition
+	auto OP_TRXDBP() {
+		with (gpu.state.textureTransfer) {
+			dstAddress = (dstAddress & 0xFF000000) | command.extract!(uint, 0, 24);
+		}
+	}
+
+	auto OP_TRXDBW() {
+		with (gpu.state.textureTransfer) {
+			dstAddress = (dstAddress & 0x00FFFFFF) | (command.extract!(uint, 16, 8) << 24);
+			dstLineWidth = command.extract!(ushort, 0, 16);
+			dstX = dstY = 0;
+		}
+	}
+	
+	auto OP_TRXDPOS() {
+		with (gpu.state.textureTransfer) {
+			dstX = command.extract!(ushort,  0, 10);
+			dstY = command.extract!(ushort, 10, 10);
+		}
+	}
+
+	// TRansfer X SIZE
+	auto OP_TRXSIZE() {
+		with (gpu.state.textureTransfer) {
+			width  = cast(ushort)(command.extract!(ushort,  0, 10) + 1);
+			height = cast(ushort)(command.extract!(ushort, 10, 10) + 1);
+		}	
+	}
+
+	// TRansfer X KICK
+	auto OP_TRXKICK() {
+		// @TODO It's possible that we need to load and store the framebuffer, and/or update textures after that.
+		gpu.checkLoadFrameBuffer();
+		gpu.state.drawBuffer.mustStore = true;
+		gpu.impl.tflush();
+
+		gpu.state.textureTransfer.texelSize = command.extractEnum!(TextureTransfer.TexelSize);
+		
+		int bpp = (gpu.state.textureTransfer.texelSize == TextureTransfer.TexelSize.BIT_16) ? 2 : 4;
+		with (gpu.state.textureTransfer) {
+			auto srcAddressHost = cast(ubyte*)gpu.memory.getPointer(srcAddress);
+			auto dstAddressHost = cast(ubyte*)gpu.memory.getPointer(dstAddress);
+			for (int n = 0; n < height; n++) {
+				int srcOffset = ((n + srcY) * srcLineWidth + srcX) * bpp;
+				int dstOffset = ((n + dstY) * dstLineWidth + dstX) * bpp;
+				(dstAddressHost + dstOffset)[0.. width * bpp] = (srcAddressHost + srcOffset)[0.. width * bpp];
+				//writefln("%08X <- %08X :: [%d]", dstOffset, srcOffset, width * bpp);
+			}
+		}
+		//writefln("Unimplemented TRXKICK : %s", gpu.state.textureTransfer);
+	}
 }

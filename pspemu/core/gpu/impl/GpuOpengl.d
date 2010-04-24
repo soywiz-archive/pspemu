@@ -7,7 +7,6 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 */
 
 //debug = DEBUG_CLEAR_MODE;
-debug = DEBUG_TEXTURE_UPDATE;
 
 //version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY;
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT;
@@ -31,6 +30,7 @@ import pspemu.core.gpu.GpuImpl;
 import pspemu.utils.Math;
 
 import pspemu.core.gpu.impl.GpuOpenglUtils;
+import pspemu.core.gpu.impl.GpuOpenglTexture;
 
 class GpuOpengl : GpuImplAbstract {
 	mixin OpenglBase;
@@ -387,94 +387,6 @@ template OpenglUtils() {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapU);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapV);
 
-			//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
-
-			uint env_mode;
-			// See http://www.opengl.org/sdk/docs/man/xhtml/glTexEnv.xml
-			// http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/graphics/VideoEngine.java
-			/*switch (state.textureEffect) {
-				case TextureEffect.GU_TFX_MODULATE:
-					// Cv = Cp * Cs
-					// Av = Ap * As
-					env_mode = GL_COMBINE;
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-				break;
-				case TextureEffect.GU_TFX_DECAL:
-					env_mode = GL_COMBINE;
-					// Cv = Cs * As + Cp * (1 - As)
-					// Av = Ap
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC2_RGB, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
-
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-				break;
-				case TextureEffect.GU_TFX_BLEND:
-					// Cv = Cc * Cs + Cp * (1 - Cs)
-					// Av = As * Ap
-					env_mode = GL_COMBINE;
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_CONSTANT);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC2_RGB, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_COLOR);
-
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-				break;
-				case TextureEffect.GU_TFX_REPLACE:
-					// Cv = Cs
-					// Av = As
-					env_mode = GL_COMBINE;
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-				break;
-				case TextureEffect.GU_TFX_ADD :
-					// Cv = Cp + Cs
-					// Av = Ap * As
-					env_mode = GL_COMBINE;
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-					glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PREVIOUS);
-					glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-				break;
-			}
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, env_mode);
-			*/
-			
 			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0); // 2.0 in scale_2x
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
 		}
@@ -495,25 +407,32 @@ template OpenglUtils() {
 		}
 
 		void prepareColors() {
+			//auto faces = GL_FRONT;
+			auto faces = GL_FRONT_AND_BACK;
+
 			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
+			
+			glColor4fv(state.ambientModelColor.ptr);
+			glEnableDisable(GL_COLOR_MATERIAL, cast(bool)state.materialColorComponents);
 			
 			if (!state.lightingEnabled) {
 				glDisable(GL_COLOR_MATERIAL);
-				glColor4fv(state.ambientModelColor.ptr);
 			} else {
-				//auto faces = GL_FRONT;
-				auto faces = GL_FRONT_AND_BACK;
 				// http://www.openorg/sdk/docs/man/xhtml/glColorMaterial.xml
 				// http://www.openorg/discussion_boards/ubbthreads.php?ubb=showflat&Number=238308
-				if (glEnableDisable(GL_COLOR_MATERIAL, cast(bool)state.materialColorComponents)) {
-					glMaterialfv(faces, GL_AMBIENT , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
-					glMaterialfv(faces, GL_DIFFUSE , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
-					glMaterialfv(faces, GL_SPECULAR, [1.0f, 1.0f, 1.0f, 1.0f].ptr);
-					if (state.materialColorComponents & LightComponents.GU_AMBIENT ) glMaterialfv(faces, GL_AMBIENT,  state.ambientModelColor.ptr);
-					if (state.materialColorComponents & LightComponents.GU_DIFFUSE ) glMaterialfv(faces, GL_DIFFUSE,  state.diffuseModelColor.ptr);
-					if (state.materialColorComponents & LightComponents.GU_SPECULAR) glMaterialfv(faces, GL_SPECULAR, state.specularModelColor.ptr);
-				}
+				/*
+				glMaterialfv(faces, GL_AMBIENT , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
+				glMaterialfv(faces, GL_DIFFUSE , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
+				glMaterialfv(faces, GL_SPECULAR, [1.0f, 1.0f, 1.0f, 1.0f].ptr);
+				if (state.materialColorComponents & LightComponents.GU_AMBIENT ) glMaterialfv(faces, GL_AMBIENT,  state.ambientModelColor.ptr);
+				if (state.materialColorComponents & LightComponents.GU_DIFFUSE ) glMaterialfv(faces, GL_DIFFUSE,  state.diffuseModelColor.ptr);
+				//if (state.materialColorComponents & LightComponents.GU_SPECULAR) glMaterialfv(faces, GL_SPECULAR, state.specularModelColor.ptr);
+				*/
 			}
+			
+			state.specularModelColor.a = state.diffuseModelColor.a = state.ambientModelColor.a = 1.0;
+			glMaterialfv(faces, GL_AMBIENT,  state.ambientModelColor.ptr);
+			glMaterialfv(faces, GL_DIFFUSE,  state.diffuseModelColor.ptr);
 		}
 
 		void prepareCulling() {
@@ -552,7 +471,7 @@ template OpenglUtils() {
 				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
 			}
 
-			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, state.lightModel);
+			//glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, state.lightModel);
 
 			foreach (n, ref light; state.lights) {
 				auto GL_LIGHT_n = GL_LIGHT0 + n;
@@ -563,18 +482,26 @@ template OpenglUtils() {
 
 				if (light.type == LightType.GU_SPOTLIGHT) {
 					glLightfv(GL_LIGHT_n, GL_SPOT_DIRECTION, light.spotDirection.pointer);
-					glLightfv(GL_LIGHT_n, GL_SPOT_EXPONENT , &light.spotLightExponent);
-					glLightfv(GL_LIGHT_n, GL_SPOT_CUTOFF   , &light.spotLightCutoff);
+					glLightf(GL_LIGHT_n, GL_SPOT_EXPONENT , light.spotLightExponent);
+					glLightf(GL_LIGHT_n, GL_SPOT_CUTOFF   , light.spotLightCutoff);
 				} else {
 					glLightf(GL_LIGHT_n, GL_SPOT_EXPONENT, 0);
 					glLightf(GL_LIGHT_n, GL_SPOT_CUTOFF, 180);
 				}
-
+				
 				glLightfv(GL_LIGHT_n, GL_POSITION , light.position.pointer);
 
+				light.ambientLightColor.a = light.diffuseLightColor.a = light.specularLightColor.a = 1.0;
+
 				//glLightfv(GL_LIGHT_n, GL_AMBIENT  , light.ambientLightColor.pointer);
-				//glLightfv(GL_LIGHT_n, GL_DIFFUSE  , light.diffuseLightColor.pointer);
-				//glLightfv(GL_LIGHT_n, GL_SPECULAR , light.specularLightColor.pointer);
+				glLightfv(GL_LIGHT_n, GL_DIFFUSE  , light.diffuseLightColor.pointer);
+				glLightfv(GL_LIGHT_n, GL_SPECULAR , light.specularLightColor.pointer);
+				
+				glLightf(GL_LIGHT_n, GL_CONSTANT_ATTENUATION , light.attenuation.constant);
+				glLightf(GL_LIGHT_n, GL_LINEAR_ATTENUATION   , light.attenuation.linear);
+				glLightf(GL_LIGHT_n, GL_QUADRATIC_ATTENUATION, light.attenuation.quadratic);
+				
+				//writefln("LIGHT(%d) : %s", n, light);
 			}
 		}
 		
@@ -696,168 +623,6 @@ template OpenglUtils() {
 			if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT  ) flags |= GL_DEPTH_BUFFER_BIT; // zbuffer
 			glClear(flags);
 			*/
-		}
-	}
-}
-
-class Texture {
-	GLuint gltex;
-	bool markForRecheck;
-	bool refreshAnyway;
-	uint textureHash, clutHash;
-	
-	this() {
-		glGenTextures(1, &gltex);
-		markForRecheck = true;
-		refreshAnyway = true;
-	}
-
-	~this() {
-		glDeleteTextures(1, &gltex);
-	}
-
-	void bind() {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, gltex);
-	}
-
-	void update(Memory memory, ref TextureState textureState, ref ClutState clutState) {
-		if (markForRecheck || refreshAnyway) {
-			ubyte[] emptyBuffer;
-
-			auto textureData = textureState.address ? (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize] : emptyBuffer;
-			//auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
-			auto clutData    = clutState.address ? clutState.data : emptyBuffer;
-		
-			if (markForRecheck) {
-				markForRecheck = false;
-
-				auto currentTextureHash = std.zlib.crc32(textureState.address, textureData);
-				if (currentTextureHash != textureHash) {
-					textureHash = currentTextureHash;
-					refreshAnyway = true;
-				}
-
-				auto currentClutHash = std.zlib.crc32(clutState.address, clutData);
-				if (currentClutHash != clutHash) {
-					clutHash = currentClutHash;
-					refreshAnyway = true;
-				}
-			}
-			
-			if (refreshAnyway) {
-				refreshAnyway = false;
-				updateActually(textureData, clutData, textureState, clutState);
-				//writefln("texture updated");
-			} else {
-				//writefln("texture reuse");
-			}
-		}
-	}
-
-	void updateActually(ubyte[] textureData, ubyte[] clutData, ref TextureState textureState, ref ClutState clutState) {
-		auto texturePixelFormat = GlPixelFormats[textureState.format];
-		auto clutPixelFormat    = GlPixelFormats[clutState.format];
-		GlPixelFormat* glPixelFormat;
-		static ubyte[] textureDataUnswizzled, textureDataWithPaletteApplied;
-
-		debug (DEBUG_TEXTURE_UPDATE) {
-			writefln("Updated: %s", textureState);
-			if (textureState.hasPalette) writefln("  %s", clutState);
-		}
-		
-		glActiveTexture(GL_TEXTURE0);
-		bind();
-
-		// Unswizzle texture.
-		if (textureState.swizzled) {
-			//writefln("swizzled: %d, %d", textureDataUnswizzled.length, textureData.length);
-			if (textureDataUnswizzled.length < textureData.length) textureDataUnswizzled.length = textureData.length;
-
-			unswizzle(textureData, textureDataUnswizzled[0..textureData.length], textureState);
-			textureData = textureDataUnswizzled[0..textureData.length];
-		}
-
-		if (textureState.hasPalette) {
-			int textureSizeWithPaletteApplied = PixelFormatSize(clutState.format, textureState.width * textureState.height);
-			//writefln("palette: %d, %d", textureDataWithPaletteApplied.length, textureSizeWithPaletteApplied);
-			if (textureDataWithPaletteApplied.length < textureSizeWithPaletteApplied) textureDataWithPaletteApplied.length = textureSizeWithPaletteApplied;
-			applyPalette(textureData, clutData, textureDataWithPaletteApplied.ptr, textureState, clutState);
-			textureData = textureDataWithPaletteApplied[0..textureSizeWithPaletteApplied];
-			glPixelFormat = cast(GlPixelFormat *)&clutPixelFormat;
-		} else {
-			glPixelFormat = cast(GlPixelFormat *)&texturePixelFormat;
-		}
-
-		// @TODO: Check this!
-		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)glPixelFormat.size);
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, textureState.buffer_width);
-		//glPixelStorei(GL_UNPACK_ROW_LENGTH, PixelFormatUnpackSize(textureState.format, textureState.buffer_width) / 2);
-		
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			glPixelFormat.internal,
-			textureState.width,
-			textureState.height,
-			0,
-			glPixelFormat.external,
-			glPixelFormat.opengl,
-			textureData.ptr
-		);
-
-		//writefln("update(%d) :: %08X, %s, %d", gltex, textureData.ptr, textureState, textureState.totalSize);
-	}
-
-	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState textureState) {
-		int rowWidth = textureState.rwidth;
-		int pitch    = (rowWidth - 16) / 4;
-		int bxc      = rowWidth / 16;
-		int byc      = textureState.height / 8;
-
-		uint* src = cast(uint*)inData.ptr;
-		
-		auto ydest = outData.ptr;
-		for (int by = 0; by < byc; by++) {
-			auto xdest = ydest;
-			for (int bx = 0; bx < bxc; bx++) {
-				auto dest = cast(uint*)xdest;
-				for (int n = 0; n < 8; n++, dest += pitch) {
-					*(dest++) = *(src++);
-					*(dest++) = *(src++);
-					*(dest++) = *(src++);
-					*(dest++) = *(src++);
-				}
-				xdest += 16;
-			}
-			ydest += rowWidth * 8;
-		}
-	}
-
-	static void applyPalette(ubyte[] textureData, ubyte[] clutData, ubyte* textureDataWithPaletteApplied, ref TextureState textureState, ref ClutState clutState) {
-		uint clutEntrySize = clutState.colorEntrySize;
-		void writeValue2(ubyte value) {
-			textureDataWithPaletteApplied[0..clutEntrySize] = value;
-			textureDataWithPaletteApplied += clutEntrySize;
-		}
-		void writeValue(uint index) {
-			textureDataWithPaletteApplied[0..clutEntrySize] = (clutData.ptr + index * clutEntrySize)[0..clutEntrySize];
-			textureDataWithPaletteApplied += clutEntrySize;
-		}
-		switch (textureState.format) {
-			case PixelFormats.GU_PSM_T4:
-				foreach (indexes; textureData) {
-					writeValue((indexes >> 0) & 0xF);
-					writeValue((indexes >> 4) & 0xF);
-				}
-			break;
-			case PixelFormats.GU_PSM_T8 :
-				foreach (index; textureData) {
-					writeValue(index);
-				}
-			break;
-			case PixelFormats.GU_PSM_T16: foreach (index; cast(ushort[])textureData) writeValue(index); break;
-			case PixelFormats.GU_PSM_T32: foreach (index; cast(uint[])textureData) writeValue(index); break;
 		}
 	}
 }

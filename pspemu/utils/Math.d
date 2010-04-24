@@ -147,6 +147,15 @@ struct TVector(Type, int Size = 4) {
 	Type[] opSlice(size_t x, size_t y) { return v[x..y]; }
 	Type* pointer() { return v.ptr; }
 	Type opIndex(size_t index) { return v[index]; }
+	string toString() {
+		string s;
+		for (int n = 0; n < v.length; n++) {
+			if (n != 0) s ~= ", ";
+			s ~= std.conv.to!(string)(v[n]);
+		}
+		//return std.conv.to!(string)(typeid(typeof(this))) ~ "(" ~ s ~ ")";
+		return "vec(" ~ s ~ ")";
+	}
 }
 
 alias TVector!(float, 4) Vector;

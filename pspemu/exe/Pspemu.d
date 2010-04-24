@@ -50,6 +50,8 @@ class PspDisplay : Display {
 }
 
 int main(string[] args) {
+	Thread.getThis.priority = +1;
+
 	// Components.
 	auto memory        = new Memory;
 	auto controller    = new Controller();

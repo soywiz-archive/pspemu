@@ -40,6 +40,7 @@ struct Colorf {
 	float* ptr() { return rgba.ptr; }
 	alias ptr pointer;
 	static assert(this.sizeof == float.sizeof * 4);
+	string toString() { return std.string.format("Colorf(%.2f, %.2f, %.2f, %.2f)", r, g, b, a); }
 }
 
 //void main() {}
