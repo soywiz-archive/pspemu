@@ -10,6 +10,10 @@ void emitString(char *v) {
 	asm("syscall 0x1012");
 }
 
+void emitComment(char *v) {
+	asm("syscall 0x1012");
+}
+
 void emitMemoryBlock(void *address, unsigned int size) {
 	asm("syscall 0x1013");
 }

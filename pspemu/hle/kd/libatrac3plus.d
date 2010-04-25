@@ -18,6 +18,7 @@ class sceAtrac3plus : Module {
 		mixin(registerd!(0xCA3CA3D2, sceAtracGetBufferInfoForReseting));
 		mixin(registerd!(0x644E5607, sceAtracResetPlayPosition));
 		mixin(registerd!(0xE88F759B, sceAtracGetInternalErrorInfo));
+		mixin(registerd!(0xA554A158, sceAtracGetBitrate));
 	}
 
 	/**
@@ -155,6 +156,20 @@ class sceAtrac3plus : Module {
 	// @TODO: UNKNOWN PROTOTYPE.
 	void sceAtracGetInternalErrorInfo() {
 		unimplemented();
+	}
+	
+	/**
+	 * Gets the bitrate.
+	 *
+	 * @param atracID - the atracID
+	 * @param outBitrate - pointer to a integer that receives the bitrate in kbps
+	 *
+	 * @return < 0 on error, otherwise 0
+	 *
+	 */
+	int sceAtracGetBitrate(int atracID, int* outBitrate) {
+		unimplemented();
+		return -1;
 	}
 }
 

@@ -10,9 +10,6 @@ class Config {
 __gshared Config _GlobalConfig;
 
 Config GlobalConfig() {
-	if (_GlobalConfig is null) {
-		_GlobalConfig = new Config;
-		writefln("*********Config");
-	}
+	if (_GlobalConfig is null) _GlobalConfig = new Config;
 	return _GlobalConfig;
 }

@@ -6,6 +6,8 @@ import std.date;
 
 // d_time has milliseconds resolution.
 
+alias uint time_t;
+
 static const ulong rtcResolution = 1_000_000; // microseconds
 
 // std.date.getUTCtime has milliseconds resolution. milliseconds -> microseconds
@@ -45,7 +47,6 @@ struct pspTime {
 	static assert (this.sizeof == 16);
 }
 
-
 class sceRtc : Module {
 	void initNids() {
 		mixin(registerd!(0xC41C2853, sceRtcGetTickResolution));
@@ -60,13 +61,16 @@ class sceRtc : Module {
 		mixin(registerd!(0xE7C27D1B, sceRtcGetCurrentClockLocalTime));
 		
 		mixin(registerd!(0x34885E0D, sceRtcConvertUtcToLocalTime));
+
+		mixin(registerd!(0x27C4594C, sceRtcGetTime_t));
 	}
 
 	/**
 	 * Convert a UTC-based tickcount into a local time tick count
 	 *
-	 * @param tickUTC - pointer to u64 tick in UTC time
+	 * @param tickUTC   - pointer to u64 tick in UTC time
 	 * @param tickLocal - pointer to u64 to receive tick in local time
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcConvertUtcToLocalTime(u64* tickUTC, u64* tickLocal) {
@@ -78,8 +82,9 @@ class sceRtc : Module {
 	 * Add two ticks
 	 *
 	 * @param destTick - pointer to tick to hold result
-	 * @param srcTick - pointer to source tick
+	 * @param srcTick  - pointer to source tick
 	 * @param numTicks - number of ticks to add
+	 *
 	 * @return 0 on success, <0 on error
 	 */
 	int sceRtcTickAddTicks(ulong* destTick, ulong* srcTick, ulong numTicks) {
@@ -92,6 +97,7 @@ class sceRtc : Module {
 	 *
 	 * @param date - pointer to pspTime to convert
 	 * @param tick - pointer to tick to set
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcGetTick(pspTime* date, ulong* tick) {
@@ -104,6 +110,7 @@ class sceRtc : Module {
 	 *
 	 * @param date - pointer to pspTime struct to set
 	 * @param tick - pointer to ticks to convert
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcSetTick(pspTime* date, ulong* tick) {
@@ -115,6 +122,7 @@ class sceRtc : Module {
 	 * Get current local time into a pspTime struct
 	 *
 	 * @param time - pointer to pspTime struct to receive time
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcGetCurrentClockLocalTime(pspTime *time) {
@@ -137,8 +145,9 @@ class sceRtc : Module {
 	 * Add an amount of ms to a tick
 	 *
 	 * @param destTick - pointer to tick to hold result
-	 * @param srcTick - pointer to source tick
-	 * @param numMS - number of ms to add
+	 * @param srcTick  - pointer to source tick
+	 * @param numMS    - number of ms to add
+	 *
 	 * @return 0 on success, <0 on error
 	 */
 	int sceRtcTickAddMicroseconds(ulong* destTick, ulong* srcTick, ulong numMS) {
@@ -149,6 +158,7 @@ class sceRtc : Module {
 	 * Get current tick count
 	 *
 	 * @param tick - pointer to u64 to receive tick count
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceRtcGetCurrentTick(ulong* tick) {
@@ -159,8 +169,9 @@ class sceRtc : Module {
 	/**
 	 * Get number of days in a specific month
 	 *
-	 * @param year - year in which to check (accounts for leap year)
+	 * @param year  - year in which to check (accounts for leap year)
 	 * @param month - month to get number of days for
+	 *
 	 * @return # of days in month, <0 on error (?)
 	 */
 	int sceRtcGetDaysInMonth(int year, int month) {
@@ -170,9 +181,10 @@ class sceRtc : Module {
 	/**
 	 * Get day of the week for a date
 	 *
-	 * @param year - year in which to check (accounts for leap year)
+	 * @param year  - year in which to check (accounts for leap year)
 	 * @param month - month that day is in
-	 * @param day - day to get day of week for
+	 * @param day   - day to get day of week for
+	 *
 	 * @return day of week with 0 representing Monday
 	 */
 	int sceRtcGetDayOfWeek(int year, int month, int day) {
@@ -181,6 +193,12 @@ class sceRtc : Module {
 		
 		auto dtime = std.date.parse(std.string.format("%04d-%02d-%02d", year, month, day));
 		return (std.date.weekDay(dtime) + 6) % 7;
+	}
+	
+	int sceRtcGetTime_t(pspTime* date, time_t* time) {
+		// @TODO: check!
+		*time = cast(time_t)(cast(ulong)tick_to_dtime(date.tick) / 1000);
+		return 0;
 	}
 }
 

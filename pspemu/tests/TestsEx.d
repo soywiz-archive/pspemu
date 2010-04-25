@@ -37,7 +37,7 @@ import pspemu.hle.Module;
 import pspemu.hle.Loader;
 import pspemu.hle.Syscall;
 
-import std.file;
+import std.file, std.regex;
 
 class PspDisplay : Display {
 	Memory memory;
@@ -89,11 +89,57 @@ void main() {
 		if (e.name.length >= 9 && e.name[$ - 9..$] == ".expected") {
 			string fileNameExpected = e.name;
 			string fileNameElf      = std.path.getName(e.name) ~ ".elf";
+			string fileNameAsm      = std.path.getName(e.name) ~ ".asm";
+			string fileNameC        = std.path.getName(e.name) ~ ".c";
+			string fileNameExe;
+			
+			if (std.file.exists(fileNameElf) && std.file.exists(fileNameC)) {
+				if (lastModified(fileNameC) > lastModified(fileNameElf)) {
+					std.file.remove(fileNameElf);
+				}
+			}
+			
+			if (std.file.exists(fileNameAsm)) {
+				fileNameExe = fileNameAsm;
+			} else if (std.file.exists(fileNameElf)) {
+				fileNameExe = fileNameElf;
+			} else if (std.file.exists(fileNameC)) {
+				string testPath = std.path.dirname(fileNameC);
+				string fileData = cast(string)std.file.read(fileNameC);
+
+				auto re = std.regex.regex(r"#pragma compile,\s+(.*)$", "gm");
+				
+				auto bat = "";
+
+				bat ~= "@ECHO OFF\r\n";
+				bat ~= "CD " ~ testPath ~ "\r\n";
+
+				foreach (m; std.regex.match(fileData, re)) {
+					string cmd = m.captures[1];
+					cmd = std.string.replace(cmd, "%PSPSDK%", ApplicationPaths.exe ~ "\\dev\\pspsdk");
+					bat ~= cmd ~ "\r\n";
+					//writefln("%s", cmd);
+					//std.process.system(cmd);
+				}
+				
+				std.file.write("build_test.bat", cast(ubyte[])bat);
+
+				std.process.system("build_test.bat");
+
+				std.file.remove("build_test.bat");
+				
+				fileNameExe = fileNameElf;
+				if (std.file.exists(fileNameElf) && std.file.exists(fileNameC)) {
+					std.file.setTimes(fileNameElf, lastModified(fileNameC), lastModified(fileNameC));
+				}
+			} else {
+				writefln("Can't find neither .asm, .elf or .c");
+			}
 
 			auto expectedLines = std.string.split(cast(string)std.file.read(fileNameExpected), "\n");
-			writefln("Testing... %s", fileNameElf);
+			writefln("Testing... %s", fileNameExe);
 			syscall.reset();
-			loader.loadAndExecute(fileNameElf);
+			loader.loadAndExecute(fileNameExe);
 			cpu.waitEnd();
 
 			int passCount = 0, failCount = 0;

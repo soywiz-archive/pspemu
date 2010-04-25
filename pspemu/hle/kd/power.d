@@ -26,6 +26,116 @@ class scePower : Module {
 		mixin(registerd!(0xB8D7B3FB, scePowerSetBusClockFrequency));
 		mixin(registerd!(0xDFA8BAF8, scePowerUnregisterCallback));
 		mixin(registerd!(0xFDB5BFE9, scePowerGetCpuClockFrequencyInt));
+
+		mixin(registerd!(0x2B51FE2F, scePower_2B51FE2F));
+		mixin(registerd!(0x442BFBAC, scePower_442BFBAC));
+		mixin(registerd!(0xEDC13FE5, scePowerGetIdleTimer));
+		mixin(registerd!(0x7F30B3B1, scePowerIdleTimerEnable));
+		mixin(registerd!(0x972CE941, scePowerIdleTimerDisable));
+		mixin(registerd!(0x27F3292C, scePowerBatteryUpdateInfo));
+		mixin(registerd!(0xE8E4E204, scePower_E8E4E204));
+		mixin(registerd!(0xB999184C, scePowerGetLowBatteryCapacity));
+		mixin(registerd!(0x78A1A796, scePower_78A1A796));
+		mixin(registerd!(0x94F5A53F, scePowerGetBatteryRemainCapacity));
+		mixin(registerd!(0xFD18A0FF, scePowerGetBatteryFullCapacity));
+		mixin(registerd!(0x862AE1A6, scePowerGetBatteryElec));
+		mixin(registerd!(0x23436A4A, scePower_23436A4A));
+		mixin(registerd!(0x0CD21B1F, scePowerSetPowerSwMode));
+		mixin(registerd!(0x165CE085, scePowerGetPowerSwMode));
+		mixin(registerd!(0xDB62C9CF, scePowerCancelRequest));
+		mixin(registerd!(0x7FA406DD, scePowerIsRequest));
+		mixin(registerd!(0x2B7C7CF4, scePowerRequestStandby));
+		mixin(registerd!(0xAC32C9CC, scePowerRequestSuspend));
+		mixin(registerd!(0x2875994B, scePower_2875994B));
+		mixin(registerd!(0x3951AF53, scePowerWaitRequestCompletion));
+		mixin(registerd!(0x0074EF9B, scePowerGetResumeCount));
+		mixin(registerd!(0xDB9D28DD, scePowerUnregitserCallback));
+		mixin(registerd!(0xBD681969, scePowerGetBusClockFrequencyInt));
+		mixin(registerd!(0xB1A52C83, scePowerGetCpuClockFrequencyFloat));
+		mixin(registerd!(0x9BADB3EB, scePowerGetBusClockFrequencyFloat));
+	}
+
+	/**
+	 * Get Bus fequency as Integer
+	 * @return frequency as int
+	 */
+	int scePowerGetBusClockFrequencyInt() { unimplemented(); return -1; }
+
+	/**
+	 * Get CPU Frequency as Float
+	 * @return frequency as float
+	 */
+	float scePowerGetCpuClockFrequencyFloat() { unimplemented(); return -1; }
+
+	/**
+	 * Get Bus frequency as Float
+	 * @return frequency as float
+	 */
+	float scePowerGetBusClockFrequencyFloat() { unimplemented(); return -1; }
+
+	void scePowerUnregitserCallback() { unimplemented(); }
+	void scePowerGetResumeCount() { unimplemented(); }
+	void scePowerWaitRequestCompletion() { unimplemented(); }
+	void scePower_2875994B() { unimplemented(); }
+	void scePowerIsRequest() { unimplemented(); }
+	void scePower_23436A4A() { unimplemented(); }
+	void scePower_78A1A796() { unimplemented(); }
+	void scePower_E8E4E204() { unimplemented(); }
+	void scePower_2B51FE2F() { unimplemented(); }
+	void scePower_442BFBAC() { unimplemented(); }
+	void scePowerBatteryUpdateInfo() { unimplemented(); }
+	void scePowerGetLowBatteryCapacity() { unimplemented(); }
+	void scePowerGetBatteryRemainCapacity() { unimplemented(); }
+	void scePowerGetBatteryFullCapacity() { unimplemented(); }
+	void scePowerSetPowerSwMode() { unimplemented(); }
+	void scePowerGetPowerSwMode() { unimplemented(); }
+	void scePowerCancelRequest() { unimplemented(); }
+
+	/**
+	 * Request the PSP to go into standby
+	 *
+	 * @return 0 always
+	 */
+	int scePowerRequestStandby() { unimplemented(); return -1; }
+
+	/**
+	 * Request the PSP to go into suspend
+	 *
+	 * @return 0 always
+	 */
+	int scePowerRequestSuspend() { unimplemented(); return -1; }
+
+	/**
+	 * unknown? - crashes PSP in usermode
+	 */
+	int scePowerGetBatteryElec() { unimplemented(); return -1; }
+
+	/**
+	 * Get Idle timer
+	 */
+	int scePowerGetIdleTimer() {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Enable Idle timer
+	 *
+	 * @param unknown - pass 0
+	 */
+	int scePowerIdleTimerEnable(int unknown) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Disable Idle timer
+	 *
+	 * @param unknown - pass 0
+	 */
+	int scePowerIdleTimerDisable(int unknown) {
+		unimplemented();
+		return -1;
 	}
 
 	// http://jpcsp.googlecode.com/svn/trunk/src/jpcsp/HLE/modules150/scePower.java

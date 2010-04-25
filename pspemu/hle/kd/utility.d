@@ -2,15 +2,16 @@ module pspemu.hle.kd.utility; // kd/utility.prx (sceUtility_Driver):
 
 import pspemu.hle.Module;
 
+import pspemu.hle.kd.utility_sysparam;
+
 class sceUtility : Module {
+	mixin sceUtility_sysparams;
+
 	void initNids() {
 		mixin(registerd!(0x50C4CD57, sceUtilitySavedataInitStart));
 		mixin(registerd!(0x9790B33C, sceUtilitySavedataShutdownStart));
 		mixin(registerd!(0xD4B95FFB, sceUtilitySavedataUpdate));
 		mixin(registerd!(0x8874DBE0, sceUtilitySavedataGetStatus));
-
-		mixin(registerd!(0xA5DA2406, sceUtilityGetSystemParamInt));
-		mixin(registerd!(0x34B78343, sceUtilityGetSystemParamString));
 
 		mixin(registerd!(0x5EEE6548, sceUtilityCheckNetParam));
 		mixin(registerd!(0x434D4B3A, sceUtilityGetNetParam));
@@ -24,12 +25,59 @@ class sceUtility : Module {
 		mixin(registerd!(0x9A1C91D7, sceUtilityMsgDialogGetStatus));
 		
 		mixin(registerd!(0xC629AF26, sceUtilityLoadAvModule));
+		
+		mixin(registerd!(0x4DB1E739, sceUtilityNetconfInitStart));
+		mixin(registerd!(0xF88155F6, sceUtilityNetconfShutdownStart));
+		mixin(registerd!(0x91E70E35, sceUtilityNetconfUpdate));
+		mixin(registerd!(0x6332AA39, sceUtilityNetconfGetStatus));
+		
+		initNids_sysparams();
+	}
+
+	/**
+	 * Init the Network Configuration Dialog Utility
+	 *
+	 * @param data - pointer to pspUtilityNetconfData to be initialized
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceUtilityNetconfInitStart(pspUtilityNetconfData *data) {
+		unimplemented(); return -1;
+	}
+
+	/**
+	 * Shutdown the Network Configuration Dialog Utility
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceUtilityNetconfShutdownStart() {
+		unimplemented(); return -1;
+	}
+
+	/**
+	 * Update the Network Configuration Dialog GUI
+	 * 
+	 * @param unknown - unknown; set to 1
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceUtilityNetconfUpdate(int unknown) {
+		unimplemented(); return -1;
+	}
+
+	/**
+	 * Get the status of a running Network Configuration Dialog
+	 *
+	 * @return one of pspUtilityDialogState on success, < 0 on error
+	 */
+	int sceUtilityNetconfGetStatus() {
+		unimplemented(); return -1;
 	}
 
 	/**
 	 * Create a message dialog
 	 *
 	 * @param params - dialog parameters
+	 *
 	 * @return 0 on success
 	 */
 	int sceUtilityMsgDialogInitStart(pspUtilityMsgDialogParams* params) {
@@ -59,8 +107,8 @@ class sceUtility : Module {
 	 * Get the current status of a message dialog currently active.
 	 *
 	 * @return 2 if the GUI is visible (you need to call sceUtilityMsgDialogGetStatus).
-	 * 3 if the user cancelled the dialog, and you need to call sceUtilityMsgDialogShutdownStart.
-	 * 4 if the dialog has been successfully shut down.
+	 *         3 if the user cancelled the dialog, and you need to call sceUtilityMsgDialogShutdownStart.
+	 *         4 if the dialog has been successfully shut down.
 	 */
 	int sceUtilityMsgDialogGetStatus() {
 		unimplemented();
@@ -78,36 +126,12 @@ class sceUtility : Module {
 	}
 
 	/**
-	 * Get Integer System Parameter
-	 *
-	 * @param id - which parameter to get
-	 * @param value - pointer to integer value to place result in
-	 * @return 0 on success, PSP_SYSTEMPARAM_RETVAL_FAIL on failure
-	 */
-	int sceUtilityGetSystemParamInt(int id, int* value) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Get String System Parameter
-	 *
-	 * @param id - which parameter to get
-	 * @param str - char * buffer to place result in
-	 * @param len - length of str buffer
-	 * @return 0 on success, PSP_SYSTEMPARAM_RETVAL_FAIL on failure
-	 */
-	int sceUtilityGetSystemParamString(int id, char* str, int len) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
 	 * Saves or Load savedata to/from the passed structure
 	 * After having called this continue calling sceUtilitySavedataGetStatus to
 	 * check if the operation is completed
 	 *
 	 * @param params - savedata parameters
+	 *
 	 * @return 0 on success
 	 */
 	int sceUtilitySavedataInitStart(/*SceUtilitySavedataParam*/void* params) {
@@ -120,7 +144,6 @@ class sceUtility : Module {
 	 * ::sceUtilitySavedataGetStatus to check when it has shutdown
 	 *
 	 * @return 0 on success
-	 *
 	 */
 	int sceUtilitySavedataShutdownStart() {
 		unimplemented();
@@ -140,6 +163,7 @@ class sceUtility : Module {
 	 * Check the current status of the saving/loading/shutdown process
 	 * Continue calling this to check current status of the process
 	 * before calling this call also sceUtilitySavedataUpdate
+	 *
 	 * @return 2 if the process is still being processed.
 	 * 3 on save/load success, then you can call sceUtilitySavedataShutdownStart.
 	 * 4 on complete shutdown.
@@ -163,10 +187,11 @@ class sceUtility : Module {
 	/**
 	 * Get Net Configuration Parameter
 	 *
-	 * @param conf - Net Configuration number (1 to n)
-	 * (0 returns valid but seems to be a copy of the last config requested)
+	 * @param conf  - Net Configuration number (1 to n)
+	 *               (0 returns valid but seems to be a copy of the last config requested)
 	 * @param param - which parameter to get
-	 * @param data - parameter data
+	 * @param data  - parameter data
+	 *
 	 * @return 0 on success, 
 	 */
 	int sceUtilityGetNetParam(int conf, int param, netData *data) {
@@ -180,6 +205,7 @@ class sceUtility : Module {
 	 * Available on firmware 2.00 and higher only.
 	 *
 	 * @param module - module number to load (PSP_AV_MODULE_xxx)
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceUtilityLoadAvModule(int _module) {
@@ -295,6 +321,27 @@ struct SceUtilitySavedataParam {
 
 }
 +/
+
+enum pspUtilityNetconfActions {
+	PSP_NETCONF_ACTION_CONNECTAP,
+	PSP_NETCONF_ACTION_DISPLAYSTATUS,
+	PSP_NETCONF_ACTION_CONNECT_ADHOC,
+    PSP_NETCONF_ACTION_CONNECTAP_LASTUSED,
+}
+
+struct pspUtilityNetconfAdhoc {
+	char name[8];
+	uint timeout;
+}
+
+struct pspUtilityNetconfData {
+	pspUtilityDialogCommon base;
+	int action; /** One of pspUtilityNetconfActions */
+	pspUtilityNetconfAdhoc *adhocparam; //* Adhoc connection params */
+	int hotspot; /** Set to 1 to allow connections with the 'Internet Browser' option set to 'Start' (ie. hotspot connection) */
+	int hotspot_connected; /** Will be set to 1 when connected to a hotspot style connection */
+	int wifisp; /** Set to 1 to allow connections to Wifi service providers (WISP) */
+}
 
 static this() {
 	mixin(Module.registerModule("sceUtility"));
