@@ -13,6 +13,8 @@ import std.contracts;
 import pspemu.hle.Module;
 import pspemu.utils.Audio;
 
+import pspemu.Config;
+
 import pspemu.hle.kd.threadman;
 
 enum PspAudioFormats : uint {
@@ -136,11 +138,13 @@ class sceAudio_driver : Module {
 
 		// Disable all the channels except the first one
 		//if (channel != 0) disableThread = true;
+		
+		if (!GlobalConfig.audioEnabled) disableThread = true;
 
 		if (disableThread) {
 			return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
 				"sceAudioOutputPannedBlocking (disabled)", (PspThread pausedThread) {
-					if (!playing) {
+					if (!playing || GlobalConfig.audioEnabled) {
 						pausedThread.resumeAndReturn(0);
 					}
 				}

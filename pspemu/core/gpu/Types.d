@@ -60,7 +60,7 @@ struct VertexType {
 				uint, "weight",   2,
 				uint, "index",    2,
 				uint, "__0",      1,
-				uint, "skinningWeightCount", 3,
+				uint, "_skinningWeightCount", 3,
 				uint, "__1",      1,
 				uint, "morphingVertexCount",   2,
 				uint, "__2",      3,
@@ -69,6 +69,8 @@ struct VertexType {
 			));
 		}
 	}
+	
+	uint skinningWeightCount() { return _skinningWeightCount + 1; }
 
 	uint vertexSize() {
 		uint size = 0;

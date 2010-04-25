@@ -204,7 +204,7 @@ class RingBuffer(Type) {
 
 class Audio {
 	//const int bufferSize = 84; // less than 2ms
-	const int bufferSize = 4410; // 100ms
+	const int bufferSize = 441; // 10ms
 	//const int bufferSize = 128;
 	
 	class Channel {
@@ -218,7 +218,7 @@ class Audio {
 		bool isPlaying() {
 			//return samples.readLeft > samples.capacity / 2;
 			//return samples.readLeft > 4410 * 2; // 100ms
-			return samples.readLeft > bufferSize * 2 * 4;
+			return samples.readLeft > bufferSize * 2 * 5;
 		}
 		
 		void wait() {

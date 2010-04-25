@@ -27,6 +27,8 @@ import pspemu.gui.AboutForm;
 import pspemu.gui.HexEditorForm;
 import pspemu.gui.Registers;
 
+import pspemu.Config;
+
 static const string svnRevision = import("svn.version");
 
 class DisplayForm : Form, IMessageFilter {
@@ -289,6 +291,10 @@ class DisplayForm : Form, IMessageFilter {
 				}
 			});
 			addMenu("-");
+			addMenu("Enable &audio", (MenuItem mi, EventArgs ea) {
+				mi.checked = !mi.checked;
+				GlobalConfig.audioEnabled = mi.checked;
+			}).checked = GlobalConfig.audioEnabled;
 			addMenu("Frame &limiting", (MenuItem mi, EventArgs ea) {
 				mi.checked = !mi.checked;
 				display.frameLimiting = mi.checked;

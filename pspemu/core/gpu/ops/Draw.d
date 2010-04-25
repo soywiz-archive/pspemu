@@ -222,7 +222,7 @@ template Gpu_Draw() {
 		auto extractColorTable = [null, &extractColor8bits, &extractColor8bits, &extractColor8bits, &extractColor16bits, &extractColor16bits, &extractColor16bits, &extractColor8888];
 		auto moveIndexTable    = [null, &moveIndexGen!(ubyte), &moveIndexGen!(ushort), &moveIndexGen!(uint)];
 
-		auto extractWeights  = vertexType.skinningWeightCount ? &extractArray!(float) : null;
+		auto extractWeights  = extractTable[vertexType.weight  ];
 		auto extractTexture  = extractTable[vertexType.texture ];
 		auto extractPosition = extractTable[vertexType.position];
 		auto extractNormal   = extractTable[vertexType.normal  ];
@@ -236,7 +236,6 @@ template Gpu_Draw() {
 				extractWeights(vertex.weights[0..vertexType.skinningWeightCount]);
 				debug (EXTRACT_PRIM) writef("| weights(...) ");
 			}
-
 			if (extractTexture) {
 				extractTexture((&vertex.u)[0..2]);
 				debug (EXTRACT_PRIM) writef("| texture(%f, %f) ", vertex.u, vertex.v);
