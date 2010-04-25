@@ -45,7 +45,7 @@ template TemplateCpu_MISC() {
 	// Inlined.
 	auto OP_UNK() {
 		.writefln("Unknown operation 0x%08X at 0x%08X", instruction.v, registers.PC);
-		version (STOP_AT_UNKNOWN_INSTRUCTION) assert(0, std.string.format("Unknown operation 0x%08X at 0x%08X", instruction.v, registers.PC));
+		version (STOP_AT_UNKNOWN_INSTRUCTION) throw(new Exception(std.string.format("Unknown operation 0x%08X at 0x%08X", instruction.v, registers.PC)));
 		registers.pcAdvance(4);
 	}
 }

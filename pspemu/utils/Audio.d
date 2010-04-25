@@ -4,8 +4,21 @@ import std.c.windows.windows;
 import std.contracts;
 import std.stdio;
 import core.thread;
+import std.stream;
 
 import pspemu.utils.Utils;
+
+//debug = DEBUG_DUMP_AUDIO_CHANNELS;
+
+//version = VERSION_ONLY_FIRST_CHANNEL;
+
+/*
+static const uint SndOutPacketSize = 512;
+static const uint MAX_BUFFER_COUNT = 8;
+
+static const int PacketsPerBuffer = (1024 / SndOutPacketSize);
+static const int BufferSize = SndOutPacketSize*PacketsPerBuffer;
+*/
 
 pragma(lib, "winmm.lib");
 
@@ -144,47 +157,172 @@ static const WOM_CLOSE = 0x3BC;
 static const WOM_DONE  = 0x3BD;
 */
 
+class RingBuffer(Type) {
+	Type[] buffer;
+
+	uint readingPosition;
+	uint writtingPosition;
+	uint readLeft;
+	uint writeLeft;
+	uint capacity() { return buffer.length; }
+	Object readLock, writeLock;
+	
+	this(uint capacity) {
+		buffer.length = capacity;
+		readingPosition = 0;
+		writtingPosition = 0;
+		readLeft = 0;
+		writeLeft = capacity;
+		readLock = new Object;
+		writeLock = new Object;
+	}
+
+	void read(Type[] data) {
+		if (data.length > readLeft) throw(new Exception("Buffer underrun"));
+		synchronized (readLock) {
+			readLeft -= data.length;
+			foreach (ref v; data) {
+				v = buffer[readingPosition];
+				readingPosition = (readingPosition + 1) % buffer.length;
+			}
+			writeLeft += data.length;
+		}
+	}
+	
+	void write(Type[] data) {
+		if (data.length > writeLeft) throw(new Exception("Buffer overrun"));
+		synchronized (writeLock) {
+			writeLeft -= data.length;
+			foreach (ref v; data) {
+				buffer[writtingPosition] = v;
+				writtingPosition = (writtingPosition + 1) % buffer.length;
+			}
+			readLeft += data.length;
+		}
+	}
+}
+
 class Audio {
+	//const int bufferSize = 84; // less than 2ms
+	const int bufferSize = 4410; // 100ms
+	//const int bufferSize = 128;
+	
 	class Channel {
-		uint playingPosition;
-		uint samplesCount;
-		short samples[44100 * 2];
-		uint samplesLeft() { return samplesCount - playingPosition; }
-		bool isPlaying() { return (samplesLeft == 0); }
+		int index;
+		RingBuffer!(short) samples;
+		
+		this(int index) {
+			samples = new typeof(samples)(44100 * 2 * 2); // 2 seconds for two channels
+		}
+		
+		bool isPlaying() {
+			//return samples.readLeft > samples.capacity / 2;
+			//return samples.readLeft > 4410 * 2; // 100ms
+			return samples.readLeft > bufferSize * 2 * 4;
+		}
 		
 		void wait() {
-			while (isPlaying) Sleep(1);
+			//writefln("read:%d, write:%d, capacity:%d, readpos:%d, writepos:%d", samples.readLeft, samples.writeLeft, samples.capacity, samples.readingPosition, samples.writtingPosition);
+			while (isPlaying) {
+				sleep(1);
+				//Sleep(0);
+			}
+			//while (samples.writeLeft < samples.capacity / 2) sleep(1);
 		}
-	
-		void set(short[] samplesToWrite, int numchannels, float volumeLeft = 1.0, float volumeRight = 1.0) {
+		
+		uint samplesLeft() {
+			return samples.readLeft;
+		}
+		
+		void read(short[] samplesToRead) {
+			samples.read(samplesToRead);
+			//writefln("%s", samplesToRead);
+		}
+
+		void write(short[] samplesToWrite, int numchannels, float volumeLeft = 1.0, float volumeRight = 1.0) {
+			//writefln("writting(%d) : %d", index, samplesToWrite.length);
 			switch (numchannels) {
 				case 1:
+					//writefln("single channel!");
 					for (int n = 0, m = 0; n < samplesToWrite.length; n++, m += 2) {
-						samples[m + 0] = cast(short)(cast(float)samplesToWrite[n] * volumeLeft);
-						samples[m + 1] = cast(short)(cast(float)samplesToWrite[n] * volumeRight);
+						samples.write([
+							cast(short)(cast(float)samplesToWrite[n] * volumeLeft),
+							cast(short)(cast(float)samplesToWrite[n] * volumeRight)
+						]);
 					}
 				break;
 				case 2:
+					// Ignore volume
+					samples.write(samplesToWrite);
+					/*
 					for (int m = 0; m < samplesToWrite.length; m += 2) {
-						samples[m + 0] = cast(short)(cast(float)samplesToWrite[m + 0] * volumeLeft);
-						samples[m + 1] = cast(short)(cast(float)samplesToWrite[m + 1] * volumeRight);
+						samples.write([
+							cast(short)(cast(float)samplesToWrite[m + 0] * volumeLeft),
+							cast(short)(cast(float)samplesToWrite[m + 1] * volumeRight)
+						]);
 					}
+					*/
 				break;
 				default: throw(new Exception(std.string.format("Only supported 1 and 2 numchannels for channel not %d.", numchannels)));
 			}
-			playingPosition = 0;
-			samplesCount = samplesToWrite.length;
+		}
+	}
+	
+	class Buffer {
+		WAVEHDR	wavehdr;
+		short[bufferSize * 2] data;
+
+		void prepare() {
+			wavehdr.dwFlags         = WHDR_DONE;
+			wavehdr.lpData          = cast(LPSTR)data.ptr;
+			wavehdr.dwBufferLength  = data.length * short.sizeof;
+			wavehdr.dwBytesRecorded = 0;
+			wavehdr.dwUser          = 0;
+			wavehdr.dwLoops         = 0;
+			enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
+			wavehdr.dwFlags |= WHDR_DONE;
+		}
+		
+		void play() {
+			wavehdr.dwFlags &= ~WHDR_DONE;
+			enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
+		}
+		
+		bool ready() {
+			return wavehdr.dwFlags & WHDR_DONE;
 		}
 	}
 	
 	Channel[8] channels;
-	//short[0x40] mixedBuffer;
-	//int[220 * 2] tempBuffer;
-	short[220 * 2 * 2] buffer;
-	//short[440 * 2 * 2] buffer;
+	Buffer[4] buffers;
+	int[bufferSize * 2] bufferTemp;
+	short[bufferSize * 2] bufferTemp2;
+
+	int fillBuffer(short[] bufferBack) {
+		int playingChannels;
+		bufferTemp[] = 0;
+		bufferBack[] = 0;
+		int maxMixed = 0;
+
+		foreach (channel; channels) {
+			int channelMixLen = min(channel.samplesLeft, bufferTemp.length);
+			maxMixed = max(maxMixed, channelMixLen);
+			
+			if (channelMixLen) {
+				channel.read(bufferTemp2[0..channelMixLen]);
+				foreach (n; 0..channelMixLen) bufferTemp[n] += bufferTemp2[n];
+
+				playingChannels++;
+			}
+		}
+
+		if (playingChannels) {
+			for (int n = 0; n < bufferBack.length; n++) bufferBack[n] = cast(short)(bufferTemp[n] / playingChannels);
+		}
+		
+		return maxMixed;
+	}
 	
-	int[] bufferTemp;
-	short[] bufferFront, bufferBack;
 	bool _running = true;
 	uint playingPos;
 	Thread thread;
@@ -195,18 +333,25 @@ class Audio {
 	MMTIME        mmtime;
 
 	this() {
-		bufferFront = buffer[0..buffer.length / 2];
-		bufferBack  = buffer[buffer.length / 2..$];
-		bufferTemp  = new int[buffer.length / 2];
-		for (int n = 0; n < channels.length; n++) channels[n] = new Channel;
+		foreach (n, ref channel; channels) channel = new Channel(n);
+		foreach (ref buffer; buffers) buffer = new Buffer();
 		(thread = new Thread(&playThread)).start();
 	}
 
 	void stop() {
 		_running = false;
 	}
+	
+	bool anyChannelAvailable() {
+		return true;
+		//foreach (channel; channels) if (channel.samplesLeft >= 84 * 2) return true;
+		foreach (channel; channels) if (channel.samplesLeft >= bufferTemp.length) return true;
+		return false;
+	}
 
 	void playThread() {
+		//Thread.getThis.priority = +1;
+
 		pcmwf.wFormatTag      = WAVE_FORMAT_PCM; 
 		pcmwf.nChannels       = 2;
 		pcmwf.wBitsPerSample  = 16;
@@ -216,72 +361,23 @@ class Audio {
 		pcmwf.cbSize          = 0;
 		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
 
-		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
-		wavehdr.lpData          = cast(LPSTR)buffer.ptr;
-		wavehdr.dwBufferLength  = buffer.length * short.sizeof;
-		wavehdr.dwBytesRecorded = 0;
-		wavehdr.dwUser          = 0;
-		wavehdr.dwLoops         = -1;
-		enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
-		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
-
-		void mix() {
-			int[int] channelsEndings;
-			int playingChannels;
-			bufferTemp[] = 0;
-
-			foreach (channel; channels) {
-				int channelMixLen = min(channel.samplesCount - channel.playingPosition, bufferTemp.length);
-				
-				if (channelMixLen) {
-					for (int n = 0; n < channelMixLen; n++) {
-						bufferTemp[n] += channel.samples[channel.playingPosition + n];
-					}
-					channel.playingPosition += channelMixLen;
-					playingChannels++;
-					if ((channelMixLen in channelsEndings) is null) channelsEndings[channelMixLen] = 1; else channelsEndings[channelMixLen]++;
-				}
-			}
-
-			static if (1) {
-				struct Slice { int numSamples, numChannels; }
-				Slice[] channelCountSlices;
-				int backPos = 0;
-				int numChannels = playingChannels;
-				foreach (pos; channelsEndings.keys.sort) {
-					int count = channelsEndings[pos];
-					channelCountSlices ~= Slice(pos - backPos, numChannels);
-					backPos = pos;
-					numChannels -= count;
-				}
-				channelCountSlices ~= Slice(bufferTemp.length - backPos, 0);
-
-				int m = 0;
-				foreach (slice; channelCountSlices) {
-					if (slice.numChannels) {
-						for (int n = 0; n < slice.numSamples; n++) bufferBack[m + n] = cast(short)(bufferTemp[m + n]);
-					} else {
-						bufferBack[m..m + slice.numSamples][] = 0;
-					}
-					m += slice.numSamples;
-				}
-			} else {
-				if (playingChannels) {
-					for (int n = 0; n < bufferBack.length; n++) {
-						bufferBack[n] = cast(short)(bufferTemp[n] / playingChannels);
-					}
-				} else {
-					bufferBack[] = 0;
-				}
-			}
-
-			swap(bufferFront, bufferBack);
-		}
+		foreach (buffer; buffers) buffer.prepare();
 
 		try {
 			while (_running) {
-				mix();
-				Sleep(5);
+				bool didsomething = false;
+
+				foreach (buffer; buffers) {
+					if (buffer.ready && anyChannelAvailable) {
+						fillBuffer(buffer.data);
+						buffer.play();
+						didsomething = true;
+					}
+				}
+
+				//Sleep(didsomething ? 1 : 0);
+				Sleep(1);
+				//Sleep(0);
 			}
 		} catch (Object o) {
 			writefln("Audio.playThread: %s", o);
@@ -289,9 +385,38 @@ class Audio {
 			enforcemm(waveOutClose(waveOutHandle));
 		}
 	}
-
+	
 	void writeWait(int channel, int numchannels, short[] samples, float volumeleft = 1.0, float volumeright = 1.0) {
-		channels[channel].set(samples, numchannels, volumeleft, volumeright);
-		channels[channel].wait();
+		version (VERSION_ONLY_FIRST_CHANNEL) if (channel != 0) return;
+
+		auto cchannel = channels[channel];
+		cchannel.write(samples, numchannels, volumeleft, volumeright);
+		cchannel.wait();
+
+		debug (DEBUG_DUMP_AUDIO_CHANNELS) writeWaitWAV(channel, numchannels, samples, volumeleft, volumeright);
+	}
+
+	debug (DEBUG_DUMP_AUDIO_CHANNELS) {
+		Stream[int] wavs;
+		void writeWaitWAV(int channel, int numchannels, short[] samples, float volumeleft = 1.0, float volumeright = 1.0) {
+			Stream wav;
+			WaveFile header;
+			if (channel !in wavs) wavs[channel] = new std.stream.File(std.string.format("%d.wav", channel), FileMode.OutNew);
+			wav = wavs[channel];
+			
+			auto pos_back = cast(uint)wav.position;
+			wav.write(cast(ubyte[])samples);
+			auto pos = cast(uint)wav.position;
+			
+			//writefln("CHANNEL(%d): %d -> %d (%d)", channel, pos_back, pos, samples.length);
+
+			header.Subchunk2Size = pos - header.sizeof;
+			header.Subchunk1Size = 16;
+			header.ChunkSize = 4 + (8 + header.Subchunk1Size) + (8 + header.Subchunk2Size);
+
+			wav.position = 0;
+			wav.write(TA(header));
+			wav.position = pos;
+		}
 	}
 }

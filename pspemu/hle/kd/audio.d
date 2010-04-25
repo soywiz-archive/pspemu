@@ -3,7 +3,7 @@ module pspemu.hle.kd.audio; // kd/audio.prx (sceAudio_Driver)
 //debug = DEBUG_AUDIO;
 //debug = DEBUG_SYSCALL;
 
-version = DISABLE_SOUND;
+//version = DISABLE_SOUND;
 
 import std.c.windows.windows;
 
@@ -38,6 +38,7 @@ class sceAudio_driver : Module {
 		mixin(registerd!(0x13F592BC, sceAudioOutputPannedBlocking));
 		mixin(registerd!(0x5EC81C55, sceAudioChReserve));
 		mixin(registerd!(0x6FC46853, sceAudioChRelease));
+		mixin(registerd!(0x8C1009B2, sceAudioOutput));
 		mixin(registerd!(0x136CAF51, sceAudioOutputBlocking));
 		mixin(registerd!(0xE2D56B2D, sceAudioOutputPanned));
 		mixin(registerd!(0xE9D97901, sceAudioGetChannelRestLen));
@@ -93,6 +94,20 @@ class sceAudio_driver : Module {
 	}
 
 	/**
+	 * Output audio of the specified channel
+	 *
+	 * @param channel - The channel number.
+	 * @param vol - The volume.
+	 * @param buf - Pointer to the PCM data to output.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioOutput(int channel, int vol, void* buf) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
 	  * Output panned audio of the specified channel (blocking)
 	  *
 	  * @param channel  - The channel number.
@@ -112,17 +127,17 @@ class sceAudio_driver : Module {
 		}
 		
 		auto cchannel = channels[channel];
+		bool playing = true;
+		bool disableThread;
 
-		version (DISABLE_SOUND) {
-			bool playing = true;
-			/*
-			(new Thread({
-				sleep(200);
-				playing = false;
-			})).start();
-			*/
+		debug (DEBUG_AUDIO) writefln("sceAudioOutputPannedBlocking(channel=%d, leftvol=%d, rightvol=%d, buf_length=%d)", channel, leftvol, rightvol, cchannel.dataCount);
 
-			// @TODO: Disabled:
+		version (DISABLE_SOUND) disableThread = true;
+
+		// Disable all the channels except the first one
+		//if (channel != 0) disableThread = true;
+
+		if (disableThread) {
 			return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
 				"sceAudioOutputPannedBlocking (disabled)", (PspThread pausedThread) {
 					if (!playing) {
@@ -130,49 +145,44 @@ class sceAudio_driver : Module {
 					}
 				}
 			);
-		//} else if (true) {
-			//return 0;
-		} else {
-			// TODO. FIX.
-			
-			float toFloat(short sample) { return cast(float)sample / cast(float)(0x8000 - 1); }
-			
-			auto samples_short = (cast(short*)buf)[0..cchannel.dataCount];
-
-			bool playing = true;
-			(new Thread({
-				//if (channel == 0)
-				try {
-					audio.writeWait(channel, cchannel.numchannels, samples_short, volumef(leftvol), volumef(rightvol));
-				} catch (Object o) {
-					writefln("sceAudioOutputPannedBlocking: %s", o);
-				}
-				playing = false;
-			})).start();
-
-			returnValue = 0;
-			avoidAutosetReturnValue();
-			
-			return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
-				"sceAudioOutputPannedBlocking", (PspThread pausedThread) {
-					if (!playing) {
-						pausedThread.resumeAndReturn(0);
-					}
-				}
-			);
 		}
+
+		float toFloat(short sample) { return cast(float)sample / cast(float)(0x8000 - 1); }
+		
+		auto samples_short = (cast(short*)buf)[0..cchannel.dataCount];
+		//auto samples_short = (cast(short*)buf)[0..cchannel.dataCount].dup;
+		
+		//writefln("samples_short:%d", samples_short.length);
+
+		(new Thread({
+			//if (channel == 0)
+			try {
+				audio.writeWait(channel, cchannel.numchannels, samples_short, volumef(leftvol), volumef(rightvol));
+			} catch (Object o) {
+				writefln("sceAudioOutputPannedBlocking: %s", o);
+			}
+			playing = false;
+		})).start();
+
+		returnValue = 0;
+		avoidAutosetReturnValue();
+		
+		return moduleManager.get!(ThreadManForUser).threadManager.currentThread.pauseAndYield(
+			"sceAudioOutputPannedBlocking", (PspThread pausedThread) {
+				if (!playing) {
+					pausedThread.resumeAndReturn(0);
+				}
+			}
+		);
 	}
 
 	/**
 	 * Output panned audio of the specified channel
 	 *
-	 * @param channel - The channel number.
-	 *
-	 * @param leftvol - The left volume.
-	 *
+	 * @param channel  - The channel number.
+	 * @param leftvol  - The left volume.
 	 * @param rightvol - The right volume.
-	 *
-	 * @param buf - Pointer to the PCM data to output.
+	 * @param buf      - Pointer to the PCM data to output.
 	 *
 	 * @return 0 on success, an error if less than 0.
 	 */
@@ -196,7 +206,7 @@ class sceAudio_driver : Module {
 	/**
 	 * Change the output sample count, after it's already been reserved
 	 *
-	 * @param channel - The channel number.
+	 * @param channel     - The channel number.
 	 * @param samplecount - The number of samples to output in one output call.
 	 *
 	 * @return 0 on success, an error if less than 0.
@@ -210,8 +220,7 @@ class sceAudio_driver : Module {
 	 * Change the format of a channel
 	 *
 	 * @param channel - The channel number.
-	 *
-	 * @param format - One of ::PspAudioFormats
+	 * @param format  - One of ::PspAudioFormats
 	 *
 	 * @return 0 on success, an error if less than 0.
 	 */
@@ -223,10 +232,8 @@ class sceAudio_driver : Module {
 	/**
 	 * Change the volume of a channel
 	 *
-	 * @param channel - The channel number.
-	 *
-	 * @param leftvol - The left volume.
-	 *
+	 * @param channel  - The channel number.
+	 * @param leftvol  - The left volume.
 	 * @param rightvol - The right volume.
 	 *
 	 * @return 0 on success, an error if less than 0.
@@ -240,10 +247,8 @@ class sceAudio_driver : Module {
 	 * Output audio of the specified channel (blocking)
 	 *
 	 * @param channel - The channel number.
-	 *
-	 * @param vol - The volume.
-	 *
-	 * @param buf - Pointer to the PCM data to output.
+	 * @param vol     - The volume.
+	 * @param buf     - Pointer to the PCM data to output.
 	 *
 	 * @return 0 on success, an error if less than 0.
 	 */
@@ -254,13 +259,13 @@ class sceAudio_driver : Module {
 	/**
 	  * Allocate and initialize a hardware output channel.
 	  *
-	  * @param channel - Use a value between 0 - 7 to reserve a specific channel.
-	  *                   Pass PSP_AUDIO_NEXT_CHANNEL to get the first available channel.
+	  * @param channel     - Use a value between 0 - 7 to reserve a specific channel.
+	  *                      Pass PSP_AUDIO_NEXT_CHANNEL to get the first available channel.
 	  * @param samplecount - The number of samples that can be output on the channel per
 	  *                      output call.  It must be a value between ::PSP_AUDIO_SAMPLE_MIN
 	  *                      and ::PSP_AUDIO_SAMPLE_MAX, and it must be aligned to 64 bytes
 	  *                      (use the ::PSP_AUDIO_SAMPLE_ALIGN macro to align it).
-	  * @param format - The output format to use for the channel.  One of ::PspAudioFormats.
+	  * @param format      - The output format to use for the channel.  One of ::PspAudioFormats.
 	  *
 	  * @return The channel number on success, an error code if less than 0.
 	  */
@@ -273,6 +278,8 @@ class sceAudio_driver : Module {
 
 		// Sets the information of the channel.
 		channels[channel] = Channel(true, samplecount, format);
+		
+		debug (DEBUG_AUDIO) writefln("sceAudioChReserve(channel=%d, samplecount=%d, format=%d)", channel, samplecount, format);
 
 		// Returns the channel.
 		return channel;

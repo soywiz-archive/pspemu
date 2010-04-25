@@ -75,6 +75,7 @@ class CpuInterpreted : public Cpu {
 			if (runningState != RunningState.RUNNING) waitUntilResume();
 			
 			if (registers.PAUSED) {
+				//sleep(1);
 				sleep(0);
 				//writefln("paused!");
 				continue;

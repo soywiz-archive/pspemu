@@ -156,18 +156,45 @@ class Audio {
 			}
 		}
 	}
+
+	static const int samplesCount = 4096;
+	
+	struct Buffer {
+		HWAVEOUT waveOutHandle;
+		WAVEHDR	 wavehdr;
+		short[samplesCount * 2] data;
+
+		void prepare() {
+			wavehdr.dwFlags         = WHDR_DONE;
+			wavehdr.lpData          = cast(LPSTR)data.ptr;
+			wavehdr.dwBufferLength  = data.length * short.sizeof;
+			wavehdr.dwBytesRecorded = 0;
+			wavehdr.dwUser          = 0;
+			wavehdr.dwLoops         = 0;
+			enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
+			wavehdr.dwFlags |= WHDR_DONE;
+		}
+		
+		void play() {
+			wavehdr.dwFlags &= ~WHDR_DONE;
+			enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
+		}
+		
+		bool ready() {
+			return wavehdr.dwFlags & WHDR_DONE;
+		}
+	}
 	
 	Channel[8] channels;
 	//short[0x40] mixedBuffer;
-	int[220 * 2] tempBuffer;
-	short[220 * 2 * 2] buffer;
+	int[samplesCount * 2] tempBuffer;
 	bool _running = true;
 	uint playingPos;
 	Thread thread;
 
 	HWAVEOUT      waveOutHandle;
+	Buffer buffers[8];
 	WAVEFORMATEX  pcmwf;
-	WAVEHDR	      wavehdr;
 	MMTIME        mmtime;
 
 	this() {
@@ -177,6 +204,27 @@ class Audio {
 
 	void stop() {
 		_running = false;
+	}
+	
+	void fillBuffer(short[] buffer) {
+		//writefln("1");
+		tempBuffer[] = 0;
+
+		foreach (ch, ref channel; channels) {
+			//channel.playingPosition = 0;
+			int channelMixLen = min(channel.samplesCount - channel.playingPosition, tempBuffer.length);
+			//writefln("%d", channelMixLen);
+			//writefln("%d/%d/%d", channel.playingPosition, channel.samplesCount, channelMixLen);
+			for (int n = 0; n < channelMixLen; n++) {
+				//writefln("%d", n);
+				tempBuffer[n] += channel.samples[channel.playingPosition + n];
+			}
+			channel.playingPosition += channelMixLen;
+		}
+
+		for (int n = 0; n < tempBuffer.length; n++) {
+			buffer[n] = cast(short)(tempBuffer[n] / channels.length);
+		}
 	}
 
 	void playThread() {
@@ -189,40 +237,29 @@ class Audio {
 		pcmwf.cbSize          = 0;
 		enforcemm(waveOutOpen(&waveOutHandle, WAVE_MAPPER, &pcmwf, 0, 0, 0));
 
-		wavehdr.dwFlags         = WHDR_BEGINLOOP | WHDR_ENDLOOP;
-		wavehdr.lpData          = cast(LPSTR)buffer.ptr;
-		wavehdr.dwBufferLength  = buffer.length * short.sizeof;
-		wavehdr.dwBytesRecorded = 0;
-		wavehdr.dwUser          = 0;
-		wavehdr.dwLoops         = -1;
-		enforcemm(waveOutPrepareHeader(waveOutHandle, &wavehdr, wavehdr.sizeof));
-		enforcemm(waveOutWrite(waveOutHandle, &wavehdr, wavehdr.sizeof));
-
 		bool bufferToggle = false;
 
-		void mix() {
-			tempBuffer[] = 0;
-
-			for (int ch = 0; ch < channels.length; ch++) {
-				auto channel = channels[ch];
-				int channelMixLen = min(channel.samplesCount - channel.playingPosition, tempBuffer.length);
-				//writefln("%d", channelMixLen);
-				for (int n = 0; n < channelMixLen; n++) {
-					//writefln("%d", n);
-					tempBuffer[n] += channel.samples[channel.playingPosition + n];
-				}
-				channel.playingPosition += channelMixLen;
-			}
-			for (int n = 0; n < tempBuffer.length; n++) {
-				buffer[tempBuffer.length * bufferToggle + n] = cast(short)(tempBuffer[n] / channels.length);
-			}
-			
-			bufferToggle = !bufferToggle;
+		foreach (ref buffer; buffers) {
+			buffer.waveOutHandle = waveOutHandle;
+			buffer.prepare();
 		}
 
-		while (_running) {
-			mix();
-			Sleep(5);
+		try {
+			while (_running) {
+				bool didsomething = false;
+
+				foreach (ref buffer; buffers) {
+					if (buffer.ready) {
+						fillBuffer(buffer.data);
+						buffer.play();
+						didsomething = true;
+					}
+				}
+
+				Sleep(didsomething ? 1 : 0);
+			}
+		} catch (Object o) {
+			writefln("Error: %s", o);
 		}
 	}
 

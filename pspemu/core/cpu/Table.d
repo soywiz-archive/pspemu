@@ -108,11 +108,17 @@ const PspInstructions_ALU = [
 	ID( "mult",   VM("000000:rs:rt:00000:00000:011000"), "%s, %t", ADDR_TYPE_NONE, 0 ),
 	ID( "multu",  VM("000000:rs:rt:00000:00000:011001"), "%s, %t", ADDR_TYPE_NONE, 0 ),
 
+	// Multiply ADD/SUBstract (Unsigned)
+	ID( "madd",   VM("000000:rs:rt:00000:00000:011100"), "%s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "maddu",  VM("000000:rs:rt:00000:00000:011101"), "%s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "msub",   VM("000000:rs:rt:00000:00000:101110"), "%s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "msubu",  VM("000000:rs:rt:00000:00000:101111"), "%s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
 	// Move To/From HI/LO
-	ID( "mfhi",   VM("000000:00000:00000:rd:00000:010000"), "%d",     ADDR_TYPE_NONE, 0 ),
-	ID( "mflo",   VM("000000:00000:00000:rd:00000:010010"), "%d",     ADDR_TYPE_NONE, 0 ),
-	ID( "mthi",   VM("000000:rs:00000:00000:00000:010001"), "%s",     ADDR_TYPE_NONE, 0 ),
-	ID( "mtlo",   VM("000000:rs:00000:00000:00000:010011"), "%s",     ADDR_TYPE_NONE, 0 ),
+	ID( "mfhi",   VM("000000:00000:00000:rd:00000:010000"), "%d",  ADDR_TYPE_NONE, 0 ),
+	ID( "mflo",   VM("000000:00000:00000:rd:00000:010010"), "%d",  ADDR_TYPE_NONE, 0 ),
+	ID( "mthi",   VM("000000:rs:00000:00000:00000:010001"), "%s",  ADDR_TYPE_NONE, 0 ),
+	ID( "mtlo",   VM("000000:rs:00000:00000:00000:010011"), "%s",  ADDR_TYPE_NONE, 0 ),
 
 	// Move if Zero/Number
 	ID( "movz",   VM("000000:rs:rt:rd:00000:001010"), "%d, %s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
@@ -121,6 +127,14 @@ const PspInstructions_ALU = [
 	// EXTract/INSert
 	ID( "ext",    VM("011111:rs:rt:msb:lsb:000000"), "%t, %s, %a, %ne", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "ins",    VM("011111:rs:rt:msb:lsb:000100"), "%t, %s, %a, %ni", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
+	// Count Leading Ones/Zeros in word
+	ID( "clz",    VM("000000:rs:00000:rd:00000:010110"), "%d, %s", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "clo",    VM("000000:rs:00000:rd:00000:010111"), "%d, %s", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
+	// WSBH -- Word Swap Bytes Within Halfwords/Words
+	ID( "wsbh",   VM("011111:00000:rt:rd:00010:100000"), "%d, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "wsbw",   VM("011111:00000:rt:rd:00011:100000"), "%d, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 ];
 
 const PspInstructions_BCU = [
@@ -210,14 +224,17 @@ const PspInstructions_FPU = [
 	ID( "ceil.w.s",    VM("010001:10000:00000:fs:fd:001110"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 	ID( "floor.w.s",   VM("010001:10000:00000:fs:fd:001111"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 
+	// Convert
 	ID( "cvt.s.w",     VM("010001:10100:00000:fs:fd:100000"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 	ID( "cvt.w.s",     VM("010001:10000:00000:fs:fd:100100"), "%D, %S",     ADDR_TYPE_NONE, 0 ),
 
+	// Move float point registers
 	ID( "mfc1",        VM("010001:00000:rt:c1dr:00000:000000"), "%t, %1",   ADDR_TYPE_NONE, 0 ),
 	ID( "cfc1",        VM("010001:00010:rt:c1cr:00000:000000"), "%t, %p",   ADDR_TYPE_NONE, 0 ),
 	ID( "mtc1",        VM("010001:00100:rt:c1dr:00000:000000"), "%t, %1",   ADDR_TYPE_NONE, 0 ),
 	ID( "ctc1",        VM("010001:00110:rt:c1cr:00000:000000"), "%t, %p",   ADDR_TYPE_NONE, 0 ),
 
+	// Compare <condition>
 	ID( "c.f.s",       VM("010001:10000:ft:fs:00000:11:0000"), "%S, %T",    ADDR_TYPE_NONE, 0 ),
 	ID( "c.un.s",      VM("010001:10000:ft:fs:00000:11:0001"), "%S, %T",    ADDR_TYPE_NONE, 0 ),
 	ID( "c.eq.s",      VM("010001:10000:ft:fs:00000:11:0010"), "%S, %T",    ADDR_TYPE_NONE, 0 ),
@@ -237,35 +254,30 @@ const PspInstructions_FPU = [
 ];
 
 const PspInstructions_SPECIAL = [
-	ID( "break",       VM("000000:imm20:001101" ), "%c",     ADDR_TYPE_NONE, 0 ),
-	ID( "cache",       VM(0xbc000000, 0xfc000000), "%k, %o", ADDR_TYPE_NONE, 0 ),
-	ID( "dbreak",      VM(0x7000003F, 0xFFFFFFFF), "",       ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "syscall",     VM("000000:imm20:001100" ), "%C",     ADDR_TYPE_NONE, 0 ),
+
+	ID( "cache",       VM(0xbc000000, 0xfc000000), "%k, %o", ADDR_TYPE_NONE, 0 ),
+	ID( "sync",        VM("00000000000000000000000000001111"), "", ADDR_TYPE_NONE, 0 ),
+
+	ID( "break",       VM("000000:imm20:001101" ), "%c",     ADDR_TYPE_NONE, 0 ),
+	ID( "dbreak",      VM(0x7000003F, 0xFFFFFFFF), "",       ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "halt",        VM("011100:00000:00000:00000:00000:000000"), "" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
+	ID( "dret",        VM(0x7000003E, 0xFFFFFFFF), "",       ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "eret",        VM("010000:10000:00000:00000:00000:011000"), "",       ADDR_TYPE_NONE, 0 ),
+
+	ID( "mfic",        VM("011100:rt:00000:00000:00000:100100"), "%t, %p", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "mtic",        VM("011100:rt:00000:00000:00000:100110"), "%t, %p", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+
+	ID( "mfdr",        VM(0x7000003D, 0xFFE007FF), "%t, %r", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
+	ID( "mtdr",        VM(0x7080003D, 0xFFE007FF), "%t, %r", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 ];
 
-const PspInstructions_UNGROUPED = [
-	/* MIPS instructions */
+const PspInstructions_COP0 = [
 	ID( "cfc0",        VM(0x40400000, 0xFFE007FF), "%t, %p", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "clo",         VM(0x00000017, 0xFC1F07FF), "%d, %s", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "clz",         VM(0x00000016, 0xFC1F07FF), "%d, %s", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "ctc0",        VM(0x40C00000, 0xFFE007FF), "%t, %p", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "dret",        VM(0x7000003E, 0xFFFFFFFF), "",       ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "eret",        VM(0x42000018, 0xFFFFFFFF), "",       ADDR_TYPE_NONE, 0 ),
-	ID( "madd",        VM(0x0000001C, 0xFC00FFFF), "%s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "maddu",       VM(0x0000001D, 0xFC00FFFF), "%s, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "mfc0",        VM(0x40000000, 0xFFE007FF), "%t, %0", ADDR_TYPE_NONE, 0 ),
-	ID( "mfdr",        VM(0x7000003D, 0xFFE007FF), "%t, %r", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "mfic",        VM(0x70000024, 0xFFE007FF), "%t, %p", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "msub",        VM(0x0000002e, 0xfc00ffff), "%d, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "msubu",       VM(0x0000002f, 0xfc00ffff), "%d, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "mtc0",        VM(0x40800000, 0xFFE007FF), "%t, %0", ADDR_TYPE_NONE, 0 ),
-	ID( "mtdr",        VM(0x7080003D, 0xFFE007FF), "%t, %r", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "mtic",        VM(0x70000026, 0xFFE007FF), "%t, %p", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "halt",        VM(0x70000000, 0xFFFFFFFF), "" ,      ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-
-	ID( "sync",        VM(0x0000000F, 0xFFFFFFFF), "",       ADDR_TYPE_NONE, 0 ),
-	ID( "wsbh",        VM(0x7C0000A0, 0xFFE007FF), "%d, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
-	ID( "wsbw",        VM(0x7C0000E0, 0xFFE007FF), "%d, %t", ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 ];
 
 const PspInstructions_VFPU = [
@@ -560,13 +572,13 @@ const PspInstructions_VFPU = [
 
 ID[] PspInstructions() {
 	return (
-		PspInstructions_SPECIAL ~
 		PspInstructions_ALU ~
 		PspInstructions_BCU ~
 		PspInstructions_LSU ~
 		PspInstructions_FPU ~
-		PspInstructions_VFPU ~
-		PspInstructions_UNGROUPED
+		PspInstructions_COP0 ~
+		//PspInstructions_VFPU ~
+		PspInstructions_SPECIAL
 	);
 }
 

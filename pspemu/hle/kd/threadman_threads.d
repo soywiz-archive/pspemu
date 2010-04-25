@@ -468,7 +468,10 @@ class PspThreadManager {
 		threadsNormalizePreemptCount();
 		threadsRemoveDead();
 		
-		if (allThreadsPaused) sleep(1);
+		if (allThreadsPaused) {
+			//sleep(0);
+			sleep(1);
+		}
 
 		if (threadRunningList.length == 0) {
 			throw(new Exception("No threads left!"));

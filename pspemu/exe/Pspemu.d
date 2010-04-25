@@ -28,7 +28,7 @@ import pspemu.core.gpu.Gpu;
 import pspemu.core.gpu.impl.GpuOpengl;
 
 version (USE_CPU_DYNAREC) {
-	import pspemu.core.cpu.dynarec.Cpu;
+	//im//port pspemu.core.cpu.dynarec.Cpu;
 } else {
 	import pspemu.core.cpu.interpreted.Cpu;
 }
@@ -50,7 +50,7 @@ class PspDisplay : Display {
 }
 
 int main(string[] args) {
-	Thread.getThis.priority = +1;
+	//Thread.getThis.priority = +1;
 
 	// Components.
 	auto memory        = new Memory;
@@ -58,7 +58,7 @@ int main(string[] args) {
 	auto display       = new PspDisplay(memory);
 	auto gpu           = new Gpu(new GpuOpengl, memory);
 	version (USE_CPU_DYNAREC) {
-		auto cpu       = new CpuDynaRec(memory, gpu, display, controller);
+		//auto cpu       = new CpuDynaRec(memory, gpu, display, controller);
 	} else {
 		auto cpu       = new CpuInterpreted(memory, gpu, display, controller);
 	}

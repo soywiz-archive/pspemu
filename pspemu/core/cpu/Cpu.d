@@ -140,7 +140,7 @@ abstract class Cpu : PspHardwareComponent, IDebugSource {
 	}
 	
 	override void run() {
-		Thread.getThis.priority = +1;
+		//Thread.getThis.priority = +1;
 
 		try {
 			componentInitialized = true;
