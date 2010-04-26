@@ -2519,6 +2519,20 @@ void glCheckError() {
 	}
 }
 
+
+bool function(int) wglSwapIntervalEXT;
+
+void setVSync(bool enable = false) {
+	if (wglSwapIntervalEXT is null) {
+		mixin(glBindFuncMix("wglSwapIntervalEXT"));
+	}
+	if (wglSwapIntervalEXT is null) {
+		writefln("Can't find wglSwapIntervalEXT");
+	} else {
+		wglSwapIntervalEXT(enable);
+	}
+}
+
 static this() {
 	glInitSystem();
 }

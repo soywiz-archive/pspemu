@@ -69,6 +69,8 @@ class GLControlDisplay : GLControl {
 				Sleep(100);
 			}
 		}
+		
+		setVSync(0);
 
 		while (running) {
 			writefln("threadRun.loop started");

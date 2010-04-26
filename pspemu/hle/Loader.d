@@ -526,18 +526,7 @@ class Loader : IDebugSource {
 	void setRegisters() {
 		auto threadManForUser = moduleManager.get!(ThreadManForUser);
 
-		assembler.assembleBlock(r"
-			.text 0x08000000
-			syscall 0x2015   ; ThreadManForUser.sceKernelSleepThreadCB
-			
-			.text 0x08000010
-			ininite_loop: j ininite_loop
-			nop
-
-			.text 0x08000200 ; sceKernelExitDeleteThread
-			li a0, 0
-			syscall 0x2071   ; sceKernelExitThread
-		");
+		assembler.assembleBlock(import("KernelUtils.asm"));
 
 		auto thid = threadManForUser.sceKernelCreateThread("Main Thread", PC, 32, 0x8000, 0, null);
 		auto pspThread = threadManForUser.getThreadFromId(thid);

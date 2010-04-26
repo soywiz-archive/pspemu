@@ -33,9 +33,9 @@ template Gpu_Draw() {
 	 * Clear current drawbuffer
 	 *
 	 * Available clear-flags are (OR them together to get final clear-mode):
-	 *   - GU_COLOR_BUFFER_BIT - Clears the color-buffer
+	 *   - GU_COLOR_BUFFER_BIT   - Clears the color-buffer
 	 *   - GU_STENCIL_BUFFER_BIT - Clears the stencil-buffer
-	 *   - GU_DEPTH_BUFFER_BIT - Clears the depth-buffer
+	 *   - GU_DEPTH_BUFFER_BIT   - Clears the depth-buffer
 	 *
 	 * @param flags - Which part of the buffer to clear
 	 **/
@@ -60,66 +60,67 @@ template Gpu_Draw() {
 	 * Draw array of vertices forming primitives
 	 *
 	 * Available primitive-types are:
-	 *   - GU_POINTS - Single pixel points (1 vertex per primitive)
-	 *   - GU_LINES - Single pixel lines (2 vertices per primitive)
-	 *   - GU_LINE_STRIP - Single pixel line-strip (2 vertices for the first primitive, 1 for every following)
-	 *   - GU_TRIANGLES - Filled triangles (3 vertices per primitive)
+	 *   - GU_POINTS         - Single pixel points (1 vertex per primitive)
+	 *   - GU_LINES          - Single pixel lines (2 vertices per primitive)
+	 *   - GU_LINE_STRIP     - Single pixel line-strip (2 vertices for the first primitive, 1 for every following)
+	 *   - GU_TRIANGLES      - Filled triangles (3 vertices per primitive)
 	 *   - GU_TRIANGLE_STRIP - Filled triangles-strip (3 vertices for the first primitive, 1 for every following)
-	 *   - GU_TRIANGLE_FAN - Filled triangle-fan (3 vertices for the first primitive, 1 for every following)
-	 *   - GU_SPRITES - Filled blocks (2 vertices per primitive)
+	 *   - GU_TRIANGLE_FAN   - Filled triangle-fan (3 vertices for the first primitive, 1 for every following)
+	 *   - GU_SPRITES        - Filled blocks (2 vertices per primitive)
 	 *
 	 * The vertex-type decides how the vertices align and what kind of information they contain.
 	 * The following flags are ORed together to compose the final vertex format:
-	 *   - GU_TEXTURE_8BIT - 8-bit texture coordinates
-	 *   - GU_TEXTURE_16BIT - 16-bit texture coordinates
+	 *   - GU_TEXTURE_8BIT   - 8-bit texture coordinates
+	 *   - GU_TEXTURE_16BIT  - 16-bit texture coordinates
 	 *   - GU_TEXTURE_32BITF - 32-bit texture coordinates (float)
 	 *
-	 *   - GU_COLOR_5650 - 16-bit color (R5G6B5A0)
-	 *   - GU_COLOR_5551 - 16-bit color (R5G5B5A1)
-	 *   - GU_COLOR_4444 - 16-bit color (R4G4B4A4)
-	 *   - GU_COLOR_8888 - 32-bit color (R8G8B8A8)
+	 *   - GU_COLOR_5650     - 16-bit color (R5G6B5A0)
+	 *   - GU_COLOR_5551     - 16-bit color (R5G5B5A1)
+	 *   - GU_COLOR_4444     - 16-bit color (R4G4B4A4)
+	 *   - GU_COLOR_8888     - 32-bit color (R8G8B8A8)
 	 *
-	 *   - GU_NORMAL_8BIT - 8-bit normals
-	 *   - GU_NORMAL_16BIT - 16-bit normals
-	 *   - GU_NORMAL_32BITF - 32-bit normals (float)
+	 *   - GU_NORMAL_8BIT    - 8-bit normals
+	 *   - GU_NORMAL_16BIT   - 16-bit normals
+	 *   - GU_NORMAL_32BITF  - 32-bit normals (float)
 	 *
-	 *   - GU_VERTEX_8BIT - 8-bit vertex position
-	 *   - GU_VERTEX_16BIT - 16-bit vertex position
-	 *   - GU_VERTEX_32BITF - 32-bit vertex position (float)
+	 *   - GU_VERTEX_8BIT    - 8-bit vertex position
+	 *   - GU_VERTEX_16BIT   - 16-bit vertex position
+	 *   - GU_VERTEX_32BITF  - 32-bit vertex position (float)
 	 *
-	 *  - GU_WEIGHT_8BIT - 8-bit weights
-	 *   - GU_WEIGHT_16BIT - 16-bit weights
-	 *   - GU_WEIGHT_32BITF - 32-bit weights (float)
+	 *   - GU_WEIGHT_8BIT    - 8-bit weights
+	 *   - GU_WEIGHT_16BIT   - 16-bit weights
+	 *   - GU_WEIGHT_32BITF  - 32-bit weights (float)
 	 *
-	 *   - GU_INDEX_8BIT - 8-bit vertex index
-	 *   - GU_INDEX_16BIT - 16-bit vertex index
+	 *   - GU_INDEX_8BIT     - 8-bit vertex index
+	 *   - GU_INDEX_16BIT    - 16-bit vertex index
 	 *
-	 *   - GU_WEIGHTS(n) - Number of weights (1-8)
-	 *   - GU_VERTICES(n) - Number of vertices (1-8)
+	 *   - GU_WEIGHTS(n)     - Number of weights (1-8)
+	 *   - GU_VERTICES(n)    - Number of vertices (1-8)
 	 *
-	 *   - GU_TRANSFORM_2D - Coordinate is passed directly to the rasterizer
-	 *   - GU_TRANSFORM_3D - Coordinate is transformed before passed to rasterizer
+	 *   - GU_TRANSFORM_2D   - Coordinate is passed directly to the rasterizer
+	 *   - GU_TRANSFORM_3D   - Coordinate is transformed before passed to rasterizer
 	 *
 	 * @note Every vertex must align to 32 bits, which means that you HAVE to pad if it does not add up!
 	 *
 	 * Vertex order:
 	 * [for vertices(1-8)]
-	 * [weights (0-8)]
-	 * [texture uv]
-	 * [color]
-	 * [normal]
-	 * [vertex]
+	 *     [weights (0-8)]
+	 *     [texture uv]
+	 *     [color]
+	 *     [normal]
+	 *     [vertex]
 	 * [/for]
 	 *
 	 * @par Example: Render 400 triangles, with floating-point texture coordinates, and floating-point position, no indices
-	 * @code
-	 * sceGuDrawArray(GU_TRIANGLES,GU_TEXTURE_32BITF|GU_VERTEX_32BITF,400*3,0,vertices);
-	 * @endcode
 	 *
-	 * @param prim - What kind of primitives to render
-	 * @param vtype - Vertex type to process
-	 * @param count - How many vertices to process
-	 * @param indices - Optional pointer to an index-list
+	 * <code>
+	 *     sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_VERTEX_32BITF, 400 * 3, 0, vertices);
+	 * </code>
+	 *
+	 * @param prim     - What kind of primitives to render
+	 * @param vtype    - Vertex type to process
+	 * @param count    - How many vertices to process
+	 * @param indices  - Optional pointer to an index-list
 	 * @param vertices - Pointer to a vertex-list
 	 **/
 	//void sceGuDrawArray(int prim, int vtype, int count, const void* indices, const void* vertices);
@@ -285,9 +286,10 @@ template Gpu_Draw() {
 	 * @note Data must be aligned to 1 quad word (16 bytes)
 	 *
 	 * @par Example: Copy a fullscreen 32-bit image from RAM to VRAM
-	 * @code
-	 * sceGuCopyImage(GU_PSM_8888,0,0,480,272,512,pixels,0,0,512,(void*)(((unsigned int)framebuffer)+0x4000000));
-	 * @endcode
+	 *
+	 * <code>
+	 *     sceGuCopyImage(GU_PSM_8888,0,0,480,272,512,pixels,0,0,512,(void*)(((unsigned int)framebuffer)+0x4000000));
+	 * </code>
 	 *
 	 * @param psm    - Pixel format for buffer
 	 * @param sx     - Source X

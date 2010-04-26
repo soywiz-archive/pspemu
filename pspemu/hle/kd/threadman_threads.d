@@ -660,7 +660,10 @@ class PspThread {
 		alive = false;
 		paused = true;
 		deleteStack();
-		//pauseAndYield();
+		//pauseAndYield(); // Check.
+		if (threadManager.currentThread is this) {
+			switchToOtherThread();
+		}
 	}
 }
 

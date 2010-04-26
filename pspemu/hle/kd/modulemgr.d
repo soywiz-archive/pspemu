@@ -39,7 +39,7 @@ class ModuleMgrForUser : Module {
 	 * @return ??? on success, otherwise one of ::PspKernelErrorCodes.
 	 */
 	int sceKernelSelfStopUnloadModule(int unknown, SceSize argsize, void *argp) {
-		throw(new Exception("sceKernelSelfStopUnloadModule"));
+		throw(new HaltException("sceKernelSelfStopUnloadModule"));
 		return 0;
 	}
 

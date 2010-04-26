@@ -49,6 +49,7 @@ class GpuOpengl : GpuImplAbstract {
 	void init() {
 		openglInit();
 		openglPostInit();
+		setVSync(0);
 		program = new glProgram();
 		program.attach(new glFragmentShader(import("shader.fragment")));
 		program.attach(new glVertexShader(import("shader.vertex")));

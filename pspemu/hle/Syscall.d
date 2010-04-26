@@ -5,6 +5,7 @@ import pspemu.utils.Logger;
 
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Instruction;
+import pspemu.core.cpu.Registers;
 
 import pspemu.hle.Module;
 
@@ -16,6 +17,7 @@ import std.zlib;
 
 class Syscall : ISyscall {
 	string[] emits;
+	Registers[] interruptRegisterPool;
 
 	Cpu cpu;
 	ModuleManager moduleManager;
@@ -30,8 +32,8 @@ class Syscall : ISyscall {
 		emits = [];
 	}
 
-	void opCall(int code) {
-		static string szToString(char *s) { return cast(string)s[0..std.c.string.strlen(s)]; }
+	void opCallReal(int code) {
+		static string szToString(char* s) { return cast(string)s[0..std.c.string.strlen(s)]; }
 
 		void callModuleFunction(Module.Function* moduleFunction) {
 			if (moduleFunction is null) throw(new Exception("Syscall.opCall.callModuleFunction: Invalid Module.Function"));
@@ -49,9 +51,19 @@ class Syscall : ISyscall {
 				uint PC = cpu.registers.PC;
 				cpu.registers.pcSet(cpu.registers.RA);
 				callModuleFunction(cast(Module.Function*)cpu.memory.read32(PC));
-				return;
 			} break;
-
+			case 0x1001: { // _pspemuHLEInterruptCallbackEnter
+				auto backRegisters = new Registers;
+				backRegisters.copyFrom(cpu.registers);
+				interruptRegisterPool ~= backRegisters;
+			} break;
+			case 0x1002: { // _pspemuHLEInterruptCallbackReturn
+				cpu.registers.copyFrom(interruptRegisterPool[$ - 1]);
+				interruptRegisterPool.length = interruptRegisterPool.length - 1;
+			} break;
+			case 0x1003: { // _pspemuHLEInvalid
+				throw(new Exception("_pspemuHLEInvalid"));
+			} break;
 			case 0x1010: { // void emitInt(int v)
 				auto vv = cpu.registers.A0;
 				Logger.log(Logger.Level.INFO, "Syscall", "emitInt(%d)", cast(int)vv);
@@ -106,6 +118,16 @@ class Syscall : ISyscall {
 
 			// Other syscalls:
 			default: throw new Exception(std.string.format("Unimplemented SYSCALL (%08X)", code)); break;
+		}
+	}
+	
+	void opCall(int code) {
+		try {
+			opCallReal(code);
+		} catch (Object o) {
+			if (cast(HaltException)o) throw(o);
+			cpu.registers.dump();
+			throw(new Exception(std.string.format("SYSCALL(0x%04X): %s", code, o)));
 		}
 	}
 }
