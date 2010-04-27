@@ -23,6 +23,7 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		mixin(registerd!(0x36CDFADE, sceDisplayWaitVblank));
 		mixin(registerd!(0x46F186C3, sceDisplayWaitVblankStartCB));
 		mixin(registerd!(0x773DD3A3, sceDisplayGetCurrentHcount));
+		mixin(registerd!(0xDEA197D4, sceDisplayGetMode));
 	}
 
 	void processCallbacks() {
@@ -131,8 +132,8 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	 * @code
 	 * @endcode
 	 *
-	 * @param mode - Display mode, normally 0.
-	 * @param width - Width of screen in pixels.
+	 * @param mode   - Display mode, normally 0.
+	 * @param width  - Width of screen in pixels.
 	 * @param height - Height of screen in pixels.
 	 *
 	 * @return ???
@@ -142,6 +143,24 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 			info.mode   = mode;
 			info.width  = width;
 			info.height = height;
+		}
+		return 0;
+	}
+
+	/**
+	 * Get display mode
+	 *
+	 * @param pmode   - Pointer to an integer to receive the current mode.
+	 * @param pwidth  - Pointer to an integer to receive the current width.
+	 * @param pheight - Pointer to an integer to receive the current height,
+	 * 
+	 * @return 0 on success
+	 */
+	int sceDisplayGetMode(int* pmode, int* pwidth, int* pheight) {
+		with (cpu.display) {
+			*pmode   = info.mode;
+			*pwidth  = info.width;
+			*pheight = info.height;
 		}
 		return 0;
 	}

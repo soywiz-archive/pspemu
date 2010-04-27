@@ -33,6 +33,8 @@ template ThreadManForUser_Threads() {
 		mixin(registerd!(0x840E8133, sceKernelWaitThreadEndCB));
 		mixin(registerd!(0x94AA61EE, sceKernelGetThreadCurrentPriority));
 		mixin(registerd!(0x75156E8F, sceKernelResumeThread));
+		mixin(registerd!(0x616403BA, sceKernelTerminateThread));
+		mixin(registerd!(0x3B183E26, sceKernelGetThreadExitStatus));
 	}
 
 	PspThread getThreadFromId(SceUID thid) {
@@ -192,7 +194,7 @@ template ThreadManForUser_Threads() {
 	/**
 	  * Change the threads current priority.
 	  * 
-	  * @param thid - The ID of the thread (from sceKernelCreateThread or sceKernelGetThreadId)
+	  * @param thid     - The ID of the thread (from sceKernelCreateThread or sceKernelGetThreadId)
 	  * @param priority - The new priority (the lower the number the higher the priority)
 	  *
 	  * @par Example:
@@ -215,7 +217,7 @@ template ThreadManForUser_Threads() {
 	 * Modify the attributes of the current thread.
 	 *
 	 * @param unknown - Set to 0.
-	 * @param attr - The thread attributes to modify.  One of ::PspThreadAttributes.
+	 * @param attr    - The thread attributes to modify.  One of ::PspThreadAttributes.
 	 *
 	 * @return < 0 on error.
 	 */
@@ -227,7 +229,7 @@ template ThreadManForUser_Threads() {
 	/** 
 	 * Wait until a thread has ended.
 	 *
-	 * @param thid - Id of the thread to wait for.
+	 * @param thid    - Id of the thread to wait for.
 	 * @param timeout - Timeout in microseconds (assumed).
 	 *
 	 * @return < 0 on error.
@@ -278,7 +280,7 @@ template ThreadManForUser_Threads() {
 	/** 
 	 * Wait until a thread has ended and handle callbacks if necessary.
 	 *
-	 * @param thid - Id of the thread to wait for.
+	 * @param thid    - Id of the thread to wait for.
 	 * @param timeout - Timeout in microseconds (assumed).
 	 *
 	 * @return < 0 on error.
@@ -294,9 +296,9 @@ template ThreadManForUser_Threads() {
 	 * @param delay - Delay in microseconds.
 	 *
 	 * @par Example:
-	 * @code
-	 * sceKernelDelayThread(1000000); // Delay for a second
-	 * @endcode
+	 * <code>
+	 *     sceKernelDelayThread(1000000); // Delay for a second
+	 * </code>
 	 */
 	int sceKernelDelayThread(SceUInt delay) {
 		mixin(changeAfterTimerPausedMicroseconds);
@@ -312,9 +314,9 @@ template ThreadManForUser_Threads() {
 	 * @param delay - Delay in microseconds.
 	 *
 	 * @par Example:
-	 * @code
-	 * sceKernelDelayThread(1000000); // Delay for a second
-	 * @endcode
+	 * <code>
+	 *     sceKernelDelayThread(1000000); // Delay for a second
+	 * </code>
 	 */
 	int sceKernelDelayThreadCB(SceUInt delay) {
 		mixin(changeAfterTimerPausedMicroseconds);
@@ -334,12 +336,12 @@ template ThreadManForUser_Threads() {
 	 * sizeof(SceKernelThreadInfo) before calling this function.
 	 *
 	 * @par Example:
-	 * @code
-	 * SceKernelThreadInfo status;
-	 * status.size = sizeof(SceKernelThreadInfo);
-	 * if(sceKernelReferThreadStatus(thid, &status) == 0)
-	 * { Do something... }
-	 * @endcode 
+	 * <code>
+	 *     SceKernelThreadInfo status;
+	 *     status.size = sizeof(SceKernelThreadInfo);
+	 *     if (sceKernelReferThreadStatus(thid, &status) == 0) { Do something... }
+	 * </code>
+	 *
 	 * @return 0 if successful, otherwise the error code.
 	 */
 	int sceKernelReferThreadStatus(SceUID thid, SceKernelThreadInfo* info) {
@@ -389,10 +391,10 @@ template ThreadManForUser_Threads() {
 	 * Sleep thread but service any callbacks as necessary
 	 *
 	 * @par Example:
-	 * @code
-	 * // Once all callbacks have been setup call this function
-	 * sceKernelSleepThreadCB();
-	 * @endcode
+	 * <code>
+	 *     // Once all callbacks have been setup call this function
+	 *     sceKernelSleepThreadCB();
+	 * </code>
 	 */
 	int sceKernelSleepThreadCB() {
 		// Ditto.
@@ -407,6 +409,30 @@ template ThreadManForUser_Threads() {
 	 * @return The current thread priority
 	 */
 	int sceKernelGetThreadCurrentPriority() {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Terminate a thread.
+	 *
+	 * @param thid - UID of the thread to terminate.
+	 *
+	 * @return Success if >= 0, an error if < 0.
+	 */
+	int sceKernelTerminateThread(SceUID thid) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get the exit status of a thread.
+	 *
+	 * @param thid - The UID of the thread to check.
+	 *
+	 * @return The exit status
+	 */
+	int sceKernelGetThreadExitStatus(SceUID thid) {
 		unimplemented();
 		return 0;
 	}

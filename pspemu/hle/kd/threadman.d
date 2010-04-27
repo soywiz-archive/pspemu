@@ -54,6 +54,100 @@ class ThreadManForUser : Module {
 		mixin(registerd!(0x0D81716A, sceKernelPollMbx));
 		mixin(registerd!(0x87D4DD36, sceKernelCancelReceiveMbx));
 		mixin(registerd!(0xA8E8C846, sceKernelReferMbxStatus));
+
+		mixin(registerd!(0xC8CD158C, sceKernelUSec2SysClockWide));
+		mixin(registerd!(0x39810265, sceKernelReferVplStatus));
+		mixin(registerd!(0x56C039B5, sceKernelCreateVpl));
+		mixin(registerd!(0x64D4540E, sceKernelReferThreadProfiler));
+		mixin(registerd!(0x8218B4DD, sceKernelReferGlobalProfiler));
+		mixin(registerd!(0xAF36D708, sceKernelTryAllocateVpl));
+		mixin(registerd!(0xB736E9FF, sceKernelFreeVpl));
+	}
+
+	/**
+	 * Get the thread profiler registers.
+	 * @return Pointer to the registers, NULL on error
+	 */
+	PspDebugProfilerRegs* sceKernelReferThreadProfiler() {
+		unimplemented();
+		return null;
+	}
+
+	/**
+	 * Get the globile profiler registers.
+	 * @return Pointer to the registers, NULL on error
+	 */
+	PspDebugProfilerRegs *sceKernelReferGlobalProfiler() {
+		unimplemented();
+		return null;
+	}
+
+	/**
+	 * Free a block
+	 *
+	 * @param uid - The UID of the pool
+	 * @param data - The data block to deallocate
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelFreeVpl(SceUID uid, void* data) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Create a variable pool
+	 *
+	 * @param name - Name of the pool
+	 * @param part - The memory partition ID
+	 * @param attr - Attributes
+	 * @param size - Size of pool
+	 * @param opt  - Options (set to NULL)
+	 *
+	 * @return The UID of the created pool, < 0 on error.
+	 */
+	SceUID sceKernelCreateVpl(string name, int part, int attr, uint size, SceKernelVplOptParam* opt) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Try to allocate from the pool 
+	 *
+	 * @param uid - The UID of the pool
+	 * @param size - The size to allocate
+	 * @param data - Receives the address of the allocated data
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelTryAllocateVpl(SceUID uid, uint size, void** data) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Convert a number of microseconds to a wide time
+	 * 
+	 * @param usec - Number of microseconds.
+	 *
+	 * @return The time
+	 */
+	SceInt64 sceKernelUSec2SysClockWide(uint usec) {
+		unimplemented();
+		return 0;
+	}
+
+	/**
+	 * Get the status of an VPL
+	 *
+	 * @param uid - The uid of the VPL
+	 * @param info - Pointer to a ::SceKernelVplInfo structure
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelReferVplStatus(SceUID uid, SceKernelVplInfo* info) {
+		unimplemented();
+		return -1;
 	}
 
 	/**
@@ -532,6 +626,43 @@ struct SceKernelMbxInfo {
 	int 		numWaitThreads; // The number of threads waiting on the messagebox.
 	int 		numMessages; // Number of messages currently in the messagebox.
 	void		*firstMessage; // The message currently at the head of the queue.
+}
+
+struct PspDebugProfilerRegs {
+	//volatile:
+	u32 enable;
+	u32 systemck;
+	u32 cpuck;
+	u32 internal;
+	u32 memory;
+	u32 copz;
+	u32 vfpu;
+	u32 sleep;
+	u32 bus_access;
+	u32 uncached_load;
+	u32 uncached_store;
+	u32 cached_load;
+	u32 cached_store;
+	u32 i_miss;
+	u32 d_miss;
+	u32 d_writeback;
+	u32 cop0_inst;
+	u32 fpu_inst;
+	u32 vfpu_inst;
+	u32 local_bus;
+}
+
+struct SceKernelVplOptParam {
+	SceSize size;
+}
+
+struct SceKernelVplInfo {
+	SceSize  size;
+	char[32] name;
+	SceUInt  attr;
+	int      poolSize;
+	int      freeSize;
+	int      numWaitThreads;
 }
 
 static this() {

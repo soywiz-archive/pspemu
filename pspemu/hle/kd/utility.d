@@ -30,8 +30,59 @@ class sceUtility : Module {
 		mixin(registerd!(0xF88155F6, sceUtilityNetconfShutdownStart));
 		mixin(registerd!(0x91E70E35, sceUtilityNetconfUpdate));
 		mixin(registerd!(0x6332AA39, sceUtilityNetconfGetStatus));
-		
+
+		mixin(registerd!(0x3DFAEBA9, sceUtilityOskShutdownStart));
+		mixin(registerd!(0x4B85C861, sceUtilityOskUpdate));
+		mixin(registerd!(0xF3F76017, sceUtilityOskGetStatus));
+		mixin(registerd!(0xF6269B82, sceUtilityOskInitStart));
+
 		initNids_sysparams();
+	}
+
+	/**
+	 * Remove a currently active keyboard. After calling this function you must
+	 *
+	 * poll sceUtilityOskGetStatus() until it returns PSP_UTILITY_DIALOG_NONE.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceUtilityOskShutdownStart() {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Refresh the GUI for a keyboard currently active
+	 *
+	 * @param n - Unknown, pass 1.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceUtilityOskUpdate(int n) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Get the status of a on-screen keyboard currently active.
+	 *
+	 * @return the current status of the keyboard. See ::pspUtilityDialogState for details.
+	 */
+	int sceUtilityOskGetStatus() {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Create an on-screen keyboard
+	 *
+	 * @param params - OSK parameters.
+	 *
+	 * @return < 0 on error.
+	 */
+	int sceUtilityOskInitStart(SceUtilityOskParams* params) {
+		unimplemented();
+		return -1;
 	}
 
 	/**
@@ -341,6 +392,105 @@ struct pspUtilityNetconfData {
 	int hotspot; /** Set to 1 to allow connections with the 'Internet Browser' option set to 'Start' (ie. hotspot connection) */
 	int hotspot_connected; /** Will be set to 1 when connected to a hotspot style connection */
 	int wifisp; /** Set to 1 to allow connections to Wifi service providers (WISP) */
+}
+
+
+
+
+/**
+ * Enumeration for input language
+ */
+enum SceUtilityOskInputLanguage {
+	PSP_UTILITY_OSK_LANGUAGE_DEFAULT   = 0x00,
+	PSP_UTILITY_OSK_LANGUAGE_JAPANESE  = 0x01,
+	PSP_UTILITY_OSK_LANGUAGE_ENGLISH   = 0x02,
+	PSP_UTILITY_OSK_LANGUAGE_FRENCH    = 0x03,
+	PSP_UTILITY_OSK_LANGUAGE_SPANISH   = 0x04,
+	PSP_UTILITY_OSK_LANGUAGE_GERMAN    = 0x05,
+	PSP_UTILITY_OSK_LANGUAGE_ITALIAN   = 0x06,
+	PSP_UTILITY_OSK_LANGUAGE_DUTCH     = 0x07,
+	PSP_UTILITY_OSK_LANGUAGE_PORTUGESE = 0x08,
+	PSP_UTILITY_OSK_LANGUAGE_RUSSIAN   = 0x09,
+	PSP_UTILITY_OSK_LANGUAGE_KOREAN    = 0x0a,
+};
+
+/**
+ * Enumeration for OSK internal state
+ */
+enum SceUtilityOskState {
+	PSP_UTILITY_OSK_DIALOG_NONE      = 0, /// No OSK is currently active
+	PSP_UTILITY_OSK_DIALOG_INITING   = 1, /// The OSK is currently being initialized
+	PSP_UTILITY_OSK_DIALOG_INITED    = 2, /// The OSK is initialised
+	PSP_UTILITY_OSK_DIALOG_VISIBLE   = 3, /// The OSK is visible and ready for use
+	PSP_UTILITY_OSK_DIALOG_QUIT      = 4, /// The OSK has been cancelled and should be shut down
+	PSP_UTILITY_OSK_DIALOG_FINISHED  = 5, /// The OSK has successfully shut down 
+};
+
+/**
+ * Enumeration for OSK field results
+ */
+enum SceUtilityOskResult {
+	PSP_UTILITY_OSK_RESULT_UNCHANGED = 0,
+	PSP_UTILITY_OSK_RESULT_CANCELLED = 1,
+	PSP_UTILITY_OSK_RESULT_CHANGED   = 2,
+};
+
+/**
+ * Enumeration for input types (these are limited by initial choice of language)
+ */
+enum SceUtilityOskInputType {
+	PSP_UTILITY_OSK_INPUTTYPE_ALL                    = 0x00000000,
+	PSP_UTILITY_OSK_INPUTTYPE_LATIN_DIGIT            = 0x00000001,
+	PSP_UTILITY_OSK_INPUTTYPE_LATIN_SYMBOL           = 0x00000002,
+	PSP_UTILITY_OSK_INPUTTYPE_LATIN_LOWERCASE        = 0x00000004,
+	PSP_UTILITY_OSK_INPUTTYPE_LATIN_UPPERCASE        = 0x00000008,
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_DIGIT         = 0x00000100,
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_SYMBOL        = 0x00000200,
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_LOWERCASE     = 0x00000400,
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_UPPERCASE     = 0x00000800,
+	// http://en.wikipedia.org/wiki/Hiragana
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_HIRAGANA      = 0x00001000,
+	// http://en.wikipedia.org/wiki/Katakana
+	// Half-width Katakana
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_HALF_KATAKANA = 0x00002000,
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_KATAKANA      = 0x00004000,
+	// http://en.wikipedia.org/wiki/Kanji
+	PSP_UTILITY_OSK_INPUTTYPE_JAPANESE_KANJI         = 0x00008000,
+	PSP_UTILITY_OSK_INPUTTYPE_RUSSIAN_LOWERCASE      = 0x00010000,
+	PSP_UTILITY_OSK_INPUTTYPE_RUSSIAN_UPPERCASE      = 0x00020000,
+	PSP_UTILITY_OSK_INPUTTYPE_KOREAN                 = 0x00040000,
+	PSP_UTILITY_OSK_INPUTTYPE_URL                    = 0x00080000,
+};
+
+/**
+ * OSK Field data
+ */
+struct SceUtilityOskData {
+	int unk_00;                          /// Unknown. Pass 0.
+    int unk_04;                          /// Unknown. Pass 0.
+    SceUtilityOskInputLanguage language; /// One of ::SceUtilityOskInputLanguage
+    int unk_12;                          /// Unknown. Pass 0.
+    SceUtilityOskInputType inputtype;    /// One or more of ::SceUtilityOskInputType (types that are selectable by pressing SELECT)
+    int     lines;                       /// Number of lines
+    int     unk_24;                      /// Unknown. Pass 0.
+    ushort* desc;                        /// Description text
+    ushort* intext;                      /// Initial text
+    int     outtextlength;               /// Length of output text
+    ushort* outtext;                     /// Pointer to the output text
+    SceUtilityOskResult result;          /// Result.
+    int     outtextlimit;                /// The max text that can be input
+}
+
+/**
+ * OSK parameters
+ */
+struct SceUtilityOskParams {
+	pspUtilityDialogCommon base;
+	int datacount;           /// Number of input fields
+	SceUtilityOskData* data; /// Pointer to the start of the data for the input fields
+	int state;               /// The local OSK state, one of ::SceUtilityOskState
+	int unk_60;              /// Unknown. Pass 0
+	
 }
 
 static this() {

@@ -285,6 +285,7 @@ const PspInstructions_VFPU = [
 	ID( "bvfl",        VM(0x49020000, 0xFFE30000), "%Zc, %O" , ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B ),
 	ID( "bvt",         VM(0x49010000, 0xFFE30000), "%Zc, %O" , ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B ),
 	ID( "bvtl",        VM(0x49030000, 0xFFE30000), "%Zc, %O" , ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B ),
+
 	ID( "lv.q",        VM(0xD8000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "lv.s",        VM(0xC8000000, 0xFC000000), "%Xs, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),
 	ID( "lvl.q",       VM(0xD4000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP ),

@@ -165,6 +165,7 @@ class IoFileMgrForKernel : Module {
 		mixin(registerd!(0x3C54E908, sceIoReopen));
 		mixin(registerd!(0x8E982A74, sceIoAddDrv));
 		mixin(registerd!(0xC7F35804, sceIoDelDrv));
+		mixin(registerd!(0x35DBD746, sceIoWaitAsyncCB));
 	}
 
 	Stream[SceUID] openedStreams;
@@ -196,8 +197,9 @@ class IoFileMgrForKernel : Module {
 	/**
 	 * Make a directory file
 	 *
-	 * @param path
+	 * @param path -
 	 * @param mode - Access mode.
+	 *
 	 * @return Returns the value 0 if its succesful otherwise -1
 	 */
 	int sceIoMkdir(string path, SceMode mode) {
@@ -215,6 +217,7 @@ class IoFileMgrForKernel : Module {
 	 * Remove a directory file
 	 *
 	 * @param path - Removes a directory file pointed by the string path
+	 *
 	 * @return Returns the value 0 if its succesful otherwise -1
 	 */
 	int sceIoRmdir(string path) {
@@ -227,6 +230,7 @@ class IoFileMgrForKernel : Module {
 	 *
 	 * @param oldname - The old filename
 	 * @param newname - The new filename
+	 *
 	 * @return < 0 on error.
 	 */
 	int sceIoRename(string oldname, string newname) {
@@ -238,13 +242,14 @@ class IoFileMgrForKernel : Module {
 	 * Open a directory
 	 * 
 	 * @par Example:
-	 * @code
-	 * int dfd;
-	 * dfd = sceIoDopen("device:/");
-	 * if(dfd >= 0)
-	 * { Do something with the file descriptor }
-	 * @endcode
+	 * <code>
+	 *     int dfd;
+	 *     dfd = sceIoDopen("device:/");
+	 *     if (dfd >= 0) { Do something with the file descriptor }
+	 * </code>
+	 *
 	 * @param dirname - The directory to open for reading.
+	 *
 	 * @return If >= 0 then a valid file descriptor, otherwise a Sony error code.
 	 */
 	SceUID sceIoDopen(string dirname) {
@@ -256,6 +261,7 @@ class IoFileMgrForKernel : Module {
 	 * Close an opened directory file descriptor
 	 *
 	 * @param fd - Already opened file descriptor (using sceIoDopen)
+	 *
 	 * @return < 0 on error
 	 */
 	int sceIoDclose(SceUID fd) {
@@ -267,6 +273,7 @@ class IoFileMgrForKernel : Module {
 	 * Change the current directory.
 	 *
 	 * @param path - The path to change to.
+	 *
 	 * @return < 0 on error.
 	 */
 	int sceIoChdir(string path) {
@@ -286,16 +293,17 @@ class IoFileMgrForKernel : Module {
 	 * Send a devctl command to a device.
 	 *
 	 * @par Example: Sending a simple command to a device (not a real devctl)
-	 * @code
-	 * sceIoDevctl("ms0:", 0x200000, indata, 4, NULL, NULL); 
-	 * @endcode
+	 * <code>
+	 *     sceIoDevctl("ms0:", 0x200000, indata, 4, NULL, NULL); 
+	 * </code>
 	 *
-	 * @param dev - String for the device to send the devctl to (e.g. "ms0:")
-	 * @param cmd - The command to send to the device
-	 * @param indata - A data block to send to the device, if NULL sends no data
-	 * @param inlen - Length of indata, if 0 sends no data
+	 * @param dev     - String for the device to send the devctl to (e.g. "ms0:")
+	 * @param cmd     - The command to send to the device
+	 * @param indata  - A data block to send to the device, if NULL sends no data
+	 * @param inlen   - Length of indata, if 0 sends no data
 	 * @param outdata - A data block to receive the result of a command, if NULL receives no data
-	 * @param outlen - Length of outdata, if 0 receives no data
+	 * @param outlen  - Length of outdata, if 0 receives no data
+	 *
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceIoDevctl(string dev, int cmd, void* indata, int inlen, void* outdata, int outlen) {
@@ -310,9 +318,9 @@ class IoFileMgrForKernel : Module {
 	/**
 	 * Delete a descriptor
 	 *
-	 * @code
-	 * sceIoClose(fd);
-	 * @endcode
+	 * <code>
+	 *     sceIoClose(fd);
+	 * </code>
 	 *
 	 * @param fd - File descriptor to close
 	 * @return < 0 on error
@@ -347,21 +355,22 @@ class IoFileMgrForKernel : Module {
 	 * Open or create a file for reading or writing
 	 *
 	 * @par Example1: Open a file for reading
-	 * @code
+	 * <code>
 	 * if(!(fd = sceIoOpen("device:/path/to/file", O_RDONLY, 0777)) {
 	 *	// error
 	 * }
-	 * @endcode
+	 * </code>
 	 * @par Example2: Open a file for writing, creating it if it doesnt exist
-	 * @code
+	 * <code>
 	 * if(!(fd = sceIoOpen("device:/path/to/file", O_WRONLY|O_CREAT, 0777)) {
 	 *	// error
 	 * }
-	 * @endcode
+	 * </code>
 	 *
-	 * @param file - Pointer to a string holding the name of the file to open
+	 * @param file  - Pointer to a string holding the name of the file to open
 	 * @param flags - Libc styled flags that are or'ed together
-	 * @param mode - File access mode.
+	 * @param mode  - File access mode.
+	 *
 	 * @return A non-negative integer is a valid fd, anything else an error
 	 */
 	SceUID sceIoOpen(/*const*/ string file, int flags, SceMode mode) {
@@ -388,11 +397,11 @@ class IoFileMgrForKernel : Module {
 	 * Read input
 	 *
 	 * @par Example:
-	 * @code
-	 * bytes_read = sceIoRead(fd, data, 100);
-	 * @endcode
+	 * <code>
+	 *     bytes_read = sceIoRead(fd, data, 100);
+	 * </code>
 	 *
-	 * @param fd - Opened file descriptor to read from
+	 * @param fd   - Opened file descriptor to read from
 	 * @param data - Pointer to the buffer where the read data will be placed
 	 * @param size - Size of the read in bytes
 	 * 
@@ -414,11 +423,11 @@ class IoFileMgrForKernel : Module {
 	 * Write output
 	 *
 	 * @par Example:
-	 * @code
-	 * bytes_written = sceIoWrite(fd, data, 100);
-	 * @endcode
+	 * <code>
+	 *     bytes_written = sceIoWrite(fd, data, 100);
+	 * </code>
 	 *
-	 * @param fd - Opened file descriptor to write to
+	 * @param fd   - Opened file descriptor to write to
 	 * @param data - Pointer to the data to write
 	 * @param size - Size of data to write
 	 *
@@ -446,14 +455,14 @@ class IoFileMgrForKernel : Module {
 	 * Reposition read/write file descriptor offset
 	 *
 	 * @par Example:
-	 * @code
-	 * pos = sceIoLseek(fd, -10, SEEK_END);
-	 * @endcode
+	 * <code>
+	 *     pos = sceIoLseek(fd, -10, SEEK_END);
+	 * </code>
 	 *
-	 * @param fd - Opened file descriptor with which to seek
+	 * @param fd     - Opened file descriptor with which to seek
 	 * @param offset - Relative offset from the start position given by whence
 	 * @param whence - Set to SEEK_SET to seek from the start of the file, SEEK_CUR
-	 * seek from the current position and SEEK_END to seek from the end.
+	 *                 seek from the current position and SEEK_END to seek from the end.
 	 *
 	 * @return The position in the file after the seek. 
 	 */
@@ -468,14 +477,14 @@ class IoFileMgrForKernel : Module {
 	 * Reposition read/write file descriptor offset (32bit mode)
 	 *
 	 * @par Example:
-	 * @code
-	 * pos = sceIoLseek32(fd, -10, SEEK_END);
-	 * @endcode
+	 * <code>
+	 *     pos = sceIoLseek32(fd, -10, SEEK_END);
+	 * </code>
 	 *
-	 * @param fd - Opened file descriptor with which to seek
+	 * @param fd     - Opened file descriptor with which to seek
 	 * @param offset - Relative offset from the start position given by whence
 	 * @param whence - Set to SEEK_SET to seek from the start of the file, SEEK_CUR
-	 * seek from the current position and SEEK_END to seek from the end.
+	 *                 seek from the current position and SEEK_END to seek from the end.
 	 *
 	 * @return The position in the file after the seek. 
 	 */
@@ -563,6 +572,7 @@ class IoFileMgrForKernel : Module {
 	 * Remove directory entry
 	 *
 	 * @param file - Path to the file to remove
+	 *
 	 * @return < 0 on error
 	 */
 	int sceIoRemove(string file) {
@@ -573,9 +583,10 @@ class IoFileMgrForKernel : Module {
 	/**
 	 * Open or create a file for reading or writing (asynchronous)
 	 *
-	 * @param file - Pointer to a string holding the name of the file to open
+	 * @param file  - Pointer to a string holding the name of the file to open
 	 * @param flags - Libc styled flags that are or'ed together
-	 * @param mode - File access mode.
+	 * @param mode  - File access mode.
+	 *
 	 * @return A non-negative integer is a valid fd, anything else an error
 	 */
 	SceUID sceIoOpenAsync(string file, int flags, SceMode mode) {
@@ -586,10 +597,10 @@ class IoFileMgrForKernel : Module {
 	/**
 	 * Reposition read/write file descriptor offset (asynchronous)
 	 *
-	 * @param fd - Opened file descriptor with which to seek
+	 * @param fd     - Opened file descriptor with which to seek
 	 * @param offset - Relative offset from the start position given by whence
 	 * @param whence - Set to SEEK_SET to seek from the start of the file, SEEK_CUR
-	 * seek from the current position and SEEK_END to seek from the end.
+	 *                 seek from the current position and SEEK_END to seek from the end.
 	 *
 	 * @return < 0 on error. Actual value should be passed returned by the ::sceIoWaitAsync call.
 	 */
@@ -650,6 +661,11 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error.
 	 */
 	int sceIoWaitAsync(SceUID fd, SceInt64* res) {
+		unimplemented();
+		return -1;
+	}
+	
+	int sceIoWaitAsyncCB(SceUID fd, SceInt64* res) {
 		unimplemented();
 		return -1;
 	}
