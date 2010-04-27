@@ -173,7 +173,19 @@ template BreakPointStuff() {
 	BreakPoint[uint] breakpoints;
 	bool checkBreakpoints;
 	bool traceStep;
+	
+	void startTracing() {
+		traceStep = true;
+		checkBreakpoints = true;
+		//checkBreakpoints = true;
+		//addBreakpoint(cpu.BreakPoint(registers.PC, [], true));	}
+	}
 
+	void stopTracing() {
+		checkBreakpoints = false;
+		instructionCounter.dump();
+	}
+	
 	void addBreakpoint(BreakPoint bp) {
 		breakpoints[bp.PC] = bp;
 		checkBreakpoints = true;

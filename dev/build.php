@@ -327,7 +327,7 @@ class Builder {
 		$this->exe = $exe;
 		$this->objects_folder = dirname(__FILE__) . '/objects';
 		
-		$common_flags = "-Jresources -Jpspemu/core/gpu/impl -Idev/dmd2/import";
+		$common_flags = "-Jresources -Jpspemu/core/gpu/impl -Jpspemu/hle -Idev/dmd2/import";
 		
 		switch (strtolower($profile)) {
 			case 'debug':

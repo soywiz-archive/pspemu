@@ -40,20 +40,7 @@ struct InfiniteLoop(int maxCount = 512/*, string file = __FILE__, int line = __L
 
 void changeAfter(T)(T* var, int microseconds, T value) {
 	(new Thread({
-		static if (true) {
-			sleep(microseconds / 1000);
-		} else {
-			long frequency; QueryPerformanceFrequency(&frequency);
-			long counter() {
-				long value = void;
-				QueryPerformanceCounter(&value);
-				return value;
-			}
-			long startCounter = counter;
-			while ((((counter - startCounter) * 1000 * 1000) / frequency) < cast(long)microseconds) {
-				sleep(0);
-			}
-		}
+		microsleep(microseconds);
 		*var = value;
 	})).start();
 }
@@ -219,14 +206,33 @@ alias CircularList Queue;
 extern (Windows) BOOL SwitchToThread();
 
 void sleep(uint ms) {
-	static if (true) {
-		Sleep(ms);
+	microsleep(ms * 1000);
+}
+
+/**
+ * Return a microsecond tick.
+ */
+ulong microSecondsTick() {
+	ulong count, frequency;
+	QueryPerformanceCounter(cast(long *)&count);
+	QueryPerformanceFrequency(cast(long *)&frequency);
+	return (count * 1_000_000) / frequency;
+}
+
+/*string lowerPriorityForThisScope() { return q{
+	int lastPriority = Thread.getThis.priority;
+	Thread.getThis.priority = PRIORITY_MIN;
+	scope (exit) Thread.getThis.priority = lastPriority;
+} }*/
+
+void microsleep(uint microSeconds) {
+	if (microSeconds == 0) {
+		Sleep(0);
 	} else {
-		if (ms == 0) {
-			SwitchToThread();
-		} else {
-			Sleep(ms);
-		}
+		int lastPriority = Thread.getThis.priority; Thread.getThis.priority = Thread.PRIORITY_MIN; scope (exit) Thread.getThis.priority = lastPriority;
+		ulong start = microSecondsTick;
+		Sleep(microSeconds / 1000);
+		while ((microSecondsTick - start) < microSeconds) SwitchToThread();
 	}
 }
 

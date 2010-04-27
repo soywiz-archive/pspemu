@@ -51,7 +51,7 @@ class PspDisplay : Display {
 	}
 }
 
-void main() {
+void main(string[] args) {
 	//test_dynarec(); return;
 
 	// Components.
@@ -70,6 +70,19 @@ void main() {
 	auto moduleManager = new ModuleManager(cpu);
 	auto loader        = new Loader(cpu, moduleManager);
 	auto syscall       = new Syscall(cpu, moduleManager);
+	
+	cpu.init();
+	gpu.init();
+	
+	bool vblank_run = true;
+
+	// Vblank.
+	(new Thread({
+		while (vblank_run) {
+			cpu.interrupts.queue(Interrupts.Type.VBLANK);
+			microsleep(1_000_000 / 60);
+		}
+	})).start();
 
 	cpu.errorHandler = (Cpu cpu, Object error) {
 		if ((cast(HaltException)error) is null) {
@@ -83,8 +96,15 @@ void main() {
 		//loader.loadAndExecute("demos/minifire.elf"); return;
 	}
 
+	string explorePath = "tests_ex";
+
+	// Select the path to explore.
+	if (args.length >= 2) {
+		explorePath = args[1];
+	}
+
 	int totalFailed = 0, totalExecuted = 0;
-	foreach (DirEntry e; dirEntries("tests_ex", SpanMode.breadth)) {
+	foreach (DirEntry e; dirEntries(explorePath, SpanMode.breadth)) {
 		if (e.name.indexOf(".svn") != -1) continue;
 		if (e.name.length >= 9 && e.name[$ - 9..$] == ".expected") {
 			string fileNameExpected = e.name;
@@ -158,6 +178,8 @@ void main() {
 			totalFailed += failCount;
 		}
 	}
+	
+	vblank_run = false;
 
 	writefln("Results:");
 	writefln("  Total : %d", totalExecuted);

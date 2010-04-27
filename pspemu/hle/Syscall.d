@@ -13,11 +13,17 @@ import pspemu.models.ISyscall;
 
 import std.zlib;
 
-//import std.variant;
+import pspemu.hle.kd.threadman;
+//import pspemu.hle.kd.threadman_threads;
 
 class Syscall : ISyscall {
 	string[] emits;
-	Registers[] interruptRegisterPool;
+	struct CallbackState {
+		Registers registers;
+		PspThread thread;
+		bool paused;
+	}
+	CallbackState[] interruptCallbackStatePool;
 
 	Cpu cpu;
 	ModuleManager moduleManager;
@@ -49,17 +55,29 @@ class Syscall : ISyscall {
 			// Special syscalls for this emulator:
 			case 0x1000: { // _pspemuHLECall
 				uint PC = cpu.registers.PC;
+				auto moduleFunction = cast(Module.Function*)cpu.memory.read32(PC);
 				cpu.registers.pcSet(cpu.registers.RA);
-				callModuleFunction(cast(Module.Function*)cpu.memory.read32(PC));
+				try {
+					callModuleFunction(moduleFunction);
+				} catch (Object o) {
+					if (cast(HaltException)o) throw(o);
+					throw(new Exception(std.string.format("%s: %s", moduleFunction.toString, o)));
+				}
 			} break;
 			case 0x1001: { // _pspemuHLEInterruptCallbackEnter
+				auto pspThread = moduleManager.get!(ThreadManForUser).threadManager.currentThread;
+				//writefln("_pspemuHLEInterruptCallbackEnter"); cpu.startTracing();
 				auto backRegisters = new Registers;
 				backRegisters.copyFrom(cpu.registers);
-				interruptRegisterPool ~= backRegisters;
+				interruptCallbackStatePool ~= CallbackState(backRegisters, pspThread, pspThread.paused);
+				pspThread.paused = false;
 			} break;
 			case 0x1002: { // _pspemuHLEInterruptCallbackReturn
-				cpu.registers.copyFrom(interruptRegisterPool[$ - 1]);
-				interruptRegisterPool.length = interruptRegisterPool.length - 1;
+				//writefln("_pspemuHLEInterruptCallbackReturn"); cpu.stopTracing();
+				auto callbackState = interruptCallbackStatePool[$ - 1];
+				cpu.registers.copyFrom(callbackState.registers);
+				callbackState.thread.paused = callbackState.paused;
+				interruptCallbackStatePool.length = interruptCallbackStatePool.length - 1;
 			} break;
 			case 0x1003: { // _pspemuHLEInvalid
 				throw(new Exception("_pspemuHLEInvalid"));
@@ -93,13 +111,10 @@ class Syscall : ISyscall {
 			} break;
 
 			case 0x1020: { // void startTracing()
-				cpu.checkBreakpoints = true;
-				cpu.addBreakpoint(cpu.BreakPoint(cpu.registers.PC, [], true));
+				cpu.startTracing();
 			} break;
 			case 0x1021: { // void stopTracing()
-				cpu.checkBreakpoints = false;
-				cpu.instructionCounter.dump();
-				//cpu.addBreakpoint(cpu.BreakPoint(cpu.registers.PC, [], true));
+				cpu.stopTracing();
 			} break;	
 
 			// PSP defined syscalls:

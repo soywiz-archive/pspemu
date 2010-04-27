@@ -2,7 +2,7 @@ module pspemu.hle.kd.modulemgr; // kd/modulemgr.prx (sceModuleManager)
 
 import pspemu.hle.Module;
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 
 class ModuleMgrForUser : Module {
 	void initNids() {

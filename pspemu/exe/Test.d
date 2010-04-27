@@ -73,9 +73,9 @@ void testExtended(string executableFile) {
 
 	// Vblank.
 	(new Thread({
-		while (cpu.state == Cpu.State.RUNNING) {
+		while (cpu.running) {
 			cpu.interrupts.queue(Interrupts.Type.VBLANK);
-			Sleep(1000 / 60);
+			microsleep(1_000_000 / 60);
 		}
 	})).start();
 

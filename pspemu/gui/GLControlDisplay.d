@@ -53,14 +53,10 @@ class GLControlDisplay : GLControl {
 
 		delay = frequency / display.verticalRefreshRate;
 
-		//Thread.sleep(100_0000);
-		//Sleep(1000);
-
 		while (running) {
 			try {
 				// Check OpenGL.
 				makeCurrent();
-				//Sleep(2000);
 				writefln("GLControlDisplay.glInit");
 				glInit(); assert(glMatrixMode !is null);
 				break;
@@ -81,7 +77,6 @@ class GLControlDisplay : GLControl {
 
 				disableStates();
 
-				//while (!ready) Sleep(1);
 				while (running) {
 					backPerformanceCounter = performanceCounter;
 					

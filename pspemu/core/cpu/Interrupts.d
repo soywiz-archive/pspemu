@@ -27,7 +27,6 @@ class Interrupts {
 	// Fields.
 	bool InterruptFlag;
 	List list;
-	Object mutex;
 	CallbackInfo[Callback][Type] callbacks;
 
 	this() {
@@ -35,15 +34,16 @@ class Interrupts {
 	}
 
 	void reset() {
-		InterruptFlag = InterruptFlag.init;
-		list = new List;
-		mutex = new Object;
-		callbacks = null;
-		//callbacks[Type.THREAD0] ~= { writefln("THREAD0"); };	
+		synchronized (this) {
+			InterruptFlag = InterruptFlag.init;
+			list = new List;
+			callbacks = null;
+			//callbacks[Type.THREAD0] ~= { writefln("THREAD0"); };	
+		}
 	}
 
 	void registerCallback(Type type, Callback cb, bool autoremove = false) {
-		synchronized (mutex) {
+		synchronized (this) {
 			callbacks[type][cb] = CallbackInfo(autoremove);
 		}
 	}
@@ -53,13 +53,13 @@ class Interrupts {
 	}
 
 	void unregisterCallback(Type type, Callback cb) {
-		synchronized (mutex) {
+		synchronized (this) {
 			callbacks[type].remove(cb);
 		}
 	}
 
 	void queue(Type type) {
-		synchronized (mutex) {
+		synchronized (this) {
 			list.queue(type);
 			InterruptFlag = true;
 		}
@@ -67,9 +67,10 @@ class Interrupts {
 
 	Callback[1024] cblist;
 	void process() {
-		synchronized (mutex) {
+		synchronized (this) {
 			while (list.readAvailable) {
 				auto type = list.consume();
+				//writefln("%d", type);
 				if (type in callbacks) {
 					auto callbackKeys = callbacks[type].keys;
 					cblist[0..callbackKeys.length] = callbackKeys[0..$];

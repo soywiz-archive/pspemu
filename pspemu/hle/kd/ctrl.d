@@ -33,7 +33,6 @@ class sceCtrl_driver : Module {
 			// Negate.
 			if (!positive) pad_data[n].Buttons = ~pad_data[n].Buttons;
 		}
-		//sleep(1);
 	}
 
 	/**

@@ -1,13 +1,19 @@
 module pspemu.hle.kd.interruptman; // kd/interruptman.prx (sceInterruptManager):
 
-debug = DEBUG_SYSCALL;
+//debug = DEBUG_SYSCALL;
 //debug = DEBUG_CONTROLLER;
 
 import pspemu.hle.Module;
 
+import pspemu.core.cpu.Interrupts;
+import pspemu.core.Memory;
+
 import pspemu.utils.Utils;
+import pspemu.hle.Utils;
 
 // http://forums.ps2dev.org/viewtopic.php?t=5687
+
+// @TODO! Fixme! In which thread should handlers be executed?
 
 class InterruptManager : Module {
 	void initNids() {
@@ -17,6 +23,8 @@ class InterruptManager : Module {
 		mixin(registerd!(0xD2E8363F, sceKernelQueryIntrHandlerInfo)); // QueryIntrHandlerInfo
 		mixin(registerd!(0x36B1EF81, sceKernelQueryIntrHandlerInfo));
 	}
+
+	Interrupts.Callback[int][int] handlers;
 
 	/** 
 	 * Register a sub interrupt handler.
@@ -28,9 +36,13 @@ class InterruptManager : Module {
 	 *
 	 * @return < 0 on error.
 	 */
-	int sceKernelRegisterSubIntrHandler(int intno, int no, void* handler, void *arg) {
-		unimplemented(); return -1;
-		//unimplemented_notice(); return 0;
+	int sceKernelRegisterSubIntrHandler(int intno, int no, uint handler, uint arg) {
+		handlers[intno][no] = createUserInterruptCallback(
+			moduleManager, cpu,
+			cast(Memory.Pointer)handler,
+			[no, cast(uint)arg]
+		);
+		return 0;
 	}
 
 	/**
@@ -42,8 +54,8 @@ class InterruptManager : Module {
 	 * @return < 0 on error.
 	 */
 	int sceKernelEnableSubIntr(int intno, int no) {
-		unimplemented(); return -1;
-		//unimplemented_notice(); return 0;
+		cpu.interrupts.registerCallback(cast(Interrupts.Type)intno, handlers[intno][no]);
+		return 0;
 	}
 
 	/**
@@ -55,7 +67,8 @@ class InterruptManager : Module {
 	 * @return < 0 on error.
 	 */
 	int sceKernelReleaseSubIntrHandler(int intno, int no) {
-		unimplemented(); return -1;
+		cpu.interrupts.unregisterCallback(cast(Interrupts.Type)intno, handlers[intno][no]);
+		return 0;
 	}
 	
 	/**
@@ -72,6 +85,7 @@ class InterruptManager : Module {
 	}
 }
 
+// Interrupts.Type
 enum PspInterrupts {
 	PSP_GPIO_INT      = 4,
 	PSP_ATA_INT       = 5,
