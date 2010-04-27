@@ -121,7 +121,7 @@ class GpuOpengl : GpuImplAbstract {
 	
 		void putVertex(ref VertexState vertex) {
 			if (flags.hasTexture ) glTexCoord2f(vertex.u, vertex.v);
-			if (flags.hasColor   ) glColor4f(vertex.r, vertex.g, vertex.b, vertex.a);
+			if (flags.hasColor   ) glColor4fv(&vertex.r);
 			if (flags.hasNormal  ) glNormal3f(vertex.nx, vertex.ny, vertex.nz);
 			if (flags.hasPosition) glVertex3f(vertex.px, vertex.py, vertex.pz);
 			//writefln("UV(%f, %f)", vertex.u, vertex.v);
@@ -416,33 +416,51 @@ template OpenglUtils() {
 			);
 		}
 
+		// http://www.openorg/sdk/docs/man/xhtml/glColorMaterial.xml
+		// http://www.openorg/discussion_boards/ubbthreads.php?ubb=showflat&Number=238308
 		void prepareColors() {
 			//auto faces = GL_FRONT;
 			auto faces = GL_FRONT_AND_BACK;
+			
+			//return;
 
-			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);
-			
-			glColor4fv(state.ambientModelColor.ptr);
+			glEnableDisable(GL_COLOR_LOGIC_OP, state.logicalOperationEnabled);		
 			glEnableDisable(GL_COLOR_MATERIAL, cast(bool)state.materialColorComponents);
+			glColor4fv(state.ambientModelColor.ptr);
 			
-			if (!state.lightingEnabled) {
-				glDisable(GL_COLOR_MATERIAL);
-			} else {
-				// http://www.openorg/sdk/docs/man/xhtml/glColorMaterial.xml
-				// http://www.openorg/discussion_boards/ubbthreads.php?ubb=showflat&Number=238308
-				/*
-				glMaterialfv(faces, GL_AMBIENT , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
-				glMaterialfv(faces, GL_DIFFUSE , [1.0f, 1.0f, 1.0f, 1.0f].ptr);
-				glMaterialfv(faces, GL_SPECULAR, [1.0f, 1.0f, 1.0f, 1.0f].ptr);
-				if (state.materialColorComponents & LightComponents.GU_AMBIENT ) glMaterialfv(faces, GL_AMBIENT,  state.ambientModelColor.ptr);
-				if (state.materialColorComponents & LightComponents.GU_DIFFUSE ) glMaterialfv(faces, GL_DIFFUSE,  state.diffuseModelColor.ptr);
-				//if (state.materialColorComponents & LightComponents.GU_SPECULAR) glMaterialfv(faces, GL_SPECULAR, state.specularModelColor.ptr);
-				*/
+			if (state.lightingEnabled) {
+				int flags;
+				glMaterialfv(faces, GL_AMBIENT , [0.0f, 0.0f, 0.0f, 0.0f].ptr);
+				glMaterialfv(faces, GL_DIFFUSE , [0.0f, 0.0f, 0.0f, 0.0f].ptr);
+				glMaterialfv(faces, GL_SPECULAR, [0.0f, 0.0f, 0.0f, 0.0f].ptr);
+
+				if (state.materialColorComponents & LightComponents.GU_AMBIENT) {
+					glMaterialfv(GL_FRONT, GL_AMBIENT,  state.ambientModelColor.ptr);
+				}
+				if (state.materialColorComponents & LightComponents.GU_DIFFUSE) {
+					glMaterialfv(GL_FRONT, GL_DIFFUSE,  state.diffuseModelColor.ptr);
+				}
+				if (state.materialColorComponents & LightComponents.GU_SPECULAR) {
+					glMaterialfv(GL_FRONT, GL_SPECULAR, state.specularModelColor.ptr);
+				}
+
+				if ((state.materialColorComponents & LightComponents.GU_AMBIENT) && (state.materialColorComponents & LightComponents.GU_DIFFUSE)) {
+					flags = GL_AMBIENT_AND_DIFFUSE;
+				} else if (state.materialColorComponents & LightComponents.GU_AMBIENT) {
+					flags = GL_AMBIENT;
+				} else if (state.materialColorComponents & LightComponents.GU_DIFFUSE) {
+					flags = GL_DIFFUSE;
+				} else if (state.materialColorComponents & LightComponents.GU_SPECULAR) {
+					flags = GL_SPECULAR;
+				}
+            	glColorMaterial(GL_FRONT_AND_BACK, flags);
+            	glEnable(GL_COLOR_MATERIAL);
 			}
 			
-			state.specularModelColor.a = state.diffuseModelColor.a = state.ambientModelColor.a = 1.0;
-			glMaterialfv(faces, GL_AMBIENT,  state.ambientModelColor.ptr);
-			glMaterialfv(faces, GL_DIFFUSE,  state.diffuseModelColor.ptr);
+			glDisable(GL_COLOR_MATERIAL);
+
+			glMaterialfv(GL_FRONT, GL_EMISSION, state.emissiveModelColor.ptr);
+			//writefln("%s, %s, %s, %s", state.ambientModelColor, state.diffuseModelColor, state.specularModelColor, state.emissiveModelColor);
 		}
 
 		void prepareCulling() {
@@ -476,12 +494,15 @@ template OpenglUtils() {
 
 		// http://jerome.jouvie.free.fr/OpenGl/Tutorials/Tutorial13.php
 		// http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/graphics/VideoEngine.java
+		// http://www.sjbaker.org/steve/omniv/opengl_lighting.html
+		// http://www.sorgonet.com/linux/openglguide/parte2.html
 		void prepareLighting() {
 			if (!glEnableDisable(GL_LIGHTING, state.lightingEnabled)) {
 				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
 			}
-
-			//glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, state.lightModel);
+			
+			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, state.lightModel ? GL_SEPARATE_SPECULAR_COLOR : GL_SINGLE_COLOR);
+			glLightModelfv(GL_LIGHT_MODEL_AMBIENT, state.ambientLightColor.ptr);
 
 			foreach (n, ref light; state.lights) {
 				auto GL_LIGHT_n = GL_LIGHT0 + n;
@@ -489,28 +510,30 @@ template OpenglUtils() {
 				if (!glEnableDisable(GL_LIGHT_n, light.enabled)) {
 					version (VERSION_ENABLED_STATE_CORTOCIRCUIT) continue;
 				}
-
-				if (light.type == LightType.GU_SPOTLIGHT) {
-					glLightfv(GL_LIGHT_n, GL_SPOT_DIRECTION, light.spotDirection.pointer);
-					glLightf(GL_LIGHT_n, GL_SPOT_EXPONENT , light.spotLightExponent);
-					glLightf(GL_LIGHT_n, GL_SPOT_CUTOFF   , light.spotLightCutoff);
+				
+				if (light.kind == LightComponents.GU_DIFFUSE_AND_SPECULAR) {
+					glLightfv(GL_LIGHT_n, GL_SPECULAR , light.specularColor.pointer);
 				} else {
-					glLightf(GL_LIGHT_n, GL_SPOT_EXPONENT, 0);
-					glLightf(GL_LIGHT_n, GL_SPOT_CUTOFF, 180);
+					glLightfv(GL_LIGHT_n, GL_SPECULAR , [0.0f, 0, 0, 0].ptr);
 				}
 				
+				glLightfv(GL_LIGHT_n, GL_AMBIENT  , light.ambientColor.pointer);
+				glLightfv(GL_LIGHT_n, GL_DIFFUSE  , light.diffuseColor.pointer);
+
+				light.position.t = 1.0;
 				glLightfv(GL_LIGHT_n, GL_POSITION , light.position.pointer);
-
-				light.ambientLightColor.a = light.diffuseLightColor.a = light.specularLightColor.a = 1.0;
-
-				//glLightfv(GL_LIGHT_n, GL_AMBIENT  , light.ambientLightColor.pointer);
-				glLightfv(GL_LIGHT_n, GL_DIFFUSE  , light.diffuseLightColor.pointer);
-				glLightfv(GL_LIGHT_n, GL_SPECULAR , light.specularLightColor.pointer);
 				
 				glLightf(GL_LIGHT_n, GL_CONSTANT_ATTENUATION , light.attenuation.constant);
 				glLightf(GL_LIGHT_n, GL_LINEAR_ATTENUATION   , light.attenuation.linear);
 				glLightf(GL_LIGHT_n, GL_QUADRATIC_ATTENUATION, light.attenuation.quadratic);
 				
+				glLightfv(GL_LIGHT_n, GL_SPOT_DIRECTION , light.spotDirection.pointer);
+				glLightf (GL_LIGHT_n, GL_SPOT_EXPONENT  , light.spotExponent);
+				glLightf (GL_LIGHT_n, GL_SPOT_CUTOFF    , light.spotCutoff);
+				
+				//writefln("ambientColor : %f, %f, %f, %f", light.ambientColor.pointer[0], light.ambientColor.pointer[1], light.ambientColor.pointer[2], light.ambientColor.pointer[3]);
+				//writefln("diffuseColor : %f, %f, %f, %f", light.diffuseColor.pointer[0], light.diffuseColor.pointer[1], light.diffuseColor.pointer[2], light.diffuseColor.pointer[3]);
+				//writefln("specularColor: %f, %f, %f, %f", light.specularColor.pointer[0], light.specularColor.pointer[1], light.specularColor.pointer[2], light.specularColor.pointer[3]);
 				//writefln("LIGHT(%d) : %s", n, light);
 			}
 		}
@@ -539,8 +562,9 @@ template OpenglUtils() {
 		void prepareDepthWrite() {
 			//return;
 			
-			glDepthMask(state.depthMask != 0);
-			if (!state.depthMask) {
+			glDepthMask(state.depthMask == 0);
+
+			if (state.depthMask) {
 				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
 			}
 
@@ -549,18 +573,10 @@ template OpenglUtils() {
 		}
 
 		void prepareStencil() {
-			//return;
-
 			if (!glEnableDisable(GL_STENCIL_TEST, state.stencilTestEnabled)) {
 				version (VERSION_ENABLED_STATE_CORTOCIRCUIT) return;
 			}
 
-			//writefln("%d, %d, %d : %d, %d, %d", state.stencilFuncFunc, state.stencilFuncRef, state.stencilFuncMask, state.stencilOperationSfail, state.stencilOperationDpfail, state.stencilOperationDppass);
-			/*
-			1, 1, 1 : 0, 0, 2
-			2, 1, 1 : 0, 0, 0
-			*/
-			
 			//if (state.stencilFuncFunc == 2) { outputDepthAndStencil(); assert(0); }
 			
 			glStencilFunc(
@@ -569,18 +585,11 @@ template OpenglUtils() {
 				state.stencilFuncMask
 			);
 			
-			//writefln("glStencilFunc(%d, %d, %d)", TestTranslate[state.stencilFuncFunc], state.stencilFuncRef, state.stencilFuncMask);
-			
-			//glCheckError();
-
 			glStencilOp(
 				StencilOperationTranslate[state.stencilOperationSfail ],
 				StencilOperationTranslate[state.stencilOperationDpfail],
 				StencilOperationTranslate[state.stencilOperationDppass]
 			);
-			//glCheckError();
-			
-			//glStencilMask(0xFFFF);
 		}
 
 		void prepareFog() {
@@ -593,24 +602,25 @@ template OpenglUtils() {
 			glFogf(GL_FOG_END, state.fogEnd);
 		}
 
-		prepareColors();
+		//glEnable(GL_NORMALIZE);
+		//glColorMask(cast(bool)state.colorMask[0], cast(bool)state.colorMask[1], cast(bool)state.colorMask[2], cast(bool)state.colorMask[3]);
+		glColorMask(true, true, true, true);
+		glEnableDisable(GL_LINE_SMOOTH, state.lineSmoothEnabled);
+		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 		glShadeModel(state.shadeModel ? GL_SMOOTH : GL_FLAT);
+
 		prepareStencil();
 		prepareScissor();
 		prepareBlend();
 		prepareCulling();
 		prepareTexture();
-		prepareLighting();
 		prepareLogicOp();
 		prepareAlphaTest();
 		prepareDepthTest();
 		prepareDepthWrite();
 		prepareFog();
-
-		//glColorMask(cast(bool)state.colorMask[0], cast(bool)state.colorMask[1], cast(bool)state.colorMask[2], cast(bool)state.colorMask[3]);
-		glColorMask(true, true, true, true);
-		glEnableDisable(GL_LINE_SMOOTH, state.lineSmoothEnabled);
-		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+		prepareLighting();
+		prepareColors();
 	}
 
 	void drawBegin() {

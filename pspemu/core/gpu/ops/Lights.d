@@ -39,14 +39,17 @@ template Gpu_Lights() {
 			kind = command.extractEnum!(LightModel, 0);
 			switch (type) {
 				case LightType.GU_DIRECTIONAL:
-					position.z = 0.0;
+					position.t = 0.0;
 				break;
 				case LightType.GU_POINTLIGHT:
-					position.z = 1.0;
-					spotLightCutoff = 180;
+					position.t = 1.0;
+					spotExponent = 0;
+					spotCutoff = 180;
 				break;
 				case LightType.GU_SPOTLIGHT:
-					position.z = 1.0;
+					position.t = 1.0;
+					spotExponent = 0;
+					spotCutoff = 180;
 				break;
 			}
 		}
@@ -97,8 +100,8 @@ template Gpu_Lights() {
 	mixin(LightArrayOperationStep3("OP_LYD_n", q{ gpu.state.lights[Index].spotDirection.y = command.float1; }));
 	mixin(LightArrayOperationStep3("OP_LZD_n", q{ gpu.state.lights[Index].spotDirection.z = command.float1; }));
 	// SPOT light EXPonent/CUToff (per light)
-	mixin(LightArrayOperation("OP_SPOTEXP_n", q{ gpu.state.lights[Index].spotLightExponent = command.float1; }));
-	mixin(LightArrayOperation("OP_SPOTCUT_n", q{ gpu.state.lights[Index].spotLightCutoff   = command.float1; }));
+	mixin(LightArrayOperation("OP_SPOTEXP_n", q{ gpu.state.lights[Index].spotExponent = command.float1; }));
+	mixin(LightArrayOperation("OP_SPOTCUT_n", q{ gpu.state.lights[Index].spotCutoff   = command.float1; }));
 
 	/**
 	 * Set light color
@@ -117,9 +120,9 @@ template Gpu_Lights() {
 	// void sceGuLightColor(int light, int component, unsigned int color); // OP_ALC_n + OP_DLC_n + OP_SLC_n
 
 	// Ambient/Diffuse/Specular Light Color (per light)
-	mixin(LightArrayOperationStep3("OP_ALC_n", q{ gpu.state.lights[Index].ambientLightColor.rgb[]  = command.float3[]; }));
-	mixin(LightArrayOperationStep3("OP_DLC_n", q{ gpu.state.lights[Index].diffuseLightColor.rgb[]  = command.float3[]; }));
-	mixin(LightArrayOperationStep3("OP_SLC_n", q{ gpu.state.lights[Index].specularLightColor.rgb[] = command.float3[]; }));
+	mixin(LightArrayOperationStep3("OP_ALC_n", q{ gpu.state.lights[Index].ambientColor.rgba[]  = command.float4[]; }));
+	mixin(LightArrayOperationStep3("OP_DLC_n", q{ gpu.state.lights[Index].diffuseColor.rgba[]  = command.float4[]; }));
+	mixin(LightArrayOperationStep3("OP_SLC_n", q{ gpu.state.lights[Index].specularColor.rgba[] = command.float4[]; }));
 
 	/**
 	 * Set the specular power for the material

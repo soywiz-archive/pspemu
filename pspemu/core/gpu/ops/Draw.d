@@ -157,10 +157,10 @@ template Gpu_Draw() {
 		ubyte* vertexPointer = vertexPointerBase;
 		ubyte* indexPointer  = indexPointerBase;
 
-		auto vertexCount   = command.param16;
 		auto primitiveType = command.extractEnum!(PrimitiveType, 16);
 		auto vertexType    = gpu.state.vertexType;
 		int  vertexSize    = vertexType.vertexSize;
+		auto vertexCount   = command.param16 * vertexType.morphingVertexCount;
 
 		debug (EXTRACT_PRIM) writefln(
 			"Prim(%d) PrimitiveType(%d) Size(%d)"

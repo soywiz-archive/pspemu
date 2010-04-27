@@ -94,11 +94,9 @@ struct LightState {
 	LightModel kind;
 	Vector position, spotDirection;
 	Attenuation attenuation;
-	float spotLightExponent;
-	float spotLightCutoff;
-	Colorf ambientLightColor;
-	Colorf diffuseLightColor;
-	Colorf specularLightColor;
+	float spotExponent;
+	float spotCutoff;
+	Colorf ambientColor, diffuseColor, specularColor;
 }
 
 struct VertexState {
@@ -135,7 +133,7 @@ static struct GpuState {
 	TextureTransfer textureTransfer;
 	
 	union {
-		uint[4096] RealState;
+		uint[1024] RealState;
 		struct {
 			VertexType vertexType; // here because of transform2d
 			Viewport viewport;

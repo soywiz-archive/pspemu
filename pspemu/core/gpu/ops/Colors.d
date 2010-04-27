@@ -14,15 +14,16 @@ template Gpu_Colors() {
 	// void sceGuAmbient(unsigned int color); // OP_ALC + OP_ALA
 
 	// Diffuse Model Color
-	auto OP_DMC() { gpu.state.diffuseModelColor.rgb[] = command.float3[]; }
+	auto OP_DMC() { gpu.state.diffuseModelColor.rgba[] = command.float4[]; }
 
 	// Specular Model Color
-	auto OP_SMC() { gpu.state.specularModelColor.rgb[] = command.float3[]; }
+	auto OP_SMC() { gpu.state.specularModelColor.rgba[] = command.float4[]; }
 
 	// Emissive Model Color
-	auto OP_EMC() { gpu.state.emissiveModelColor.rgb[] = command.float3[]; }
+	auto OP_EMC() { gpu.state.emissiveModelColor.rgba[] = command.float4[]; }
 
 	// Ambient Model Color/Alpha
+	// When lighting is off, this is like glColor*
 	auto OP_AMC() { gpu.state.ambientModelColor.rgb[] = command.float3[]; }
 	auto OP_AMA() { gpu.state.ambientModelColor.alpha = command.float4[0]; }
 
