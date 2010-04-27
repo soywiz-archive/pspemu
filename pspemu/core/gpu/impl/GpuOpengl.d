@@ -8,10 +8,12 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 
 //debug = DEBUG_CLEAR_MODE;
 
-//version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY;
+version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY;
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT;
+version = VERSION_ENABLED_STATE_CORTOCIRCUIT_EX;
 
 //debug = DEBUG_OUTPUT_DEPTH_AND_STENCIL;
+//debug = DEBUG_PRIM_PERFORMANCE;
 
 import std.c.windows.windows;
 import std.windows.syserror;
@@ -72,6 +74,8 @@ class GpuOpengl : GpuImplAbstract {
 	}
 
 	void startDisplayList() {
+		debug (DEBUG_PRIM_PERFORMANCE) writefln("-");
+
 		// Here we should invalidate texture cache? and recheck hashes of the textures?
 		foreach (texture; textureCache) {
 			texture.markForRecheck = true;
@@ -79,6 +83,7 @@ class GpuOpengl : GpuImplAbstract {
 	}
 
 	void endDisplayList() {
+		state.toggleUpdateState = !state.toggleUpdateState;
 	}
 	
 	void tflush() {
@@ -109,6 +114,10 @@ class GpuOpengl : GpuImplAbstract {
 			writefln("  %s", vertexList[1]);
 		}
 		*/
+
+		debug (DEBUG_PRIM_PERFORMANCE) {
+			auto start = microSecondsTick; scope (exit) writefln("DRAW: Vertex(%d) : MicroSeconds(%d)", vertexList.length, microSecondsTick - start);
+		}
 	
 		void putVertex(ref VertexState vertex) {
 			if (flags.hasTexture ) glTexCoord2f(vertex.u, vertex.v);
@@ -190,11 +199,11 @@ class GpuOpengl : GpuImplAbstract {
 		}
 		
 		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
-			if (depthBuffer !is null) {
+			if ((depthBuffer !is null) && (colorBuffer != depthBuffer)) {
 				glDrawPixels(
 					state.depthBuffer.width, 272,
 					GL_DEPTH_COMPONENT,
-					GL_UNSIGNED_BYTE,
+					GL_UNSIGNED_SHORT,
 					colorBuffer
 				);
 			}
@@ -247,13 +256,13 @@ class GpuOpengl : GpuImplAbstract {
 		}
 
 		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
-			if (depthBuffer !is null) {
+			if ((depthBuffer !is null) && (colorBuffer != depthBuffer)) {
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 				glReadPixels(
 					0, 0, // x, y
 					state.depthBuffer.width, 272, // w, h
 					GL_DEPTH_COMPONENT,
-					GL_UNSIGNED_BYTE,
+					GL_UNSIGNED_SHORT,
 					depthBuffer
 				);
 			}
@@ -313,7 +322,7 @@ template OpenglUtils() {
 
 	void drawBeginClear() {
 		bool ccolorMask, calphaMask;
-	
+		
 		//glGetTexEnvfv(GL_TEXTURE_ENV, GL_RGB_SCALE, clearModeRgbScale, 0);
 		//glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, clearModeTextureEnvMode, 0);
 		//glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
@@ -605,8 +614,15 @@ template OpenglUtils() {
 	}
 
 	void drawBegin() {
-		drawBeginCommon();
+		if (prevState.RealState == (*state).RealState) {
+			version (VERSION_ENABLED_STATE_CORTOCIRCUIT_EX) {
+				//prepareTexture();
+				//if (state.textureMappingEnabled) getTexture(state.textures[0], state.clut).bind();
+				return;
+			}
+		}
 
+		drawBeginCommon();
 		if (state.clearingMode) {
 			drawBeginClear();
 		} else {
@@ -616,15 +632,6 @@ template OpenglUtils() {
 	
 	void drawEnd() {
 		prevState = *state;
-		if (state.clearingMode) {
-			/*
-			uint flags = 0;
-			if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT  ) flags |= GL_COLOR_BUFFER_BIT; // target
-			if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) flags |= GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT; // stencil/alpha
-			if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT  ) flags |= GL_DEPTH_BUFFER_BIT; // zbuffer
-			glClear(flags);
-			*/
-		}
 	}
 }
 

@@ -274,37 +274,39 @@ class Gpu : PspHardwareComponent {
 		if (count > 0) sleep(count);
 	}
 
-	void* drawBufferAddress() {
-		//writefln("%s :: %08X", state.drawBuffer, state.drawBuffer.address);
-		if (state.drawBuffer.address == 0) return null;
-		return memory.getPointer(state.drawBuffer.address);
-	}
-
-	void* depthBufferAddress() {
-		//writefln("%s :: %08X", state.drawBuffer, state.drawBuffer.address);
-		if (state.depthBuffer.address == 0) return null;
-		return memory.getPointer(state.depthBuffer.address);
-	}
-
 	void externalActionAdd(TaskQueue.Task task) {
 		externalActions.add(task);
 		if (inDrawingThread) externalActions(); else externalActions.waitEmpty();
 	}
+	
+	void loadBuffer(ScreenBuffer* buffer) {
+		if (buffer.mustLoad) {
+			buffer.mustLoad = false;
+			externalActionAdd(delegate void() {
+				if (buffer == &state.drawBuffer ) impl.frameLoad(memory.getPointerOrNull(buffer.address), null);
+				if (buffer == &state.depthBuffer) impl.frameLoad(null, memory.getPointerOrNull(buffer.address));
+			});
+		}
+	}
 
-	void loadFrameBuffer () { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameLoad (drawBufferAddress, depthBufferAddress); }); }
-	void storeFrameBuffer() { if (drawBufferAddress) externalActionAdd(delegate void() { impl.frameStore(drawBufferAddress, depthBufferAddress); }); }
-
-	//void loadFrameBufferActually() { impl.frameLoad(drawBufferAddress); }
-	//void storeFrameBufferActually() { impl.frameStore(drawBufferAddress); }
+	void storeBuffer(ScreenBuffer* buffer) {
+		if (buffer.mustStore) {
+			buffer.mustStore = false;
+			externalActionAdd(delegate void() {
+				if (buffer == &state.drawBuffer ) impl.frameStore(memory.getPointerOrNull(buffer.address), null);
+				if (buffer == &state.depthBuffer) impl.frameStore(null, memory.getPointerOrNull(buffer.address));
+			});
+		}
+	}
 
 	void checkLoadFrameBuffer() {
-		if (!state.drawBuffer.mustLoad) return; else state.drawBuffer.mustLoad = false;
-		loadFrameBuffer();
+		loadBuffer(&state.drawBuffer);
+		loadBuffer(&state.depthBuffer);
 	}
 
 	void checkStoreFrameBuffer() {
-		if (!state.drawBuffer.mustStore) return; else state.drawBuffer.mustStore = false;
-		storeFrameBuffer();
+		storeBuffer(&state.drawBuffer);
+		storeBuffer(&state.depthBuffer);
 	}
 
 	mixin ExternalInterface;

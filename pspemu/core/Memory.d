@@ -164,6 +164,11 @@ class Memory : Stream {
 			.writefln("");
 		}
 	}
+	
+	public void* getPointerOrNull(Pointer address) {
+		if (address == 0) return null;
+		return getPointer(address);
+	}
 
 	/**
 	 * Obtains a pointer to a physical memory position.

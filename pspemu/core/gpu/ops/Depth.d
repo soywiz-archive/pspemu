@@ -13,13 +13,13 @@ template Gpu_Depth() {
 	// Depth Buffer Pointer
 	auto OP_ZBP() {
 		gpu.state.depthBuffer.lowAddress = command.param24;
-		gpu.state.depthBuffer.mustLoad   = true;
 	}
 
 	// Depth Buffer Width
 	auto OP_ZBW() {
 		gpu.state.depthBuffer.highAddress = command.extract!(ubyte, 16);
 		gpu.state.depthBuffer.width       = command.extract!(ushort, 0);
+		gpu.state.depthBuffer.mustLoad    = true;
 	}
 
 	/**

@@ -130,108 +130,111 @@ struct Viewport {
 
 static struct GpuState {
 	Memory memory;
-
+	uint baseAddress, vertexAddress, indexAddress;
 	ScreenBuffer drawBuffer, depthBuffer;
-
-	VertexType vertexType;
-	Viewport viewport;
-	uint offsetX, offsetY;
-
-	uint baseAddress;
-	uint vertexAddress;
-	uint indexAddress;
-
-	ClearBufferMask clearFlags;
-	bool clearingMode;
-
-	Colorf ambientModelColor, diffuseModelColor, specularModelColor, emissiveModelColor;
-	Colorf textureEnviromentColor;
-	LightComponents materialColorComponents;
-	
-	Colorf fogColor;
-	float  fogDist, fogEnd;
-
-	// Matrix.
-	Matrix projectionMatrix, worldMatrix, viewMatrix, textureMatrix;
-	
-	LightModel lightModel;
-	
-	// Textures.
-	// Temporal values.
-	bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
-	int  mipMapMaxLevel;
-	bool textureSwizzled;
-	PixelFormats  textureFormat;
-	TextureFilter textureFilterMin, textureFilterMag;
-	WrapMode      textureWrapU, textureWrapV;
-	TextureEffect textureEffect;
-	TextureColorComponent textureColorComponent;
-	UV   textureScale, textureOffset;
-	bool mipmapShareClut;
-
-	TextureState[8] textures;
-	ClutState uploadedClut;
-	ClutState clut;
-
-	Rect scissor;
-	FrontFaceDirection frontFaceDirection;
-	ShadingModel shadeModel;
-
-	float[8] morphWeights;
-
-	// Lights related.
-	Colorf ambientLightColor;
-	float  specularPower;
-	LightState[4] lights;
-
-	// State.
-	bool clipPlaneEnabled;        // Clip Plane Enable (GL_CLIP_PLANE0)
-	bool backfaceCullingEnabled;  // Backface Culling Enable (GL_CULL_FACE)
-	bool alphaBlendEnabled;       // Alpha Blend Enable (GL_BLEND)
-	bool depthTestEnabled;        // depth (Z) Test Enable (GL_DEPTH_TEST)
-	bool stencilTestEnabled;      // Stencil Test Enable (GL_STENCIL_TEST)
-	bool logicalOperationEnabled; // Logical Operation Enable (GL_COLOR_LOGIC_OP)
-	bool alphaTestEnabled;        // Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
-	bool lightingEnabled;         // Lighting Enable (GL_LIGHTING)
-	bool fogEnabled;              // FOG Enable (GL_FOG)
-	bool ditheringEnabled;
-	bool lineSmoothEnabled;
-	bool colorTestEnabled;
-	bool patchCullEnabled;
-
-	float fogDensity = 0.1;
-	int fogMode;
-	int fogHint;
-	
-	// Blending.
-	int blendEquation;
-	int blendFuncSrc;
-	int blendFuncDst;
-
-	TestFunction depthFunc = TestFunction.GU_ALWAYS;
-	float depthRangeNear = 0.0, depthRangeFar = 1.0;
-	ushort depthMask;
-
-	TestFunction alphaTestFunc = TestFunction.GU_ALWAYS;
-	float alphaTestValue;
-	ubyte alphaTestMask = 0xFF;
-	
-	TestFunction stencilFuncFunc;
-	ubyte stencilFuncRef;
-	ubyte stencilFuncMask = 0xFF;
-
-	StencilOperations stencilOperationSfail;
-	StencilOperations stencilOperationDpfail;
-	StencilOperations stencilOperationDppass;
-
-	Colorf fixColorSrc, fixColorDst;
-
-	LogicalOperation logicalOperation = LogicalOperation.GU_COPY; // GL_COPY (default)
-	
-	ubyte[4] colorMask = [0xFF, 0xFF, 0xFF, 0xFF];
-
 	TextureTransfer textureTransfer;
-	//static assert (this.sizeof <= 512);
+	
+	union {
+		uint[4096] RealState;
+		struct {
+			VertexType vertexType; // here because of transform2d
+			Viewport viewport;
+			uint offsetX, offsetY;
+			bool toggleUpdateState;
+
+			ClearBufferMask clearFlags;
+			bool clearingMode;
+
+			Colorf ambientModelColor, diffuseModelColor, specularModelColor, emissiveModelColor;
+			Colorf textureEnviromentColor;
+			LightComponents materialColorComponents;
+			
+			Colorf fogColor;
+			float  fogDist, fogEnd;
+
+			// Matrix.
+			Matrix projectionMatrix, worldMatrix, viewMatrix, textureMatrix;
+			
+			LightModel lightModel;
+			
+			// Textures.
+			// Temporal values.
+			bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
+			int  mipMapMaxLevel;
+			bool textureSwizzled;
+			PixelFormats  textureFormat;
+			TextureFilter textureFilterMin, textureFilterMag;
+			WrapMode      textureWrapU, textureWrapV;
+			TextureEffect textureEffect;
+			TextureColorComponent textureColorComponent;
+			UV   textureScale, textureOffset;
+			bool mipmapShareClut;
+
+			TextureState[8] textures;
+			ClutState uploadedClut;
+			ClutState clut;
+
+			Rect scissor;
+			FrontFaceDirection frontFaceDirection;
+			ShadingModel shadeModel;
+
+			float[8] morphWeights;
+
+			// Lights related.
+			Colorf ambientLightColor;
+			float  specularPower;
+			LightState[4] lights;
+
+			// State.
+			bool clipPlaneEnabled;        // Clip Plane Enable (GL_CLIP_PLANE0)
+			bool backfaceCullingEnabled;  // Backface Culling Enable (GL_CULL_FACE)
+			bool alphaBlendEnabled;       // Alpha Blend Enable (GL_BLEND)
+			bool depthTestEnabled;        // depth (Z) Test Enable (GL_DEPTH_TEST)
+			bool stencilTestEnabled;      // Stencil Test Enable (GL_STENCIL_TEST)
+			bool logicalOperationEnabled; // Logical Operation Enable (GL_COLOR_LOGIC_OP)
+			bool alphaTestEnabled;        // Alpha Test Enable (GL_ALPHA_TEST) glAlphaFunc(GL_GREATER, 0.03f);
+			bool lightingEnabled;         // Lighting Enable (GL_LIGHTING)
+			bool fogEnabled;              // FOG Enable (GL_FOG)
+			bool ditheringEnabled;
+			bool lineSmoothEnabled;
+			bool colorTestEnabled;
+			bool patchCullEnabled;
+
+			float fogDensity; // 0.1
+			int fogMode;
+			int fogHint;
+			
+			// Blending.
+			int blendEquation;
+			int blendFuncSrc;
+			int blendFuncDst;
+
+			TestFunction depthFunc; // TestFunction.GU_ALWAYS
+			float depthRangeNear, depthRangeFar; // 0.0 - 1.0
+			ushort depthMask;
+
+			TestFunction alphaTestFunc; // TestFunction.GU_ALWAYS
+			float alphaTestValue;
+			ubyte alphaTestMask; // 0xFF
+			
+			TestFunction stencilFuncFunc;
+			ubyte stencilFuncRef;
+			ubyte stencilFuncMask; // 0xFF
+
+			StencilOperations stencilOperationSfail;
+			StencilOperations stencilOperationDpfail;
+			StencilOperations stencilOperationDppass;
+
+			Colorf fixColorSrc, fixColorDst;
+
+			LogicalOperation logicalOperation; // LogicalOperation.GU_COPY
+			
+			ubyte[4] colorMask; // [0xFF, 0xFF, 0xFF, 0xFF];
+			//static assert (this.sizeof <= 512);
+		}
+	}
+
+	static assert (this.RealState.offsetof + this.RealState.sizeof == this.sizeof); // RealState ends the struct
 }
 
 struct PrimitiveFlags {

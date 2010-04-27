@@ -24,13 +24,13 @@ template Gpu_Special() {
 	// Frame Buffer Pointer
 	auto OP_FBP() {
 		gpu.state.drawBuffer.lowAddress = command.param24;
-		gpu.state.drawBuffer.mustLoad = true;
 	}
 
 	// Frame Buffer Width
 	auto OP_FBW() {
 		gpu.state.drawBuffer.highAddress = command.extract!(ubyte, 16);
 		gpu.state.drawBuffer.width       = command.extract!(ushort, 0);
+		gpu.state.drawBuffer.mustLoad    = true;
 	}
 
 	// frame buffer Pixel Storage Mode
