@@ -1,5 +1,5 @@
-#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g line.c ../common/emits.c ../common/vram.c -lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpspdisplay -lpspge -lpspsdk -lc -lpspuser -lpspkernel -o line.elf
-#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" line.elf
+//#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g line.c ../common/emits.c ../common/vram.c -lpspgum -lpspgu -lm -lpsprtc -lpspdebug -lpspdisplay -lpspge -lpspsdk -lc -lpspuser -lpspkernel -o line.elf
+//#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" line.elf
 
 #include <pspkernel.h>
 #include <pspdisplay.h>

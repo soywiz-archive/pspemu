@@ -26,7 +26,7 @@ import pspemu.core.cpu.Disassembler;
 import pspemu.core.gpu.Gpu;
 
 version (USE_CPU_DYNAREC) {
-	import pspemu.core.cpu.dynarec.Cpu;
+	//import pspemu.core.cpu.//dynarec.Cpu;
 } else {
 	import pspemu.core.cpu.interpreted.Cpu;
 }
@@ -168,7 +168,11 @@ void main(string[] args) {
 				string emitedLine   = (n < syscall.emits.length) ? syscall.emits[n] : "<not emited>";
 				string expectedLine = (n < expectedLines.length) ? expectedLines[n] : "<not expected>";
 				bool pass = (emitedLine == expectedLine);
-				writefln("  %s : '%s' <-> '%s'", pass ? "PASS" : "FAIL", emitedLine, expectedLine);
+				if (pass) {
+					writefln("  PASS : '%s'", emitedLine);
+				} else {
+					writefln("  FAIL : '%s' <-> '%s'", emitedLine, expectedLine);
+				}
 				if (!pass) failCount++;
 				totalExecuted++;
 			}

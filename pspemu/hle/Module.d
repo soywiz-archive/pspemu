@@ -17,6 +17,11 @@ debug = DEBUG_SYSCALL;
 
 // http://dsource.org/projects/minid/browser/trunk/minid/bind.d
 
+void putStringz(T)(ref T ptr, string s) {
+	ptr[0..s.length] = s;
+	ptr[s.length] = 0;
+}
+
 bool isArrayType(alias T)() { return is(typeof(T[0])) && is(typeof(T.sort)); }
 bool isPointerType(alias T)() { return is(typeof(*T)) && !isArrayType!(T); }
 bool isArrayType(T)() { return is(typeof(T[0])) && is(typeof(T.sort)); }

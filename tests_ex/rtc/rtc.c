@@ -1,5 +1,5 @@
-#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g rtc.c ../common/emits.c -lpspsdk -lc -lpspuser -lpspkernel -lpsprtc -o rtc.elf
-#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" rtc.elf
+//#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g rtc.c ../common/emits.c -lpspsdk -lc -lpspuser -lpspkernel -lpsprtc -o rtc.elf
+//#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" rtc.elf
 
 #include <pspkernel.h>
 #include <psprtc.h>

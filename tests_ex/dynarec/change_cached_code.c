@@ -2,8 +2,8 @@
  * Dynamic recompilation implementations may reuse cached functions.
  * This tests that if the code memory changed, the code must be updated.
  */
-#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g change_cached_code.c ../common/emits.c -lpspsdk -lc -lpspuser -lpspkernel -o change_cached_code.elf
-#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" change_cached_code.elf
+//#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g change_cached_code.c ../common/emits.c -lpspsdk -lc -lpspuser -lpspkernel -o change_cached_code.elf
+//#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" change_cached_code.elf
 
 #include <pspkernel.h>
 #include <pspthreadman.h>

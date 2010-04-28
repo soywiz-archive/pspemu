@@ -1,0 +1,21 @@
+int:1
+string:"ms0:/PSP/GAME/virtual/EBOOT.PBP"
+string:"ms0:/PSP/GAME/virtual"
+string:"ms0:/PSP/GAME/virtual"
+string:"(chdir error)"
+string:"ms0:/PSP/GAME"
+string:"ms0:/PSP/SAVEDATA"
+string:"ms0:"
+string:"ms0:"
+string:"ms0:/PSP"
+string:"ms0:/PSP/GAME"
+string:"ms0:"
+string:"ms0:/PSP/GAME"
+string:"flash0:"
+string:"ms0:/PSP"
+int:1
+int:1
+string:"io.expected"
+string:"io.c"
+string:"io.elf"
+string:"GAME"

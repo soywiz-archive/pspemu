@@ -534,16 +534,20 @@ class Loader : IDebugSource {
 			registers.pcSet = PC;
 			registers.GP = GP;
 
+			registers.SP -= 4;
 			registers.K0 = registers.SP;
 			registers.RA = 0x08000000;
-			registers.A0 = 32; // argumentsLength.
-			registers.A1 = registers.SP; // argumentsPointer
-			memory.position = registers.SP;
-			memory.writeString("ms0:/PSP/GAME/virtual/EBOOT.PBP\0");
 		}
-		threadManForUser.sceKernelStartThread(thid, 0, null);
+
+		// Write arguments.
+		memory.position = 0x08100000;
+		memory.write(cast(uint)(memory.position + 4));
+		memory.writeString("ms0:/PSP/GAME/virtual/EBOOT.PBP\0");
+
+		threadManForUser.sceKernelStartThread(thid, 1, memory.getPointerOrNull(0x08100004));
 		pspThread.switchToThisThread();
 
+		//cpu.traceStep = true; cpu.checkBreakpoints = true;
 		Logger.log(Logger.Level.DEBUG, "Loader", "PC: %08X", cpu.registers.PC);
 		Logger.log(Logger.Level.DEBUG, "Loader", "GP: %08X", cpu.registers.GP);
 		Logger.log(Logger.Level.DEBUG, "Loader", "SP: %08X", cpu.registers.SP);

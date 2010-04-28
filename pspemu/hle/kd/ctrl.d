@@ -18,10 +18,6 @@ class sceCtrl_driver : Module {
 		mixin(registerd!(0xA7144800, sceCtrlSetIdleCancelThresholdFunction));
 	}
 
-	void sceCtrlSetIdleCancelThresholdFunction() {
-		unimplemented();
-	}
-
 	void readBufferedFrames(SceCtrlData* pad_data, int count = 1, bool positive = true) {
 		for (int n = 0; n < count; n++) {
 			pad_data[n] = cpu.controller.frameRead(n);
@@ -50,6 +46,8 @@ class sceCtrl_driver : Module {
 	 *
 	 * @param pad_data - Pointer to a ::SceCtrlData structure used hold the returned pad data.
 	 * @param count - Number of ::SceCtrlData buffers to read.
+	 *
+	 * @return Count?
 	 */
 	int sceCtrlReadBufferPositive(SceCtrlData* pad_data, int count) {
 		readBufferedFrames(pad_data, count, true);
@@ -85,9 +83,32 @@ class sceCtrl_driver : Module {
 		return 0;
 	}
 	
-	int sceCtrlReadLatch(SceCtrlLatch* latch_data) {
+	SceCtrlLatch lastLatch;
+	
+	/**
+	 * Obtains information about 
+	 *
+	 * @param currentLatch - Pointer to SceCtrlLatch to store the result.
+	 *
+	 * @return 
+	 */
+	int sceCtrlReadLatch(SceCtrlLatch* currentLatch) {
+		SceCtrlData pad;
+		readBufferedFrames(&pad, 1, true);
+		
+		currentLatch.uiPress   = cast(PspCtrlButtons)pad.Buttons;
+		currentLatch.uiRelease = cast(PspCtrlButtons)~pad.Buttons;
+		currentLatch.uiMake    = (lastLatch.uiRelease ^ currentLatch.uiRelease) & lastLatch.uiRelease;
+		currentLatch.uiBreak   = (lastLatch.uiPress   ^ currentLatch.uiPress  ) & lastLatch.uiPress;
+
+		//unimplemented_notice();
+		lastLatch = *currentLatch;
+
+		return 0;
+	}
+
+	void sceCtrlSetIdleCancelThresholdFunction() {
 		unimplemented();
-		return -1;
 	}
 }
 
@@ -99,81 +120,58 @@ class sceCtrl : sceCtrl_driver {
  *
  * @note PSP_CTRL_HOME, PSP_CTRL_NOTE, PSP_CTRL_SCREEN, PSP_CTRL_VOLUP, PSP_CTRL_VOLDOWN, PSP_CTRL_DISC, PSP_CTRL_WLAN_UP, PSP_CTRL_REMOTE, PSP_CTRL_MS can only be read in kernel mode
  */
-enum PspCtrlButtons {
-	/** Select button. */
-	PSP_CTRL_SELECT     = 0x000001,
-	/** Start button. */
-	PSP_CTRL_START      = 0x000008,
-	/** Up D-Pad button. */
-	PSP_CTRL_UP         = 0x000010,
-	/** Right D-Pad button. */
-	PSP_CTRL_RIGHT      = 0x000020,
-	/** Down D-Pad button. */
-	PSP_CTRL_DOWN      	= 0x000040,
-	/** Left D-Pad button. */
-	PSP_CTRL_LEFT      	= 0x000080,
-	/** Left trigger. */
-	PSP_CTRL_LTRIGGER   = 0x000100,
-	/** Right trigger. */
-	PSP_CTRL_RTRIGGER   = 0x000200,
-	/** Triangle button. */
-	PSP_CTRL_TRIANGLE   = 0x001000,
-	/** Circle button. */
-	PSP_CTRL_CIRCLE     = 0x002000,
-	/** Cross button. */
-	PSP_CTRL_CROSS      = 0x004000,
-	/** Square button. */
-	PSP_CTRL_SQUARE     = 0x008000,
-	/** Home button. In user mode this bit is set if the exit dialog is visible. */
-	PSP_CTRL_HOME       = 0x010000,
-	/** Hold button. */
-	PSP_CTRL_HOLD       = 0x020000,
-	/** Music Note button. */
-	PSP_CTRL_NOTE       = 0x800000,
-	/** Screen button. */
-	PSP_CTRL_SCREEN     = 0x400000,
-	/** Volume up button. */
-	PSP_CTRL_VOLUP      = 0x100000,
-	/** Volume down button. */
-	PSP_CTRL_VOLDOWN    = 0x200000,
-	/** Wlan switch up. */
-	PSP_CTRL_WLAN_UP    = 0x040000,
-	/** Remote hold position. */
-	PSP_CTRL_REMOTE     = 0x080000,	
-	/** Disc present. */
-	PSP_CTRL_DISC       = 0x1000000,
-	/** Memory stick present. */
-	PSP_CTRL_MS         = 0x2000000,
+enum PspCtrlButtons { // Set
+	PSP_CTRL_NONE      = 0x_0000000,
+	PSP_CTRL_SELECT    = 0x_0000001, /// Select button.
+	PSP_CTRL_START     = 0x_0000008, /// Start button.
+	PSP_CTRL_UP        = 0x_0000010, /// Up D-Pad button.
+	PSP_CTRL_RIGHT     = 0x_0000020, /// Right D-Pad button.
+	PSP_CTRL_DOWN      = 0x_0000040, /// Down D-Pad button.
+	PSP_CTRL_LEFT      = 0x_0000080, /// Left D-Pad button.
+	PSP_CTRL_LTRIGGER  = 0x_0000100, /// Left trigger.
+	PSP_CTRL_RTRIGGER  = 0x_0000200, /// Right trigger.
+	PSP_CTRL_TRIANGLE  = 0x_0001000, /// Triangle button.
+	PSP_CTRL_CIRCLE    = 0x_0002000, /// Circle button.
+	PSP_CTRL_CROSS     = 0x_0004000, /// Cross button.
+	PSP_CTRL_SQUARE    = 0x_0008000, /// Square button.
+	PSP_CTRL_HOME      = 0x_0010000, /// Home button. In user mode this bit is set if the exit dialog is visible.
+	PSP_CTRL_HOLD      = 0x_0020000, /// Hold button.
+	PSP_CTRL_WLAN_UP   = 0x_0040000, /// Wlan switch up.
+	PSP_CTRL_REMOTE    = 0x_0080000, /// Remote hold position.
+	PSP_CTRL_VOLUP     = 0x_0100000, /// Volume up button.
+	PSP_CTRL_VOLDOWN   = 0x_0200000, /// Volume down button.
+	PSP_CTRL_SCREEN    = 0x_0400000, /// Screen button.
+	PSP_CTRL_NOTE      = 0x_0800000, /// Music Note button.
+	PSP_CTRL_DISC      = 0x_1000000, /// Disc present.
+	PSP_CTRL_MS        = 0x_2000000, /// Memory stick present.
 }
 
-/** Controller mode. */
+/**
+ * Controller mode.
+ */
 enum PspCtrlMode {
-	/* Digitial. */
-	PSP_CTRL_MODE_DIGITAL = 0,
-	/* Analog. */
-	PSP_CTRL_MODE_ANALOG
+	PSP_CTRL_MODE_DIGITAL = 0, /// Digitial.
+	PSP_CTRL_MODE_ANALOG  = 1, /// Analog.
 }
 
+/**
+ * Controller latch.
+ */
 struct SceCtrlLatch {
-	uint 	uiMake;
-	uint 	uiBreak;
-	uint 	uiPress;
-	uint 	uiRelease;
+	PspCtrlButtons uiMake;    /// A bit fields of buttons just pressed (since last call?)
+	PspCtrlButtons uiBreak;   /// A bit fields of buttons just released (since last call?)
+	PspCtrlButtons uiPress;   /// Same has SceCtrlData.Buttons?
+	PspCtrlButtons uiRelease; /// A bit field of buttons released 
 }
 
 /+
 /** Returned controller data */
 struct SceCtrlData {
-	/** The current read frame. */
-	uint 	TimeStamp;
-	/** Bit mask containing zero or more of ::PspCtrlButtons. */
-	uint 	Buttons;
-	/** Analogue stick, X axis. */
-	ubyte 	Lx;
-	/** Analogue stick, Y axis. */
-	ubyte 	Ly;
-	/** Reserved. */
-	ubyte 	Rsrv[6];
+	uint 	TimeStamp; /// The current read frame.
+	uint 	Buttons;   /// Bit mask containing zero or more of ::PspCtrlButtons.
+	ubyte 	Lx;        /// Analogue stick, X axis.
+	ubyte 	Ly;        /// Analogue stick, Y axis.
+	ubyte 	Rsrv[6];   /// Reserved.
 
 	static assert(this.sizeof == 16);
 }

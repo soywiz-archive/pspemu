@@ -124,6 +124,7 @@ template ThreadManForUser_Threads() {
 			writefln("sceKernelStartThread: Null");
 			return -1;
 		}
+		//writefln("sceKernelStartThread:%d,%d,%d", thid, arglen, cpu.memory.getPointerReverseOrNull(argp));
 		pspThread.registers.A0 = arglen;
 		pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
 		pspThread.info.status  = PspThreadStatus.PSP_THREAD_RUNNING;

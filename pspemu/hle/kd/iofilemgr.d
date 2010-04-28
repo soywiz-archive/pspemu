@@ -9,85 +9,8 @@ import pspemu.core.cpu.Interrupts;
 import pspemu.hle.Module;
 
 import pspemu.utils.Utils;
-import pspemu.utils.VirtualFileSystem;
-
 import pspemu.utils.Logger;
-
-class IoDevice : VFS_Proxy {
-	Cpu cpu;
-	string name = "<iodev:unknown>";
-
-	this(Cpu cpu, VFS node) {
-		this.cpu = cpu;
-		super(name, node, null);
-		register();
-	}
-	
-	void register() {
-	}
-	
-	bool present() { return true; }
-	
-	bool inserted() { return false; }
-	bool inserted(bool value) { return false; }
-
-	int sceIoDevctl(uint cmd, ubyte[] inData, ubyte[] outData) {
-		return -1;
-	}
-}
-
-class UmdDevice : IoDevice {
-	this(Cpu cpu, VFS node) { super(cpu, node); }
-}
-
-class MemoryStickDevice : IoDevice {
-	bool _inserted = true;
-	bool[uint] callbacks;
-	string name = "<iodev:mstick>";
-
-	this(Cpu cpu, VFS node) { super(cpu, node); }
-
-	override void register() {
-		//writefln("MemoryStickDevice.register");
-		cpu.interrupts.registerCallback(Interrupts.Type.GPIO, delegate void() {
-			writefln("MemoryStickDevice.processGPIO");
-			cpu.queueCallbacks(callbacks.keys, []);
-		});
-	}
-
-	override bool inserted() { return _inserted; }
-	override bool inserted(bool value) {
-		if (_inserted != value) {
-			_inserted = value;
-			cpu.interrupts.queue(Interrupts.Type.GPIO);
-		}
-		return _inserted;
-	}
-
-	override int sceIoDevctl(uint cmd, ubyte[] inData, ubyte[] outData) {
-		switch (cmd) {
-			case 0x02025806: // MScmIsMediumInserted
-				*(cast(uint*)outData.ptr) = cast(uint)inserted;
-				writefln("MScmIsMediumInserted");
-			break;
-			case 0x02415821: // MScmRegisterMSInsertEjectCallback
-				uint callback = *(cast(uint*)inData.ptr);
-				callbacks[callback] = true;
-				writefln("MScmRegisterMSInsertEjectCallback");
-			break;
-			case 0x02415822: // MScmUnregisterMSInsertEjectCallback
-				uint callback = *(cast(uint*)inData.ptr);
-				callbacks.remove(callback);
-				writefln("MScmUnregisterMSInsertEjectCallback");
-			break;
-			default: // Unknown command
-				writefln("MemoryStickDevice.sceIoDevctl: Unknown command 0x%08X!", cmd);
-				return -1;
-			break;
-		}
-		return 0;
-	}
-}
+import pspemu.utils.VirtualFileSystem;
 
 class IoFileMgrForKernel : Module {
 	VFS fsroot, gameroot;
@@ -178,22 +101,6 @@ class IoFileMgrForKernel : Module {
 		return openedStreams[uid];
 	}
 
-	/** 
-	  * Reads an entry from an opened file descriptor.
-	  *
-	  * @param fd - Already opened file descriptor (using sceIoDopen)
-	  * @param dir - Pointer to an io_dirent_t structure to hold the file information
-	  *
-	  * @return Read status
-	  * -   0 - No more directory entries left
-	  * - > 0 - More directory entired to go
-	  * - < 0 - Error
-	  */
-	int sceIoDread(SceUID fd, SceIoDirent *dir) {
-		unimplemented();
-		return -1;
-	}
-
 	/**
 	 * Make a directory file
 	 *
@@ -238,6 +145,25 @@ class IoFileMgrForKernel : Module {
 		return -1;
 	}
 
+	class DirectoryIterator {
+		string dirname;
+		uint pos;
+		VFS vfs;
+		VFS[] children;
+		this(string dirname) {
+			this.dirname = dirname;
+			this.pos = 0;
+			this.vfs = fsroot[dirname];
+			foreach (child; this.vfs) children ~= child;
+		}
+		uint left() { return children.length - pos; }
+		VFS extract() {
+			return children[pos++];
+		}
+	}
+
+	DirectoryIterator[SceUID] openedDirectories;
+
 	/**
 	 * Open a directory
 	 * 
@@ -253,8 +179,41 @@ class IoFileMgrForKernel : Module {
 	 * @return If >= 0 then a valid file descriptor, otherwise a Sony error code.
 	 */
 	SceUID sceIoDopen(string dirname) {
-		unimplemented();
-		return -1;
+		try {
+			SceUID uid = openedDirectories.length + 1;
+			openedDirectories[uid] = new DirectoryIterator(dirname);
+			return uid;
+		} catch (Object o) {
+			writefln("sceIoDopen: %s", o);
+			return -1;
+		}
+	}
+
+	/** 
+	  * Reads an entry from an opened file descriptor.
+	  *
+	  * @param fd - Already opened file descriptor (using sceIoDopen)
+	  * @param dir - Pointer to an io_dirent_t structure to hold the file information
+	  *
+	  * @return Read status
+	  * -   0 - No more directory entries left
+	  * - > 0 - More directory entired to go
+	  * - < 0 - Error
+	  */
+	int sceIoDread(SceUID fd, SceIoDirent *dir) {
+		if (fd !in openedDirectories) return -1;
+		auto cdir = openedDirectories[fd];
+		uint lastLeft = cdir.left;
+		if (lastLeft) {
+			auto entry = cdir.extract;
+
+			fillStats(&dir.d_stat, entry.stats);
+			putStringz(dir.d_name, entry.name);
+			dir.d_private = null;
+			dir.dummy = 0;
+			//writefln(""); writefln("sceIoDread:'%s':'%s'", entry.name, dir.d_name[0]);
+		}
+		return lastLeft;
 	}
 
 	/**
@@ -265,8 +224,9 @@ class IoFileMgrForKernel : Module {
 	 * @return < 0 on error
 	 */
 	int sceIoDclose(SceUID fd) {
-		unimplemented();
-		return -1;
+		if (fd !in openedDirectories) return -1;
+		openedDirectories.remove(fd);
+		return 0;
 	}
 
 	/**
@@ -278,13 +238,11 @@ class IoFileMgrForKernel : Module {
 	 */
 	int sceIoChdir(string path) {
 		try {
+			fsroot.access(path);
 			fscurdir = path;
-			fsroot[fscurdir];
-			//unimplemented();
-			//return -1;
 			return 0;
-		} catch (Exception e) {
-			//throw(e);
+		} catch (Object o) {
+			writefln("sceIoChdir: %s", o);
 			return -1;
 		}
 	}
@@ -333,20 +291,29 @@ class IoFileMgrForKernel : Module {
 		stream.close();
 		return 0;
 	}
+	
+	string getAbsolutePathFromRelative(string relativePath) {
+		auto indexHasDevice = relativePath.indexOf(":/");
+		if (indexHasDevice >= 0) {
+			return relativePath;
+		} else {
+			throw(new Exception("Not supporting relative paths"));
+		}
+	}
 
 	VFS locateParentAndUpdateFile(ref string file) {
-		VFS vfs = gameroot;
-
-		// A full path.
-		auto index = file.indexOf(":");
-		if (index >= 0) {
-			vfs = fsroot;
-			vfs = vfs[file[0..index + 1]];
-			file = file[index + 1..$];
-			while (file.length && file[0] == '/') file = file[1..$];
+		VFS vfs;
+		auto indexLastSeparator = file.lastIndexOf("/");
+		if (indexLastSeparator >= 0) {
+			auto path = getAbsolutePathFromRelative(file);
+			path = file[0..indexLastSeparator];
+			file = file[indexLastSeparator + 1..$];
+			vfs = fsroot.access(path);
+		} else {
+			vfs = fsroot.access(fscurdir);
 		}
 		
-		//writefln("\n\n\nSELECTED DIR: %s\n\n", vfs);
+		//writefln("locateParentAndUpdateFile('%s', '%s')", vfs, file);
 
 		return vfs;
 	}
@@ -385,7 +352,8 @@ class IoFileMgrForKernel : Module {
 			writefln("Open: Flags:%08X, Mode:%03o, File:'%s'", flags, mode, file);
 			
 			SceUID fd = 0; foreach (fd_cur; openedStreams.keys) if (fd < fd_cur) fd = fd_cur; fd++;
-			openedStreams[fd] = locateParentAndUpdateFile(file).open(file, fmode, 0777);
+			auto vfs = locateParentAndUpdateFile(file);
+			openedStreams[fd] = vfs.open(file, fmode, 0777);
 			return fd;
 		} catch (Object o) {
 			writefln("sceIoOpen exception: %s", o);
@@ -501,52 +469,11 @@ class IoFileMgrForKernel : Module {
 	  * @return < 0 on error.
 	  */
 	int sceIoGetstat(string file, SceIoStat* stat) {
-		ScePspDateTime convertTime(d_time timeD) {
-			ScePspDateTime dateTimePsp;
-			std.date.Date dateTimeD;
-			dateTimeD.parse(toUTCString(timeD));
-			with (dateTimePsp) {
-				year   = cast(ushort)dateTimeD.year;
-				month  = cast(ushort)dateTimeD.month;
-				day    = cast(ushort)dateTimeD.day;
-				hour   = cast(ushort)dateTimeD.hour;
-				minute = cast(ushort)dateTimeD.minute;
-				second = cast(ushort)dateTimeD.second;
-				microsecond = dateTimeD.ms * 1000;
-			}
-			return dateTimePsp;
-		}
-		
 		try {
 			locateParentAndUpdateFile(file).flush();
 			auto fentry = locateParentAndUpdateFile(file)[file];
 			
-			{
-				stat.st_mode = 0;
-				
-				// User access rights mask
-				stat.st_mode |= IOAccessModes.FIO_S_IRUSR | IOAccessModes.FIO_S_IWUSR | IOAccessModes.FIO_S_IXUSR;
-				// Group access rights mask
-				stat.st_mode |= IOAccessModes.FIO_S_IRGRP | IOAccessModes.FIO_S_IWGRP | IOAccessModes.FIO_S_IXGRP;
-				// Others access rights mask
-				stat.st_mode |= IOAccessModes.FIO_S_IROTH | IOAccessModes.FIO_S_IWOTH | IOAccessModes.FIO_S_IXOTH;
-
-				//stat.st_mode |= FIO_S_IFLNK
-				stat.st_mode |= fentry.stats.isdir ? IOAccessModes.FIO_S_IFDIR : IOAccessModes.FIO_S_IFREG;
-			}
-			{
-				stat.st_attr  = 0;
-				
-				//stat.st_attr |= IOFileModes.FIO_SO_IFLNK;
-
-				stat.st_attr |= fentry.stats.isdir ? IOFileModes.FIO_SO_IFDIR : IOFileModes.FIO_SO_IFREG;
-				stat.st_attr |= IOFileModes.FIO_SO_IROTH | IOFileModes.FIO_SO_IWOTH | IOFileModes.FIO_SO_IXOTH; // rwx
-			}
-			
-			stat.st_size  = fentry.stats.size;
-			stat.st_ctime = convertTime(fentry.stats.time_c);
-			stat.st_atime = convertTime(fentry.stats.time_a);
-			stat.st_mtime = convertTime(fentry.stats.time_m);
+			fillStats(stat, fentry.stats);
 			return 0;
 		} catch (Exception e) {
 			writefln("ERROR: STAT!! FAILED: %s", e);
@@ -764,71 +691,154 @@ class IoFileMgrForKernel : Module {
 class IoFileMgrForUser : IoFileMgrForKernel {
 }
 
+void fillStats(SceIoStat* psp_stats, VFS.Stats vfs_stats) {
+	{
+		psp_stats.st_mode = 0;
+		
+		// User access rights mask
+		psp_stats.st_mode |= IOAccessModes.FIO_S_IRUSR | IOAccessModes.FIO_S_IWUSR | IOAccessModes.FIO_S_IXUSR;
+		// Group access rights mask
+		psp_stats.st_mode |= IOAccessModes.FIO_S_IRGRP | IOAccessModes.FIO_S_IWGRP | IOAccessModes.FIO_S_IXGRP;
+		// Others access rights mask
+		psp_stats.st_mode |= IOAccessModes.FIO_S_IROTH | IOAccessModes.FIO_S_IWOTH | IOAccessModes.FIO_S_IXOTH;
+
+		//psp_stats.st_mode |= FIO_S_IFLNK
+		psp_stats.st_mode |= vfs_stats.isdir ? IOAccessModes.FIO_S_IFDIR : IOAccessModes.FIO_S_IFREG;
+	}
+	{
+		//psp_stats.st_attr |= IOFileModes.FIO_SO_IFLNK;
+		if (vfs_stats.isdir) {
+			psp_stats.st_attr = IOFileModes.FIO_SO_IFDIR;
+		} else {
+			psp_stats.st_attr  = cast(IOFileModes)0;
+			psp_stats.st_attr |= IOFileModes.FIO_SO_IFREG;
+			psp_stats.st_attr |= IOFileModes.FIO_SO_IROTH | IOFileModes.FIO_SO_IWOTH | IOFileModes.FIO_SO_IXOTH; // rwx
+		}
+	}
+	
+	psp_stats.st_size = vfs_stats.size;
+	psp_stats.st_ctime.parse(vfs_stats.time_c);
+	psp_stats.st_atime.parse(vfs_stats.time_a);
+	psp_stats.st_mtime.parse(vfs_stats.time_m);
+
+	psp_stats.st_private[] = 0;
+}
+
+class IoDevice : VFS_Proxy {
+	Cpu cpu;
+	string name = "<iodev:unknown>";
+
+	this(Cpu cpu, VFS node) {
+		this.cpu = cpu;
+		super(name, node, null);
+		register();
+	}
+	
+	void register() {
+	}
+	
+	bool present() { return true; }
+	
+	bool inserted() { return false; }
+	bool inserted(bool value) { return false; }
+
+	int sceIoDevctl(uint cmd, ubyte[] inData, ubyte[] outData) {
+		return -1;
+	}
+}
+
+class UmdDevice : IoDevice {
+	this(Cpu cpu, VFS node) { super(cpu, node); }
+}
+
+class MemoryStickDevice : IoDevice {
+	bool _inserted = true;
+	bool[uint] callbacks;
+	string name = "<iodev:mstick>";
+
+	this(Cpu cpu, VFS node) { super(cpu, node); }
+
+	override void register() {
+		//writefln("MemoryStickDevice.register");
+		cpu.interrupts.registerCallback(Interrupts.Type.GPIO, delegate void() {
+			writefln("MemoryStickDevice.processGPIO");
+			cpu.queueCallbacks(callbacks.keys, []);
+		});
+	}
+
+	override bool inserted() { return _inserted; }
+	override bool inserted(bool value) {
+		if (_inserted != value) {
+			_inserted = value;
+			cpu.interrupts.queue(Interrupts.Type.GPIO);
+		}
+		return _inserted;
+	}
+
+	override int sceIoDevctl(uint cmd, ubyte[] inData, ubyte[] outData) {
+		switch (cmd) {
+			case 0x02025806: // MScmIsMediumInserted
+				*(cast(uint*)outData.ptr) = cast(uint)inserted;
+				writefln("MScmIsMediumInserted");
+			break;
+			case 0x02415821: // MScmRegisterMSInsertEjectCallback
+				uint callback = *(cast(uint*)inData.ptr);
+				callbacks[callback] = true;
+				writefln("MScmRegisterMSInsertEjectCallback");
+			break;
+			case 0x02415822: // MScmUnregisterMSInsertEjectCallback
+				uint callback = *(cast(uint*)inData.ptr);
+				callbacks.remove(callback);
+				writefln("MScmUnregisterMSInsertEjectCallback");
+			break;
+			default: // Unknown command
+				writefln("MemoryStickDevice.sceIoDevctl: Unknown command 0x%08X!", cmd);
+				return -1;
+			break;
+		}
+		return 0;
+	}
+}
+
 enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 }
 
 /** Access modes for st_mode in SceIoStat (confirm?). */
 enum IOAccessModes {
-	/** Format bits mask */
-	FIO_S_IFMT		= 0xF000,
-	/** Symbolic link */
-	FIO_S_IFLNK		= 0x4000,
-	/** Directory */
-	FIO_S_IFDIR		= 0x1000,
-	/** Regular file */
-	FIO_S_IFREG		= 0x2000,
+	FIO_S_IFMT		= 0xF000, /// Format bits mask
+	FIO_S_IFLNK		= 0x4000, /// Symbolic link
+	FIO_S_IFDIR		= 0x1000, /// Directory
+	FIO_S_IFREG		= 0x2000, /// Regular file
 
-	/** Set UID */
-	FIO_S_ISUID		= 0x0800,
-	/** Set GID */
-	FIO_S_ISGID		= 0x0400,
-	/** Sticky */
-	FIO_S_ISVTX		= 0x0200,
+	FIO_S_ISUID		= 0x0800, /// Set UID
+	FIO_S_ISGID		= 0x0400, /// Set GID
+	FIO_S_ISVTX		= 0x0200, /// Sticky
 
-	/** User access rights mask */
-	FIO_S_IRWXU		= 0x01C0,	
-	/** Read user permission */
-	FIO_S_IRUSR		= 0x0100,
-	/** Write user permission */
-	FIO_S_IWUSR		= 0x0080,
-	/** Execute user permission */
-	FIO_S_IXUSR		= 0x0040,	
+	FIO_S_IRWXU		= 0x01C0, /// User access rights mask
+	FIO_S_IRUSR		= 0x0100, /// Read user permission
+	FIO_S_IWUSR		= 0x0080, /// Write user permission
+	FIO_S_IXUSR		= 0x0040, /// Execute user permission
 
-	/** Group access rights mask */
-	FIO_S_IRWXG		= 0x0038,	
-	/** Group read permission */
-	FIO_S_IRGRP		= 0x0020,
-	/** Group write permission */
-	FIO_S_IWGRP		= 0x0010,
-	/** Group execute permission */
-	FIO_S_IXGRP		= 0x0008,
+	FIO_S_IRWXG		= 0x0038, /// Group access rights mask
+	FIO_S_IRGRP		= 0x0020, /// Group read permission
+	FIO_S_IWGRP		= 0x0010, /// Group write permission
+	FIO_S_IXGRP		= 0x0008, /// Group execute permission
 
-	/** Others access rights mask */
-	FIO_S_IRWXO		= 0x0007,	
-	/** Others read permission */
-	FIO_S_IROTH		= 0x0004,	
-	/** Others write permission */
-	FIO_S_IWOTH		= 0x0002,	
-	/** Others execute permission */
-	FIO_S_IXOTH		= 0x0001,	
+	FIO_S_IRWXO		= 0x0007, /// Others access rights mask
+	FIO_S_IROTH		= 0x0004, /// Others read permission
+	FIO_S_IWOTH		= 0x0002, /// Others write permission
+	FIO_S_IXOTH		= 0x0001, /// Others execute permission
 }
 
 /** File modes, used for the st_attr parameter in SceIoStat (confirm?). */
 enum IOFileModes {
-	/** Format mask */
-	FIO_SO_IFMT			= 0x0038,		// Format mask
-	/** Symlink */
-	FIO_SO_IFLNK		= 0x0008,		// Symbolic link
-	/** Directory */
-	FIO_SO_IFDIR		= 0x0010,		// Directory
-	/** Regular file */
-	FIO_SO_IFREG		= 0x0020,		// Regular file
+	FIO_SO_IFMT			= 0x0038,		/// Format mask
+	FIO_SO_IFLNK		= 0x0008,		/// Symbolic link
+	FIO_SO_IFDIR		= 0x0010,		/// Directory
+	FIO_SO_IFREG		= 0x0020,		/// Regular file
 
-	/** Hidden read permission */
-	FIO_SO_IROTH		= 0x0004,		// read
-	/** Hidden write permission */
-	FIO_SO_IWOTH		= 0x0002,		// write
-	/** Hidden execute permission */
-	FIO_SO_IXOTH		= 0x0001,		// execute
+	FIO_SO_IROTH		= 0x0004,		/// Hidden read permission
+	FIO_SO_IWOTH		= 0x0002,		/// Hidden write permission
+	FIO_SO_IXOTH		= 0x0001,		/// Hidden execute permission
 }
 
 /*
@@ -840,17 +850,12 @@ enum IOFileModes {
 /** Structure to hold the status information about a file */
 struct SceIoStat {
 	SceMode         st_mode;
-	uint            st_attr;
-	/** Size of the file in bytes. */
-	SceOff          st_size;
-	/** Creation time. */
-	ScePspDateTime  st_ctime;
-	/** Access time. */
-	ScePspDateTime  st_atime;
-	/** Modification time. */
-	ScePspDateTime  st_mtime;
-	/** Device-specific data. */
-	uint            st_private[6];
+	IOFileModes     st_attr;
+	SceOff          st_size;  /// Size of the file in bytes.
+	ScePspDateTime  st_ctime; /// Creation time.
+	ScePspDateTime  st_atime; /// Access time.
+	ScePspDateTime  st_mtime; /// Modification time.
+	uint            st_private[6]; /// Device-specific data.
 }
 
 enum : uint {
@@ -870,37 +875,27 @@ enum : uint {
 }
 
 struct SceIoDirent {
-	/** File status. */
-	SceIoStat 	d_stat;
-	/** File name. */
-	char 		d_name[256];
-	/** Device-specific data. */
-	void * 		d_private;
-	int 		dummy;
+	SceIoStat   d_stat;    /// File status.
+	char[256]   d_name;    /// File name.
+	void*       d_private; /// Device-specific data.
+	int         dummy;
 }
 
 enum : uint { PSP_SEEK_SET, PSP_SEEK_CUR, PSP_SEEK_END }
 
 /** Structure passed to the init and exit functions of the io driver system */
 struct PspIoDrvArg {
-	/** Pointer to the original driver which was added */
-	PspIoDrv* drv;
-	/** Pointer to a user defined argument (if written by the driver will preseve across calls */
-	void* arg;
+	PspIoDrv* drv; /// Pointer to the original driver which was added
+	void*     arg; /// Pointer to a user defined argument (if written by the driver will preseve across calls
 }
 
 /** Structure passed to the file functions of the io driver system */
 struct PspIoDrvFileArg {
-	/** Unknown */
-	u32 unk1;
-	/** The file system number, e.g. if a file is opened as host5:/myfile.txt this field will be 5 */
-	u32 fs_num;
-	/** Pointer to the driver structure */
-	PspIoDrvArg *drv;
-	/** Unknown, again */
-	u32 unk2;
-	/** Pointer to a user defined argument, this is preserved on a per file basis */
-	void *arg;
+	u32 unk1;         /// Unknown
+	u32 fs_num;       /// The file system number, e.g. if a file is opened as host5:/myfile.txt this field will be 5
+	PspIoDrvArg *drv; /// Pointer to the driver structure
+	u32 unk2;         /// Unknown, again
+	void *arg;        /// Pointer to a user defined argument, this is preserved on a per file basis
 }
 
 /** Structure to maintain the file driver pointers */
@@ -931,16 +926,11 @@ struct PspIoDrvFuncs { extern (C):
 }
 
 struct PspIoDrv {
-	/** The name of the device to add */
-	const char* name;
-	/** Device type, this 0x10 is for a filesystem driver */
-	u32 dev_type;
-	/** Unknown, set to 0x800 */
-	u32 unk2;
-	/** This seems to be the same as name but capitalised :/ */
-	const char* name2;
-	/** Pointer to a filled out functions table */
-	PspIoDrvFuncs* funcs;
+	const char* name;     /// The name of the device to add
+	u32 dev_type;         /// Device type, this 0x10 is for a filesystem driver
+	u32 unk2;             /// Unknown, set to 0x800
+	const char* name2;    /// This seems to be the same as name but capitalised :/
+	PspIoDrvFuncs* funcs; /// Pointer to a filled out functions table
 }
 
 static this() {

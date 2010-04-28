@@ -7,8 +7,8 @@
  * If new threads are not executed immediately, it would output: 2, 2, -1.
  * It's expected to output 0, 1, -1.
  */
-#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g thread_start.c ../common/emits.c -lpspsdk -lc -lpspuser -lpspkernel -o thread_start.elf
-#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" thread_start.elf
+//#pragma compile, "%PSPSDK%/bin/psp-gcc" -I. -I"%PSPSDK%/psp/sdk/include" -L. -L"%PSPSDK%/psp/sdk/lib" -D_PSP_FW_VERSION=150 -Wall -g thread_start.c ../common/emits.c -lpspsdk -lc -lpspuser -lpspkernel -o thread_start.elf
+//#pragma compile, "%PSPSDK%/bin/psp-fixup-imports" thread_start.elf
 
 #include <pspkernel.h>
 #include <pspthreadman.h>

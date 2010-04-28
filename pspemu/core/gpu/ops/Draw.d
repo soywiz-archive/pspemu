@@ -52,6 +52,7 @@ template Gpu_Draw() {
 		else {
 			//gpu.impl.clear();
 			gpu.state.drawBuffer.mustStore = true;
+			//gpu.state.depthBuffer.mustStore = true;
 			gpu.state.clearingMode = false;
 		}
 	}
@@ -275,9 +276,10 @@ template Gpu_Draw() {
 			);
 		} catch (Object o) {
 			writefln("gpu.impl.draw Error");
-			throw(o);
+			//throw(o);
 		}
 		gpu.state.drawBuffer.mustStore = true;
+		//gpu.state.depthBuffer.mustStore = true;
 	}
 
 	/**

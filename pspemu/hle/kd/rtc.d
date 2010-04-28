@@ -8,44 +8,7 @@ import std.date;
 
 alias uint time_t;
 
-static const ulong rtcResolution = 1_000_000; // microseconds
-
-// std.date.getUTCtime has milliseconds resolution. milliseconds -> microseconds
-d_time tick_to_dtime(ulong  tick) { return cast(d_time)(tick / 1_000); }
-ulong  dtime_to_tick(d_time tick) { return (tick * 1_000); }
-
-struct pspTime {
-	ushort year;
-	ushort month;
-	ushort day;
-	ushort hour;
-	ushort minutes;
-	ushort seconds;
-	uint   microseconds;
-
-	ulong tick() {
-		auto dtime = std.date.parse(std.string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minutes, seconds));
-		return (cast(ulong)dtime * 1_000) + microseconds;
-	}
-
-	bool parse(ulong tick) {
-		std.date.Date date;
-		
-		date.parse(toUTCString(tick_to_dtime(tick)));
-		
-		year    = cast(ushort)date.year;
-		month   = cast(ushort)date.month;
-		day     = cast(ushort)date.day;
-		hour    = cast(ushort)date.hour;
-		minutes = cast(ushort)date.minute;
-		seconds = cast(ushort)date.second;
-		microseconds = cast(uint)(tick % 1_000_000);
-
-		return true;
-	}
-	
-	static assert (this.sizeof == 16);
-}
+alias ScePspDateTime pspTime;
 
 class sceRtc : Module {
 	void initNids() {
