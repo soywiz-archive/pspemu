@@ -8,12 +8,14 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 
 //debug = DEBUG_CLEAR_MODE;
 
-version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY;
+//version = VERSION_ENABLE_FRAME_LOAD; // Disabled temporary
+//version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY; // Disabled temporary
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT;
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT_EX;
 
 //debug = DEBUG_OUTPUT_DEPTH_AND_STENCIL;
 //debug = DEBUG_PRIM_PERFORMANCE;
+//debug = DEBUG_FRAME_TRANSFER;
 
 import std.c.windows.windows;
 import std.windows.syserror;
@@ -41,6 +43,8 @@ class GpuOpengl : GpuImplAbstract {
 	/// Previous state to check changes in the new state and perform new operations.
 	GpuState prevState;
 	glProgram program;
+	
+	ubyte[4 * 512 * 272] tempBufferData;
 
 	glUniform gla_tex;
 	glUniform gla_clut;
@@ -56,6 +60,8 @@ class GpuOpengl : GpuImplAbstract {
 		program.attach(new glFragmentShader(import("shader.fragment")));
 		program.attach(new glVertexShader(import("shader.vertex")));
 		program.link();
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		//program.use();
 
 		/*
@@ -94,6 +100,50 @@ class GpuOpengl : GpuImplAbstract {
 	void tsync() {
 	}
 
+	void test(string reason) {
+		/+
+		glClearColor(0.0, 0.0, 1.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glColor4f(1f, 1f, 1f, 1f);
+		glColorMask(true, true, true, true);
+		glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glDisable(GL_ALPHA_TEST);
+        glDisable(GL_FOG);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_LOGIC_OP);
+        glDisable(GL_STENCIL_TEST);
+        glDisable(GL_SCISSOR_TEST);
+		/*
+		glStencilFunc(GL_ALWAYS, 1, 1);
+		glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
+		glEnable(GL_DEPTH_TEST);
+		*/
+
+		glMatrixMode(GL_PROJECTION); glLoadIdentity();
+		glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+		glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+
+		+/
+		
+		/*
+		tempBufferData[] = 0xFF;
+		glWindowPos2i(0, 0);
+		glPixelZoom(1.0f, 1.0f);
+		glDrawPixels(
+			512, 272,
+			GL_RGBA,
+			GL_UNSIGNED_INT_8_8_8_8_REV,
+			&tempBufferData[0]
+		);
+		*/
+		
+		//glFlush(); glFinish();
+		
+		writefln("GpuOpengl.test('%s')", reason);
+	}
+
 	void clear() {
 		/*
 		uint flags = 0;
@@ -107,6 +157,8 @@ class GpuOpengl : GpuImplAbstract {
 	}
 
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags) {
+		//if (gpu.state.clearingMode) return; // Do not draw in clearmode.
+
 		/*
 		static if (1) {
 			writefln("type:%d, vertexcount:%d, flags:%d", type, vertexList.length, flags);
@@ -187,37 +239,101 @@ class GpuOpengl : GpuImplAbstract {
 	// @TODO @FIXME - Depth should be swizzled.
 
 	void frameLoad(void* colorBuffer, void* depthBuffer) {
-		//return;
-		if (colorBuffer !is null) {
-			//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
-			glDrawPixels(
-				state.drawBuffer.width, 272,
-				GlPixelFormats[state.drawBuffer.format].external,
-				GlPixelFormats[state.drawBuffer.format].opengl,
-				colorBuffer
-			);
+		scope microSecondsStart = microSecondsTick;
+		
+		version (VERSION_ENABLE_FRAME_LOAD) ´{
+			/*
+			glColorMask(true, true, true, true);
+			glPixelZoom(1.0f, 1.0f);
+			glRasterPos2s(0, 0);
+			*/
+
+			//return;
+			if (colorBuffer !is null) {
+				//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
+				glWindowPos2i(0, 0);
+				glPixelZoom(1.0f, 1.0f);
+				for (int n = 0; n < 272; n++) {
+					int m = 271 - n;
+					//int m = n;
+					state.drawBuffer.row(&tempBufferData, m)[] = state.drawBuffer.row(colorBuffer, n)[];
+				}
+				glDrawPixels(
+					state.drawBuffer.width, 272,
+					GlPixelFormats[state.drawBuffer.format].external,
+					GlPixelFormats[state.drawBuffer.format].opengl,
+					&tempBufferData
+				);
+			}
+			
+			version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
+				if ((depthBuffer !is null) && (colorBuffer != depthBuffer)) {
+					glWindowPos2i(0, 0);
+					glPixelZoom(1.0f, 1.0f);
+					glDrawPixels(
+						state.depthBuffer.width, 272,
+						GL_DEPTH_COMPONENT,
+						GL_UNSIGNED_SHORT,
+						depthBuffer
+					);
+				}
+			}
 		}
 		
+		debug (DEBUG_FRAME_TRANSFER) writefln("frameLoad(%08X, %08X) : microseconds:%d", cast(uint)colorBuffer, cast(uint)depthBuffer, microSecondsTick - microSecondsStart);
+	}
+
+	void frameStore(void* colorBuffer, void* depthBuffer) {
+		scope microSecondsStart = microSecondsTick;
+
+		//return;
+		if (colorBuffer !is null) {
+			//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
+			//writefln("%d, %d", state.drawBuffer.width, 272);
+			glReadPixels(
+				0, 0, // x, y
+				state.drawBuffer.width, 272, // w, h
+				GlPixelFormats[state.drawBuffer.format].external,
+				GlPixelFormats[state.drawBuffer.format].opengl,
+				&tempBufferData[0]
+			);
+			for (int n = 0; n < 272; n++) {
+				int m = 271 - n;
+				state.drawBuffer.row(colorBuffer, n)[] = state.drawBuffer.row(&tempBufferData, m)[];
+			}
+		}
+
 		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
 			if ((depthBuffer !is null) && (colorBuffer != depthBuffer)) {
-				glDrawPixels(
-					state.depthBuffer.width, 272,
+				glReadPixels(
+					0, 0, // x, y
+					state.depthBuffer.width, 272, // w, h
 					GL_DEPTH_COMPONENT,
 					GL_UNSIGNED_SHORT,
-					colorBuffer
+					depthBuffer
 				);
 			}
 		}
+
+		debug (DEBUG_OUTPUT_DEPTH_AND_STENCIL) {
+			outputDepthAndStencil();
+		}
+		
+		debug (DEBUG_FRAME_TRANSFER) writefln("frameStore(%08X, %08X) : microseconds:%d", cast(uint)colorBuffer, cast(uint)depthBuffer, microSecondsTick - microSecondsStart);
 	}
+}
+
+template OpenglUtils() {
+	Texture[string] textureCache;
+	//Clut[uint] clutCache;
 	
-	version (VERSION_GL_BITMAP_RENDERING) {
-	} else {
-		ubyte[4 * 512 * 272] colorBufferTemp;
+	bool glEnableDisable(int type, bool enable) {
+		if (enable) glEnable(type); else glDisable(type);
+		return enable;
 	}
-	
+
 	void outputDepthAndStencil() {
 		scope temp = new ubyte[1024 * 1024];
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glReadPixels(
 			0, 0, // x, y
 			state.drawBuffer.width, 272, // w, h
@@ -234,53 +350,6 @@ class GpuOpengl : GpuImplAbstract {
 			temp.ptr
 		);
 		writeBmp8("stencil.bmp", temp.ptr, 512, 272, paletteRandom);
-	}
-
-	void frameStore(void* colorBuffer, void* depthBuffer) {
-		//return;
-		if (colorBuffer !is null) {
-			//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
-			glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)GlPixelFormats[state.drawBuffer.format].size);
-			//writefln("%d, %d", state.drawBuffer.width, 272);
-			glReadPixels(
-				0, 0, // x, y
-				state.drawBuffer.width, 272, // w, h
-				GlPixelFormats[state.drawBuffer.format].external,
-				GlPixelFormats[state.drawBuffer.format].opengl,
-				&colorBufferTemp
-			);
-			for (int n = 0; n < 272; n++) {
-				int m = 271 - n;
-				state.drawBuffer.row(colorBuffer, n)[] = state.drawBuffer.row(&colorBufferTemp, m)[];
-			}
-		}
-
-		version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
-			if ((depthBuffer !is null) && (colorBuffer != depthBuffer)) {
-				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-				glReadPixels(
-					0, 0, // x, y
-					state.depthBuffer.width, 272, // w, h
-					GL_DEPTH_COMPONENT,
-					GL_UNSIGNED_SHORT,
-					depthBuffer
-				);
-			}
-		}
-
-		debug (DEBUG_OUTPUT_DEPTH_AND_STENCIL) {
-			outputDepthAndStencil();
-		}
-	}
-}
-
-template OpenglUtils() {
-	Texture[string] textureCache;
-	//Clut[uint] clutCache;
-	
-	bool glEnableDisable(int type, bool enable) {
-		if (enable) glEnable(type); else glDisable(type);
-		return enable;
 	}
 
 	Texture getTexture(TextureState textureState, ClutState clutState) {
@@ -300,7 +369,9 @@ template OpenglUtils() {
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
-				glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+				//glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+				glOrtho(0, 512, 272, 0, 0, -0xFFFF);
+				//glTranslatef(0, 1, 0);
 				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 			} else {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
@@ -366,7 +437,7 @@ template OpenglUtils() {
 
 		//glClearDepth(0.0); glClear(GL_DEPTH_BUFFER_BIT);
 
-		//glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		//if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT) glClear(GL_DEPTH_BUFFER_BIT);
 	}
 	
 	void drawBeginNormal() {
@@ -380,12 +451,13 @@ template OpenglUtils() {
 			glMatrixMode(GL_TEXTURE);
 			glLoadIdentity();
 			
-			if (state.vertexType.transform2D && (state.textureScale.uv == Vector(1.0, 1.0))) {
+			//if (state.vertexType.transform2D && (state.textureScale.uv == Vector(1.0, 1.0))) {
+			if (state.vertexType.transform2D) {
 				glScalef(1.0f / state.textures[0].width, 1.0f / state.textures[0].height, 1);
 			} else {
+				glTranslatef(state.textureOffset.u, state.textureOffset.v, 0);
 				glScalef(state.textureScale.u, state.textureScale.v, 1);
 			}
-			glTranslatef(state.textureOffset.u, state.textureOffset.v, 0);
 			
 			glEnable(GL_TEXTURE_2D);
 			getTexture(state.textures[0], state.clut).bind();
@@ -397,7 +469,7 @@ template OpenglUtils() {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapU);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapV);
 
-			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0); // 2.0 in scale_2x
+			//glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0); // 2.0 in scale_2x
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
 		}
 		
@@ -632,12 +704,12 @@ template OpenglUtils() {
 			}
 		}
 
-		drawBeginCommon();
 		if (state.clearingMode) {
 			drawBeginClear();
 		} else {
 			drawBeginNormal();
 		}
+		drawBeginCommon();
 	}
 	
 	void drawEnd() {

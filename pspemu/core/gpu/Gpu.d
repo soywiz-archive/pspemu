@@ -241,7 +241,7 @@ class Gpu : PspHardwareComponent {
 			} catch {
 			}
 
-			checkStoreFrameBuffer();
+			performBufferOp(BufferOperation.STORE);
 		}
 		
 		/**
@@ -262,7 +262,7 @@ class Gpu : PspHardwareComponent {
 			} catch {
 			}
 			
-			checkStoreFrameBuffer();
+			performBufferOp(BufferOperation.STORE);
 		}
 	}
 
@@ -298,15 +298,43 @@ class Gpu : PspHardwareComponent {
 			});
 		}
 	}
-
-	void checkLoadFrameBuffer() {
-		loadBuffer(&state.drawBuffer);
-		loadBuffer(&state.depthBuffer);
+	
+	enum BufferType {
+		COLOR = 1,
+		DEPTH = 2,
+		// All
+		ALL   = COLOR | DEPTH,
 	}
-
-	void checkStoreFrameBuffer() {
-		storeBuffer(&state.drawBuffer);
-		storeBuffer(&state.depthBuffer);
+	
+	enum BufferOperation {
+		LOAD  = 0,
+		STORE = 1,
+	}
+	
+	void markBufferOp(BufferOperation bufferOperation, BufferType bufferType = BufferType.ALL) {
+		if (bufferOperation == BufferOperation.LOAD) {
+			if (bufferType & BufferType.COLOR) state.drawBuffer.mustLoad = true;
+			if (bufferType & BufferType.DEPTH) state.depthBuffer.mustLoad = true;
+		} else {
+			if (bufferType & BufferType.COLOR) state.drawBuffer.mustStore = true;
+			if (bufferType & BufferType.DEPTH) state.depthBuffer.mustStore = true;
+		}
+	}
+	
+	void performBufferOp(BufferOperation bufferOperation, BufferType bufferType = BufferType.ALL) {
+		if (bufferOperation == BufferOperation.LOAD) {
+			if (state.drawBuffer.mustStore) {
+				//writefln("WARNING! performBufferOp(LOAD) has state.drawBuffer.mustStore. It wasn't stored yet!");
+			}
+			if (bufferType & BufferType.COLOR) loadBuffer(&state.drawBuffer);
+			if (bufferType & BufferType.DEPTH) loadBuffer(&state.depthBuffer);
+		} else {
+			if (state.drawBuffer.mustLoad) {
+				//writefln("WARNING! performBufferOp(STORE) has state.drawBuffer.mustLoad. It wasn't stored yet!");
+			}
+			if (bufferType & BufferType.COLOR) storeBuffer(&state.drawBuffer);
+			if (bufferType & BufferType.DEPTH) storeBuffer(&state.depthBuffer);
+		}
 	}
 
 	mixin ExternalInterface;

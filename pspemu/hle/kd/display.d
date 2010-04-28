@@ -94,6 +94,18 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 	}
 
 	/**
+	 * Turn display on or off
+	 *
+	 * Available states are:
+	 *   - GU_TRUE (1) - Turns display on
+	 *   - GU_FALSE (0) - Turns display off
+	 *
+	 * @param state - Turn display on or off
+	 * @return State of the display prior to this call
+	**/
+	// sceDisplaySetFrameBuf(0, 0, 0, PSP_DISPLAY_SETBUF_NEXTFRAME);
+
+	/**
 	 * Display set framebuf
 	 *
 	 * @param topaddr - address of start of framebuffer

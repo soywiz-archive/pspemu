@@ -47,4 +47,8 @@ class GpuSoftware : GpuImplAbstract {
 	void tsync() {
 		assert(0);
 	}
+	
+	void test(string reason) {
+		assert(0);
+	}
 }

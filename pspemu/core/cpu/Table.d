@@ -578,7 +578,7 @@ ID[] PspInstructions() {
 		PspInstructions_LSU ~
 		PspInstructions_FPU ~
 		PspInstructions_COP0 ~
-		PspInstructions_VFPU ~
+		//PspInstructions_VFPU ~
 		PspInstructions_SPECIAL
 	);
 }

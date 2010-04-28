@@ -95,8 +95,8 @@ class IoFileMgrForKernel : Module {
 
 	Stream getStreamFromFD(SceUID uid) {
 		if ((uid in openedStreams) is null) {
-			//throw(new Exception(std.string.format("No file opened with FD/UID(%d)", uid)));
-			Logger.log(Logger.Level.WARNING, "iofilemgr", "No file opened with FD/UID(%d)", uid);
+			throw(new Exception(std.string.format("No file opened with FD/UID(%d)", uid)));
+			//Logger.log(Logger.Level.WARNING, "iofilemgr", "No file opened with FD/UID(%d)", uid);
 		}
 		return openedStreams[uid];
 	}
@@ -285,11 +285,16 @@ class IoFileMgrForKernel : Module {
 	 */
 	int sceIoClose(SceUID fd) {
 		if (fd < 0) return -1;
-		auto stream = getStreamFromFD(fd);
-		openedStreams.remove(fd);
-		stream.flush();
-		stream.close();
-		return 0;
+		try {
+			auto stream = getStreamFromFD(fd);
+			openedStreams.remove(fd);
+			stream.flush();
+			stream.close();
+			return 0;
+		} catch (Object o) {
+			writefln("sceIoClose(%d) : %s", fd, o);
+			return -1;
+		}
 	}
 	
 	string getAbsolutePathFromRelative(string relativePath) {

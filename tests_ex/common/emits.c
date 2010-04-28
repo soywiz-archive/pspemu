@@ -17,3 +17,7 @@ void emitComment(char *v) {
 void emitMemoryBlock(void *address, unsigned int size) {
 	asm("syscall 0x1013");
 }
+
+void emitHex(void *address, unsigned int size) {
+	asm("syscall 0x1014");
+}

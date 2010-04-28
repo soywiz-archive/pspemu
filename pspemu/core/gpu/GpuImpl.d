@@ -16,6 +16,7 @@ interface GpuImpl {
 	void frameStore(void* colorBuffer, void* depthBuffer);
 	void tsync();
 	void tflush();
+	void test(string reason);
 }
 
 abstract class GpuImplAbstract : GpuImpl {

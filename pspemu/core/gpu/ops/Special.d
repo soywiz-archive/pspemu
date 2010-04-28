@@ -30,7 +30,7 @@ template Gpu_Special() {
 	auto OP_FBW() {
 		gpu.state.drawBuffer.highAddress = command.extract!(ubyte, 16);
 		gpu.state.drawBuffer.width       = command.extract!(ushort, 0);
-		gpu.state.drawBuffer.mustLoad    = true;
+		gpu.markBufferOp(BufferOperation.LOAD, BufferType.COLOR);
 	}
 
 	// frame buffer Pixel Storage Mode

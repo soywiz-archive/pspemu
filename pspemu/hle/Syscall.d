@@ -109,6 +109,14 @@ class Syscall : ISyscall {
 				Logger.log(Logger.Level.INFO, "Syscall", "emitMemoryBlock(0x%08X):0x%08X,%d", vv, cpu.registers.A0, cpu.registers.A1);
 				emits ~= std.string.format("memory:0x%08X", vv);
 			} break;
+			case 0x1014: { // emitHex(void *address, unsigned int size)
+				uint vv;
+				auto slice = cpu.memory[cpu.registers.A0..cpu.registers.A0 + cpu.registers.A1];
+				string hex_string = "";
+				foreach (value; slice) hex_string ~= std.string.format("%02X", value);
+				Logger.log(Logger.Level.INFO, "Syscall", "emitHex(%s):0x%08X,%d", vv, cpu.registers.A0, cpu.registers.A1);
+				emits ~= std.string.format("hex:%s", hex_string);
+			} break;
 
 			case 0x1020: { // void startTracing()
 				cpu.startTracing();

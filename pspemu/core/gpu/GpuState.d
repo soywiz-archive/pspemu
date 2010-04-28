@@ -6,6 +6,11 @@ import pspemu.utils.Math;
 
 import std.bitmanip;
 
+enum TransformMode {
+	Normal = 0,
+	Raw    = 1,
+}
+
 struct ClutState {
 	uint address;
 	PixelFormats format;
@@ -36,10 +41,17 @@ struct ScreenBuffer {
 	bool mustLoad, mustStore;
 	uint address(uint _address) { return this._address = _address; }
 	uint address() { return (0x04_000000 | this._address); }
+	uint addressEnd() { return address + width * 272 * pixelSize; }
 	uint pixelSize() { return PixelFormatSizeMul[format]; }
 	ubyte[] row(void* ptr, int row) {
 		int rowsize = PixelFormatSize(format, width);
 		return ((cast(ubyte *)ptr) + rowsize * row)[0..rowsize];
+	}
+	bool isAnyAddressInBuffer(uint[] ptrList) {
+		foreach (ptr; ptrList) {
+			if ((ptr >= address) && (ptr < addressEnd)) return true;
+		}
+		return false;
 	}
 }
 
@@ -65,6 +77,7 @@ struct TextureState {
 
 struct TextureTransfer {
 	enum TexelSize { BIT_16 = 0, BIT_32 = 1 }
+	//enum TexelSize { BIT_32 = 0, BIT_16 = 1 }
 	
 	uint srcAddress, dstAddress;
 	ushort srcLineWidth, dstLineWidth;
@@ -79,10 +92,11 @@ struct TextureTransfer {
 			"SRC(addr=%08X, w=%d, XY(%d, %d))"
 			"-"
 			"DST(addr=%08X, w=%d, XY(%d, %d))"
-			")",
+			") : Bpp:%s",
 			width, height,
 			srcAddress, srcLineWidth, srcX, srcY,
-			dstAddress, dstLineWidth, dstX, dstY
+			dstAddress, dstLineWidth, dstX, dstY,
+			texelSize
 		);
 	}
 }
@@ -158,6 +172,7 @@ static struct GpuState {
 			// Textures.
 			// Temporal values.
 			bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
+			TransformMode transformMode;
 			int  mipMapMaxLevel;
 			bool textureSwizzled;
 			PixelFormats  textureFormat;

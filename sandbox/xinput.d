@@ -159,13 +159,13 @@ extern (Windows) {
 	 * The constant XINPUT_GAMEPAD_TRIGGER_THRESHOLD may be used as the value which bLeftTrigger and bRightTrigger must be greater than to register as pressed. This is optional, but often desirable. Xbox 360 Controller buttons do not manifest crosstalk.
 	 */
 	struct XINPUT_GAMEPAD {
-		WORD wButtons;      /// Bitmask of the device digital buttons, as follows. A set bit indicates that the corresponding button is pressed. Bits that are set but not defined above are reserved, and their state is undefined. XINPUT_GAMEPAD_*
-		BYTE bLeftTrigger;  /// The current value of the left  trigger analog control. The value is between 0 and 255.
-		BYTE bRightTrigger; /// The current value of the right trigger analog control. The value is between 0 and 255.
-		SHORT sThumbLX;     /// Left thumbstick x-axis value. Each of the thumbstick axis members is a signed value between -32768 and 32767 describing the position of the thumbstick. A value of 0 is centered. Negative values signify down or to the left. Positive values signify up or to the right. The constants XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE or XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE can be used as a positive and negative value to filter a thumbstick input.
-		SHORT sThumbLY;     /// Left thumbstick y-axis value. The value is between -32768 and 32767.
-		SHORT sThumbRX;     /// Right thumbstick x-axis value. The value is between -32768 and 32767.
-		SHORT sThumbRY;     /// Right thumbstick y-axis value. The value is between -32768 and 32767.
+		WORD  wButtons;      /// Bitmask of the device digital buttons, as follows. A set bit indicates that the corresponding button is pressed. Bits that are set but not defined above are reserved, and their state is undefined. XINPUT_GAMEPAD_*
+		BYTE  bLeftTrigger;  /// The current value of the left  trigger analog control. The value is between 0 and 255.
+		BYTE  bRightTrigger; /// The current value of the right trigger analog control. The value is between 0 and 255.
+		SHORT sThumbLX;      /// Left thumbstick x-axis value. Each of the thumbstick axis members is a signed value between -32768 and 32767 describing the position of the thumbstick. A value of 0 is centered. Negative values signify down or to the left. Positive values signify up or to the right. The constants XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE or XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE can be used as a positive and negative value to filter a thumbstick input.
+		SHORT sThumbLY;      /// Left thumbstick y-axis value. The value is between -32768 and 32767.
+		SHORT sThumbRX;      /// Right thumbstick x-axis value. The value is between -32768 and 32767.
+		SHORT sThumbRY;      /// Right thumbstick y-axis value. The value is between -32768 and 32767.
 	}
 	
 	/**
@@ -267,10 +267,11 @@ void BindLibrary(string dll, alias bindTemplate, string prefixTo = "", string pr
 
 
 void main() {
-	XINPUT_STATE state;
+	XINPUT_STATE     state;
 	XINPUT_KEYSTROKE keystroke;
+	XINPUT_VIBRATION vibration;
 	XInputEnable(true);
-
+	
 	while (1) {
 		XInputGetState(0, &state);
 		XInputGetKeystroke(0, BATTERY_DEVTYPE_GAMEPAD, &keystroke);
@@ -285,7 +286,12 @@ void main() {
 			, state.Gamepad.sThumbRX, state.Gamepad.sThumbRY
 			, keystroke.VirtualKey
 		);
+		
+		vibration.wLeftMotorSpeed  = cast(ushort)(state.Gamepad.bLeftTrigger  * 255);
+		vibration.wRightMotorSpeed = cast(ushort)(state.Gamepad.bRightTrigger * 255);
+		XInputSetState(0, &vibration);
 
 		Sleep(1);
+		// We have to delay a little between calls. motioninjoy driver causes a BoD when querying state too fast.
 	}
 }

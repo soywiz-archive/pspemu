@@ -2,6 +2,7 @@ module pspemu.core.gpu.ops.Draw;
 
 //debug = EXTRACT_PRIM;
 //debug = EXTRACT_PRIM_COMPONENT;
+//debug = DEBUG_DRAWING;
 
 static assert(byte.sizeof  == 1);
 static assert(short.sizeof == 2);
@@ -43,18 +44,22 @@ template Gpu_Draw() {
 
 	auto OP_CLEAR() {
 		// Set flags.
-		if (command.param24 & 1) {
+		if (command.extract!(bool, 0, 1)) {
 			gpu.state.clearFlags = cast(ClearBufferMask)command.extract!(ubyte, 8, 8);
 			gpu.state.clearingMode = true;
-			gpu.checkLoadFrameBuffer();
+			// @TODO: Check which buffers are going to be used (using the state).
+			gpu.performBufferOp(BufferOperation.LOAD, BufferType.ALL);
 		}
 		// Clear actually.
 		else {
 			//gpu.impl.clear();
-			gpu.state.drawBuffer.mustStore = true;
-			//gpu.state.depthBuffer.mustStore = true;
+			// @TODO: Check which buffers have been updated (using the state).
+			gpu.markBufferOp(BufferOperation.STORE, BufferType.ALL);
+
 			gpu.state.clearingMode = false;
 		}
+		
+		debug (DEBUG_DRAWING) writefln("CLEAR(0x%08X, %d)", gpu.state.drawBuffer.address, command.extract!(bool, 0, 1));
 	}
 
 	/**
@@ -128,7 +133,7 @@ template Gpu_Draw() {
 
 	// Vertex Type
 	auto OP_VTYPE() {
-		gpu.state.vertexType.v = command.param24;
+		gpu.state.vertexType.v  = command.extract!(uint, 0, 24);
 		//writefln("VTYPE:%032b", command.param24);
 		//writefln("     :%d", gpu.state.vertexType.position);
 	}
@@ -260,7 +265,10 @@ template Gpu_Draw() {
 		if (vertexListBuffer.length < vertexCount) vertexListBuffer.length = vertexCount;
 		for (int n = 0; n < vertexCount; n++) extractVertex(vertexListBuffer[n]);
 
-		gpu.checkLoadFrameBuffer();
+		// Need to have the framebuffer updated.
+		// @TODO: Check which buffers are going to be used (using the state).
+		gpu.performBufferOp(BufferOperation.LOAD, BufferType.ALL);
+		scope microSecondsStart = microSecondsTick;
 		try {
 			gpu.impl.draw(
 				vertexListBuffer[0..vertexCount],
@@ -278,8 +286,11 @@ template Gpu_Draw() {
 			writefln("gpu.impl.draw Error");
 			//throw(o);
 		}
-		gpu.state.drawBuffer.mustStore = true;
-		//gpu.state.depthBuffer.mustStore = true;
+		debug (DEBUG_DRAWING) writefln("PRIM(0x%08X, %d, %d) : microseconds:%d", gpu.state.drawBuffer.address, primitiveType, vertexCount, microSecondsTick - microSecondsStart);
+		// Now we should store the updated framebuffer when required.
+		// @TODO: Check which buffers have been updated (using the state).
+		//gpu.impl.test("prim");
+		gpu.markBufferOp(BufferOperation.STORE, BufferType.ALL);
 	}
 
 	/**
@@ -376,24 +387,43 @@ template Gpu_Draw() {
 
 	// TRansfer X KICK
 	auto OP_TRXKICK() {
-		// @TODO It's possible that we need to load and store the framebuffer, and/or update textures after that.
-		gpu.checkLoadFrameBuffer();
-		gpu.state.drawBuffer.mustStore = true;
-		gpu.impl.tflush();
-
-		gpu.state.textureTransfer.texelSize = command.extractEnum!(TextureTransfer.TexelSize);
+		// Optimize: We can also perform the upload directly into the framebuffer.
+		// That way we won't need to store into ram and loading again after. But this way is simpler.
 		
+		// @TODO It's possible that we need to load and store the framebuffer, and/or update textures after that.
+		gpu.state.textureTransfer.texelSize = command.extractEnum!(TextureTransfer.TexelSize);
+
 		int bpp = (gpu.state.textureTransfer.texelSize == TextureTransfer.TexelSize.BIT_16) ? 2 : 4;
-		with (gpu.state.textureTransfer) {
-			auto srcAddressHost = cast(ubyte*)gpu.memory.getPointer(srcAddress);
-			auto dstAddressHost = cast(ubyte*)gpu.memory.getPointer(dstAddress);
-			for (int n = 0; n < height; n++) {
-				int srcOffset = ((n + srcY) * srcLineWidth + srcX) * bpp;
-				int dstOffset = ((n + dstY) * dstLineWidth + dstX) * bpp;
-				(dstAddressHost + dstOffset)[0.. width * bpp] = (srcAddressHost + srcOffset)[0.. width * bpp];
-				//writefln("%08X <- %08X :: [%d]", dstOffset, srcOffset, width * bpp);
+		
+		/*if (gpu.state.drawBuffer.isAnyAddressInBuffer([dstAddress])) {
+			// @TODO
+			glDrawPixels();
+		} else */{
+			with (gpu.state.textureTransfer) {
+				auto srcAddressHost = cast(ubyte*)gpu.memory.getPointer(srcAddress);
+				auto dstAddressHost = cast(ubyte*)gpu.memory.getPointer(dstAddress);
+
+				if (gpu.state.drawBuffer.isAnyAddressInBuffer([srcAddress, dstAddress])) {
+					gpu.performBufferOp(BufferOperation.STORE, BufferType.COLOR);
+				}
+
+				for (int n = 0; n < height; n++) {
+					int srcOffset = ((n + srcY) * srcLineWidth + srcX) * bpp;
+					int dstOffset = ((n + dstY) * dstLineWidth + dstX) * bpp;
+					(dstAddressHost + dstOffset)[0.. width * bpp] = (srcAddressHost + srcOffset)[0.. width * bpp];
+					//writefln("%08X <- %08X :: [%d]", dstOffset, srcOffset, width * bpp);
+				}
+				//std.file.write("buffer", dstAddressHost[0..512 * 272 * 4]);
+				
+				if (gpu.state.drawBuffer.isAnyAddressInBuffer([dstAddress])) {
+					//gpu.impl.test();
+					//gpu.impl.test("trxkick");
+					gpu.markBufferOp(BufferOperation.LOAD, BufferType.COLOR);
+				}
+				//gpu.impl.test();
 			}
 		}
-		//writefln("Unimplemented TRXKICK : %s", gpu.state.textureTransfer);
+		debug (DEBUG_DRAWING) writefln("TRXKICK(%s)", gpu.state.textureTransfer);
+		
 	}
 }

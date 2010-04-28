@@ -19,7 +19,7 @@ template Gpu_Depth() {
 	auto OP_ZBW() {
 		gpu.state.depthBuffer.highAddress = command.extract!(ubyte, 16);
 		gpu.state.depthBuffer.width       = command.extract!(ushort, 0);
-		gpu.state.depthBuffer.mustLoad    = true;
+		gpu.markBufferOp(BufferOperation.LOAD, BufferType.DEPTH);
 	}
 
 	/**
