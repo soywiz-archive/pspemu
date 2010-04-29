@@ -79,6 +79,9 @@ class Controller { // SceCtrl
 	void frameWrite() {
 		currentFrame.TimeStamp = clock(); // Should be ticks?/seconds?/frames?
 		currentFrame.Rsrv[] = 0;
+		if (samplingMode == Mode.DIGITAL) {
+			currentFrame.Ly = currentFrame.Lx = 0x80;
+		}
 		frames.queue(currentFrame);
 	}
 

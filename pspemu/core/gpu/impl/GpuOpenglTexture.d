@@ -1,6 +1,6 @@
 module pspemu.core.gpu.impl.GpuOpenglTexture;
 
-debug = DEBUG_TEXTURE_UPDATE;
+//debug = DEBUG_TEXTURE_UPDATE;
 //version = VERSION_CACHE_ALWAYS_VALID;
 
 import std.c.windows.windows;

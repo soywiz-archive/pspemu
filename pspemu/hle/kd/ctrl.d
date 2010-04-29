@@ -8,6 +8,8 @@ import pspemu.hle.Module;
 import pspemu.models.IController;
 import pspemu.utils.Utils;
 
+// http://forums.qj.net/psp-development-forum/141207-using-analog-stick-c-question.html
+
 class sceCtrl_driver : Module {
 	void initNids() {
 		mixin(registerd!(0x6A2774F3, sceCtrlSetSamplingCycle));
@@ -35,25 +37,28 @@ class sceCtrl_driver : Module {
 	 * Read buffer positive
 	 *
 	 * @par Example:
-	 * @code
-	 * SceCtrlData pad;
-
-	 * sceCtrlSetSamplingCycle(0);
-	 * sceCtrlSetSamplingMode(1);
-	 * sceCtrlReadBufferPositive(&pad, 1);
-	 * // Do something with the read controller data
-	 * @endcode
+	 * <code>
+	 *     SceCtrlData pad;
+	 *
+	 *     sceCtrlSetSamplingCycle(0);
+	 *     sceCtrlSetSamplingMode(1);
+	 *     sceCtrlReadBufferPositive(&pad, 1);
+	 *     // Do something with the read controller data
+	 * </code>
 	 *
 	 * @param pad_data - Pointer to a ::SceCtrlData structure used hold the returned pad data.
-	 * @param count - Number of ::SceCtrlData buffers to read.
+	 * @param count    - Number of ::SceCtrlData buffers to read.
 	 *
 	 * @return Count?
 	 */
+	// sceCtrlReadBufferPositive () is blocking and waits for vblank (slower).
 	int sceCtrlReadBufferPositive(SceCtrlData* pad_data, int count) {
 		readBufferedFrames(pad_data, count, true);
+		// @TODO: Wait for vblank.
 		return count;
 	}
 
+	// sceCtrlPeekBufferPositive () is non-blocking (faster)
 	int sceCtrlPeekBufferPositive(SceCtrlData* pad_data, int count) {
 		readBufferedFrames(pad_data, count, true);
 		return count;
@@ -62,25 +67,35 @@ class sceCtrl_driver : Module {
 	/**
 	 * Set the controller cycle setting.
 	 *
-	 * @param cycle - Cycle.  Normally set to 0.
+	 * @param cycle - Cycle. Normally set to 0.
+	 *
+	 * @TODO Unknown what this means exactly.
 	 *
 	 * @return The previous cycle setting.
 	 */
 	int sceCtrlSetSamplingCycle(int cycle) {
+		int previousCycle = cpu.controller.samplingCycle;
 		cpu.controller.samplingCycle = cycle;
-		return 0;
+		if (cycle != 0) writefln("sceCtrlSetSamplingCycle != 0! :: %d", cycle);
+		return previousCycle;
 	}
 
 	/**
 	 * Set the controller mode.
 	 *
 	 * @param mode - One of ::PspCtrlMode.
+	 *             - PSP_CTRL_MODE_DIGITAL = 0
+	 *             - PSP_CTRL_MODE_ANALOG  = 1
+	 *
+	 * PSP_CTRL_MODE_DIGITAL is the same as PSP_CTRL_MODE_ANALOG
+	 * except that doesn't update Lx and Ly values. Setting them to 0x80.
 	 *
 	 * @return The previous mode.
 	 */
 	int sceCtrlSetSamplingMode(int mode) {
+		uint previouseMode = cast(int)cpu.controller.samplingMode;
 		cpu.controller.samplingMode = cast(Controller.Mode)mode;
-		return 0;
+		return previouseMode;
 	}
 	
 	SceCtrlLatch lastLatch;

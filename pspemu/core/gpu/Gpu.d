@@ -7,6 +7,8 @@ debug = GPU_UNKNOWN_COMMANDS;
 //debug = GPU_UNKNOWN_COMMANDS_STOP;
 //debug = DEBUG_GPU_SHOW_COMMAND;
 
+//debug = DEBUG_WARNING_PERFORM_BUFFER_OP;
+
 import core.thread;
 
 import std.stdio;
@@ -280,21 +282,23 @@ class Gpu : PspHardwareComponent {
 	}
 	
 	void loadBuffer(ScreenBuffer* buffer) {
-		if (buffer.mustLoad) {
-			buffer.mustLoad = false;
+		if (buffer.loadAddress) {
+			uint loadAddress = buffer.loadAddress;
+			buffer.loadAddress = 0;
 			externalActionAdd(delegate void() {
-				if (buffer == &state.drawBuffer ) impl.frameLoad(memory.getPointerOrNull(buffer.address), null);
-				if (buffer == &state.depthBuffer) impl.frameLoad(null, memory.getPointerOrNull(buffer.address));
+				if (buffer == &state.drawBuffer ) impl.frameLoad(memory.getPointerOrNull(loadAddress), null);
+				if (buffer == &state.depthBuffer) impl.frameLoad(null, memory.getPointerOrNull(loadAddress));
 			});
 		}
 	}
 
 	void storeBuffer(ScreenBuffer* buffer) {
-		if (buffer.mustStore) {
-			buffer.mustStore = false;
+		if (buffer.storeAddress) {
+			uint storeAddress = buffer.storeAddress;
+			buffer.storeAddress = 0;
 			externalActionAdd(delegate void() {
-				if (buffer == &state.drawBuffer ) impl.frameStore(memory.getPointerOrNull(buffer.address), null);
-				if (buffer == &state.depthBuffer) impl.frameStore(null, memory.getPointerOrNull(buffer.address));
+				if (buffer == &state.drawBuffer ) impl.frameStore(memory.getPointerOrNull(storeAddress), null);
+				if (buffer == &state.depthBuffer) impl.frameStore(null, memory.getPointerOrNull(storeAddress));
 			});
 		}
 	}
@@ -313,24 +317,25 @@ class Gpu : PspHardwareComponent {
 	
 	void markBufferOp(BufferOperation bufferOperation, BufferType bufferType = BufferType.ALL) {
 		if (bufferOperation == BufferOperation.LOAD) {
-			if (bufferType & BufferType.COLOR) state.drawBuffer.mustLoad = true;
-			if (bufferType & BufferType.DEPTH) state.depthBuffer.mustLoad = true;
+			if (bufferType & BufferType.COLOR) state.drawBuffer.loadAddress  = state.drawBuffer.address;
+			if (bufferType & BufferType.DEPTH) state.depthBuffer.loadAddress = state.depthBuffer.address;
 		} else {
-			if (bufferType & BufferType.COLOR) state.drawBuffer.mustStore = true;
-			if (bufferType & BufferType.DEPTH) state.depthBuffer.mustStore = true;
+			if (bufferType & BufferType.COLOR) state.drawBuffer.storeAddress  = state.drawBuffer.address;
+			if (bufferType & BufferType.DEPTH) state.depthBuffer.storeAddress = state.depthBuffer.address;
 		}
 	}
 	
 	void performBufferOp(BufferOperation bufferOperation, BufferType bufferType = BufferType.ALL) {
 		if (bufferOperation == BufferOperation.LOAD) {
-			if (state.drawBuffer.mustStore) {
-				//writefln("WARNING! performBufferOp(LOAD) has state.drawBuffer.mustStore. It wasn't stored yet!");
+			if (state.drawBuffer.storeAddress) {
+				debug (DEBUG_WARNING_PERFORM_BUFFER_OP) writefln("WARNING! performBufferOp(LOAD) has state.drawBuffer.mustStore. It wasn't stored yet!");
+				//return;
 			}
 			if (bufferType & BufferType.COLOR) loadBuffer(&state.drawBuffer);
 			if (bufferType & BufferType.DEPTH) loadBuffer(&state.depthBuffer);
 		} else {
-			if (state.drawBuffer.mustLoad) {
-				//writefln("WARNING! performBufferOp(STORE) has state.drawBuffer.mustLoad. It wasn't stored yet!");
+			if (state.drawBuffer.loadAddress) {
+				debug (DEBUG_WARNING_PERFORM_BUFFER_OP) writefln("WARNING! performBufferOp(STORE) has state.drawBuffer.mustLoad. It wasn't stored yet!");
 			}
 			if (bufferType & BufferType.COLOR) storeBuffer(&state.drawBuffer);
 			if (bufferType & BufferType.DEPTH) storeBuffer(&state.depthBuffer);

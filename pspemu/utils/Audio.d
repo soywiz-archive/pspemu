@@ -219,6 +219,7 @@ class Audio {
 			//return samples.readLeft > samples.capacity / 2;
 			//return samples.readLeft > 4410 * 2; // 100ms
 			return samples.readLeft > bufferSize * 2 * 5;
+			//return samples.readLeft > bufferSize * 2 * 20;
 		}
 		
 		void wait() {

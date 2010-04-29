@@ -27,9 +27,14 @@ class sceGe_driver : Module {
 		mixin(registerd!(0x4C06E472, sceGeContinue));
 		mixin(registerd!(0x438A385A, sceGeSaveContext));
 		mixin(registerd!(0x0BF608FB, sceGeRestoreContext));
+		mixin(registerd!(0xB77905EA, sceGeEdramSetAddrTranslation));
 	}
 
 	PspGeCallbackData[] callbackDataList;
+	
+	void sceGeEdramSetAddrTranslation() {
+		unimplemented();
+	}
 	
 	/**
 	 * Save the GE's current state.

@@ -8,7 +8,7 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 
 //debug = DEBUG_CLEAR_MODE;
 
-version = VERSION_ENABLE_FRAME_LOAD; // Disabled temporary
+//version = VERSION_ENABLE_FRAME_LOAD; // Disabled temporary. It cause problems with some games (Dividead for example and a lot of games using SDL. I have to fix it first.).
 //version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY; // Disabled temporary
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT;
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT_EX;
@@ -136,60 +136,11 @@ class GpuOpengl : GpuImplAbstract {
 	void tsync() {
 	}
 
-	void test(string reason) {
-		/+
-		glClearColor(0.0, 0.0, 1.0, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glColor4f(1f, 1f, 1f, 1f);
-		glColorMask(true, true, true, true);
-		glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_FOG);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_LOGIC_OP);
-        glDisable(GL_STENCIL_TEST);
-        glDisable(GL_SCISSOR_TEST);
-		/*
-		glStencilFunc(GL_ALWAYS, 1, 1);
-		glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
-		glEnable(GL_DEPTH_TEST);
-		*/
-
-		glMatrixMode(GL_PROJECTION); glLoadIdentity();
-		glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
-		glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-
-		+/
-		
-		/*
-		tempBufferData[] = 0xFF;
-		glWindowPos2i(0, 0);
-		glPixelZoom(1.0f, 1.0f);
-		glDrawPixels(
-			512, 272,
-			GL_RGBA,
-			GL_UNSIGNED_INT_8_8_8_8_REV,
-			&tempBufferData[0]
-		);
-		*/
-		
-		//glFlush(); glFinish();
-		
+	void test(string reason) {	
 		writefln("GpuOpengl.test('%s')", reason);
 	}
 
 	void clear() {
-		/*
-		uint flags = 0;
-		if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT  ) flags |= GL_COLOR_BUFFER_BIT; // target
-		if (state.clearFlags & ClearBufferMask.GU_STENCIL_BUFFER_BIT) flags |= GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT; // stencil/alpha
-		if (state.clearFlags & ClearBufferMask.GU_DEPTH_BUFFER_BIT  ) flags |= GL_DEPTH_BUFFER_BIT; // zbuffer
-		
-		//glClear(flags);
-		//writefln("clear: %08b", state.clearFlags );
-		*/
 	}
 
 	void draw(VertexState[] vertexList, PrimitiveType type, PrimitiveFlags flags) {
@@ -273,37 +224,25 @@ class GpuOpengl : GpuImplAbstract {
 
 	// http://hitmen.c02.at/files/yapspd/psp_doc/chap10.html#sec10
 	// @TODO @FIXME - Depth should be swizzled.
+	// Reading from VRAM+6Mib will give you a proper linearized version of the depth buffer with no effort.
 
 	void frameLoad(void* colorBuffer, void* depthBuffer) {
 		scope microSecondsStart = microSecondsTick;
 		
 		version (VERSION_ENABLE_FRAME_LOAD) {
-			/*
-			glColorMask(true, true, true, true);
-			glPixelZoom(1.0f, 1.0f);
-			glRasterPos2s(0, 0);
-			*/
-
-			//return;
 			if (colorBuffer !is null) {
-				//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
 				glWindowPos2i(0, 272 - 0);
 				glPixelZoom(1.0f, -1.0f);
-				/*for (int n = 0; n < 272; n++) {
-					int m = 271 - n;
-					//int m = n;
-					state.drawBuffer.row(&tempBufferData, m)[] = state.drawBuffer.row(colorBuffer, n)[];
-				}*/
 				
 				GlPixelFormat glPixelFormat = GlPixelFormats[state.drawBuffer.format];
-				glPixelStorei(GL_UNPACK_ALIGNMENT, cast(uint)glPixelFormat.size);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, glPixelFormat.isize);
+
+				//glColorMask(true, true, true, false);
 
 				glDrawPixels(
 					state.drawBuffer.width, 272,
 					glPixelFormat.external,
-					//GL_RGB,
 					glPixelFormat.opengl,
-					//&tempBufferData
 					colorBuffer
 				);
 				

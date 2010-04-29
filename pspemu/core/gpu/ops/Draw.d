@@ -390,6 +390,8 @@ template Gpu_Draw() {
 		// Optimize: We can also perform the upload directly into the framebuffer.
 		// That way we won't need to store into ram and loading again after. But this way is simpler.
 		
+		//return;
+		
 		// @TODO It's possible that we need to load and store the framebuffer, and/or update textures after that.
 		gpu.state.textureTransfer.texelSize = command.extractEnum!(TextureTransfer.TexelSize);
 

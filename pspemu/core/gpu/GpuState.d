@@ -38,7 +38,7 @@ struct ScreenBuffer {
 	}
 	uint width = 512;
 	PixelFormats format = PixelFormats.GU_PSM_8888;
-	bool mustLoad, mustStore;
+	uint loadAddress, storeAddress;
 	uint address(uint _address) { return this._address = _address; }
 	uint address() { return (0x04_000000 | this._address); }
 	uint addressEnd() { return address + width * 272 * pixelSize; }
