@@ -17,6 +17,7 @@ interface GpuImpl {
 	void tsync();
 	void tflush();
 	void test(string reason);
+	void fastTrxKickToFrameBuffer();
 }
 
 abstract class GpuImplAbstract : GpuImpl {

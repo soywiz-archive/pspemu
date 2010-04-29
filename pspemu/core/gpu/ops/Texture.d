@@ -103,6 +103,10 @@ template Gpu_Texture() {
 	 * sceGuCopyImage() has completed.
 	 **/
 	// void sceGuTexSync(); // OP_TSYNC
+	//
+	// http://forums.ps2dev.org/viewtopic.php?t=6304
+	// SceGuTexSync() is needed when you upload a texture to VRAM and part of that memory is still in texture cash
+	// (which you won't know until you get some wrong texture artifacts). So just call it after each sceGuCopyImage and you're fine. 
 
 	// Texture Sync
 	auto OP_TSYNC() {

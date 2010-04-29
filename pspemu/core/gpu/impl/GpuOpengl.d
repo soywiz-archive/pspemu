@@ -8,7 +8,7 @@ http://code.google.com/p/pspplayer/source/browse/trunk/Noxa.Emulation.Psp.Video.
 
 //debug = DEBUG_CLEAR_MODE;
 
-//version = VERSION_ENABLE_FRAME_LOAD; // Disabled temporary
+version = VERSION_ENABLE_FRAME_LOAD; // Disabled temporary
 //version = VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY; // Disabled temporary
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT;
 version = VERSION_ENABLED_STATE_CORTOCIRCUIT_EX;
@@ -73,6 +73,42 @@ class GpuOpengl : GpuImplAbstract {
 		*/
 
 		//program.use(0);
+	}
+	
+	void fastTrxKickToFrameBuffer() {
+		// trxkick:TextureTransfer(Size(480, 272) : SRC(addr=08EB4510, w=480, XY(0, 0))-DST(addr=04088000, w=512, XY(0, 0))) : Bpp:4
+		//writefln("trxkick:%s", state.textureTransfer);
+		with (state.textureTransfer) {
+			GlPixelFormat glPixelFormat = GlPixelFormats[state.drawBuffer.format];
+			int _dstX = dstX, _dstY = dstY;
+			
+			// @TODO: With this we should increment _dstX and _dstY
+			// CHECK!
+			// dstAddress - state.drawBuffer.address;
+			int dstPixels = (dstAddress - state.drawBuffer.address) / glPixelFormat.isize;
+			_dstX += dstPixels % dstLineWidth;
+			_dstY += dstPixels / dstLineWidth;
+
+			glWindowPos2i(_dstX, 272 - _dstY);
+			glPixelZoom(1.0f, -1.0f);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT,   glPixelFormat.isize);
+			glPixelStorei(GL_UNPACK_ROW_LENGTH,  srcLineWidth);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, srcX);
+			glPixelStorei(GL_UNPACK_SKIP_ROWS,   srcY);
+			{
+				glDrawPixels(
+					width, height,
+					glPixelFormat.external,
+					glPixelFormat.opengl,
+					state.memory.getPointer(srcAddress)
+				);
+			}
+			glPixelStorei(GL_UNPACK_ALIGNMENT,   1);
+			glPixelStorei(GL_UNPACK_ROW_LENGTH,  0);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+			glPixelStorei(GL_UNPACK_SKIP_ROWS,   0);
+		}
 	}
 
 	void reset() {
@@ -241,7 +277,7 @@ class GpuOpengl : GpuImplAbstract {
 	void frameLoad(void* colorBuffer, void* depthBuffer) {
 		scope microSecondsStart = microSecondsTick;
 		
-		version (VERSION_ENABLE_FRAME_LOAD) ´{
+		version (VERSION_ENABLE_FRAME_LOAD) {
 			/*
 			glColorMask(true, true, true, true);
 			glPixelZoom(1.0f, 1.0f);
@@ -251,19 +287,27 @@ class GpuOpengl : GpuImplAbstract {
 			//return;
 			if (colorBuffer !is null) {
 				//bitmapData[0..512 * 272] = (cast(uint *)drawBufferAddress)[0..512 * 272];
-				glWindowPos2i(0, 0);
-				glPixelZoom(1.0f, 1.0f);
-				for (int n = 0; n < 272; n++) {
+				glWindowPos2i(0, 272 - 0);
+				glPixelZoom(1.0f, -1.0f);
+				/*for (int n = 0; n < 272; n++) {
 					int m = 271 - n;
 					//int m = n;
 					state.drawBuffer.row(&tempBufferData, m)[] = state.drawBuffer.row(colorBuffer, n)[];
-				}
+				}*/
+				
+				GlPixelFormat glPixelFormat = GlPixelFormats[state.drawBuffer.format];
+				glPixelStorei(GL_UNPACK_ALIGNMENT, cast(uint)glPixelFormat.size);
+
 				glDrawPixels(
 					state.drawBuffer.width, 272,
-					GlPixelFormats[state.drawBuffer.format].external,
-					GlPixelFormats[state.drawBuffer.format].opengl,
-					&tempBufferData
+					glPixelFormat.external,
+					//GL_RGB,
+					glPixelFormat.opengl,
+					//&tempBufferData
+					colorBuffer
 				);
+				
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			}
 			
 			version (VERSION_HOLD_DEPTH_BUFFER_IN_MEMORY) {
@@ -290,13 +334,21 @@ class GpuOpengl : GpuImplAbstract {
 		if (colorBuffer !is null) {
 			//(cast(uint *)drawBufferAddress)[0..512 * 272] = bitmapData[0..512 * 272];
 			//writefln("%d, %d", state.drawBuffer.width, 272);
+
+			GlPixelFormat glPixelFormat = GlPixelFormats[state.drawBuffer.format];
+			glPixelStorei(GL_PACK_ALIGNMENT, cast(uint)glPixelFormat.size);
+
 			glReadPixels(
 				0, 0, // x, y
 				state.drawBuffer.width, 272, // w, h
-				GlPixelFormats[state.drawBuffer.format].external,
-				GlPixelFormats[state.drawBuffer.format].opengl,
+				glPixelFormat.external,
+				//GL_RGB,
+				glPixelFormat.opengl,
 				&tempBufferData[0]
 			);
+			
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);
+			
 			for (int n = 0; n < 272; n++) {
 				int m = 271 - n;
 				state.drawBuffer.row(colorBuffer, n)[] = state.drawBuffer.row(&tempBufferData, m)[];

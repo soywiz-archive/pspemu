@@ -382,7 +382,7 @@ template Gpu_Draw() {
 		with (gpu.state.textureTransfer) {
 			width  = cast(ushort)(command.extract!(ushort,  0, 10) + 1);
 			height = cast(ushort)(command.extract!(ushort, 10, 10) + 1);
-		}	
+		}
 	}
 
 	// TRansfer X KICK
@@ -393,37 +393,42 @@ template Gpu_Draw() {
 		// @TODO It's possible that we need to load and store the framebuffer, and/or update textures after that.
 		gpu.state.textureTransfer.texelSize = command.extractEnum!(TextureTransfer.TexelSize);
 
-		int bpp = (gpu.state.textureTransfer.texelSize == TextureTransfer.TexelSize.BIT_16) ? 2 : 4;
-		
-		/*if (gpu.state.drawBuffer.isAnyAddressInBuffer([dstAddress])) {
-			// @TODO
-			glDrawPixels();
-		} else */{
-			with (gpu.state.textureTransfer) {
-				auto srcAddressHost = cast(ubyte*)gpu.memory.getPointer(srcAddress);
-				auto dstAddressHost = cast(ubyte*)gpu.memory.getPointer(dstAddress);
-
-				if (gpu.state.drawBuffer.isAnyAddressInBuffer([srcAddress, dstAddress])) {
-					gpu.performBufferOp(BufferOperation.STORE, BufferType.COLOR);
-				}
-
-				for (int n = 0; n < height; n++) {
-					int srcOffset = ((n + srcY) * srcLineWidth + srcX) * bpp;
-					int dstOffset = ((n + dstY) * dstLineWidth + dstX) * bpp;
-					(dstAddressHost + dstOffset)[0.. width * bpp] = (srcAddressHost + srcOffset)[0.. width * bpp];
-					//writefln("%08X <- %08X :: [%d]", dstOffset, srcOffset, width * bpp);
-				}
-				//std.file.write("buffer", dstAddressHost[0..512 * 272 * 4]);
-				
-				if (gpu.state.drawBuffer.isAnyAddressInBuffer([dstAddress])) {
-					//gpu.impl.test();
-					//gpu.impl.test("trxkick");
-					gpu.markBufferOp(BufferOperation.LOAD, BufferType.COLOR);
-				}
-				//gpu.impl.test();
-			}
+		// Specific implementation
+		// @TODO. Checks more compatibility?!
+		if (
+			(gpu.state.drawBuffer.isAnyAddressInBuffer([gpu.state.textureTransfer.dstAddress])) && // Check that the address we are writting in is in the frame buffer.
+			(gpu.state.textureTransfer.dstLineWidth == gpu.state.drawBuffer.width) && // Check that the dstLineWidth is the same as the current frame buffer width
+			(gpu.state.drawBuffer.pixelSize == gpu.state.textureTransfer.bpp) && // Check that the BPP is the same.
+		1) {
+			gpu.impl.fastTrxKickToFrameBuffer();
+			return;
 		}
+
+		// Generic implementation.
+		with (gpu.state.textureTransfer) {
+			auto srcAddressHost = cast(ubyte*)gpu.memory.getPointer(srcAddress);
+			auto dstAddressHost = cast(ubyte*)gpu.memory.getPointer(dstAddress);
+
+			if (gpu.state.drawBuffer.isAnyAddressInBuffer([srcAddress, dstAddress])) {
+				gpu.performBufferOp(BufferOperation.STORE, BufferType.COLOR);
+			}
+
+			for (int n = 0; n < height; n++) {
+				int srcOffset = ((n + srcY) * srcLineWidth + srcX) * bpp;
+				int dstOffset = ((n + dstY) * dstLineWidth + dstX) * bpp;
+				(dstAddressHost + dstOffset)[0.. width * bpp] = (srcAddressHost + srcOffset)[0.. width * bpp];
+				//writefln("%08X <- %08X :: [%d]", dstOffset, srcOffset, width * bpp);
+			}
+			//std.file.write("buffer", dstAddressHost[0..512 * 272 * 4]);
+			
+			if (gpu.state.drawBuffer.isAnyAddressInBuffer([dstAddress])) {
+				//gpu.impl.test();
+				//gpu.impl.test("trxkick");
+				gpu.markBufferOp(BufferOperation.LOAD, BufferType.COLOR);
+			}
+			//gpu.impl.test();
+		}
+
 		debug (DEBUG_DRAWING) writefln("TRXKICK(%s)", gpu.state.textureTransfer);
-		
 	}
 }

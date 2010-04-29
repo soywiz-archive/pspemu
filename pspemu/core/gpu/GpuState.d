@@ -85,6 +85,8 @@ struct TextureTransfer {
 	ushort width, height;
 	TexelSize texelSize;
 	
+	uint bpp() { return (texelSize == TexelSize.BIT_16) ? 2 : 4; }
+	
 	string toString() {
 		return std.string.format(
 			"TextureTransfer("
@@ -96,7 +98,7 @@ struct TextureTransfer {
 			width, height,
 			srcAddress, srcLineWidth, srcX, srcY,
 			dstAddress, dstLineWidth, dstX, dstY,
-			texelSize
+			bpp
 		);
 	}
 }

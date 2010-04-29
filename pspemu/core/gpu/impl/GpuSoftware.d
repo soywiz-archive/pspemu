@@ -51,4 +51,8 @@ class GpuSoftware : GpuImplAbstract {
 	void test(string reason) {
 		assert(0);
 	}
+
+	void fastTrxKickToFrameBuffer() {
+		assert(0);
+	}
 }

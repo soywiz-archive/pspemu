@@ -18,6 +18,7 @@ struct GlPixelFormat {
 	uint  internal;
 	uint  external;
 	uint  opengl;
+	uint  isize() { return cast(uint)size; }
 }
 
 static const auto GlPixelFormats = [
