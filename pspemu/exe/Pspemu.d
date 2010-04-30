@@ -51,6 +51,37 @@ class PspDisplay : Display {
 
 int main(string[] args) {
 	//Thread.getThis.priority = +1;
+	
+	try { std.file.mkdirRecurse("pspfs/flash0/font"); } catch { }
+	try { std.file.mkdirRecurse("pspfs/flash0/kd"); } catch { }
+	try { std.file.mkdirRecurse("pspfs/flash0/vsh"); } catch { }
+	try { std.file.mkdirRecurse("pspfs/flash1"); } catch { }
+	try { std.file.mkdirRecurse("pspfs/ms0/PSP/GAME/virtual"); } catch { }
+	try { std.file.mkdirRecurse("pspfs/ms0/PSP/PHOTO"); } catch { }
+	try { std.file.mkdirRecurse("pspfs/ms0/PSP/SAVEDATA"); } catch { }
+
+	// No file specified.
+	// Check if there is a file in the directory
+	// with the same name as the executable (with elf, iso, cso, asm or pbp extension) so we can open it.
+	if (args.length < 2) {
+		auto baseName = std.path.getName(args[0]);
+		foreach (extension; ["iso", "cso", "asm", "elf", "pbp"]) {
+			auto currentFullName = baseName ~ '.' ~ extension;
+			if (std.file.exists(currentFullName)) {
+				args ~= currentFullName;
+				goto file_to_execute_found;
+			}
+		}
+
+		// Still didn't found. Try several more files:
+		foreach (currentFullName; ["BOOT.PBP", "EBOOT.PBP"]) {
+			if (std.file.exists(currentFullName)) { args ~= currentFullName; goto file_to_execute_found; }
+		}
+
+		file_to_execute_found:;
+		//writefln("%s", args);
+	}
+
 
 	// Components.
 	auto memory        = new Memory;

@@ -96,6 +96,7 @@ class Bitmap { public:
 	}
 	
 	void use() {
+		waitReady();
 		sceGuEnable(GU_TEXTURE_2D);
 		sceGuTexMode(GU_PSM_8888, 0, 0, 0);
 		sceGuTexFilter(GU_LINEAR, GU_LINEAR);
