@@ -61,44 +61,55 @@ class Bitmap { public:
 		int reqW = 1, reqH = 1;
 		while (reqW < bitmap->slice_w) reqW <<= 1;
 		while (reqH < bitmap->slice_h) reqH <<= 1;
-		SDL_Surface *newsurface = SDL_CreateRGBSurface(SDL_SWSURFACE, reqW, reqH, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-		SDL_SetAlpha(bitmap->surface, 0, SDL_ALPHA_OPAQUE);
-		SDL_BlitSurface(bitmap->surface, NULL, newsurface, NULL);
-		SDL_FreeSurface(bitmap->surface);
-		bitmap->surface = newsurface;
+		if ((bitmap->surface->w != reqW) || (bitmap->surface->h != reqH)) {
+			SDL_Surface *newsurface = SDL_CreateRGBSurface(SDL_SWSURFACE, reqW, reqH, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+			SDL_SetAlpha(bitmap->surface, 0, SDL_ALPHA_OPAQUE);
+			SDL_BlitSurface(bitmap->surface, NULL, newsurface, NULL);
+			SDL_FreeSurface(bitmap->surface);
+			bitmap->surface = newsurface;
+		}
 		return bitmap;
+	}
+	
+	void use() {
+		sceGuEnable(GU_TEXTURE_2D);
+		sceGuTexMode(GU_PSM_8888, 0, 0, 0);
+		sceGuTexFilter(GU_LINEAR, GU_LINEAR);
+		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
+		sceGuTexImage(0, surface->w, surface->h, surface->w, surface->pixels);
+	}
+	
+	void unuse() {
+		sceGuDisable(GU_TEXTURE_2D);
 	}
 	
 	void draw(int x, int y) {
 		//pspDebugScreenPrintf("Bitmap::draw(%d, %s)\n", data[0], test);
 		if (surface == NULL) return;
 
-		sceGuEnable(GU_TEXTURE_2D);
-		//sceGuEnable(GU_BLEND);
+		use();
+		{
+			TexVertex *vl = (TexVertex *)sceGuGetMemory(2 * sizeof(TexVertex));
 
-		sceGuTexMode(GU_PSM_8888, 0, 0, 0);
-		sceGuTexFilter(GU_LINEAR, GU_LINEAR);
-		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
-		sceGuTexImage(0, surface->w, surface->h, surface->w, surface->pixels);
-
-		TexVertex *vl = (TexVertex *)sceGuGetMemory(2 * sizeof(TexVertex));
-
-		vl[0].x = x - cx;
-		vl[0].y = y - cy;
+			writeCoords(vl, x - cx, y - cy, 0, 0, slice_w, slice_h);
+			
+			sceGumDrawArray(GU_SPRITES, GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vl);
+		}
+		unuse();
+	}
+	
+	void writeCoords(TexVertex *vl, int px, int py, int tx, int ty, int tw, int th) {
+		vl[0].x = px;
+		vl[0].y = py;
 		vl[0].z = 0;
-		vl[0].u = slice_x;
-		vl[0].v = slice_y;
+		vl[0].u = slice_x + tx;
+		vl[0].v = slice_y + ty;
 
-		vl[1].x = x + slice_w - cx;
-		vl[1].y = y + slice_h - cy;
-		vl[1].z = 0;
-		vl[1].u = slice_x + slice_w;
-		vl[1].v = slice_y + slice_h;
-		
-		sceGumDrawArray(GU_SPRITES, GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vl);
-
-		sceGuDisable(GU_TEXTURE_2D);
-		//sceGuDisable(GU_BLEND);
+		vl[1].x = vl[0].x + tw;
+		vl[1].y = vl[0].y + th;
+		vl[1].z = vl[0].z + 0;
+		vl[1].u = vl[0].u + tw;
+		vl[1].v = vl[0].v + th;
 	}
 };
 

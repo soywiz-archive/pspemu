@@ -52,6 +52,8 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 */
 
 #include "main_bitmap.hpp"
+#include "main_tilemap.hpp"
+#include "main_sqlite.hpp"
 
 void printfunc(HSQUIRRELVM vm, const SQChar *s, ...) {
 	char temp[1024];
@@ -191,6 +193,16 @@ DSQ_FUNC(point)
 	RETURN_VOID;
 }
 
+DSQ_FUNC(sleep)
+{
+	EXTRACT_PARAM_START();
+	EXTRACT_PARAM_INT(2, milliseconds, 0);
+
+	SDL_Delay(milliseconds);
+
+	RETURN_VOID;
+}
+
 DSQ_FUNC(printf)
 {
 	EXTRACT_PARAM_START();
@@ -202,7 +214,7 @@ DSQ_FUNC(printf)
 	for (int n = 1; n <= nargs; n++) sq_push(v, n);
 	sq_call(v, nargs, 1, 0);
 	sq_getstring(v, -1, &s);
-	printf("%s", s);
+	pspDebugScreenPrintf("%s", s);
 	return 0;
 }
 
@@ -233,6 +245,10 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 
 	// Our classes.
 	register_Bitmap(v);
+	register_Tilemap(v);
+	register_Sqlite(v);
+	
+	// Out functions.
 	NEWSLOT_FUNC(clear, 0, "");
 	NEWSLOT_FUNC(color, 0, "");
 	NEWSLOT_FUNC(colorf, 0, "");
@@ -241,6 +257,7 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 	NEWSLOT_FUNC(frame, 0, "");
 	NEWSLOT_FUNC(printf, 0, "");
 	NEWSLOT_FUNC(exit, 0, "");
+	NEWSLOT_FUNC(sleep, 0, "");
 
 	sqstd_seterrorhandlers(v);
 
