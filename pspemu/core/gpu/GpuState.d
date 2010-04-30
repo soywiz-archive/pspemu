@@ -3,6 +3,7 @@ module pspemu.core.gpu.GpuState;
 import pspemu.core.Memory;
 import pspemu.core.gpu.Types;
 import pspemu.utils.Math;
+import pspemu.utils.Utils;
 
 import std.bitmanip;
 
@@ -22,6 +23,10 @@ struct ClutState {
 	int colorEntrySize() { return PixelFormatSize(format, 1); }
 	int blocksSize(int num_blocks) {
 		return PixelFormatSize(format, num_blocks * 8);
+	}
+	string hash() {
+		return cast(string)(cast(ubyte*)cast(void*)&this)[0..data.offsetof];
+		//return toString;
 	}
 	string toString() {
 		return std.string.format("ClutState(addr=%08X, format=%d, shift=%d, mask=%d, start=%d)", address, format, shift, mask, start);
@@ -70,6 +75,10 @@ struct TextureState {
 	uint totalSize() { return rwidth * height; }
 	bool hasPalette() { return (format >= PixelFormats.GU_PSM_T4 && format <= PixelFormats.GU_PSM_T32); }
 	uint paletteRequiredComponents() { return hasPalette ? (1 << (4 + (format - PixelFormats.GU_PSM_T4))) : 0; }
+	string hash() {
+		return cast(string)TA(this);
+		//return toString;
+	}
 	string toString() {
 		return std.string.format("TextureState(addr=%08X, size(%dx%d), bwidth=%d size=%d, format=%d, swizzled=%d)", address, width, height, buffer_width, size, format, swizzled);
 	}

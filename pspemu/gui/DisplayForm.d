@@ -19,7 +19,6 @@ import pspemu.models.IController;
 
 import pspemu.hle.Module;
 import pspemu.hle.Loader;
-import pspemu.hle.Syscall;
 import pspemu.hle.kd.threadman;
 import pspemu.hle.kd.iofilemgr;
 
@@ -297,8 +296,8 @@ class DisplayForm : Form, IMessageFilter {
 			}).checked = GlobalConfig.audioEnabled;
 			addMenu("Frame &limiting", (MenuItem mi, EventArgs ea) {
 				mi.checked = !mi.checked;
-				display.frameLimiting = mi.checked;
-			}).checked = true;
+				GlobalConfig.frameLimiting = mi.checked;
+			}).checked = GlobalConfig.frameLimiting;
 		});
 		addMenu("&Help", {
 			addMenu("&Website", (MenuItem mi, EventArgs ea) {

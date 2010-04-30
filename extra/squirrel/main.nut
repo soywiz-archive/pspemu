@@ -1,11 +1,13 @@
+print("Hello world from Squirrel!\n");
+printf("lang: %s\n", syslang);
+printf("platform: %s\n", platform);
+for (local n = 0; n < 20; n++) print(n);
+print("\n");
+
 db <- Sqlite(":memory:");
 db.query("CREATE TABLE records (name, points);");
 db.query("INSERT INTO records (name, points) VALUES (?, ?);", ["soywiz", 999]);
 db.query("INSERT INTO records (name, points) VALUES (?, ?);", ["nobody", 1000]);
-
-print("Hello world from Squirrel!\n");
-for (local n = 0; n < 20; n++) print(n);
-print("\n");
 
 foreach (n, row in db.query("SELECT * FROM records ORDER BY points DESC;")) {
 	printf("Register(%d): %s, %d\n", n, row.name, row.points);
@@ -24,6 +26,11 @@ for (local y = 0; y < tilemap.h; y++) {
 	for (local x = 0; x < tilemap.w; x++) {
 		tilemap.set(x, y, (x + y) % 3);
 	}
+}
+
+ctrl.update();
+if (ctrl.cross) {
+	printf("Starting with cross pressed...\n");
 }
 
 while (resources_loading_count() > 0) {
@@ -45,11 +52,8 @@ while (true) {
 	{
 		logo.draw(x + 480 / 2, y + 272 / 2);
 	}
-	for (local m = 0; m < 480; m += 20) {
-		colorf([1, 0, 0, (sin(n / 20.0 + m / 10.0) + 1.0) * 0.5]);
-		line(m + 10, 0, m + 10, 272);
-	}
+	//for (local m = 0; m < 480; m += 20) { colorf([1, 0, 0, (sin(n / 20.0 + m / 10.0) + 1.0) * 0.5]); line(m + 10, 0, m + 10, 272); }
 	
 	frame();
-	n++;
+	if (ctrl.cross) n++;
 }

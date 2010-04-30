@@ -89,20 +89,28 @@ final class Registers {
 	}
 
 	void copyFrom(Registers that) {
-		this.PC    = that.PC;
-		this.nPC   = that.nPC;
-		this.HILO  = that.HILO;
-		this.IC    = that.IC;
-		this.FCR0  = that.FCR0;
-		this.FCR31 = that.FCR31;
-		this.R []  = that.R [];
-		this.RF[]  = that.RF[];
-		this.CLOCKS   = that.CLOCKS;
+		//writefln("registers: v0 <- %08X : PC <- %08X", that.V0, that.PC);
+		this.PC     = that.PC;
+		this.nPC    = that.nPC;
+		this.HILO   = that.HILO;
+		this.IC     = that.IC;
+		this.PAUSED = that.PAUSED;
+		this.FCR0   = that.FCR0;
+		this.FCR31  = that.FCR31;
+		this.R []   = that.R [];
+		this.RF[]   = that.RF[];
+		this.CMP[]  = that.CMP[];
+		this.CLOCKS = that.CLOCKS;
+
 		if (that.CallStack.length) {
 			this.CallStack = that.CallStack.dup;
 		} else {
 			this.CallStack = [];
 		}
+	}
+	
+	void copyFromVFPU(Registers that) {
+		this.VF[]  = that.VF[]; // Only if preserved!
 	}
 
 	static this() {

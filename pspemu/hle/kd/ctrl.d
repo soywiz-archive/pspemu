@@ -17,6 +17,7 @@ class sceCtrl_driver : Module {
 		mixin(registerd!(0x1F803938, sceCtrlReadBufferPositive));
 		mixin(registerd!(0x3A622550, sceCtrlPeekBufferPositive));
 		mixin(registerd!(0x0B588501, sceCtrlReadLatch));
+		mixin(registerd!(0xB1D0E5CD, sceCtrlPeekLatch));
 		mixin(registerd!(0xA7144800, sceCtrlSetIdleCancelThresholdFunction));
 	}
 
@@ -101,13 +102,35 @@ class sceCtrl_driver : Module {
 	SceCtrlLatch lastLatch;
 	
 	/**
-	 * Obtains information about 
+	 * Obtains information about currentLatch.
 	 *
 	 * @param currentLatch - Pointer to SceCtrlLatch to store the result.
 	 *
 	 * @return 
 	 */
 	int sceCtrlReadLatch(SceCtrlLatch* currentLatch) {
+		SceCtrlData pad;
+		readBufferedFrames(&pad, 1, true);
+		
+		currentLatch.uiPress   = cast(PspCtrlButtons)pad.Buttons;
+		currentLatch.uiRelease = cast(PspCtrlButtons)~pad.Buttons;
+		currentLatch.uiMake    = (lastLatch.uiRelease ^ currentLatch.uiRelease) & lastLatch.uiRelease;
+		currentLatch.uiBreak   = (lastLatch.uiPress   ^ currentLatch.uiPress  ) & lastLatch.uiPress;
+
+		//unimplemented_notice();
+		lastLatch = *currentLatch;
+
+		return 0;
+	}
+
+	/**
+	 * Obtains information about currentLatch.
+	 *
+	 * @param currentLatch - Pointer to SceCtrlLatch to store the result.
+	 *
+	 * @return 
+	 */
+	int sceCtrlPeekLatch(SceCtrlLatch* currentLatch) {
 		SceCtrlData pad;
 		readBufferedFrames(&pad, 1, true);
 		

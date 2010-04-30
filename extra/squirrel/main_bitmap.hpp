@@ -17,7 +17,7 @@ class Bitmap { public:
 		slice_h = height;
 		cx = 0;
 		cy = 0;
-		ready = false;
+		ready = true;
 	}
 	
 	Bitmap() {
@@ -57,7 +57,7 @@ class Bitmap { public:
 	}
 	
 	static int fromFileThread(void *_bitmap) {
-		//SDL_Delay(1); // @BUG! This causes errors some times on d pspemu
+		SDL_Delay(1); // @BUG! This causes errors some times on d pspemu
 		Bitmap *bitmap = (Bitmap *)_bitmap;
 		bitmap->surface = IMG_Load(bitmap->name);
 		bitmap->slice_x = 0;

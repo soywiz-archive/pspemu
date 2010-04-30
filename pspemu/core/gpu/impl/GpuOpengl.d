@@ -345,7 +345,7 @@ template OpenglUtils() {
 
 	Texture getTexture(TextureState textureState, ClutState clutState) {
 		Texture texture = void;
-		string hash = textureState.toString ~ clutState.toString;
+		string hash = textureState.hash ~ clutState.hash;
 		if ((hash in textureCache) is null) {
 			texture = new Texture();
 			textureCache[hash] = texture;

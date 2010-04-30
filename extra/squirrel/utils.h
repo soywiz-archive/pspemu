@@ -58,7 +58,9 @@
 	sq_get(v, -2); \
 	sq_createinstance(v, -1); \
 	sq_setinstanceup(v, -1, OBJ); \
-	sq_setreleasehook(v, -1, CSQ_RELEASE(TYPE));
+	sq_setreleasehook(v, -1, CSQ_RELEASE(TYPE)); \
+	sq_remove(v, -2); \
+	sq_remove(v, -2);
 
 
 typedef struct {

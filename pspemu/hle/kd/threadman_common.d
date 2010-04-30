@@ -8,11 +8,11 @@ public import pspemu.core.cpu.Registers;
 
 public import pspemu.hle.kd.sysmem; // kd/sysmem.prx (SysMemUserForUser)
 
-template ThreadSubsystemManager() {
+/*template ThreadSubsystemManager() {
 	Module threadManForUser;
 	Cpu cpu() { return threadManForUser.cpu; }
 
 	public this(Module threadManForUser) {
 		this.threadManForUser = threadManForUser;
 	}
-}
+}*/

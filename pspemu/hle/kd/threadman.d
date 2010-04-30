@@ -3,7 +3,8 @@ module pspemu.hle.kd.threadman; // kd/threadman.prx (sceThreadManager)
 //debug = DEBUG_THREADS;
 //debug = DEBUG_SYSCALL;
 
-import pspemu.hle.kd.threadman_common;
+public import pspemu.hle.kd.threadman_common;
+public import pspemu.hle.ThreadManager;
 
 public import pspemu.hle.kd.threadman_threads;
 public import pspemu.hle.kd.threadman_semaphores;

@@ -28,6 +28,14 @@
 #define SCR_WIDTH (480)
 #define SCR_HEIGHT (272)
 
+SceCtrlLatch latch;
+SceCtrlData pad_data;
+
+void psp_ctrl_update() {
+	sceCtrlPeekBufferPositive(&pad_data, 1);
+	sceCtrlPeekLatch(&latch);
+}
+
 //void* sceGuGetMemory(int size);
 
 static unsigned int __attribute__((aligned(16))) list[262144];
@@ -55,6 +63,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #include "main_bitmap.hpp"
 #include "main_tilemap.hpp"
 #include "main_sqlite.hpp"
+#include "main_controller.hpp"
 
 void printfunc(HSQUIRRELVM vm, const SQChar *s, ...) {
 	char temp[1024];
@@ -103,6 +112,19 @@ void psp_init() {
 	pspDebugScreenInit();
 	
 	sceGuStart(GU_DIRECT, list);
+	
+	sceCtrlSetSamplingCycle(0);
+	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
+}
+
+void psp_frame() {
+	sceGuFinish();
+	sceGuSync(0, 0);
+	sceGuStart(GU_DIRECT, list);
+	sceKernelDcacheWritebackInvalidateAll();
+	sceDisplayWaitVblankStart();
+	swapBuffers();
+	psp_ctrl_update();
 }
 
 DSQ_FUNC(clear)
@@ -122,12 +144,7 @@ DSQ_FUNC(frame)
 	//EXTRACT_PARAM_INT(2, fps, 30);
 	//EXTRACT_PARAM_INT(3, swap_type, 1);
 
-	sceGuFinish();
-	sceGuSync(0, 0);
-	sceGuStart(GU_DIRECT, list);
-	sceKernelDcacheWritebackInvalidateAll();
-	sceDisplayWaitVblankStart();
-	swapBuffers();
+	psp_frame();
 
 	RETURN_VOID;
 }
@@ -245,30 +262,55 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 	BitmapLoadingCount = 0;
 	
 	sq_pushroottable(v);
-	sqstd_register_iolib(v); 
-	sqstd_register_bloblib(v);
-	sqstd_register_mathlib(v);
-	sqstd_register_stringlib(v);
-	sqstd_register_systemlib(v);
+	{
+		// Our classes.
+		register_Bitmap(v);
+		register_Tilemap(v);
+		register_Sqlite(v);
+		register_Controller(v);
+		
+		// Out functions.
+		NEWSLOT_FUNC(clear, 0, "");
+		NEWSLOT_FUNC(color, 0, "");
+		NEWSLOT_FUNC(colorf, 0, "");
+		NEWSLOT_FUNC(line, 0, "");
+		NEWSLOT_FUNC(point, 0, "");
+		NEWSLOT_FUNC(frame, 0, "");
+		NEWSLOT_FUNC(printf, 0, "");
+		NEWSLOT_FUNC(exit, 0, "");
+		NEWSLOT_FUNC(sleep, 0, "");
+		NEWSLOT_FUNC(resources_loading_count, 0, "");
 
-	// Our classes.
-	register_Bitmap(v);
-	register_Tilemap(v);
-	register_Sqlite(v);
-	
-	// Out functions.
-	NEWSLOT_FUNC(clear, 0, "");
-	NEWSLOT_FUNC(color, 0, "");
-	NEWSLOT_FUNC(colorf, 0, "");
-	NEWSLOT_FUNC(line, 0, "");
-	NEWSLOT_FUNC(point, 0, "");
-	NEWSLOT_FUNC(frame, 0, "");
-	NEWSLOT_FUNC(printf, 0, "");
-	NEWSLOT_FUNC(exit, 0, "");
-	NEWSLOT_FUNC(sleep, 0, "");
-	NEWSLOT_FUNC(resources_loading_count, 0, "");
+		sq_pushstring(v, "ctrl", -1);
+		CREATE_OBJECT(Controller, new Controller("normal"));
+		sq_createslot(v, -3);
+
+		sq_pushstring(v, "syslang", -1);
+		sq_pushstring(v, "en", -1);
+		sq_createslot(v, -3);
+
+		sq_pushstring(v, "platform", -1);
+		sq_pushstring(v, "psp", -1);
+		sq_createslot(v, -3);
+
+		sq_pushstring(v, "argv", -1);
+		sq_newarray(v, 0);
+		for (int n = 1; n < argc; n++) {
+			sq_pushstring(v, argv[n], -1);
+			sq_arrayappend(v, -2);
+		}
+		sq_createslot(v, -3);
+
+		// Standard Libraries
+		sqstd_register_iolib(v); 
+		sqstd_register_bloblib(v);
+		sqstd_register_mathlib(v);
+		sqstd_register_stringlib(v);
+		sqstd_register_systemlib(v);
+	}
 
 	sqstd_seterrorhandlers(v);
+	sq_enabledebuginfo(v, 1);
 
 	sq_setprintfunc(v, printfunc, printfunc);
 

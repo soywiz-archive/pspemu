@@ -5,6 +5,7 @@ import std.c.windows.windows;
 import std.stdio;
 
 import pspemu.utils.Utils;
+import pspemu.Config;
 
 /**
  * Interface for the Display.
@@ -21,8 +22,7 @@ abstract class Display {
 		int height = 272;
 	}
 
-	bool frameLimiting = true;
-	//bool frameLimiting = false;
+	bool frameLimiting() { return GlobalConfig.frameLimiting; }
 
 	Info info;
 

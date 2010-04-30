@@ -10,42 +10,64 @@ import pspemu.utils.Logger;
 
 //debug = MODULE_LOADER;
 
+// http://hitmen.c02.at/files/yapspd/psp_doc/chap26.html#sec26.2
 class Elf {
+	// http://advancedpsp.tk/foro_es/viewtopic.php?f=22&t=17
 	static struct Header {
-		enum Type : ushort {
-			Executable = 0x0002,
-			Prx        = 0xFFA0,
-		}
-		enum Machine : ushort {
-			ALLEGREX = 8,
-		}
+		enum Type    : ushort { Executable = 0x0002, Prx = 0xFFA0 }
+		enum Machine : ushort { ALLEGREX = 8 }
 
-		char[4]  magic = [0x7F, 'E', 'L', 'F'];  //
-		ubyte    _class;                         //
-		ubyte    data;                           //
-		ubyte    idver;                          //
-		ubyte[9] _0;                             // Padding.
-		Type     type;                           // Module type
-		Machine  machine = Machine.ALLEGREX;     //
-		uint     _version;                       //
-		uint     entryPoint;                     // Module EntryPoint (PC)
-		uint     programHeaderOffset;            // Program Header Offset
-		uint     sectionHeaderOffset;            // Section Header Offset
-		uint     flags;                          // Flags
-		ushort   ehsize;                         //
+		// e_ident 16 bytes.
+		char[4]  magic = [0x7F, 'E', 'L', 'F'];  /// 
+		ubyte    _class;                         ///
+		ubyte    data;                           ///
+		ubyte    idver;                          ///
+		ubyte[9] _0;                             /// Padding.
+
+		Type     type;                           /// Identifies object file type
+		Machine  machine = Machine.ALLEGREX;     /// Architecture build
+		uint     _version;                       /// Object file version
+		uint     entryPoint;                     /// Virtual address of code entry. Module EntryPoint (PC)
+		uint     programHeaderOffset;            /// Program header table's file offset in bytes
+		uint     sectionHeaderOffset;            /// Section header table's file offset in bytes
+		uint     flags;                          /// Processor specific flags
+		ushort   ehsize;                         /// ELF header size in bytes
 
 		// Program Header.
-		ushort   programHeaderEntrySize;         //
-		ushort   programHeaderCount;             //
+		ushort   programHeaderEntrySize;         /// Program header size (all the same size)
+		ushort   programHeaderCount;             /// Number of program headers
 
 		// Section Header.
-		ushort   sectionHeaderEntrySize;         //
-		ushort   sectionHeaderCount;             // Section Header Num
-		ushort   sectionHeaderStringTable;       // 
+		ushort   sectionHeaderEntrySize;         /// Section header size (all the same size)
+		ushort   sectionHeaderCount;             /// Number of section headers
+		ushort   sectionHeaderStringTable;       /// Section header table index of the entry associated with the section name string table
 
 		// Check the size of the struct.
 		static assert(this.sizeof == 52);
 	}
+	
+	static struct ProgramHeader { // ELF Program Header
+		enum Type : uint { NO_LOAD = 0, LOAD = 1 }
+		Type type;     /// Type of segment
+		uint offset;   /// Offset for segment's first byte in file
+		uint vaddr;    /// Virtual address for segment
+		uint paddr;    /// Physical address for segment
+		uint filesz;   /// Segment image size in file
+		uint memsz;    /// Segment image size in memory
+		uint flags;    /// Flags
+		uint _align;   /// Alignment
+		
+		string toString() {
+			return std.string.format("ProgramHeader(type=%02X, offset=%08X, vaddr=%08X, paddr=%08X, filesz=%08X, memsz=%08X, flags=%02X, align=%02X)", type, offset, vaddr, paddr, filesz, memsz, flags, _align);
+		}
+		
+		static assert (this.sizeof == 32);
+	}
+	/*
+	Example:
+		ProgramHeader(type=01, offset=00000080, vaddr=00000000, paddr=001752D0, filesz=001A4E38, memsz=001A4E38, flags=07, align=40)
+		ProgramHeader(type=01, offset=001A4EC0, vaddr=001A4E40, paddr=00000000, filesz=0014118C, memsz=00D5F75C, flags=06, align=40)
+	*/
 	
 	static struct SectionHeader { // ELF Section Header
 		static enum Type : uint {
@@ -132,11 +154,17 @@ class Elf {
 	Stream stream;
 	Header header;
 	SectionHeader[] sectionHeaders;
+	ProgramHeader[] programHeaders;
 	string[] sectionHeaderNames;
 	SectionHeader[string] sectionHeadersNamed;
 	char[] stringTable;
 
 	void dumpSections() {
+		writefln("ProgramHeader(%d):", programHeaders.length);
+		foreach (n, programHeader; programHeaders) {
+			writefln("  %s", programHeader);
+		}
+
 		writefln("SectionHeader(%d):", sectionHeaders.length);
 		foreach (n, sectionHeader; sectionHeaders) {
 			writefln(
@@ -181,6 +209,9 @@ class Elf {
 		// Checks that it's an ELF file and that it's a PSP ELF file.
 		if (header.magic   != Header.init.magic  ) throw(new Exception(std.string.format("Magic '%s' != '%s'", header.magic, Header.init.magic)));
 		if (header.machine != Header.init.machine) throw(new Exception(std.string.format("Machine %d != %d", header.machine, Header.init.machine)));
+
+		// Program Headers
+		extractProgramHeaders();
 
 		// Section Headers
 		extractSectionHeaders();
@@ -232,11 +263,25 @@ class Elf {
 		sectionHeaders = []; assert(SectionHeader.sizeof >= header.sectionHeaderEntrySize);
 		try {
 			foreach (index; 0 .. header.sectionHeaderCount) {
-				SectionHeader sectionHeader = read!(SectionHeader)(
+				auto sectionHeader = read!(SectionHeader)(
 					stream,
 					header.sectionHeaderOffset + (index * header.sectionHeaderEntrySize)
 				);
 				sectionHeaders ~= sectionHeader;
+			}
+		} catch {
+		}
+	}
+
+	void extractProgramHeaders() {
+		programHeaders = []; assert(SectionHeader.sizeof >= header.sectionHeaderEntrySize);
+		try {
+			foreach (index; 0 .. header.programHeaderCount) {
+				auto programHeader = read!(ProgramHeader)(
+					stream,
+					header.programHeaderOffset + (index * header.programHeaderEntrySize)
+				);
+				programHeaders ~= programHeader;
 			}
 		} catch {
 		}
@@ -282,6 +327,8 @@ class Elf {
 				
 				// Lee la palabra original
 				Instruction instruction = Instruction(memory_read32(offset));
+				
+				//writefln("Patching offset: %08X, type:%d", offset, reloc.type);
 				
 				// Modifica la palabra según el tipo de relocalización
 				switch (reloc.type) { default: throw(new Exception(std.string.format("RELOC: unknown reloc type '%02X'", reloc.type)));

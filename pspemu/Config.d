@@ -4,7 +4,7 @@ import std.stdio;
 
 class Config {
 	public bool audioEnabled = true;
-	public bool frameLimiting = true;
+	public bool frameLimiting = false;
 }
 
 __gshared Config _GlobalConfig;

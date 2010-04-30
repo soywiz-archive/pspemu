@@ -3,6 +3,8 @@ module pspemu.core.cpu.interpreted.Cpu;
 const uint THREAD0_CALL_MASK = 0xFFFFF;
 //const uint THREAD0_CALL_MASK = 0xFFFF;
 //const uint THREAD0_CALL_MASK = 0xFFF;
+//const uint THREAD0_CALL_MASK = 0xFF;
+//const uint THREAD0_CALL_MASK = 0xF;
 
 //debug = DEBUG_GEN_SWITCH;
 
@@ -33,6 +35,8 @@ import pspemu.core.cpu.interpreted.ops.Unimplemented;
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
 class CpuInterpreted : public Cpu {
+	uint LOCAL_THREAD0_CALL_MASK = THREAD0_CALL_MASK;
+
 	this(Memory memory, Gpu gpu, Display display, IController controller) {
 		super(memory, gpu, display, controller);
 	}
@@ -67,7 +71,7 @@ class CpuInterpreted : public Cpu {
 		//writefln("Execute: %08X", count);
 		while (count--) {
 			// Equeue a THREAD Interrupt (to switch threads)
-			if (registers.PAUSED || ((count & THREAD0_CALL_MASK) == 0)) interrupts.queue(Interrupts.Type.THREAD0);
+			if (registers.PAUSED || ((count & LOCAL_THREAD0_CALL_MASK) == 0)) interrupts.queue(Interrupts.Type.THREAD0);
 			
 			// Process interrupts if there are pending interrupts
 			// Process IRQ (Interrupt ReQuest)
