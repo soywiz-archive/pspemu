@@ -28,16 +28,16 @@ template Gpu_Texture() {
 
 	// Texture Mode
 	auto OP_TMODE() {
-		with (gpu.state) {
-			textureSwizzled  =  command.extract!(bool,  0, 8);
-			mipmapShareClut  = !command.extract!(bool,  8, 8);
-			mipMapMaxLevel   =  command.extract!(ubyte, 16, 8);
+		with (gpu.state.texture) {
+			swizzled        =  command.extract!(bool,  0, 8);
+			mipmapShareClut = !command.extract!(bool,  8, 8);
+			mipmapMaxLevel  =  command.extract!(ubyte, 16, 8);
 		}
 	}
 
 	// Texture Pixel Storage Mode
 	auto OP_TPSM() {
-		gpu.state.textureFormat = command.extractEnum!(PixelFormats);
+		gpu.state.texture.format = command.extractEnum!(PixelFormats);
 	}
 
 	/**
@@ -56,30 +56,28 @@ template Gpu_Texture() {
 	 **/
 	// void sceGuTexImage(int mipmap, int width, int height, int tbw, const void* tbp); // OP_TBP_n, OP_TBW_n, OP_TSIZE_n, OP_TFLUSH
 
-	// Texture Base Pointer
+	// TextureMipmap Base Pointer
 	mixin (TextureArrayOperation("OP_TBP_n", q{
-		with (gpu.state.textures[Index]) {
+		with (gpu.state.texture.mipmaps[Index]) {
 			address &= 0xFF000000;
 			address |= command.param24;
 		}
 	}));
 
-	// Texture Buffer Width.
+	// TextureMipmap Buffer Width.
 	mixin (TextureArrayOperation("OP_TBW_n", q{
-		with (gpu.state.textures[Index]) {
+		with (gpu.state.texture.mipmaps[Index]) {
 			buffer_width = command.extract!(uint, 0, 16); // ???
 			address &= 0x00FFFFFF;
 			address |= command.extract!(uint, 16, 8) << 24;
 		}
 	}));
 
-	// Texture Size
+	// TextureMipmap Size
 	mixin (TextureArrayOperation("OP_TSIZE_n", q{
-		with (gpu.state.textures[Index]) {
+		with (gpu.state.texture.mipmaps[Index]) {
 			width  = 1 << command.extract!(uint, 0, 8);
 			height = 1 << command.extract!(uint, 8, 8);
-			format   = gpu.state.textureFormat;
-			swizzled = gpu.state.textureSwizzled;
 		}
 	}));
 
@@ -132,9 +130,9 @@ template Gpu_Texture() {
 
 	// Texture FiLTer
 	auto OP_TFLT() {
-		with (gpu.state) {
-			textureFilterMin = command.extractEnum!(TextureFilter, 0); // only GL_NEAREST, GL_LINEAR (no mipmaps) (& 0b_1)
-			textureFilterMag = command.extractEnum!(TextureFilter, 8); // only GL_NEAREST, GL_LINEAR (no mipmaps) (& 0b_1)
+		with (gpu.state.texture) {
+			filterMin = command.extractEnum!(TextureFilter, 0); // only GL_NEAREST, GL_LINEAR (no mipmaps) (& 0b_1)
+			filterMag = command.extractEnum!(TextureFilter, 8); // only GL_NEAREST, GL_LINEAR (no mipmaps) (& 0b_1)
 		}
 	}
 
@@ -152,9 +150,9 @@ template Gpu_Texture() {
 
 	// Texture WRAP
 	auto OP_TWRAP() {
-		with (gpu.state) {
-			textureWrapU = command.extractEnum!(WrapMode, 0);
-			textureWrapV = command.extractEnum!(WrapMode, 8);
+		with (gpu.state.texture) {
+			wrapU = command.extractEnum!(WrapMode, 0);
+			wrapV = command.extractEnum!(WrapMode, 8);
 		}
 	}
 
@@ -192,10 +190,10 @@ template Gpu_Texture() {
 
 	// Texture enviroment Mode
 	auto OP_TFUNC() {
-		with (gpu.state) {
-			textureEffect         = command.extractEnum!(TextureEffect, 0);
-			textureColorComponent = command.extractEnum!(TextureColorComponent, 8);
-			//fragment_2x           = command.extract!(bool, 16, 1);
+		with (gpu.state.texture) {
+			effect         = command.extractEnum!(TextureEffect, 0);
+			colorComponent = command.extractEnum!(TextureColorComponent, 8);
+			fragment_2x    = command.extract!(bool, 16, 1); // ?
 		}
 	}
 
@@ -211,8 +209,8 @@ template Gpu_Texture() {
 	// void sceGuTexScale(float u, float v);
 
 	// UV SCALE
-	auto OP_USCALE () { gpu.state.textureScale.u = command.float1; }
-	auto OP_VSCALE () { gpu.state.textureScale.v = command.float1; }
+	auto OP_USCALE () { gpu.state.texture.scale.u = command.float1; }
+	auto OP_VSCALE () { gpu.state.texture.scale.v = command.float1; }
 
 	/**
 	 * Set texture offset
@@ -226,6 +224,6 @@ template Gpu_Texture() {
 	// void sceGuTexOffset(float u, float v);
 
 	// UV OFFSET
-	auto OP_UOFFSET() { gpu.state.textureOffset.u = command.float1; }
-	auto OP_VOFFSET() { gpu.state.textureOffset.v = command.float1; }
+	auto OP_UOFFSET() { gpu.state.texture.offset.u = command.float1; }
+	auto OP_VOFFSET() { gpu.state.texture.offset.v = command.float1; }
 }

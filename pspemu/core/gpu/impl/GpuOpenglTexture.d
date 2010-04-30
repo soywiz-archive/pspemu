@@ -42,27 +42,27 @@ class Texture {
 		glBindTexture(GL_TEXTURE_2D, gltex);
 	}
 
-	void update(Memory memory, ref TextureState textureState, ref ClutState clutState) {
+	void update(Memory memory, ref TextureState texture, ref ClutState clut) {
 		//refreshAnyway = true;
 		if (markForRecheck || refreshAnyway) {
-			ubyte[] emptyBuffer;
+			static ubyte[] emptyBuffer;
 
-			auto textureData = textureState.address ? (cast(ubyte*)memory.getPointer(textureState.address))[0..textureState.totalSize] : emptyBuffer;
-			//auto clutData    = clutState.address    ? (cast(ubyte*)memory.getPointer(clutState.address))[0..textureState.paletteRequiredComponents] : emptyBuffer;
-			auto clutData    = clutState.address ? clutState.data : emptyBuffer;
+			auto textureData = texture.address ? (cast(ubyte*)memory.getPointer(texture.address))[0..texture.mipmapTotalSize(0)] : emptyBuffer;
+			//auto clutData    = clut.address    ? (cast(ubyte*)memory.getPointer(clut.address))[0..texture.paletteRequiredComponents] : emptyBuffer;
+			auto clutData    = clut.address ? clut.data : emptyBuffer;
 		
 			if (markForRecheck) {
 				markForRecheck = false;
 
 				version (VERSION_CACHE_ALWAYS_VALID) {
 				} else {
-					auto currentTextureHash = std.zlib.crc32(textureState.address, textureData);
+					auto currentTextureHash = std.zlib.crc32(texture.address, textureData);
 					if (currentTextureHash != textureHash) {
 						textureHash = currentTextureHash;
 						refreshAnyway = true;
 					}
 
-					auto currentClutHash = std.zlib.crc32(clutState.address, clutData);
+					auto currentClutHash = std.zlib.crc32(clut.address, clutData);
 					if (currentClutHash != clutHash) {
 						clutHash = currentClutHash;
 						refreshAnyway = true;
@@ -72,7 +72,7 @@ class Texture {
 			
 			if (refreshAnyway) {
 				refreshAnyway = false;
-				updateActually(textureData, clutData, textureState, clutState);
+				updateActually(textureData, clutData, texture, clut);
 				//writefln("texture updated");
 			} else {
 				//writefln("texture reuse");
@@ -80,34 +80,35 @@ class Texture {
 		}
 	}
 
-	void updateActually(ubyte[] textureData, ubyte[] clutData, ref TextureState textureState, ref ClutState clutState) {
-		auto texturePixelFormat = GlPixelFormats[textureState.format];
-		auto clutPixelFormat    = GlPixelFormats[clutState.format];
+	void updateActually(ubyte[] textureData, ubyte[] clutData, ref TextureState texture, ref ClutState clut) {
+		auto texturePixelFormat = GlPixelFormats[texture.format];
+		auto clutPixelFormat    = GlPixelFormats[clut.format];
 		GlPixelFormat* glPixelFormat;
 		static ubyte[] textureDataUnswizzled, textureDataWithPaletteApplied;
 
 		debug (DEBUG_TEXTURE_UPDATE) {
-			writefln("Updated: %s", textureState);
-			if (textureState.hasPalette) writefln("  %s", clutState);
+			writefln("Updated: %s", texture);
+			if (texture.hasPalette) writefln("  %s", clut);
 		}
 		
 		glActiveTexture(GL_TEXTURE0);
 		bind();
 
 		// Unswizzle texture.
-		if (textureState.swizzled) {
+		if (texture.swizzled) {
 			//writefln("swizzled: %d, %d", textureDataUnswizzled.length, textureData.length);
 			if (textureDataUnswizzled.length < textureData.length) textureDataUnswizzled.length = textureData.length;
 
-			unswizzle(textureData, textureDataUnswizzled[0..textureData.length], textureState);
+			unswizzle(textureData, textureDataUnswizzled[0..textureData.length], texture);
 			textureData = textureDataUnswizzled[0..textureData.length];
 		}
 
-		if (textureState.hasPalette) {
-			int textureSizeWithPaletteApplied = PixelFormatSize(clutState.format, textureState.width * textureState.height);
+		if (texture.hasPalette) {
+			int textureSizeWithPaletteApplied = PixelFormatSize(clut.format, texture.width * texture.height);
 			//writefln("palette: %d, %d", textureDataWithPaletteApplied.length, textureSizeWithPaletteApplied);
 			if (textureDataWithPaletteApplied.length < textureSizeWithPaletteApplied) textureDataWithPaletteApplied.length = textureSizeWithPaletteApplied;
-			applyPalette(textureData, clutData, textureDataWithPaletteApplied.ptr, textureState, clutState);
+			textureDataWithPaletteApplied[] = 0;
+			applyPalette(textureData, clutData, textureDataWithPaletteApplied.ptr, texture, clut);
 			textureData = textureDataWithPaletteApplied[0..textureSizeWithPaletteApplied];
 			glPixelFormat = cast(GlPixelFormat *)&clutPixelFormat;
 		} else {
@@ -116,29 +117,29 @@ class Texture {
 
 		// @TODO: Check this!
 		glPixelStorei(GL_UNPACK_ALIGNMENT, cast(int)glPixelFormat.size);
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, textureState.buffer_width);
-		//glPixelStorei(GL_UNPACK_ROW_LENGTH, PixelFormatUnpackSize(textureState.format, textureState.buffer_width) / 2);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.buffer_width);
+		//glPixelStorei(GL_UNPACK_ROW_LENGTH, PixelFormatUnpackSize(texture.format, texture.buffer_width) / 2);
 		
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
 			glPixelFormat.internal,
-			textureState.width,
-			textureState.height,
+			texture.width,
+			texture.height,
 			0,
 			glPixelFormat.external,
 			glPixelFormat.opengl,
 			textureData.ptr
 		);
 
-		//writefln("update(%d) :: %08X, %s, %d", gltex, textureData.ptr, textureState, textureState.totalSize);
+		//writefln("update(%d) :: %08X, %s, %d", gltex, textureData.ptr, texture, texture.totalSize);
 	}
 
-	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState textureState) {
-		int rowWidth = textureState.rwidth;
+	static void unswizzle(ubyte[] inData, ubyte[] outData, ref TextureState texture) {
+		int rowWidth = texture.mipmapRealWidth(0);
 		int pitch    = (rowWidth - 16) / 4;
 		int bxc      = rowWidth / 16;
-		int byc      = textureState.height / 8;
+		int byc      = texture.height / 8;
 
 		uint* src = cast(uint*)inData.ptr;
 		
@@ -159,8 +160,8 @@ class Texture {
 		}
 	}
 
-	static void applyPalette(ubyte[] textureData, ubyte[] clutData, ubyte* textureDataWithPaletteApplied, ref TextureState textureState, ref ClutState clutState) {
-		uint clutEntrySize = clutState.colorEntrySize;
+	static void applyPalette(ubyte[] textureData, ubyte[] clutData, ubyte* textureDataWithPaletteApplied, ref TextureState texture, ref ClutState clut) {
+		uint clutEntrySize = clut.colorEntrySize;
 		void writeValue2(ubyte value) {
 			textureDataWithPaletteApplied[0..clutEntrySize] = value;
 			textureDataWithPaletteApplied += clutEntrySize;
@@ -169,7 +170,7 @@ class Texture {
 			textureDataWithPaletteApplied[0..clutEntrySize] = (clutData.ptr + index * clutEntrySize)[0..clutEntrySize];
 			textureDataWithPaletteApplied += clutEntrySize;
 		}
-		switch (textureState.format) {
+		switch (texture.format) {
 			case PixelFormats.GU_PSM_T4:
 				foreach (indexes; textureData) {
 					writeValue((indexes >> 0) & 0xF);

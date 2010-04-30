@@ -81,6 +81,16 @@ int main(string[] args) {
 		file_to_execute_found:;
 		//writefln("%s", args);
 	}
+	
+	if ((args.length >= 2) && std.file.exists(args[1]) && std.file.isdir(args[1])) {
+		foreach (currentName; ["BOOT.PBP", "EBOOT.PBP"]) {
+			auto currentFullName = args[1] ~ "/" ~ currentName;
+			if (std.file.exists(currentFullName)) {
+				args[1] = currentFullName;
+				break;
+			}
+		}
+	}
 
 
 	// Components.

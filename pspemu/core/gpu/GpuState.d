@@ -60,30 +60,6 @@ struct ScreenBuffer {
 	}
 }
 
-struct TextureState {
-	uint address;
-	uint buffer_width;
-	uint width, height;
-	uint size;
-	PixelFormats format;
-	bool swizzled;
-
-	uint rwidth() { return PixelFormatSize(format, buffer_width); }
-	//uint rwidth() { return buffer_width; }
-	//uint rwidth() { return PixelFormatSize(format, width); }
-	//uint rwidth() { return width; }
-	uint totalSize() { return rwidth * height; }
-	bool hasPalette() { return (format >= PixelFormats.GU_PSM_T4 && format <= PixelFormats.GU_PSM_T32); }
-	uint paletteRequiredComponents() { return hasPalette ? (1 << (4 + (format - PixelFormats.GU_PSM_T4))) : 0; }
-	string hash() {
-		return cast(string)TA(this);
-		//return toString;
-	}
-	string toString() {
-		return std.string.format("TextureState(addr=%08X, size(%dx%d), bwidth=%d size=%d, format=%d, swizzled=%d)", address, width, height, buffer_width, size, format, swizzled);
-	}
-}
-
 struct TextureTransfer {
 	enum TexelSize { BIT_16 = 0, BIT_32 = 1 }
 	//enum TexelSize { BIT_32 = 0, BIT_16 = 1 }
@@ -151,6 +127,46 @@ struct Viewport {
 	float sx, sy, sz;
 }
 
+struct TextureState {
+	// Format of the texture data.
+	bool           swizzled;              /// Is texture swizzled?
+	PixelFormats   format;                /// Texture Data mode
+
+	// Normal attributes
+	TextureFilter  filterMin, filterMag;  /// TextureFilter when drawing the texture scaled
+	WrapMode       wrapU, wrapV;          /// Wrap mode when specifying texture coordinates beyond texture size
+	UV             scale;                 /// 
+	UV             offset;                /// 
+
+	// Effects
+	TextureEffect  effect;                /// 
+	TextureColorComponent colorComponent; ///
+	bool           fragment_2x;           /// ???
+
+	// Mimaps
+	struct MipmapState {
+		uint address;                     /// Pointer 
+		uint buffer_width;                ///
+		uint width, height;               ///
+	}
+	int            mipmapMaxLevel;        /// Levels of mipmaps
+	bool           mipmapShareClut;       /// Mipmaps share clut?
+	MipmapState[8] mipmaps;               /// MipmapState list
+
+	int mipmapRealWidth(int mipmap = 0) { return PixelFormatSize(format, mipmaps[mipmap].buffer_width); }
+	int mipmapTotalSize(int mipmap = 0) { return mipmapRealWidth(mipmap) * mipmaps[mipmap].height; }
+
+	string hash() { return cast(string)TA(this); }
+	//string toString() { return std.string.format("TextureState(addr=%08X, size(%dx%d), bwidth=%d, format=%d, swizzled=%d)", address, width, height, buffer_width, format, swizzled); }
+
+	int address() { return mipmaps[0].address; }
+	int buffer_width() { return mipmaps[0].buffer_width; }
+	int width() { return mipmaps[0].width; }
+	int height() { return mipmaps[0].height; }
+	bool hasPalette() { return (format >= PixelFormats.GU_PSM_T4 && format <= PixelFormats.GU_PSM_T32); }
+	uint paletteRequiredComponents() { return hasPalette ? (1 << (4 + (format - PixelFormats.GU_PSM_T4))) : 0; }
+}
+
 static struct GpuState {
 	Memory memory;
 	uint baseAddress, vertexAddress, indexAddress;
@@ -182,19 +198,9 @@ static struct GpuState {
 			
 			// Textures.
 			// Temporal values.
-			bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
 			TransformMode transformMode;
-			int  mipMapMaxLevel;
-			bool textureSwizzled;
-			PixelFormats  textureFormat;
-			TextureFilter textureFilterMin, textureFilterMag;
-			WrapMode      textureWrapU, textureWrapV;
-			TextureEffect textureEffect;
-			TextureColorComponent textureColorComponent;
-			UV   textureScale, textureOffset;
-			bool mipmapShareClut;
-
-			TextureState[8] textures;
+			
+			TextureState texture;
 			ClutState uploadedClut;
 			ClutState clut;
 
@@ -210,6 +216,7 @@ static struct GpuState {
 			LightState[4] lights;
 
 			// State.
+			bool textureMappingEnabled;   // Texture Mapping Enable (GL_TEXTURE_2D)
 			bool clipPlaneEnabled;        // Clip Plane Enable (GL_CLIP_PLANE0)
 			bool backfaceCullingEnabled;  // Backface Culling Enable (GL_CULL_FACE)
 			bool alphaBlendEnabled;       // Alpha Blend Enable (GL_BLEND)

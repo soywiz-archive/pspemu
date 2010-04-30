@@ -46,20 +46,24 @@ class GpuOpengl : GpuImplAbstract {
 	
 	ubyte[4 * 512 * 272] tempBufferData;
 
+	/*
 	glUniform gla_tex;
 	glUniform gla_clut;
 	glUniform gla_clutOffset;
 	glUniform gla_clutUse;
 	glUniform gla_textureUse;
+	*/
 	
 	void init() {
 		openglInit();
 		openglPostInit();
 		setVSync(0);
+		/*
 		program = new glProgram();
 		program.attach(new glFragmentShader(import("shader.fragment")));
 		program.attach(new glVertexShader(import("shader.vertex")));
 		program.link();
+		*/
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		//program.use();
@@ -442,26 +446,25 @@ template OpenglUtils() {
 			glMatrixMode(GL_TEXTURE);
 			glLoadIdentity();
 			
-			//if (state.vertexType.transform2D && (state.textureScale.uv == Vector(1.0, 1.0))) {
-			if (state.vertexType.transform2D) {
-				glScalef(1.0f / state.textures[0].width, 1.0f / state.textures[0].height, 1);
+			if (state.vertexType.transform2D && (state.texture.scale.uv == Vector(1.0, 1.0))) {
+			//if (state.vertexType.transform2D) {
+				glScalef(1.0f / cast(float)state.texture.mipmaps[0].width, 1.0f / cast(float)state.texture.mipmaps[0].height, 1);
 			} else {
-				glTranslatef(state.textureOffset.u, state.textureOffset.v, 0);
-				glScalef(state.textureScale.u, state.textureScale.v, 1);
+				glTranslatef(state.texture.offset.u, state.texture.offset.v, 0);
+				glScalef(state.texture.scale.u, state.texture.scale.v, 1);
 			}
 			
 			glEnable(GL_TEXTURE_2D);
-			getTexture(state.textures[0], state.clut).bind();
-			//writefln("tex0:%s", state.textures[0]);
+			getTexture(state.texture, state.clut).bind();
+			//writefln("tex0:%s", state.textureMipmaps[0]);
 
-			glEnable(GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state.textureFilterMin ? GL_LINEAR : GL_NEAREST);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state.textureFilterMag ? GL_LINEAR : GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, state.textureWrapU);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, state.textureWrapV);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (state.texture.filterMin == TextureFilter.GU_LINEAR) ? GL_LINEAR : GL_NEAREST);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (state.texture.filterMag == TextureFilter.GU_LINEAR) ? GL_LINEAR : GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     (state.texture.wrapU     == WrapMode.GU_REPEAT     ) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     (state.texture.wrapV     == WrapMode.GU_REPEAT     ) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 
 			//glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0); // 2.0 in scale_2x
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.textureEffect]);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TextureEnvModeTranslate[state.texture.effect]);
 		}
 		
 		void prepareBlend() {
