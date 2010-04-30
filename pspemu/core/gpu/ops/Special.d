@@ -38,6 +38,17 @@ template Gpu_Special() {
 		gpu.state.drawBuffer.format = command.extractEnum!(PixelFormats);
 	}
 
+	// void drawRegion(int x, int y, int width, int height)
+	// void sceGuDispBuffer(int width, int height, void* dispbp, int dispbw)
+	auto OP_REGION1() {
+		int x1 = command.extract!(ushort,  0, 10);
+		int y1 = command.extract!(ushort, 10, 10);
+	}
+	auto OP_REGION2() {
+		int x2 = command.extract!(ushort,  0, 10) + 1;
+		int y2 = command.extract!(ushort, 10, 10) + 1;
+	}
+
 	/**
 	 * Set what to scissor within the current framebuffer
 	 *

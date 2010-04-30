@@ -86,10 +86,10 @@ template Gpu_Colors() {
 	 *   - GU_ONE_MINUS_DST_COLOR
 	 *   - GU_FIX
 	 *
-	 * @param op - Blending Operation
-	 * @param src - Blending function for source operand
-	 * @param dest - Blending function for dest operand
-	 * @param srcfix - Fix value for GU_FIX (source operand)
+	 * @param op      - Blending Operation
+	 * @param src     - Blending function for source operand
+	 * @param dest    - Blending function for dest operand
+	 * @param srcfix  - Fix value for GU_FIX (source operand)
 	 * @param destfix - Fix value for GU_FIX (dest operand)
 	 **/
 	// void sceGuBlendFunc(int op, int src, int dest, unsigned int srcfix, unsigned int destfix);

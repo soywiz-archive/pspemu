@@ -1,0 +1,53 @@
+class Bitmap {
+	// With and height of the image.
+	w; h;
+
+	// Center of the image.
+	cx; cy;
+
+	// Creates an empty bitmap.
+	constructor(width, height, bpp);
+
+	// Loads a bitmap from a file: BMP, JPG or PNG.
+	static function fromFile(filename);
+
+	// Draws the bitmap in the specified coords.
+	function draw(x, y);
+
+	// Obtains a slice of the bitmap.
+	function slice(x, y, w, h);
+
+	// Sets the center of the image and return the image itself.
+	function center(cx, cy);
+
+	// Sets the center of the image and return the image itself.
+	//   (0, 0) center is in the top left corner
+	//   (1, 1) center is in the bottom right corner
+	//   (0.5, 0.5) center is in the center of the image
+	function centerf(cx, cy);
+}
+
+// Sets the current color.
+// colorf([1, 0, 0, 0.5]); // semi-transparent red
+function colorf(color);
+
+// Sets the current color.
+// color(0x7F0000FF); // semi-transparent red
+function color(color);
+
+// Draws a line with the current color.
+function line(x1, y1, x2, y2);
+
+// Draws a point with the current color.
+function point(x, y);
+
+// Clear the frame buffer.
+function clear();
+
+// Finalizes the current drawing, wait for vsync, swap the buffers and start a new drawing.
+function frame();
+
+// Exits the game.
+function exit();
+
+function printf();

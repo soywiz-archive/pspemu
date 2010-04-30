@@ -49,10 +49,10 @@ template Gpu_Texture() {
 	 * @note Data must be aligned to 1 quad word (16 bytes)
 	 *
 	 * @param mipmap - Mipmap level
-	 * @param width - Width of texture (must be a power of 2)
+	 * @param width  - Width of texture (must be a power of 2)
 	 * @param height - Height of texture (must be a power of 2)
-	 * @param tbw - Texture Buffer Width (block-aligned)
-	 * @param tbp - Texture buffer pointer (16 byte aligned)
+	 * @param tbw    - Texture Buffer Width (block-aligned)
+	 * @param tbp    - Texture buffer pointer (16 byte aligned)
 	 **/
 	// void sceGuTexImage(int mipmap, int width, int height, int tbw, const void* tbp); // OP_TBP_n, OP_TBW_n, OP_TSIZE_n, OP_TFLUSH
 
