@@ -41,12 +41,23 @@ class TileMap {
 	function setBlockInfo(block, V);
 	function getBlockInfo(block);
 
-	// Search a path from (sx, sy) to (dx, dy)
+	// Search a path using A* from (sx, sy) to (dx, dy)
 	function pathFind(sx, sy, dx, dy, diagonals = 1);
 
 	function draw(bitmap, tile_w = 32, tile_h = 32, repeat_x = 1, repeat_y = 1, put_x = 0, put_y = 0, scroll_x = 0, scroll_y = 0, scroll_w = 16, scroll_h = 16, alpha = 1.0, margin_x = 0, margin_y = 0);
 }
 
+/*
+db <- Sqlite("file.db");
+
+db.query("CREATE TABLE records (name, points);");
+db.query("INSERT INTO records (name, points) VALUES (?, ?);", ["soywiz", 999]);
+db.query("INSERT INTO records (name, points) VALUES (?, ?);", ["nobody", 1000]);
+
+foreach (n, row in db.query("SELECT * FROM records ORDER BY points DESC;")) {
+	printf("Register(%d): %s, %d\n", n, row.name, row.points);
+}
+*/
 class Sqlite {
 	last_insert_id;
 	

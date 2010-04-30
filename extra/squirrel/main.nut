@@ -8,20 +8,27 @@ for (local n = 0; n < 20; n++) print(n);
 print("\n");
 
 foreach (n, row in db.query("SELECT * FROM records ORDER BY points DESC;")) {
-	printf("Register: %s, %d\n", row.name, row.points);
+	printf("Register(%d): %s, %d\n", n, row.name, row.points);
 }
 
-sleep(500);
+//sleep(500);
 //for (local n = 0; n < 10; n++) frame();
 
-bg   <- Bitmap.fromFile("background.jpg").centerf(0, 0);
-logo <- Bitmap.fromFile("logo.png").centerf(0.5, 0.5);
+bg      <- Bitmap.fromFile("background.jpg");
+logo    <- Bitmap.fromFile("logo.png");
 tileset <- Bitmap.fromFile("tileset.png");
+
+logo.centerf(0.5, 0.5);
 tilemap <- TileMap(20, 12, 1);
 for (local y = 0; y < tilemap.h; y++) {
 	for (local x = 0; x < tilemap.w; x++) {
 		tilemap.set(x, y, (x + y) % 3);
 	}
+}
+
+while (resources_loading_count() > 0) {
+	printf("Loading Left(%d/3)...", 3 - resources_loading_count());
+	sleep(10);
 }
 
 n <- 0;

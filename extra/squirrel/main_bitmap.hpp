@@ -1,10 +1,14 @@
 
+static int BitmapLoadingCount;
 class Bitmap { public:
+	char name[256];
 	SDL_Surface *surface;
 	int slice_x, slice_y, slice_w, slice_h;
 	int cx, cy;
+	bool ready;
 
 	Bitmap(int width, int height, int bpp) {
+		name[0] = 0;
 		//pspDebugScreenPrintf("Bitmap::Bitmap\n");
 		surface = SDL_CreateRGBSurface(SDL_HWSURFACE, width, height, bpp * 8, 0, 0, 0, 0);
 		slice_x = 0;
@@ -13,6 +17,7 @@ class Bitmap { public:
 		slice_h = height;
 		cx = 0;
 		cy = 0;
+		ready = false;
 	}
 	
 	Bitmap() {
@@ -24,6 +29,8 @@ class Bitmap { public:
 	}
 	
 	Bitmap *slice(int x, int y, int w, int h) {
+		waitReady();
+
 		Bitmap *newbitmap = new Bitmap();
 		newbitmap->surface = surface;
 
@@ -49,9 +56,10 @@ class Bitmap { public:
 		return newbitmap;
 	}
 	
-	static Bitmap *fromFile(const char *name) {
-		Bitmap *bitmap = new Bitmap();
-		bitmap->surface = IMG_Load(name);
+	static int fromFileThread(void *_bitmap) {
+		//SDL_Delay(1); // @BUG! This causes errors some times on d pspemu
+		Bitmap *bitmap = (Bitmap *)_bitmap;
+		bitmap->surface = IMG_Load(bitmap->name);
 		bitmap->slice_x = 0;
 		bitmap->slice_y = 0;
 		bitmap->slice_w = bitmap->surface->w;
@@ -68,7 +76,23 @@ class Bitmap { public:
 			SDL_FreeSurface(bitmap->surface);
 			bitmap->surface = newsurface;
 		}
+		bitmap->ready = true;
+		BitmapLoadingCount--;
+		return 0;
+	}
+	
+	static Bitmap *fromFile(const char *name) {
+		Bitmap *bitmap = new Bitmap();
+		strcpy(bitmap->name, name);
+		bitmap->ready = false;
+		BitmapLoadingCount++;
+		SDL_CreateThread(Bitmap::fromFileThread, bitmap);
 		return bitmap;
+	}
+
+	// Waits until the bitmap have been loaded completely.
+	void waitReady() {
+		while (!ready) SDL_Delay(1); // @TODO: Use semaphores? Maybe not too necessary.
 	}
 	
 	void use() {
@@ -84,6 +108,8 @@ class Bitmap { public:
 	}
 	
 	void draw(int x, int y) {
+		waitReady();
+
 		//pspDebugScreenPrintf("Bitmap::draw(%d, %s)\n", data[0], test);
 		if (surface == NULL) return;
 
@@ -172,6 +198,7 @@ DSQ_METHOD(Bitmap, center)
 	EXTRACT_PARAM_INT(2, cx, self->slice_w / 2);
 	EXTRACT_PARAM_INT(3, cy, self->slice_h / 2);
 
+	self->waitReady();
 	self->cx = cx;
 	self->cy = cy;
 	
@@ -185,6 +212,7 @@ DSQ_METHOD(Bitmap, centerf)
 	EXTRACT_PARAM_FLO(2, cx, 0.5);
 	EXTRACT_PARAM_FLO(3, cy, 0.5);
 
+	self->waitReady();
 	self->cx = (float)self->slice_w * cx;
 	self->cy = (float)self->slice_h * cy;
 	
@@ -201,6 +229,7 @@ DSQ_METHOD(Bitmap, _get)
 		
 		char *c = (char *)s.data;
 		
+		self->waitReady();
 		if (strcmp(c, "w" ) == 0) RETURN_INT(self->slice_w);
 		if (strcmp(c, "h" ) == 0) RETURN_INT(self->slice_h);
 		if (strcmp(c, "cx") == 0) RETURN_INT(self->cx);
@@ -220,7 +249,8 @@ DSQ_METHOD(Bitmap, _set)
 		EXTRACT_PARAM_INT(3, vi, 0);
 		
 		char *c = (char *)s.data;
-		
+
+		self->waitReady();		
 		if (strcmp(c, "cx") == 0) self->cx = vi;
 		if (strcmp(c, "cy") == 0) self->cy = vi;
 	}

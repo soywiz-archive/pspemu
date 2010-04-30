@@ -346,6 +346,7 @@ class IoFileMgrForKernel : Module {
 	 * @return A non-negative integer is a valid fd, anything else an error
 	 */
 	SceUID sceIoOpen(/*const*/ string file, int flags, SceMode mode) {
+		string fileIni = file;
 		try {
 			FileMode fmode;
 
@@ -361,7 +362,7 @@ class IoFileMgrForKernel : Module {
 			openedStreams[fd] = vfs.open(file, fmode, 0777);
 			return fd;
 		} catch (Object o) {
-			writefln("sceIoOpen exception: %s", o);
+			writefln("sceIoOpen('%s') exception: %s", fileIni, o);
 			return -1;
 		}
 	}
@@ -474,14 +475,16 @@ class IoFileMgrForKernel : Module {
 	  * @return < 0 on error.
 	  */
 	int sceIoGetstat(string file, SceIoStat* stat) {
+		string fileIni = file;
 		try {
-			locateParentAndUpdateFile(file).flush();
-			auto fentry = locateParentAndUpdateFile(file)[file];
+			auto vfs = locateParentAndUpdateFile(file);
+			vfs.flush();
+			auto fentry = vfs[file];
 			
 			fillStats(stat, fentry.stats);
 			return 0;
 		} catch (Exception e) {
-			writefln("ERROR: STAT!! FAILED: %s", e);
+			writefln("ERROR: STAT(%s)!! FAILED: %s", fileIni, e);
 			return -1;
 		}
 	}

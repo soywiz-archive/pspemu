@@ -69,6 +69,9 @@ class TileMap { public:
 	
 	void draw(Bitmap *bitmap, int tile_w = 32, int tile_h = 32, int put_x = 0, int put_y = 0, int scroll_x = -5, int scroll_y = -5, int scroll_w = 16, int scroll_h = 16, bool repeat_x = true, bool repeat_y = true, float size = 1, int margin_x = 0, int margin_y = 0) {
 		if (bitmap == NULL) return;
+
+		bitmap->waitReady();
+
 		if (tile_w < 1 || tile_h < 1) return; // Too small tile
 		if (bitmap->slice_w / tile_w <= 0) return; // Too small image
 

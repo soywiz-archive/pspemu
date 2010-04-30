@@ -21,6 +21,7 @@
 #include <sqstdsystem.h> 
 
 #include <SDL/SDL.h>
+#include <SDL/SDL_thread.h>
 #include <SDL/SDL_Image.h>
 
 #define BUF_WIDTH (512)
@@ -224,6 +225,12 @@ DSQ_FUNC(exit)
 	return 0;
 }
 
+DSQ_FUNC(resources_loading_count)
+{
+	RETURN_INT(BitmapLoadingCount);
+}
+
+
 /*DSQ_FUNC(exiting)
 {
 	RETURN_INT(1);
@@ -235,6 +242,7 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 	SDL_Init(0);
 
 	psp_init();
+	BitmapLoadingCount = 0;
 	
 	sq_pushroottable(v);
 	sqstd_register_iolib(v); 
@@ -258,6 +266,7 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 	NEWSLOT_FUNC(printf, 0, "");
 	NEWSLOT_FUNC(exit, 0, "");
 	NEWSLOT_FUNC(sleep, 0, "");
+	NEWSLOT_FUNC(resources_loading_count, 0, "");
 
 	sqstd_seterrorhandlers(v);
 
