@@ -154,6 +154,7 @@ template Gpu_Draw() {
 	}
 
 	VertexState[] vertexListBuffer;
+	//VertexStateArrays vertexListBufferArrays;
 	
 	// draw PRIMitive
 	auto OP_PRIM() {
@@ -261,6 +262,8 @@ template Gpu_Draw() {
 			}
 			debug (EXTRACT_PRIM) writefln("");
 		}
+
+		//vertexListBufferArrays.reserve(vertexCount);
 
 		if (vertexListBuffer.length < vertexCount) vertexListBuffer.length = vertexCount;
 		for (int n = 0; n < vertexCount; n++) extractVertex(vertexListBuffer[n]);

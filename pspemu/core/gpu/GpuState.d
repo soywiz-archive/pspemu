@@ -100,7 +100,7 @@ struct LightState {
 	Colorf ambientColor, diffuseColor, specularColor;
 }
 
-struct VertexState {
+static struct VertexState {
 	float u, v;        // Texture coordinates.
 	float r, g, b, a;  // Color components.
 	float nx, ny, nz;  // Normal vector.
@@ -121,6 +121,24 @@ struct VertexState {
 	alias p position;
 	alias n normal;
 }
+
+/*static struct VertexStateArrays {
+	UV[]       textureArray;
+	float[4][] colorArray;
+	float[3][] normalArray;
+	float[3][] positionArray;
+	float[8][] weights;
+
+	void reserve(int count) {
+		if (textureArray.length < count) {
+			textureArray.length  = count;
+			colorArray.length    = count;
+			normalArray.length   = count;
+			positionArray.length = count;
+			weights.length       = count;
+		}
+	}
+}*/
 
 struct Viewport {
 	float px, py, pz;

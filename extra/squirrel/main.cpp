@@ -24,6 +24,8 @@
 #include <SDL/SDL_thread.h>
 #include <SDL/SDL_Image.h>
 
+#include "intraFont/intraFont.h"
+
 #define BUF_WIDTH (512)
 #define SCR_WIDTH (480)
 #define SCR_HEIGHT (272)
@@ -64,6 +66,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #include "main_tilemap.hpp"
 #include "main_sqlite.hpp"
 #include "main_controller.hpp"
+#include "main_font.hpp"
 
 void printfunc(HSQUIRRELVM vm, const SQChar *s, ...) {
 	char temp[1024];
@@ -81,6 +84,8 @@ void swapBuffers() {
 	sceGuDrawBuffer(GU_PSM_8888, buffers[bufferTick], BUF_WIDTH);
 	sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, buffers[bufferTick ^ 1], BUF_WIDTH);
 }
+
+intraFont* font;
 
 void psp_init() {
 	
@@ -115,9 +120,19 @@ void psp_init() {
 	
 	sceCtrlSetSamplingCycle(0);
 	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
+
+	intraFontInit();
+	//font = intraFontLoad("flash0:/font/ltn0.pgf", INTRAFONT_STRING_UTF8);
+	//intraFontSetStyle(font, 0.8f, 0xFFFFFFFF, 0xFF3F3F3F, 0);
 }
 
 void psp_frame() {
+	/*
+	intraFontPrint(font, 120, 120, "intraFont 0.31 - 2009 by BenHur");
+	sceGuDisable(GU_TEXTURE_2D);
+	sceGuDisable(GU_DEPTH_TEST);
+	*/
+
 	sceGuFinish();
 	sceGuSync(0, 0);
 	sceGuStart(GU_DIRECT, list);
@@ -268,6 +283,7 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 		register_Tilemap(v);
 		register_Sqlite(v);
 		register_Controller(v);
+		register_Font(v);
 		
 		// Out functions.
 		NEWSLOT_FUNC(clear, 0, "");

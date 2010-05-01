@@ -43,13 +43,10 @@ template Gpu_Lights() {
 				break;
 				case LightType.GU_POINTLIGHT:
 					position.t = 1.0;
-					spotExponent = 0;
 					spotCutoff = 180;
 				break;
 				case LightType.GU_SPOTLIGHT:
 					position.t = 1.0;
-					spotExponent = 0;
-					spotCutoff = 180;
 				break;
 			}
 		}

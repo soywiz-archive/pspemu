@@ -4,6 +4,8 @@ printf("platform: %s\n", platform);
 for (local n = 0; n < 20; n++) print(n);
 print("\n");
 
+font <- Font();
+
 db <- Sqlite(":memory:");
 db.query("CREATE TABLE records (name, points);");
 db.query("INSERT INTO records (name, points) VALUES (?, ?);", ["soywiz", 999]);
@@ -38,6 +40,7 @@ while (resources_loading_count() > 0) {
 	sleep(10);
 }
 
+m <- 0;
 n <- 0;
 x <- 0;
 y <- 0;
@@ -54,6 +57,15 @@ while (true) {
 	}
 	//for (local m = 0; m < 480; m += 20) { colorf([1, 0, 0, (sin(n / 20.0 + m / 10.0) + 1.0) * 0.5]); line(m + 10, 0, m + 10, 272); }
 	
+	font.size = 0.7;
+	font.cutLen = m % 60;
+	font.print(96, 128, "Hello! This is a test of\nintraFont\ncool!");
+
+	font.size = 0.8;
+	font.cutLen = -1;
+	font.print(8, 16, "Press X to move the PSP image");
+	
 	frame();
 	if (ctrl.cross) n++;
+	m++;
 }
