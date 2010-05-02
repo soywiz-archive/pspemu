@@ -1,3 +1,5 @@
+#define VERSION_BACKGROUND_LOADING
+
 #include <pspkernel.h>
 #include <pspdisplay.h>
 #include <pspdebug.h>
@@ -77,14 +79,6 @@ void printfunc(HSQUIRRELVM vm, const SQChar *s, ...) {
 	pspDebugScreenPrintf("%s", temp);
 }
 
-void* buffers[2] = {(void *)0, (void *)(512 * 272 * 4)};
-
-void swapBuffers() {
-	bufferTick ^= 1;
-	sceGuDrawBuffer(GU_PSM_8888, buffers[bufferTick], BUF_WIDTH);
-	sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, buffers[bufferTick ^ 1], BUF_WIDTH);
-}
-
 intraFont* font;
 
 void psp_init() {
@@ -95,7 +89,10 @@ void psp_init() {
 
 	sceGuStart(GU_DIRECT, list);
 	{
-		swapBuffers();
+		sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, (void *)(0), BUF_WIDTH);
+		sceGuDrawBuffer(GU_PSM_8888, (void *)(512 * 272 * 4 * 1), BUF_WIDTH);
+		//sceGuDepthBuffer((void*)(512 * 272 * 4 * 2), BUF_WIDTH);
+
 		//sceGuDepthBuffer(depthBufferPointer, BUF_WIDTH);
 		sceGuOffset(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2));
 		sceGuViewport(2048, 2048, SCR_WIDTH, SCR_HEIGHT);
@@ -112,7 +109,7 @@ void psp_init() {
 	sceGuFinish();
 	sceGuSync(0, 0);
 
-	sceGuDisplay(1);
+	//sceGuDisplay(1);
 	
 	pspDebugScreenInit();
 	
@@ -135,10 +132,13 @@ void psp_frame() {
 
 	sceGuFinish();
 	sceGuSync(0, 0);
-	sceGuStart(GU_DIRECT, list);
-	sceKernelDcacheWritebackInvalidateAll();
+
 	sceDisplayWaitVblankStart();
-	swapBuffers();
+	sceGuDisplay(GU_TRUE);
+	sceGuTexFlush();
+	sceGuSwapBuffers();
+	sceKernelDcacheWritebackInvalidateAll();
+	sceGuStart(GU_DIRECT, list);
 	psp_ctrl_update();
 }
 
@@ -147,8 +147,7 @@ DSQ_FUNC(clear)
 	//EXTRACT_PARAM_START();
 
 	sceGuClearColor(0);
-	sceGuClearDepth(0);
-	sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
+	sceGuClear(GU_COLOR_BUFFER_BIT);
 
 	RETURN_VOID;
 }

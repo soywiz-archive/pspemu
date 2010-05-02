@@ -52,6 +52,9 @@ class sceAudio_driver : Module {
 		mixin(registerd!(0x2D53F36E, sceAudioOutput2OutputBlockingFunction));
 		mixin(registerd!(0x43196845, sceAudioOutput2ReleaseFunction));
 		mixin(registerd!(0xB011922F, sceAudioGetChannelRestLengthFunction));
+
+		mixin(registerd!(0x086E5895, sceAudioInputBlocking));
+		mixin(registerd!(0x7DE61688, sceAudioInputInit));
 	}
 
 	void initModule() {
@@ -300,6 +303,34 @@ class sceAudio_driver : Module {
 		if (!validChannelIndex(channel)) return -1;
 		channels[channel].reserved = false;
 		return 0;
+	}
+
+	/**
+	 * Perform audio input (blocking)
+	 *
+	 * @param samplecount - Number of samples.
+	 * @param freq        - Either 44100, 22050 or 11025.
+	 * @param buf         - Pointer to where the audio data will be stored.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioInputBlocking(int samplecount, int freq, void* buf) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Init audio input
+	 *
+	 * @param unknown1 - Unknown. Pass 0.
+	 * @param gain - Gain.
+	 * @param unknown2 - Unknown. Pass 0.
+	 *
+	 * @return 0 on success, an error if less than 0.
+	 */
+	int sceAudioInputInit(int unknown1, int gain, int unknown2) {
+		unimplemented();
+		return -1;
 	}
 }
 

@@ -1,3 +1,35 @@
+// http://wiki.ps2dev.org/psp:ge_faq
+void swizzle_fast(u8* out, const u8* in, unsigned int width, unsigned int height) {
+	unsigned int blockx, blocky;
+	unsigned int j;
+
+	unsigned int width_blocks = (width / 16);
+	unsigned int height_blocks = (height / 8);
+
+	unsigned int src_pitch = (width-16)/4;
+	unsigned int src_row = width * 8;
+
+	const u8* ysrc = in;
+	u32* dst = (u32*)out;
+
+	for (blocky = 0; blocky < height_blocks; ++blocky) {
+		const u8* xsrc = ysrc;
+		for (blockx = 0; blockx < width_blocks; ++blockx) {
+			const u32* src = (u32*)xsrc;
+			for (j = 0; j < 8; ++j) {
+				*(dst++) = *(src++);
+				*(dst++) = *(src++);
+				*(dst++) = *(src++);
+				*(dst++) = *(src++);
+				src += src_pitch;
+			}
+			xsrc += 16;
+		}
+		ysrc += src_row;
+	}
+}
+
+unsigned int graphicMemory = (512 * 272 * 4 * 1);
 
 static int BitmapLoadingCount;
 class Bitmap { public:
@@ -6,6 +38,8 @@ class Bitmap { public:
 	int slice_x, slice_y, slice_w, slice_h;
 	int cx, cy;
 	bool ready;
+	bool swizzled;
+	bool hasAlpha;
 
 	Bitmap(int width, int height, int bpp) {
 		name[0] = 0;
@@ -17,6 +51,7 @@ class Bitmap { public:
 		slice_h = height;
 		cx = 0;
 		cy = 0;
+		swizzled = false;
 		ready = true;
 	}
 	
@@ -50,6 +85,7 @@ class Bitmap { public:
 		
 		newbitmap->surface->refcount++;
 
+		newbitmap->swizzled = swizzled;
 		newbitmap->cx = 0;
 		newbitmap->cy = 0;
 
@@ -57,9 +93,13 @@ class Bitmap { public:
 	}
 	
 	static int fromFileThread(void *_bitmap) {
-		SDL_Delay(1); // @BUG! This causes errors some times on d pspemu
+		//SDL_Delay(1); // @BUG! This causes errors some times on d pspemu
 		Bitmap *bitmap = (Bitmap *)_bitmap;
 		bitmap->surface = IMG_Load(bitmap->name);
+		if (bitmap->surface == NULL) {
+			bitmap->surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1, 32, 0, 0, 0, 0);
+		}
+		bitmap->swizzled = 0;
 		bitmap->slice_x = 0;
 		bitmap->slice_y = 0;
 		bitmap->slice_w = bitmap->surface->w;
@@ -69,13 +109,24 @@ class Bitmap { public:
 		int reqW = 1, reqH = 1;
 		while (reqW < bitmap->slice_w) reqW <<= 1;
 		while (reqH < bitmap->slice_h) reqH <<= 1;
-		if ((bitmap->surface->w != reqW) || (bitmap->surface->h != reqH)) {
+		if ((bitmap->surface->w != reqW)) {
 			SDL_Surface *newsurface = SDL_CreateRGBSurface(SDL_SWSURFACE, reqW, reqH, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 			SDL_SetAlpha(bitmap->surface, 0, SDL_ALPHA_OPAQUE);
 			SDL_BlitSurface(bitmap->surface, NULL, newsurface, NULL);
 			SDL_FreeSurface(bitmap->surface);
 			bitmap->surface = newsurface;
 		}
+		bitmap->surface->h = reqH;
+
+		// Swizzle.
+		if (bitmap->surface->pixels) {
+			u8 *newdata = (u8 *)malloc(bitmap->surface->pitch * bitmap->surface->h);
+			swizzle_fast(newdata, (const u8*)bitmap->surface->pixels, bitmap->surface->w * 4, bitmap->surface->h);
+			free(bitmap->surface->pixels);
+			bitmap->surface->pixels = newdata;
+			bitmap->swizzled = 1;
+		}
+		
 		bitmap->ready = true;
 		BitmapLoadingCount--;
 		return 0;
@@ -86,7 +137,11 @@ class Bitmap { public:
 		strcpy(bitmap->name, name);
 		bitmap->ready = false;
 		BitmapLoadingCount++;
-		SDL_CreateThread(Bitmap::fromFileThread, bitmap);
+		#ifdef VERSION_BACKGROUND_LOADING
+			SDL_CreateThread(Bitmap::fromFileThread, bitmap);
+		#else
+			fromFileThread(bitmap);
+		#endif
 		return bitmap;
 	}
 
@@ -98,7 +153,7 @@ class Bitmap { public:
 	void use() {
 		waitReady();
 		sceGuEnable(GU_TEXTURE_2D);
-		sceGuTexMode(GU_PSM_8888, 0, 0, 0);
+		sceGuTexMode(GU_PSM_8888, 0, 0, swizzled);
 		sceGuTexFilter(GU_LINEAR, GU_LINEAR);
 		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
 		sceGuTexImage(0, surface->w, surface->h, surface->w, surface->pixels);
@@ -116,11 +171,33 @@ class Bitmap { public:
 
 		use();
 		{
-			TexVertex *vl = (TexVertex *)sceGuGetMemory(2 * sizeof(TexVertex));
+			int width_subslice = 64;
+			int x_count = (slice_w / width_subslice) + ((slice_w % width_subslice) ? 1 : 0);
 
-			writeCoords(vl, x - cx, y - cy, 0, 0, slice_w, slice_h);
-			
-			sceGumDrawArray(GU_SPRITES, GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vl);
+			TexVertex *vl = (TexVertex *)sceGuGetMemory(2 * x_count * sizeof(TexVertex));
+			TexVertex *vlp = vl;
+
+			// http://hitmen.c02.at/files/yapspd/psp_doc/chap11.html#sec11
+			// The texture cache is very important on the PSP (as it was on the PS2). From experiments it seems to be 8kB,
+			// so that means it's 64x32 in 32-bit, 64x64 in 16-bit, 128x64 in 8-bit and 128x128 in 4-bit (the sizes are
+			// qualified guesses by looking at the PS2). Ordering your draws so that locality in uv-coordinates is maximized
+			// will make sure your rendering is optimal. DXTn is decompressed into 32-bit when loaded into the cache, so what
+			// you gain in shrinking the texture-size, you lose in texture-cache. If you can, use 4- or 8-bit textures, which
+			// will allow a much larger area to be kept in the cache.
+
+			for (int xpos = 0; xpos < slice_w; xpos += width_subslice, vlp += 2) {
+				int cw = (slice_w - xpos);
+				if (cw > width_subslice) cw = width_subslice;
+				writeCoords(
+					vlp,
+					x - cx + xpos, y - cy,
+					xpos, 0,
+					cw, slice_h
+				);
+				// writeCoords(vl, x - cx, y - cy, 0, 0, slice_w, slice_h);
+			}
+
+			sceGuDrawArray(GU_SPRITES, GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2 * x_count, 0, vl);
 		}
 		unuse();
 	}

@@ -36,6 +36,9 @@ class sceUtility : Module {
 		mixin(registerd!(0xF3F76017, sceUtilityOskGetStatus));
 		mixin(registerd!(0xF6269B82, sceUtilityOskInitStart));
 
+		mixin(registerd!(0x1579A159, sceUtilityLoadNetModule));
+		mixin(registerd!(0x64D50C56, sceUtilityUnloadNetModule));
+
 		initNids_sysparams();
 	}
 
@@ -263,11 +266,47 @@ class sceUtility : Module {
 		unimplemented();
 		return -1;
 	}
+
+	/**
+	 * Load a network module (PRX) from user mode.
+	 * Load PSP_NET_MODULE_COMMON and PSP_NET_MODULE_INET
+	 * to use infrastructure WifI (via an access point).
+	 * Available on firmware 2.00 and higher only.
+	 *
+	 * @param module - module number to load (PSP_NET_MODULE_xxx)
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceUtilityLoadNetModule(int _module) {
+		unimplemented();
+		return -1;
+	}
+
+	/**
+	 * Unload a network module (PRX) from user mode.
+	 * Available on firmware 2.00 and higher only.
+	 *
+	 * @param module - module number be unloaded
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceUtilityUnloadNetModule(int _module) {
+		unimplemented();
+		return -1;
+	}
 }
 
 union netData {
 	u32 asUint;
 	char asString[128];
+}
+
+enum {
+	PSP_NET_MODULE_COMMON    = 1,
+	PSP_NET_MODULE_ADHOC     = 2,
+	PSP_NET_MODULE_INET      = 3,
+	PSP_NET_MODULE_PARSEURI  = 4,
+	PSP_NET_MODULE_PARSEHTTP = 5,
+	PSP_NET_MODULE_HTTP      = 6,
+	PSP_NET_MODULE_SSL       = 7,
 }
 
 enum pspUtilityMsgDialogMode {

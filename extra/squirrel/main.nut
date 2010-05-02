@@ -18,9 +18,13 @@ foreach (n, row in db.query("SELECT * FROM records ORDER BY points DESC;")) {
 //sleep(500);
 //for (local n = 0; n < 10; n++) frame();
 
+printf("Before Bitmap.fromFile...\n");
+
 bg      <- Bitmap.fromFile("background.jpg");
 logo    <- Bitmap.fromFile("logo.png");
 tileset <- Bitmap.fromFile("tileset.png");
+
+printf("After Bitmap.fromFile...\n");
 
 logo.centerf(0.5, 0.5);
 tilemap <- TileMap(20, 12, 1);
@@ -56,7 +60,8 @@ while (true) {
 		logo.draw(x + 480 / 2, y + 272 / 2);
 	}
 	//for (local m = 0; m < 480; m += 20) { colorf([1, 0, 0, (sin(n / 20.0 + m / 10.0) + 1.0) * 0.5]); line(m + 10, 0, m + 10, 272); }
-	
+
+	/*
 	font.size = 0.7;
 	font.cutLen = m % 60;
 	font.print(96, 128, "Hello! This is a test of\nintraFont\ncool!");
@@ -64,6 +69,7 @@ while (true) {
 	font.size = 0.8;
 	font.cutLen = -1;
 	font.print(8, 16, "Press X to move the PSP image");
+	*/
 	
 	frame();
 	if (ctrl.cross) n++;

@@ -231,6 +231,35 @@ class sceGe_driver : Module {
 	}
 
 	/**
+	 * Wait until display list has finished executing
+	 *
+	 * @par Example: Wait for the currently executing display list
+	 * @code
+	 * sceGuSync(0,0);
+	 * @endcode
+	 *
+	 * Available what are:
+	 *   - GU_SYNC_WHAT_DONE
+	 *   - GU_SYNC_WHAT_QUEUED
+	 *   - GU_SYNC_WHAT_DRAW
+	 *   - GU_SYNC_WHAT_STALL
+	 *   - GU_SYNC_WHAT_CANCEL
+	 *
+	 * Available mode are:
+	 *   - GU_SYNC_FINISH - Wait until the last sceGuFinish command is reached
+	 *   - GU_SYNC_SIGNAL - Wait until the last (?) signal is executed
+	 *   - GU_SYNC_DONE   - Wait until all commands currently in list are executed
+	 *   - GU_SYNC_LIST   - Wait for the currently executed display list (GU_DIRECT)
+	 *   - GU_SYNC_SEND   - Wait for the last send list
+	 *
+	 * @param mode - What to wait for
+	 * @param what - What to sync to
+	 *
+	 * @return Unknown at this time
+	**/
+	// int sceGuSync(int mode, int what);
+
+	/**
 	 * Wait for drawing to complete.
 	 * 
 	 * @param syncType - Specifies the condition to wait on.  One of ::PspGeSyncType.
