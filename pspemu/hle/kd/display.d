@@ -24,6 +24,13 @@ class sceDisplay_driver : Module { // Flags: 0x00010000
 		mixin(registerd!(0x46F186C3, sceDisplayWaitVblankStartCB));
 		mixin(registerd!(0x773DD3A3, sceDisplayGetCurrentHcount));
 		mixin(registerd!(0xDEA197D4, sceDisplayGetMode));
+		mixin(registerd!(0xDBA6C4C4, sceDisplayGetFramePerSec));
+	}
+
+	// http://forums.ps2dev.org/viewtopic.php?t=9168
+	float sceDisplayGetFramePerSec() {
+		// (pixel_clk_freq * cycles_per_pixel)/(row_pixels * column_pixel)
+		return 9_000_000f * 1 / (525 * 286);
 	}
 
 	void processCallbacks() {

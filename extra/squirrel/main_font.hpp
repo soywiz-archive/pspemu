@@ -2,7 +2,7 @@
 class Font { public:
 	intraFont* font;
 	int width;
-	int cutLen;
+	int cutFrom, cutTo;
 
 	Font(const char *pgfFilename) {
 		// "flash0:/font/ltn0.pgf"
@@ -10,9 +10,9 @@ class Font { public:
 		font->size = 1.0;
 		font->color = 0xFFFFFFFF;
 		font->shadowColor = 0xFF3F3F3F;
-		intraFontSetStyle(font, 1.0, 0xFFFFFFFF, 0xFF3F3F3F, 0);
 		width = 0;
-		cutLen = -1;
+		cutFrom = 0;
+		cutTo = -1;
 	}
 	
 	~Font() {
@@ -20,7 +20,7 @@ class Font { public:
 	}
 	
 	void print(int x, int y, const char *text) {
-		int textLength = (cutLen < 0) ? strlen(text) : cutLen;
+		int textLength = (cutTo < 0) ? strlen(text) : cutTo;
 
 		if (width != 0) {
 			intraFontPrintColumnEx(font, x, y, width, text, textLength);
@@ -30,6 +30,9 @@ class Font { public:
 
 		sceGuDisable(GU_TEXTURE_2D);
 		sceGuDisable(GU_DEPTH_TEST);
+		
+		cutFrom = 0;
+		cutTo = -1;
 	}
 };
 
@@ -64,6 +67,19 @@ DSQ_METHOD(Font, print)
 	return 0;
 }
 
+DSQ_METHOD(Font, cut)
+{
+	EXTRACT_PARAM_START();
+	EXTRACT_PARAM_SELF(Font);
+	EXTRACT_PARAM_INT(2, cutFrom, 0);
+	EXTRACT_PARAM_INT(3, cutTo, 0);
+	
+	self->cutFrom = cutFrom;
+	self->cutTo = cutTo;
+	
+	sq_push(v, -3); return 1;
+}
+
 DSQ_METHOD(Font, _get)
 {
 	EXTRACT_PARAM_START();
@@ -75,7 +91,10 @@ DSQ_METHOD(Font, _get)
 		char *c = (char *)s.data;
 		
 		if (strcmp(c, "size" ) == 0) RETURN_FLOAT(self->font->size);
-		if (strcmp(c, "cutLen") == 0) RETURN_INT(self->cutLen);
+		if (strcmp(c, "color") == 0) RETURN_INT(self->font->color);
+		if (strcmp(c, "shadowColor") == 0) RETURN_INT(self->font->shadowColor);
+		if (strcmp(c, "cutFrom") == 0) RETURN_INT(self->cutFrom);
+		if (strcmp(c, "cutTo") == 0) RETURN_INT(self->cutTo);
 	}
 	
 	return 0;
@@ -94,7 +113,10 @@ DSQ_METHOD(Font, _set)
 		char *c = (char *)s.data;
 
 		if (strcmp(c, "size") == 0) RETURN_FLOAT(self->font->size = vf);
-		if (strcmp(c, "cutLen") == 0) RETURN_INT(self->cutLen = vi);
+		if (strcmp(c, "color") == 0) RETURN_INT(self->font->color = vi);
+		if (strcmp(c, "shadowColor") == 0) RETURN_INT(self->font->shadowColor = vi);
+		if (strcmp(c, "cutFrom") == 0) RETURN_INT(self->cutFrom = vi);
+		if (strcmp(c, "cutTo") == 0) RETURN_INT(self->cutTo = vi);
 	}
 	
 	return 0;
@@ -107,6 +129,7 @@ void register_Font(HSQUIRRELVM v)
 		NEWSLOT_METHOD(Font, constructor, 0, "");
 		NEWSLOT_METHOD(Font, _get, 0, ".");
 		NEWSLOT_METHOD(Font, _set, 0, ".");
+		NEWSLOT_METHOD(Font, cut, 0, ".");
 		NEWSLOT_METHOD(Font, print, 0, ".");
 	}
 	CLASS_END;

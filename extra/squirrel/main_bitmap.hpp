@@ -29,6 +29,14 @@ void swizzle_fast(u8* out, const u8* in, unsigned int width, unsigned int height
 	}
 }
 
+/*
+texture reads from user memory (mem range 0x08800000 - 0x01800000) have a bandwidth of 50MB/s
+texture reads from GE memory or VRAM (mem range 0x04000000 - 0x00200000) have a bandwidth of 500MB/s
+if you have a texture in user memory it is possible to load that texture to VRAM at a bandwidth of 150MB/s
+
+10x faster
+*/
+
 unsigned int graphicMemory = (512 * 272 * 4 * 1);
 
 static int BitmapLoadingCount;

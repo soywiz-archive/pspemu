@@ -7,6 +7,7 @@ class TileMap { public:
 	unsigned short w, h;
 	unsigned short *data;
 	unsigned char  *blockInfo; int blockInfoLength;
+	unsigned short *translateBlockType;
 	Pathfind *pathfind;
 	
 	TileMap(unsigned short w, unsigned short h, unsigned short V) {
@@ -14,7 +15,11 @@ class TileMap { public:
 		this->h = h;
 		this->pathfind = NULL;
 		this->blockInfo = new unsigned char[blockInfoLength = 2048];
-		memset(this->blockInfo, 0, blockInfoLength);
+		this->translateBlockType = new unsigned short[blockInfoLength];
+		for (int n = 0; n < blockInfoLength; n++) {
+			this->blockInfo[n] = 0;
+			this->translateBlockType[n] = n;
+		}
 		if (w > 0 && h > 0 && w <= 2048 && h <= 2048) {
 			this->data = new unsigned short[w * h];
 			if (this->data != NULL) {
@@ -30,6 +35,15 @@ class TileMap { public:
 		if (data != NULL) delete data;
 		if (pathfind != NULL) delete pathfind;
 		if (blockInfo != NULL) delete blockInfo;
+		if (translateBlockType != NULL) delete translateBlockType;
+	}
+
+	int getTranslateBlock(unsigned short block) {
+		return this->translateBlockType[block % blockInfoLength];
+	}
+
+	int setTranslateBlock(unsigned short block, unsigned short blockTo) {
+		return this->translateBlockType[block % blockInfoLength] = (blockTo % blockInfoLength);
 	}
 	
 	bool pathFind(int x0, int y0, int x1, int y1, bool diagonals = true) {
@@ -87,7 +101,11 @@ class TileMap { public:
 			for (int y = 0, my = 0; y < scroll_h; y++, my += tile_h + margin_y) {
 				for (int x = 0, mx = 0; x < scroll_w; x++, mx += tile_w + margin_x) {
 					int idx = get_repeat(scroll_x + x, scroll_y + y, repeat_x, repeat_y);
-					if (idx == -1) continue;
+					if (idx < 0) continue;
+					idx = translateBlockType[idx % blockInfoLength];
+					if (idx < 0) continue;
+					idx = idx % blockInfoLength;
+
 					int tile_x = (idx % tiles_per_row) * tile_w, tile_y = (idx / tiles_per_row) * tile_h;
 					bitmap->writeCoords(&vl[vlpos], mx + put_x, my + put_y, tile_x, tile_y, tile_w, tile_h); vlpos += 2;
 				}
@@ -192,6 +210,25 @@ DSQ_METHOD(TileMap, setBlockInfo)
 	EXTRACT_PARAM_INT(3, value, 0);
 
 	RETURN_INT(self->setBlockInfo(block, value));
+}
+
+DSQ_METHOD(TileMap, getTranslateBlock)
+{
+	EXTRACT_PARAM_START();
+	EXTRACT_PARAM_SELF(TileMap);
+	EXTRACT_PARAM_INT(2, block, 0);
+
+	RETURN_INT(self->getTranslateBlock(block));
+}
+
+DSQ_METHOD(TileMap, setTranslateBlock)
+{
+	EXTRACT_PARAM_START();
+	EXTRACT_PARAM_SELF(TileMap);
+	EXTRACT_PARAM_INT(2, block, 0);
+	EXTRACT_PARAM_INT(3, value, 0);
+
+	RETURN_INT(self->setTranslateBlock(block, value));
 }
 
 DSQ_METHOD(TileMap, draw)
@@ -300,6 +337,8 @@ void register_Tilemap(HSQUIRRELVM v) {
 		NEWSLOT_METHOD(TileMap, get, 0, "");
 		NEWSLOT_METHOD(TileMap, setBlockInfo, 0, "");
 		NEWSLOT_METHOD(TileMap, getBlockInfo, 0, "");
+		NEWSLOT_METHOD(TileMap, getTranslateBlock, 0, "");
+		NEWSLOT_METHOD(TileMap, setTranslateBlock, 0, "");
 		NEWSLOT_METHOD(TileMap, draw, 0, "");
 		NEWSLOT_METHOD(TileMap, draw2, 0, "");
 		NEWSLOT_METHOD(TileMap, pathFind, 0, "");

@@ -173,9 +173,10 @@ DSQ_FUNC(color)
 	RETURN_VOID;
 }
 
+
 DSQ_FUNC(colorf)
 {
-	float colors[4];
+	float colors[4] = {0, 0, 0, 1};
 	EXTRACT_PARAM_START();
 	EXTRACT_PARAM_COL(2, colors);
 
@@ -188,6 +189,19 @@ DSQ_FUNC(colorf)
 	RETURN_VOID;
 }
 
+
+DSQ_FUNC(getcolorf)
+{
+	float colors[4] = {0, 0, 0, 1};
+	EXTRACT_PARAM_START();
+	EXTRACT_PARAM_COL(2, colors);
+
+	unsigned int r = (unsigned int)(colors[0] * 0xFF) & 0xFF;
+	unsigned int g = (unsigned int)(colors[1] * 0xFF) & 0xFF;
+	unsigned int b = (unsigned int)(colors[2] * 0xFF) & 0xFF;
+	unsigned int a = (unsigned int)(colors[3] * 0xFF) & 0xFF;
+	RETURN_INT((a << 24) | (b << 16) | (g << 8) | (r << 0));
+}
 DSQ_FUNC(line)
 {
 	EXTRACT_PARAM_START();
@@ -277,6 +291,13 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 	
 	sq_pushroottable(v);
 	{
+		// Standard Libraries
+		sqstd_register_iolib(v); 
+		sqstd_register_bloblib(v);
+		sqstd_register_mathlib(v);
+		sqstd_register_stringlib(v);
+		sqstd_register_systemlib(v);
+
 		// Our classes.
 		register_Bitmap(v);
 		register_Tilemap(v);
@@ -284,10 +305,11 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 		register_Controller(v);
 		register_Font(v);
 		
-		// Out functions.
+		// Our functions.
 		NEWSLOT_FUNC(clear, 0, "");
 		NEWSLOT_FUNC(color, 0, "");
 		NEWSLOT_FUNC(colorf, 0, "");
+		NEWSLOT_FUNC(getcolorf, 0, "");
 		NEWSLOT_FUNC(line, 0, "");
 		NEWSLOT_FUNC(point, 0, "");
 		NEWSLOT_FUNC(frame, 0, "");
@@ -296,6 +318,7 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 		NEWSLOT_FUNC(sleep, 0, "");
 		NEWSLOT_FUNC(resources_loading_count, 0, "");
 
+		// Our global variables.
 		sq_pushstring(v, "ctrl", -1);
 		CREATE_OBJECT(Controller, new Controller("normal"));
 		sq_createslot(v, -3);
@@ -315,13 +338,6 @@ extern "C" int SDL_main(int argc, char* argv[])  {
 			sq_arrayappend(v, -2);
 		}
 		sq_createslot(v, -3);
-
-		// Standard Libraries
-		sqstd_register_iolib(v); 
-		sqstd_register_bloblib(v);
-		sqstd_register_mathlib(v);
-		sqstd_register_stringlib(v);
-		sqstd_register_systemlib(v);
 	}
 
 	sqstd_seterrorhandlers(v);

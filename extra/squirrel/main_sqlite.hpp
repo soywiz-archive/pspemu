@@ -79,6 +79,10 @@ class Sqlite { public:
 	long long int last_insert_id() {
 		return sqlite3_last_insert_rowid(db);
 	}
+	
+	long long int changes() {
+		return sqlite3_changes(db);
+	}
 };
 
 #define SQTAG_Sqlite (SQUserPointer)0x80000013
@@ -113,6 +117,9 @@ DSQ_METHOD(Sqlite, _get)
 		char *c = (char *)s.data;
 		
 		if (strcmp(c, "last_insert_id" ) == 0) RETURN_INT(self->last_insert_id());
+		if (strcmp(c, "changes" ) == 0) RETURN_INT(self->changes());
+		if (strcmp(c, "version" ) == 0) RETURN_STR(sqlite3_libversion());
+		
 	}
 	
 	return 0;

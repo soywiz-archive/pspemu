@@ -1,0 +1,248 @@
+<html>
+<head>
+<title>Squirrel for PSP</title>
+<style>
+body {
+	cursor: default;
+	font: 12px Arial;
+}
+span.comment {
+	color: green;
+}
+code.example:before {
+	font: bold 14px Arial;
+    content: "Example: ";
+	margin-left: 3px;
+	margin-bottom:4px;
+	color: #555;
+}
+code.example {
+}
+code.example div {
+	font: 0.85em "Courier New";
+	color: #444;
+	white-space: pre;
+	background: #f7fff7;
+	padding: 6px;
+}
+code.class {
+}
+code.class div {
+	font: 1.0em "Courier New";
+	color: #000;
+	white-space: pre;
+	background: #f7f7ff;
+	padding: 6px;
+}
+</style>
+</head>
+<body>
+<h1>Squirrel for PSP</h1>
+<hr />
+<h2>Sqlite</h2>
+<code class="class"><div>class Sqlite {
+	last_insert_id;
+	changes;
+	version;
+
+	<span class="comment">// Opens/creates a database with the specified filename.
+	// Use ":memory:" to create a temporary database in memory.</span>
+	constructor(filename = ":memory:");
+
+	<span class="comment">// Perform a query and returns an array with rows.
+	// '?' in the sql will be substituted by params.</span>
+	function query(sql, params = []);
+}
+</div></code>
+
+<p>
+Simple class for a sqlite3 database. The complete sql syntax for sqlite can be found here: <a href="http://sqlite.org/lang.html" target="_blank">http://sqlite.org/lang.html</a>.
+</p>
+<code class="example"><div>db <- Sqlite("file.db");
+
+db.query("CREATE TABLE records (name, points);");
+db.query("INSERT INTO  records (name, points) VALUES (?, ?);", ["soywiz", 999]);
+db.query("INSERT INTO  records (name, points) VALUES (?, ?);", ["nobody", 1000]);
+
+foreach (n, row in db.query("SELECT * FROM records ORDER BY points DESC;")) {
+	printf("Register(%d): %s, %d\n", n, row.name, row.points);
+}</div></code>
+
+<hr />
+
+<h2>Font</h2>
+<code class="class"><div>class Font {
+	<span class="comment">// Size of the text to print.</span>
+	size = 1.0;
+	
+	color = 0xFFFFFFFF;
+	shadowColor = 0xFF3F3F3F;
+
+	<span class="comment">// Displays only a part of the text. Useful for typing and other kind of effects.
+	// Negative values represents positions from the end of the string.</span>
+	cutFrom = 0; cutTo = -1;
+
+	<span class="comment">// Creates a font for drawing text.</span>
+	constructor(name = "flash0:/font/ltn0.pgf");
+
+	<span class="comment">// Sets cutFrom and cutTo values and returns the object itself for chaining.</span>
+	function cut(cutFrom, cutTo);
+
+	<span class="comment">// Draws the specified text on screen.
+	// {color=RRGGBBAA} for tinting and {size=X} for reescaling.</span>
+	function print(x, y, text);
+}
+</div></code>
+
+<p>Font uses intraFront library that uses PGF psp fonts. There are tools to convert TTF to PGF fonts.</p>
+
+<code class="example"><div>font <- Font("myfont.pgf");
+
+font.size = 1.0;
+
+local n = 0;
+while (true) {
+	font.cut(0, (n % 20)).print(480 / 2, 272 / 2, "Hello world!");
+	frame();
+	n++;
+}</div></code>
+
+<hr />
+
+<h2>Bitmap</h2>
+
+<code class="class"><div>class Bitmap {
+	<span class="comment">// With and height of the image.</span>
+	w; h;
+
+	<span class="comment">// Center of the image.</span>
+	cx; cy;
+
+	<span class="comment">// Creates an empty bitmap.</span>
+	constructor(width, height, bpp);
+
+	<span class="comment">// Loads a bitmap from a file: BMP, JPG or PNG.</span>
+	static function fromFile(filename);
+
+	<span class="comment">// Sets the center of the image and return the image itself.</span>
+	function center(cx, cy);
+
+	<span class="comment">// Sets the center of the image and return the image itself.
+	//   (0, 0) center is in the top left corner
+	//   (1, 1) center is in the bottom right corner
+	//   (0.5, 0.5) center is in the center of the image</span>
+	function centerf(cx, cy);
+
+	<span class="comment">// Obtains a slice of the bitmap.</span>
+	function slice(x, y, w, h);
+
+	<span class="comment">// Draws the bitmap in the specified coords.</span>
+	function draw(x, y);
+}
+</div></code>
+
+<p>Class for loading and drawing bitmaps and slices of bitmaps.</p>
+<p>Bitmaps are loaded in the background. While you are not using that bitmap, the program will continue.
+Use center, centerf, slice or draw will require the bitmap to be loaded completely and will wait until then.
+To determine how many resources are loading, you can use the function resources_loading_count().
+When this value reaches 0, there are no resources left for loading.</p>
+
+<code class="example"><div>bmp <- Bitmap.fromFile("tileset.png");
+
+bmpslice1 <- bmp.slice(0, 0, 32, 32).centerf(0.5, 1.0);
+bmpslice2 <- bmp.slice(32, 32, 32, 32).center(16, 32);
+
+while (true) {
+	bmpslice1.draw(0 + 16, 0 + 32);
+	bmpslice2.draw(32 + 16, 32 + 32);
+	frame();
+}</div></code>
+
+<hr />
+
+<h2>TileMap</h2>
+
+<code class="class"><div>class TileMap {
+	<span class="comment">// Width and height of the image.</span>
+	w; h;
+
+	constructor(width, height, V);
+
+	function set(x, y, V);
+	function setRect(x0, y0, x1, y1, V);
+	function get(x, y);
+
+	<span class="comment">// Used for pathfinding (wall=1, floor=0)</span>
+	function setBlockInfo(block, V);
+	function getBlockInfo(block);
+
+	<span class="comment">// Draws a tile using other tile. Useful for lightweight animations (without changing each tile manually).</span>
+	function setTranslateBlock(block, blockTo);
+	function getTranslateBlock(block);
+
+	<span class="comment">// Search a path using A* from (sx, sy) to (dx, dy)</span>
+	function pathFind(sx, sy, dx, dy, diagonals = 1);
+
+	function draw(bitmap, tile_w = 32, tile_h = 32, repeat_x = 1, repeat_y = 1, put_x = 0, put_y = 0, scroll_x = 0, scroll_y = 0, scroll_w = 16, scroll_h = 16, alpha = 1.0, margin_x = 0, margin_y = 0);
+}
+</div></code>
+
+<hr />
+
+<h2>Controller</h2>
+
+<code class="class"><div>class Controller {
+	<span class="comment">// Analog stick. Values between -1 and +1 with deadzone already removed.</span>
+	Lx; Ly;
+
+	<span class="comment">// Digital buttons.</span>
+	up; down; left; right;
+	cross; square; triangle; circle;
+	start; select;
+	triggerL; triggerR;
+
+	<span class="comment">// Every frame() call Controller will be updated, but can be called manually in case it's needed.</span>
+	function update();
+}
+</div></code>
+
+<hr />
+
+<h2>Global Functions</h2>
+
+<code class="class"><div>
+<span class="comment">// Global Controller instance.</span>
+ctrl;
+
+<span class="comment">// Sets the current color.
+// colorf([1, 0, 0, 0.5]); // semi-transparent red</span>
+function colorf(color);
+
+<span class="comment">// Sets the current color.
+// color(0x7F0000FF); // semi-transparent red</span>
+function color(color);
+
+<span class="comment">// Draws a line with the current color.</span>
+function line(x1, y1, x2, y2);
+
+<span class="comment">// Draws a point with the current color.</span>
+function point(x, y);
+
+<span class="comment">// Clear the frame buffer.</span>
+function clear();
+
+<span class="comment">// Finalizes the current drawing, wait for vsync, swap the buffers, updates the Controller class and starts a new drawing.</span>
+function frame();
+
+<span class="comment">// Exits the game.</span>
+function exit();
+
+<span class="comment">// Sleep a number of milliseconds</span>
+function sleep(milliseconds);
+
+<span class="comment">// printf function</span>
+function printf(format, ...);
+
+</div></code>
+</body>
+</html>
