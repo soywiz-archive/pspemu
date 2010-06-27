@@ -66,7 +66,7 @@ final class Registers {
 	uint CLOCKS;
 	union { uint[32] RF; float[32] F; } // Floating point registers.
 	union {
-		struct { float[8 * 4 * 4] VF;        } //  cells
+		struct { float[8 * 4 * 4] VF;        } // cells
 		struct { float[8][4 * 4]  VF_MATRIX; } // matrix,cell
 		struct { float[8][4][4]   VF_CELLS ; } // matrix,column,row
 	}

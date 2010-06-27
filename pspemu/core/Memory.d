@@ -290,6 +290,16 @@ class Memory : Stream {
 			}
 			return r;
 		}
+		
+		T twrite(T)(uint address, T value) {
+			version (VERSION_CHECK_ALIGNMENT) assert(((address & ((T.sizeof >> 3) - 1)) == 0), std.string.format("Address 0x%08X not aligned to %d bytes.", address, (T.sizeof >> 3)));
+			return *cast(T*)getPointer(address) = value;
+		}
+
+		T tread(T)(uint address) {
+			version (VERSION_CHECK_ALIGNMENT) assert(((address & ((T.sizeof >> 3) - 1)) == 0), std.string.format("Address 0x%08X not aligned to %d bytes.", address, (T.sizeof >> 3)));
+			return *cast(T*)getPointer(address);
+		}
 
 		/// Write functions.
 		mixin(writeGen("8" ));

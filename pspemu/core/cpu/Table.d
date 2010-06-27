@@ -314,14 +314,6 @@ const PspInstructions_VFPU1 = [
 	ID("vmul.s",      VM(0x64000000, 0xFF808080), "%zs, %ys, %xs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vmul.t",      VM(0x64008000, 0xFF808080), "%zt, %yt, %xt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
-	ID("vdot.p",      VM(0x64800080, 0xFF808080), "%zs, %yp, %xp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vdot.q",      VM(0x64808080, 0xFF808080), "%zs, %yq, %xq" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vdot.t",      VM(0x64808000, 0xFF808080), "%zs, %yt, %xt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-
-	ID("vscl.p",      VM(0x65000080, 0xFF808080), "%zp, %yp, %xs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vscl.q",      VM(0x65008080, 0xFF808080), "%zq, %yq, %xs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vscl.t",      VM(0x65008000, 0xFF808080), "%zt, %yt, %xs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-
 	ID("vhdp.p",      VM(0x66000080, 0xFF808080), "%zs, %yp, %xp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vhdp.q",      VM(0x66008080, 0xFF808080), "%zs, %yq, %xq" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vhdp.t",      VM(0x66008000, 0xFF808080), "%zs, %yt, %xt" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
@@ -342,6 +334,9 @@ const PspInstructions_VFPU2 = [
 
 const PspInstructions_VFPU_IMP = [
 	ID("lv.q",        VM(0xD8000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("sv.q",        VM(0xF8000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vdot",        VM("011001:001:vt:two:vs:one:vd"), "%zs, %yp, %xp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vscl",        VM("011001:010:vt:two:vs:one:vd"), "%zp, %yp, %xs" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 ];
 
 const PspInstructions_VFPU = [
@@ -354,7 +349,6 @@ const PspInstructions_VFPU = [
 	ID("lvl.q",       VM(0xD4000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("lvr.q",       VM(0xD4000002, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
-	ID("sv.q",        VM(0xF8000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("sv.s",        VM(0xE8000000, 0xFC000000), "%Xs, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("svl.q",       VM(0xF4000000, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("svr.q",       VM(0xF4000002, 0xFC000002), "%Xq, %Y" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
