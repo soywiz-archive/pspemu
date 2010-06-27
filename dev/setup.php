@@ -3,8 +3,8 @@
 $base = dirname(__FILE__);
 
 $packages = array(
-	'dmd'    => new Package('http://pspemu.googlecode.com/files/dmd.2.042.zip'),
-	'dfl'    => new Package('http://pspemu.googlecode.com/files/dfl_dmd2040.7z'),
+	'dmd'    => new Package('http://pspemu.googlecode.com/files/dmd.2.047.zip'),
+	'dfl'    => new Package('http://pspemu.googlecode.com/files/dfl-20100516.zip'),
 	'ddbg'   => new Package('http://pspemu.googlecode.com/files/Ddbg-0.11.3-beta.zip'),
 	'pspsdk' => new Package('http://pspemu.googlecode.com/files/pspsdk.7z'),
 );

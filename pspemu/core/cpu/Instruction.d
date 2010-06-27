@@ -44,9 +44,13 @@ struct ValueMask {
 		}
 		foreach (part; parts) {
 			switch (part) {
+				case "vt1": alloc(1); break;
+				case "vt5":
 				case "c0dr", "c0cr", "c1dr", "c1cr":
 				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft": alloc(5); break;
 				case "fcond": alloc(4 ); break;
+				case "imm7" : alloc(7 ); break;
+				case "imm14": alloc(14); break;
 				case "imm16": alloc(16); break;
 				case "imm20": alloc(20); break;
 				case "imm26": alloc(26); break;
@@ -89,11 +93,20 @@ struct InstructionDefinition {
 	}
 }
 
+/*string bitslice(alias v, T, uint start, uint count)() {
+}*/
+
 struct Instruction {
 	union {
 		// Normal value.
 		uint v;
 		ubyte[4] vv;
+
+		/*
+		mixin(bitslice!(v, uint, "RD", 11 + 5 * 0, 5));
+		mixin(bitslice!(v, uint, "RT", 11 + 5 * 1, 5));
+		mixin(bitslice!(v, uint, "RS", 11 + 5 * 2, 5));
+		*/
 		
 		// Type Register.
 		struct { mixin(bitfields!(
@@ -133,6 +146,12 @@ struct Instruction {
 		struct { mixin(bitfields!(
 			uint, "JUMP", 26,
 			uint, "__2",  6
+		)); }
+
+		// Immediate 7 bits.
+		struct { mixin(bitfields!(
+			uint, "IMM7", 7,
+			uint, "__3",  25
 		)); }
 
 		uint JUMP2() { return JUMP << 2; }

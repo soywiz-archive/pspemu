@@ -1,6 +1,8 @@
 module pspemu.core.cpu.interpreted.ops.VFpu;
 import pspemu.core.cpu.interpreted.Utils;
 
+import std.math;
+
 // http://forums.ps2dev.org/viewtopic.php?t=6929 
 // http://wiki.fx-world.org/doku.php?do=index
 // http://mrmrice.fx-world.org/vfpu.html
@@ -101,6 +103,29 @@ template TemplateCpu_VFPU() {
 	// http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/Allegrex/Common.java?spec=svn819&r=819
 	// http://code.google.com/p/pspe4all/source/browse/trunk/emulator/allegrex.cpp
 	// S, P, T, Q
+	
+	const float[] vfpu_constant = [
+		0.0f,                                       /// VFPU_ZERO     - 0
+		float.infinity,                             /// VFPU_HUGE     - infinity
+		cast(float)(SQRT2),                         /// VFPU_SQRT2    - sqrt(2)
+		cast(float)(SQRT1_2),                       /// VFPU_SQRT1_2  - sqrt(1 / 2)
+		cast(float)(M_2_SQRTPI),                    /// VFPU_2_SQRTPI - 2 / sqrt(pi)
+		cast(float)(M_2_PI),                        /// VFPU_2_PI     - 2 / pi
+		cast(float)(M_1_PI),                        /// VFPU_1_PI     - 1 / pi
+		cast(float)(PI_4),                          /// VFPU_PI_4     - pi / 4
+		cast(float)(PI_2),                          /// VFPU_PI_2     - pi / 2
+		cast(float)(PI),                            /// VFPU_PI       - pi
+		cast(float)(E),                             /// VFPU_E        - e
+		cast(float)(LOG2E),                         /// VFPU_LOG2E    - log2(E) = log(E) / log(2)
+		cast(float)(LOG10E),                        /// VFPU_LOG10E   - log10(E)
+		cast(float)(LN2),                           /// VFPU_LN2      - ln(2)
+		cast(float)(LN10),                          /// VFPU_LN2      - ln(10)
+		cast(float)(2.0 * PI),                      /// VFPU_2PI      - 2 * pi
+		cast(float)(PI / 6.0),                      /// VFPU_PI_6     - pi / 6
+		cast(float)(LOG2),                          /// VFPU_LOG10TWO - log10(2)
+		cast(float)(LOG2T),                         /// VFPU_LOG2TEN  - log2(10) = log(10) / log(2)
+		cast(float)(sqrt(3.0) / 2.0)                /// VFPU_SQRT3_2  - sqrt(3) / 2
+	];
 
 	// Vector Matrix IDenTity Quad aligned?
 	// VMIDT(111100:111:00:00011:two:0000000:one:vd)
@@ -120,6 +145,43 @@ template TemplateCpu_VFPU() {
 	// Load 4 Vfpu (Quad) regs from 16 byte aligned memory
 	// LVQ(110110:rs:vt5:imm14:0:vt1)
 	void OP_LV_Q() {
-		
+		writefln("::r%d", instruction.RS);
+		registers.pcAdvance(4);
+		assert(0, "Unimplemented");
+	}
+
+	// Move From Vfpu (C?)
+	// MFV(010010:00:011:rt:0:0000000:0:imm7)
+	void OP_MFV() {
+		cpu.registers.R[instruction.RT] = F_I(cpu.registers.VF[instruction.IMM7]);
+		registers.pcAdvance(4);
+		/*
+		// From jpcsp:
+        int r = (imm7 >> 5) & 3;
+        int m = (imm7 >> 2) & 7;
+        int c = (imm7 >> 0) & 3;
+
+        gpr[rt] = Float.floatToRawIntBits(vpr[m][c][r]);
+		*/
+	}
+	void OP_MFVC() {
+		assert(0, "Unimplemented");
+	}
+
+	// Move To Vfpu (C?)
+	// MTV(010010:00:111:rt:0:0000000:0:imm7)
+	void OP_MTV() {
+		cpu.registers.VF[instruction.IMM7] = I_F(cpu.registers.R[instruction.RT]);
+		registers.pcAdvance(4);
+		/*
+        int r = (imm7 >> 5) & 3;
+        int m = (imm7 >> 2) & 7;
+        int c = (imm7 >> 0) & 3;
+
+        vpr[m][c][r] = Float.intBitsToFloat(gpr[rt]);
+		*/
+	}
+	void OP_MTVC() {
+		assert(0, "Unimplemented");
 	}
 }
