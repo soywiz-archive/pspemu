@@ -49,6 +49,7 @@ struct ValueMask {
 				case "vt1": alloc(1); break;
 				case "vt5":
 				case "c0dr", "c0cr", "c1dr", "c1cr":
+				case "imm5":
 				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft": alloc(5); break;
 				case "fcond": alloc(4 ); break;
 				case "vs", "vt", "vd":
@@ -127,6 +128,7 @@ struct Instruction {
 			~ bitslice!("v", uint, "VT1", 0, 1)
 			~ bitslice!("v", int , "IMM14", 2, 14)
 			~ bitslice!("v", uint, "VT5", 16, 5)
+			~ bitslice!("v", uint, "IMM5", 16, 5)
 
 			~ bitslice!("v", uint, "VD",  0, 7)
 			~ bitslice!("v", uint, "ONE", 7, 1)

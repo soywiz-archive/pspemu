@@ -128,25 +128,51 @@ template TemplateCpu_VFPU() {
 		cast(float)(LOG2T),                         /// VFPU_LOG2TEN  - log2(10) = log(10) / log(2)
 		cast(float)(sqrt(3.0) / 2.0)                /// VFPU_SQRT3_2  - sqrt(3) / 2
 	];
+	
+	void OP_VCST() {
+		auto vsize = instruction.ONE_TWO;
+        float constant = 0.0f;
+		auto row_d = vfpuVectorPointer(vsize, instruction.VD);
 
+        if (instruction.IMM5 >= 0 && instruction.IMM5 < vfpu_constant.length) {
+            constant = vfpu_constant[instruction.IMM5];
+        }
+
+        for (int n = 0; n < vsize; n++) *row_d[n] = constant;
+		registers.pcAdvance(4);
+	}
+
+	void OP_VIDT_x(int vsize, int vd) {
+		auto row_d = vfpuVectorPointer(vsize, vd);
+		int id = vd & 3;
+		for (int n = 0; n < vsize; n++) *row_d[n] = (n == id) ? 1.0f : 0.0f;
+	}
+	
 	// Vector Matrix IDenTity Quad aligned?
 	// VMIDT(111100:111:00:00011:two:0000000:one:vd)
-	void OP_VMIDT_Q() {
-		uint matrix = instruction.VD >> 2;
-		if (matrix >= 8) throw(new Exception("VMIDT_Q matrix >= 8"));
-		cpu.registers.VF_MATRIX[matrix] = [
-			1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1
-		];
+	void OP_VMIDT() {
+		auto vsize = instruction.ONE_TWO;
+		int vd = instruction.VD;
+		for (int n = 0; n < vsize; n++) OP_VIDT_x(vsize, vd + n);
+		registers.pcAdvance(4);
+	}
+
+	void OP_VIDT() {
+		auto vsize = instruction.ONE_TWO;
+		OP_VIDT_x(vsize, instruction.VD);
+		registers.pcAdvance(4);
+	}
+
+	// Vfpu load Integer IMmediate
+	void OP_VIIM() {
+		*vfpuVectorPointer(1, instruction.VD)[0] = cast(float)instruction.IMM;
 		registers.pcAdvance(4);
 	}
 	
 	// Load 4 Vfpu (Quad) regs from 16 byte aligned memory
 	// LVQ(110110:rs:vt5:imm14:0:vt1)
 	void OP_LV_Q() {
-		auto row = vfpuVectorPointer(4, instruction.VT5, instruction.VT1);
+		auto row = vfpuVectorPointer2(4, instruction.VT5, instruction.VT1);
 		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
 		
 		for (int n = 0; n < 4; n++) {
@@ -156,11 +182,58 @@ template TemplateCpu_VFPU() {
 		
 		registers.pcAdvance(4);
 	}
+	void OP_LVL_Q() {
+		int vt = instruction.VT5;
+        int m  = (vt >> 2) & 7;
+        int i  = (vt >> 0) & 3;
+
+		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4 - 12;
+		int k = 4 - ((address >> 2) & 3);
+		
+        if ((vt & 32) != 0) {
+            for (int j = 0; j < k; ++j) {
+                cpu.registers.VF_CELLS[m][j][i] = cpu.memory.tread!(float)(address);
+				address += 4;
+            }
+        } else {
+            for (int j = 0; j < k; ++j) {
+                cpu.registers.VF_CELLS[m][i][j] = cpu.memory.tread!(float)(address);
+				address += 4;
+            }
+        }
+
+		//Logger.log(Logger.Level.WARNING, "Vfpu", "LVL.Q");
+		registers.pcAdvance(4);
+	}
+
+	void OP_LVR_Q() {
+		int vt = instruction.VT5;
+        int m = (vt >> 2) & 7;
+        int i = (vt >> 0) & 3;
+
+        uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
+        int k = (address >> 2) & 3;
+        address += (4 - k) << 2;
+
+        if ((vt & 32) != 0) {
+            for (int j = 4 - k; j < 4; ++j) {
+                cpu.registers.VF_CELLS[m][j][i] = cpu.memory.tread!(float)(address);
+				address += 4;
+            }
+        } else {
+            for (int j = 4 - k; j < 4; ++j) {
+                cpu.registers.VF_CELLS[m][i][j] = cpu.memory.tread!(float)(address);
+				address += 4;
+            }
+        }
+
+		registers.pcAdvance(4);
+	}
 
 	// Store 4 Vfpu (Quad) regs from 16 byte aligned memory
 	// SVQ(111110:rs:vt5:imm14:0:vt1)
 	void OP_SV_Q() {
-		auto row = vfpuVectorPointer(4, instruction.VT5, instruction.VT1);
+		auto row = vfpuVectorPointer2(4, instruction.VT5, instruction.VT1);
 		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
 		
 		for (int n = 0; n < 4; n++) {
@@ -214,7 +287,7 @@ template TemplateCpu_VFPU() {
 	void OP_MTVC() {
 		assert(0, "Unimplemented");
 	}
-
+	
 	// Vfpu SCaLe
 	// VSCL(011001:010:vt:two:vs:one:vd)
 	void OP_VSCL() {
@@ -230,13 +303,164 @@ template TemplateCpu_VFPU() {
 		}
 		registers.pcAdvance(4);
 	}
+
+	void OP_V_INTERNAL_IN_N(int N, string op)() {
+		static assert((N >= 0) && (N <= 2));
+		auto vsize = instruction.ONE_TWO;
+		static if (N >= 1) auto row_s = vfpuVectorPointer(vsize, instruction.VS);
+		static if (N >= 2) auto row_t = vfpuVectorPointer(vsize, instruction.VT);
+		auto row_d = vfpuVectorPointer(vsize, instruction.VD);
+		for (int n = 0; n < vsize; n++) {
+			static if (N >= 1) { float l = *row_s[n]; alias l v; }
+			static if (N >= 2) { float r = *row_t[n]; }
+			mixin("*row_d[n] = (" ~ op ~ ");");
+		}
+		registers.pcAdvance(4);
+	}
+
+	// Vfpu ONE
+	void OP_VONE()  { OP_V_INTERNAL_IN_N!(0, "1.0f"); }
+	
+	// Vfpu ABSolute/COSine/MOVe/Reverse SQuare root/LOG2/EXP2/NEGate/ReCiProcal
+	void OP_VMOV()  { OP_V_INTERNAL_IN_N!(1, "v"); }
+	void OP_VSGN()  { OP_V_INTERNAL_IN_N!(1, "sign(v)"); }
+	void OP_VABS()  { OP_V_INTERNAL_IN_N!(1, "abs(v)"); }
+	void OP_VCOS()  { OP_V_INTERNAL_IN_N!(1, "cos(PI_2 * v)"); }
+	void OP_VASIN() { OP_V_INTERNAL_IN_N!(1, "asin(v) * M_2_PI"); }
+	void OP_VRSQ()  { OP_V_INTERNAL_IN_N!(1, "1.0f / sqrt(v)"); }
+	void OP_VLOG2() { OP_V_INTERNAL_IN_N!(1, "log2(v)"); }
+	void OP_VEXP2() { OP_V_INTERNAL_IN_N!(1, "exp2(v)"); }
+	void OP_VNEG()  { OP_V_INTERNAL_IN_N!(1, "-v"); }
+	void OP_VRCP()  { OP_V_INTERNAL_IN_N!(1, "1.0f / v"); }
+
+	// Vfpu MINimum/MAXimum/ADD
+	void OP_VMIN() { OP_V_INTERNAL_IN_N!(2, "min(l, r)"); }
+	void OP_VMAX() { OP_V_INTERNAL_IN_N!(2, "max(l, r)"); }
+	void OP_VADD() { OP_V_INTERNAL_IN_N!(2, "l + r"); }
+	void OP_VSUB() { OP_V_INTERNAL_IN_N!(2, "l - r"); }
+	void OP_VDIV() { OP_V_INTERNAL_IN_N!(2, "l / r"); }
+	void OP_VMUL() { OP_V_INTERNAL_IN_N!(2, "l * r"); }
+	
+	// Vfpu ??
+	void OP_VHDP() {
+		auto vsize = instruction.ONE_TWO;
+		if (vsize == 1) OP_UNK();
+		
+		//writefln("%032b", instruction.v);
+		//writefln("vsize:%d", vsize);
+		auto row_t = vfpuVectorPointer(vsize, instruction.VT);
+		auto row_s = vfpuVectorPointer(vsize, instruction.VS);
+		auto row_d = vfpuVectorPointer(1,    instruction.VD);
+		row_s[vsize - 1] = &vfpu_one;
+		*row_d[0] = 0.0;
+		//writefln("%s", cpu.registers.VF);
+		for (int n = 0; n < vsize; n++) {
+			//writefln("%f * %f", *row_s[n], *row_t[n]);
+			*row_d[0] += (*row_s[n]) * (*row_t[n]);
+		}
+		
+		registers.pcAdvance(4);
+	}
+	
+	void OP_VCRSP_T() {
+		auto row_s = vfpuVectorPointer(3, instruction.VS);
+		auto row_t = vfpuVectorPointer(3, instruction.VT);
+		auto row_d = vfpuVectorPointer(3, instruction.VD);
+
+		*row_d[0] = +*row_s[1] * *row_t[2] - *row_s[2] * *row_t[1];
+		*row_d[1] = +*row_s[2] * *row_t[0] - *row_s[0] * *row_t[2];
+		*row_d[2] = +*row_s[0] * *row_t[1] - *row_s[1] * *row_t[0];
+		
+		registers.pcAdvance(4);
+	}
+
+	void OP_VI2C() {
+		// auto vsize = instruction.ONE_TWO;
+		auto row_s = vfpuVectorPointer!(ubyte[4])(4, instruction.VS);
+		auto row_d = vfpuVectorPointer!(ubyte[4])(1, instruction.VD);
+		for (int n = 0; n < 4; n++) {
+			//writefln("%s", *row_s[n]);
+			(*row_d[0])[n] = (*row_s[n])[3];
+		}
+		registers.pcAdvance(4);
+	}
+
+	void OP_VI2UC() {
+		// auto vsize = instruction.ONE_TWO;
+		auto row_s = vfpuVectorPointer!(int)(4, instruction.VS);
+		auto row_d = vfpuVectorPointer!(ubyte[4])(1, instruction.VD);
+		for (int n = 0; n < 4; n++) {
+			int value = *row_s[n];
+			//writefln("%s", *row_s[n]);
+			(*row_d[0])[n] = cast(ubyte)((value < 0) ? 0 : (value >> 23));
+		}
+		registers.pcAdvance(4);
+	}
+	
+	void OP_VTFM_X(int vsize, bool half)() {
+		auto row_t = vfpuVectorPointer(vsize - cast(int)half, instruction.VT);
+		float*[4] row_s;
+		auto row_d = vfpuVectorPointer(vsize, instruction.VD);
+		if (half) row_t[vsize - 1] = &vfpu_one;
+		
+		for (int n = 0; n < vsize; n++) {
+			row_s = vfpuVectorPointer(vsize, instruction.VS + n);
+			*row_d[n] = summult_ptr(row_s[0..vsize], row_t[0..vsize]);
+		}
+		registers.pcAdvance(4);
+	}
+
+	void OP_VTFM2() { OP_VTFM_X!(2, false)(); }
+	void OP_VTFM3() { OP_VTFM_X!(3, false)(); }
+	void OP_VTFM4() { OP_VTFM_X!(4, false)(); }
+
+	void OP_VHTFM2() { OP_VTFM_X!(2, true)(); }
+	void OP_VHTFM3() { OP_VTFM_X!(3, true)(); }
+	void OP_VHTFM4() { OP_VTFM_X!(4, true)(); }
+	
+	void OP_VMMUL() {
+		auto vsize = instruction.ONE_TWO;
+		if (vsize == 1) OP_UNK();
+
+        for (int i = 0; i < vsize; ++i) {
+			auto row_t = vfpuVectorPointer(vsize, instruction.VT + i);
+			auto row_d = vfpuVectorPointer(vsize, instruction.VD + i);
+            for (int j = 0; j < vsize; ++j) {
+				auto row_s = vfpuVectorPointer(vsize, instruction.VS + j);
+				*row_d[j] = summult_ptr(row_s[0..vsize], row_t[0..vsize]);
+            }
+        }
+		registers.pcAdvance(4);
+	}
+
+    void OP_VSRT3() {
+		registers.pcAdvance(4);
+
+		auto vsize = instruction.ONE_TWO;
+        if (vsize != 4) {
+			Logger.log(Logger.Level.WARNING, "Vfpu", "Only supported VSRT3.Q (vsize=%d)", vsize);
+			// The instruction is somehow supported on the PSP (see VfpuTest),
+			// but leave the error message here to help debugging the Decoder.
+			return;
+        }
+
+		auto row_s = vfpuVectorPointer(4, instruction.VS);
+		auto row_d = vfpuVectorPointer(4, instruction.VD);
+        float x = *row_s[0], y = *row_s[1];
+        float z = *row_s[2], w = *row_s[3];
+        *row_d[0] = max(x, y);
+        *row_d[1] = min(x, y);
+        *row_d[2] = max(z, w);
+        *row_d[3] = min(z, w);
+    }
 }
 
 template TemplateCpu_VFPU_Utils() {
 	float vfpu_dummy_address;
+	float vfpu_one = 1.0;
 
-	float*[4] vfpuVectorPointer(uint vsize, uint vs, bool readonly = false) {
-		float*[4] vector;
+	T*[4] vfpuVectorPointer(T = float)(uint vsize, uint vs, bool readonly = false) {
+		T*[4] vector;
 		uint line   = (vs >> 0) & 3; // 0-3
 		uint matrix = (vs >> 2) & 7; // 0-7
 		uint offset = void;
@@ -253,9 +477,9 @@ template TemplateCpu_VFPU_Utils() {
 		//writefln("SIZE:%d, DATA:%08b, ORDER:%d, MATRIX:%d, OFFSET:%d, LINE:%d", vsize, vs, order, matrix, offset, line);
 
 		if (order) {
-			for (int n = 0; n < vsize; n++) vector[n] = &cpu.registers.VF_CELLS[matrix][offset + n][line];
+			for (int n = 0; n < vsize; n++) vector[n] = cast(T*)&cpu.registers.VF_CELLS[matrix][offset + n][line];
 		} else {
-			for (int n = 0; n < vsize; n++) vector[n] = &cpu.registers.VF_CELLS[matrix][line][offset + n];
+			for (int n = 0; n < vsize; n++) vector[n] = cast(T*)&cpu.registers.VF_CELLS[matrix][line][offset + n];
 		}
 
 		// @TODO: Implement prefixes.
@@ -266,7 +490,14 @@ template TemplateCpu_VFPU_Utils() {
 		return vector;
 	}
 	
-	float*[4] vfpuVectorPointer(uint vsize, uint v5, uint v1) {
-		return vfpuVectorPointer(vsize, v5 | (v1 << 32));
+	T*[4] vfpuVectorPointer2(T = float)(uint vsize, uint v5, uint v1) {
+		return vfpuVectorPointer!(T)(vsize, v5 | (v1 << 32));
+	}
+
+	T summult_ptr(T)(T*[] a, T*[] b) {
+		assert(a.length);
+		T result = 0;
+		for (int n = 0; n < a.length; n++) result += *a[n] * *b[n];
+		return result;
 	}
 }

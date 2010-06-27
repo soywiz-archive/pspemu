@@ -1,5 +1,6 @@
 module pspemu.core.cpu.interpreted.Utils;
 
+public import pspemu.utils.Logger;
 public import pspemu.utils.Utils;
 
 public import pspemu.core.cpu.Registers;

@@ -108,6 +108,8 @@ ulong readVarInt(Stream stream) {
 void swap(T)(ref T a, ref T b) { auto c = a; a = b; b = c; }
 T min(T)(T l, T r) { return (l < r) ? l : r; }
 T max(T)(T l, T r) { return (l > r) ? l : r; }
+T xabs(T)(T v) { return (v >= 0) ? v : -v; }
+T sign(T)(T v) { if (v == 0) return 0; return (v > 0) ? 1 : -1; }
 
 static pure nothrow string tos(T)(T v, int base = 10, int pad = 0) {
 	if (v == 0) return "0";
