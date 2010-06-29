@@ -145,18 +145,26 @@ template TemplateCpu_VFPU() {
 	void OP_VIDT_x(int vsize, int vd) {
 		auto row_d = vfpuVectorPointer(vsize, vd);
 		int id = vd & 3;
-		for (int n = 0; n < vsize; n++) *row_d[n] = (n == id) ? 1.0f : 0.0f;
+		//writef("%d(%d):", vd, vsize);
+		for (int n = 0; n < vsize; n++) {
+			*row_d[n] = (n == id) ? 1.0f : 0.0f;
+			//writef("%f,", *row_d[n]);
+		}
+		//writef(": %s", row_d);
+		//writefln("");
 	}
 	
-	// Vector Matrix IDenTity Quad aligned?
+	// Vector Matrix IDenTity quad aligned?
 	// VMIDT(111100:111:00:00011:two:0000000:one:vd)
 	void OP_VMIDT() {
 		auto vsize = instruction.ONE_TWO;
 		int vd = instruction.VD;
 		for (int n = 0; n < vsize; n++) OP_VIDT_x(vsize, vd + n);
+		//writefln("%s", cpu.registers.VF);
 		registers.pcAdvance(4);
 	}
 
+	// Vector IDenTity quad aligned?
 	void OP_VIDT() {
 		auto vsize = instruction.ONE_TWO;
 		OP_VIDT_x(vsize, instruction.VD);
@@ -172,6 +180,8 @@ template TemplateCpu_VFPU() {
 	// Load 4 Vfpu (Quad) regs from 16 byte aligned memory
 	// LVQ(110110:rs:vt5:imm14:0:vt1)
 	void OP_LV_Q() {
+		//writefln("OP_LV_Q: %032b : %d, %d", instruction.v, instruction.VT5, instruction.VT1);
+	
 		auto row = vfpuVectorPointer2(4, instruction.VT5, instruction.VT1);
 		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
 		
@@ -476,6 +486,8 @@ template TemplateCpu_VFPU_Utils() {
 		
 		//writefln("SIZE:%d, DATA:%08b, ORDER:%d, MATRIX:%d, OFFSET:%d, LINE:%d", vsize, vs, order, matrix, offset, line);
 
+		//writefln("vfpuVectorPointer(%d, %d, %d) : matrix(%d) line(%d) order(%d)", vsize, vs, readonly, matrix, line, order);
+
 		if (order) {
 			for (int n = 0; n < vsize; n++) vector[n] = cast(T*)&cpu.registers.VF_CELLS[matrix][offset + n][line];
 		} else {
@@ -491,7 +503,7 @@ template TemplateCpu_VFPU_Utils() {
 	}
 	
 	T*[4] vfpuVectorPointer2(T = float)(uint vsize, uint v5, uint v1) {
-		return vfpuVectorPointer!(T)(vsize, v5 | (v1 << 32));
+		return vfpuVectorPointer!(T)(vsize, v5 | (v1 << 5));
 	}
 
 	T summult_ptr(T)(T*[] a, T*[] b) {

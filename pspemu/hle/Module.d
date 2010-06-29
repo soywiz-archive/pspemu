@@ -85,6 +85,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 	{
 		r ~= "currentExecutingNid = " ~ tos(nid) ~ ";";
 		r ~= "setReturnValue = true;";
+		r ~= "current_vparam = 0;";
 		string parametersString = _parametersString;
 		string parametersPrototypeString = _parametersPrototypeString;
 		debug (DEBUG_ALL_SYSCALLS) { } else { r ~= "debug (DEBUG_SYSCALL)"; }
@@ -177,10 +178,38 @@ abstract class Module {
 	void shutdownModule() { }
 	
 	template Parameters() {
-		ulong param64(int n) { return cpu.registers[4 + n + 0] | (cpu.registers[4 + n + 1] << 32); }
-		uint  param(int n) { return cpu.registers[4 + n]; }
+		void* vparam_ptr(T)(int n) {
+			//return &cpu.registers.R[4 + n];
+			if (n >= 8) {
+				return cpu.memory.getPointer(cpu.registers.SP + (n - 8) * 4);
+			} else {
+				return &cpu.registers.R[4 + n];
+			}
+		}
+		T vparam_value(T)(int n) {
+			static if (is(T == string)) {
+				auto ptr = cast(char*)cpu.memory.getPointer(vparam_value!(uint)(n));
+				return cast(string)ptr[0..std.c.string.strlen(ptr)];
+			} else {
+				return *cast(T *)vparam_ptr!(T)(n);
+			}
+		}
+		ulong param64(int n) { return vparam_value!(ulong)(n); }
+		uint  param  (int n) { return vparam_value!(uint )(n); }
+		float paramf (int n) { return vparam_value!(float)(n); }
+		
+		int current_vparam = 0;
+		T readparam(T)(int set = -1) {
+			int _align = T.sizeof / 4;
+			if (set >= 0) current_vparam = set;
+			while (current_vparam % _align) current_vparam++;
+			auto ret = vparam_value!(T)(current_vparam);
+			current_vparam += _align;
+			return ret;
+		}
+		
 		void* param_p(int n) {
-			uint v = cpu.registers[4 + n];
+			uint v = param(n);
 			if (v != 0) {
 				try {
 					return cpu.memory.getPointer(v);
@@ -194,7 +223,8 @@ abstract class Module {
 			}
 		}
 		char* paramszp(int n) { return cast(char *)param_p(n); }
-		string paramsz(int n) { auto ptr = paramszp(n); return cast(string)ptr[0..std.c.string.strlen(ptr)]; }
+		//string paramsz(int n) { auto ptr = paramszp(n); return cast(string)ptr[0..std.c.string.strlen(ptr)]; }
+		string paramsz(int n) { return vparam_value!(string)(n); }
 	}
 	
 	template Registration() {
