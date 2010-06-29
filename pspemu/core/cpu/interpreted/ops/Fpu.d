@@ -107,6 +107,6 @@ template TemplateCpu_FPU() {
 	auto OP_CVT_S_W() { mixin(CE("$fd = cast(float)reinterpret!(int)($fs);")); }
 
 	// Memory transfer.
-	auto OP_LWC1() { mixin(CE("$Ft = memory.read32($rs + #im);")); }
-	auto OP_SWC1() { mixin(CE("memory.write32($rs + #im, $Ft);")); }
+	auto OP_LWC1() { mixin(CE("$Ft = memory.tread!(uint)($rs + #im);")); }
+	auto OP_SWC1() { mixin(CE("memory.twrite!(uint)($rs + #im, $Ft);")); }
 }

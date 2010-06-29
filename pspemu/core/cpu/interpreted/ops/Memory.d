@@ -6,35 +6,32 @@ import pspemu.core.cpu.interpreted.Utils;
 template TemplateCpu_MEMORY() {
 	mixin TemplateCpu_MEMORY_Utils;
 	
-	alias pspemu.utils.Utils.Signed Signed;
-	alias pspemu.utils.Utils.Unsigned Unsigned;
-
 	// LB(U) -- Load byte (unsigned)
 	// LH(U) -- Load half (unsigned)
 	// LW    -- Load word
 	// A byte/half/word is loaded into a register from the specified address.
 	// $t = MEM[$s + offset]; advance_pc (4);
-	auto OP_LB () { mixin(LOAD(8 , Signed  )); }
-	auto OP_LBU() { mixin(LOAD(8 , Unsigned)); }
+	auto OP_LB () { LOAD!(byte); }
+	auto OP_LBU() { LOAD!(ubyte); }
 
-	auto OP_LH () { mixin(LOAD(16, Signed  )); }
-	auto OP_LHU() { mixin(LOAD(16, Unsigned)); }
+	auto OP_LH () { LOAD!(short); }
+	auto OP_LHU() { LOAD!(ushort); }
 
-	auto OP_LW () { mixin(LOAD(32, Unsigned)); }
+	auto OP_LW () { LOAD!(uint); }
 
 	// LWL -- Load Word Left
 	// LWR -- Load Word Right
 	auto OP_LWL() {
 		registers[instruction.RT] = (
 			(registers[instruction.RT] & 0x_0000_FFFF) |
-			((memory.read16(registers[instruction.RS] + instruction.IMM - 1) << 16) & 0x_FFFF_0000)
+			((memory.tread!(ushort)(registers[instruction.RS] + instruction.IMM - 1) << 16) & 0x_FFFF_0000)
 		);
 		registers.pcAdvance(4);
 	}
 	auto OP_LWR() {
 		registers[instruction.RT] = (
 			(registers[instruction.RT] & 0x_FFFF_0000) |
-			((memory.read16(registers[instruction.RS] + instruction.IMM - 0) << 0) & 0x_0000_FFFF)
+			((memory.tread!(ushort)(registers[instruction.RS] + instruction.IMM - 0) << 0) & 0x_0000_FFFF)
 		);
 		registers.pcAdvance(4);
 	}
@@ -44,25 +41,14 @@ template TemplateCpu_MEMORY() {
 	// SW -- Store word
 	// The contents of $t is stored at the specified address.
 	// MEM[$s + offset] = $t; advance_pc (4);
-	auto OP_SB() {
-		debug (DEBUG_SB) {
-			writef("%08X: ", registers[instruction.RS] + instruction.OFFSET);
-			for (int n = -4; n <= 4; n++) writef("%02X", memory[registers[instruction.RS] + instruction.OFFSET + n]);
-			writef(" -> ");
-		}
-		mixin(STORE(8 ));
-		debug (DEBUG_SB) {
-			for (int n = -4; n <= 4; n++) writef("%02X", memory[registers[instruction.RS] + instruction.OFFSET + n]);
-			writefln("");
-		}
-	}
-	auto OP_SH() { mixin(STORE(16)); }
-	auto OP_SW() { mixin(STORE(32)); }
+	auto OP_SB() { STORE!(ubyte); }
+	auto OP_SH() { STORE!(ushort); }
+	auto OP_SW() { STORE!(uint); }
 
 	// SWL -- Store Word Left
 	// SWR -- Store Word Right
-	auto OP_SWL() { memory.write16(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); registers.pcAdvance(4); }
-	auto OP_SWR() { memory.write16(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); registers.pcAdvance(4); }
+	auto OP_SWL() { memory.twrite!(ushort)(registers[instruction.RS] + instruction.IMM - 1, (registers[instruction.RT] >> 16) & 0xFFFF); registers.pcAdvance(4); }
+	auto OP_SWR() { memory.twrite!(ushort)(registers[instruction.RS] + instruction.IMM - 0, (registers[instruction.RT] >>  0) & 0xFFFF); registers.pcAdvance(4); }
 
 	// CACHE
 	auto OP_CACHE() {
@@ -72,19 +58,28 @@ template TemplateCpu_MEMORY() {
 }
 
 template TemplateCpu_MEMORY_Utils() {
-	static pure nothrow {
-		string LOAD(uint size, bool signed) {
-			return (
-				"registers[instruction.RT] = cast(" ~ (signed ? "s" : "u") ~ tos(size) ~ ")memory.read" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET * " ~ tos(1) ~ ");" ~
-				"registers.pcAdvance(4);"
-			);
+	void LOAD(T)() {
+		registers[instruction.RT] = cast(uint)memory.tread!(T)(registers[instruction.RS] + instruction.OFFSET);
+		registers.pcAdvance(4);
+	}
+
+	void STORE(T)() {
+		static if (is(T == ubyte)) {
+			debug (DEBUG_SB) {
+				writef("%08X: ", registers[instruction.RS] + instruction.OFFSET);
+				for (int n = -4; n <= 4; n++) writef("%02X", memory[registers[instruction.RS] + instruction.OFFSET + n]);
+				writef(" -> ");
+			}
 		}
 
-		string STORE(uint size) {
-			return (
-				"memory.write" ~ tos(size) ~ "(registers[instruction.RS] + instruction.OFFSET * " ~ tos(1) ~ ", cast(u" ~ tos(size) ~ ")registers[instruction.RT]);" ~
-				"registers.pcAdvance(4);"
-			);
+		memory.twrite!(T)(registers[instruction.RS] + instruction.OFFSET, cast(T)registers[instruction.RT]);
+		registers.pcAdvance(4);
+
+		static if (is(T == ubyte)) {
+			debug (DEBUG_SB) {
+				for (int n = -4; n <= 4; n++) writef("%02X", memory[registers[instruction.RS] + instruction.OFFSET + n]);
+				writefln("");
+			}
 		}
 	}
 }

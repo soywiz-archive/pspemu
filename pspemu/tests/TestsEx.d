@@ -11,6 +11,7 @@ import pspemu.models.IDisplay;
 import pspemu.formats.Pbp;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Path;
 import pspemu.utils.Assertion;
 
 import pspemu.models.IDisplay;

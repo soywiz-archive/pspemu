@@ -265,32 +265,6 @@ class Memory : Stream {
 	 * Implementation of the read/write functions with several memory sizes.
 	 */
 	template ReadWriteTemplate() {
-		private static pure string checkAlignment(string size) {
-			return "version (VERSION_CHECK_ALIGNMENT) assert(((address & ((" ~ size ~ " >> 3) - 1)) == 0), std.string.format(\"Address 0x%08X not aligned to %d bytes.\", address, (" ~ size ~ " >> 3)));";
-		}
-		
-		private static pure string writeGen(string size) {
-			string r, type = "u" ~ size;
-			{
-				r ~= "void write" ~ size ~ "(uint address, " ~ type ~ " value) {";
-				r ~= "    " ~ checkAlignment(size);
-				r ~= "    *cast(" ~ type ~ "*)getPointer(address) = value;";
-				r ~= "}";
-			}
-			return r;
-		}
-
-		private static pure string readGen(string size) {
-			string r, type = "u" ~ size;
-			{
-				r ~= type ~ " read" ~ size ~ "(uint address) {";
-				r ~= "    " ~ checkAlignment(size);
-				r ~= "    return *cast(" ~ type ~ "*)getPointer(address);";
-				r ~= "}";
-			}
-			return r;
-		}
-		
 		T twrite(T)(uint address, T value) {
 			version (VERSION_CHECK_ALIGNMENT) assert(((address & ((T.sizeof >> 3) - 1)) == 0), std.string.format("Address 0x%08X not aligned to %d bytes.", address, (T.sizeof >> 3)));
 			return *cast(T*)getPointer(address) = value;
@@ -300,18 +274,6 @@ class Memory : Stream {
 			version (VERSION_CHECK_ALIGNMENT) assert(((address & ((T.sizeof >> 3) - 1)) == 0), std.string.format("Address 0x%08X not aligned to %d bytes.", address, (T.sizeof >> 3)));
 			return *cast(T*)getPointer(address);
 		}
-
-		/// Write functions.
-		mixin(writeGen("8" ));
-		mixin(writeGen("16"));
-		mixin(writeGen("32"));
-		mixin(writeGen("64"));
-
-		/// Read functions.
-		mixin(readGen("8" ));
-		mixin(readGen("16"));
-		mixin(readGen("32"));
-		mixin(readGen("64"));
 	}
 
 	/**
@@ -381,7 +343,7 @@ class Memory : Stream {
 		 *
 		 * @return A single byte with the data in that memory address.
 		 */
-		ubyte opIndex(uint address) { return read8(address); }
+		ubyte opIndex(uint address) { return tread!(ubyte)(address); }
 
 		/**
 		 * Sets a single byte on memory.
@@ -390,7 +352,7 @@ class Memory : Stream {
 		 *
 		 * @return A single byte with the data set in that memory address.
 		 */
-		ubyte opIndexAssign(ubyte value, uint address) { write8(address, value); return read8(address); }
+		ubyte opIndexAssign(ubyte value, uint address) { twrite(address, value); return tread!(ubyte)(address); }
 	}
 
 	/**
@@ -421,7 +383,7 @@ class Memory : Stream {
 			size_t readBlock(void *_data, size_t len) {
 				u8 *data = cast(u8*)_data; int rlen = len;
 				try {
-					while (len-- > 0) *data++ = read8(cast(uint)streamPosition++);
+					while (len-- > 0) *data++ = tread!(u8)(cast(uint)streamPosition++);
 				} catch (Exception e) {
 					return 0;
 				}
@@ -439,7 +401,7 @@ class Memory : Stream {
 			size_t writeBlock(const void *_data, size_t len) {
 				u8 *data = cast(u8*)_data; int rlen = len;
 				try {
-					while (len-- > 0) write8(cast(uint)streamPosition++, *data++);
+					while (len-- > 0) twrite!(ubyte)(cast(uint)streamPosition++, *data++);
 				} catch (Exception e) {
 					return 0;
 				}

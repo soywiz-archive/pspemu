@@ -9,6 +9,7 @@ import pspemu.core.cpu.Interrupts;
 import pspemu.hle.Module;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Path;
 import pspemu.utils.Logger;
 import pspemu.utils.VirtualFileSystem;
 

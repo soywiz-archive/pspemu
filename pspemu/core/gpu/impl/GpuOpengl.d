@@ -22,6 +22,7 @@ import std.windows.syserror;
 import std.stdio;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Image;
 
 import std.contracts;
 

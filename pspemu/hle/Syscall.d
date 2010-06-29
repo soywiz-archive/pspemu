@@ -55,7 +55,7 @@ class Syscall : ISyscall {
 			// Special syscalls for this emulator:
 			case 0x1000: { // _pspemuHLECall
 				uint PC = cpu.registers.PC;
-				auto moduleFunction = cast(Module.Function*)cpu.memory.read32(PC);
+				auto moduleFunction = cast(Module.Function*)cpu.memory.tread!(uint)(PC);
 				cpu.registers.pcSet(cpu.registers.RA);
 				try {
 					callModuleFunction(moduleFunction);

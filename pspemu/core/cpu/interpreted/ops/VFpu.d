@@ -107,7 +107,7 @@ template TemplateCpu_VFPU() {
 	mixin TemplateCpu_VFPU_Utils;
 	
 	const float[] vfpu_constant = [
-		0.0f,                                       /// VFPU_ZERO     - 0
+		0.0f,                                       /// 
 		float.infinity,                             /// VFPU_HUGE     - infinity
 		cast(float)(SQRT2),                         /// VFPU_SQRT2    - sqrt(2)
 		cast(float)(SQRT1_2),                       /// VFPU_SQRT1_2  - sqrt(1 / 2)
@@ -121,7 +121,7 @@ template TemplateCpu_VFPU() {
 		cast(float)(LOG2E),                         /// VFPU_LOG2E    - log2(E) = log(E) / log(2)
 		cast(float)(LOG10E),                        /// VFPU_LOG10E   - log10(E)
 		cast(float)(LN2),                           /// VFPU_LN2      - ln(2)
-		cast(float)(LN10),                          /// VFPU_LN2      - ln(10)
+		cast(float)(LN10),                          /// VFPU_LN10     - ln(10)
 		cast(float)(2.0 * PI),                      /// VFPU_2PI      - 2 * pi
 		cast(float)(PI / 6.0),                      /// VFPU_PI_6     - pi / 6
 		cast(float)(LOG2),                          /// VFPU_LOG10TWO - log10(2)
@@ -164,7 +164,7 @@ template TemplateCpu_VFPU() {
 		registers.pcAdvance(4);
 	}
 
-	// Vector IDenTity quad aligned?
+	// Vector IDenTity
 	void OP_VIDT() {
 		auto vsize = instruction.ONE_TWO;
 		OP_VIDT_x(vsize, instruction.VD);
@@ -173,7 +173,7 @@ template TemplateCpu_VFPU() {
 
 	// Vfpu load Integer IMmediate
 	void OP_VIIM() {
-		*vfpuVectorPointer(1, instruction.VD)[0] = cast(float)instruction.IMM;
+		*vfpuVectorPointer(1, instruction.EXT(16, 7))[0] = cast(float)instruction.IMM;
 		registers.pcAdvance(4);
 	}
 	

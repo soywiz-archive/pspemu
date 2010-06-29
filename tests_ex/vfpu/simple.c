@@ -125,26 +125,84 @@ void checkMatrixIdentity() {
 	//Kprintf("Test! %d, %d, %d, %d\n", 1, 2, 3, -3);
 }
 
-int main(int argc, char *argv[]) {
+void checkConstants() {
+	ScePspFVector4 v[5];
+	int n;
+	asm volatile(
+		"vcst.s S000, VFPU_HUGE\n"
+		"vcst.s S010, VFPU_SQRT2\n"
+		"vcst.s S020, VFPU_SQRT1_2\n"
+		"vcst.s S030, VFPU_2_SQRTPI\n"
+		"vcst.s S001, VFPU_2_PI\n"
+		"vcst.s S011, VFPU_1_PI\n"
+		"vcst.s S021, VFPU_PI_4\n"
+		"vcst.s S031, VFPU_PI_2\n"
+		"vcst.s S002, VFPU_PI\n"
+		"vcst.s S012, VFPU_E\n"
+		"vcst.s S022, VFPU_LOG2E\n"
+		"vcst.s S032, VFPU_LOG10E\n"
+		"vcst.s S003, VFPU_LN2\n"
+		"vcst.s S013, VFPU_LN10\n"
+		"vcst.s S023, VFPU_2PI\n"
+		"vcst.s S033, VFPU_PI_6\n"
+		"vcst.s S100, VFPU_LOG10TWO\n"
+		"vcst.s S110, VFPU_LOG2TEN\n"
+		"vcst.s S120, VFPU_SQRT3_2\n"
+		"viim.s S130, 0\n"
+		"sv.q   R000, 0x00+%0\n"
+		"sv.q   R001, 0x10+%0\n"
+		"sv.q   R002, 0x20+%0\n"
+		"sv.q   R003, 0x30+%0\n"
+		"sv.q   R100, 0x40+%0\n"
+		: "+m" (v)
+	);
+	char buf[1024];
+	char temp[1024];
+	buf[0] = 0;
+	for (n = 0; n < 5; n++) {
+		sprintf(temp, "%f,%f,%f,%f\n", v[n].x, v[n].y, v[n].z, v[n].w);
+		strcat(buf, temp);
+	}
+	//Kprintf("%s", buf);
+	emitInt(strcmp(buf,
+		"inf,1.414214,0.707107,1.128379\n"
+		"0.636620,0.318310,0.785398,1.570796\n"
+		"3.141593,2.718282,1.442695,0.434294\n"
+		"0.693147,2.302585,6.283185,0.523599\n"
+		"0.301030,3.321928,0.866025,0.000000\n"
+	));
+}
+
+void checkVectorCopy() {
 	initValues();
 	vcopy(&v0, &v1);
 	emitFloat(v0.x);
 	emitFloat(v0.y);
 	emitFloat(v0.z);
 	emitFloat(v0.w);
+}
 
+void checkDot() {
 	initValues();
 	vdotq(&v0, &v1, &v2);
 	emitFloat(v0.x);
+}
 
+void checkScale() {
 	initValues();
 	vsclq(&v0, &v1, &v2);
 	emitFloat(v0.x);
 	emitFloat(v0.y);
 	emitFloat(v0.z);
 	emitFloat(v0.w);
+}
 
+int main(int argc, char *argv[]) {
+	checkVectorCopy();
+	checkDot();
+	checkScale();
 	checkMatrixIdentity();
+	checkConstants();
 
 	return 0;
 }

@@ -6,6 +6,7 @@ import std.stdio, std.c.time, core.memory;
 import std.typetuple;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Path;
 
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Disassembler;
@@ -298,6 +299,10 @@ class DisplayForm : Form, IMessageFilter {
 				mi.checked = !mi.checked;
 				GlobalConfig.frameLimiting = mi.checked;
 			}).checked = GlobalConfig.frameLimiting;
+			addMenu("-");
+			addMenu("Associate extensions (.cso, .elf, .pbp)", (MenuItem mi, EventArgs ea) {
+				RunAsAdmin(Application.executablePath, "/register");
+			});
 		});
 		addMenu("&Help", {
 			addMenu("&Website", (MenuItem mi, EventArgs ea) {

@@ -210,7 +210,7 @@ template BreakPointStuff() {
 		if (breakpointRegisters is null) breakpointRegisters = new Registers;
 		if (bp.callback) bp.callback();
 		if (instructionCounter is null) instructionCounter = new InstructionCounter();
-		Instruction instruction = void; instruction.v = memory.read32(PC);
+		Instruction instruction = void; instruction.v = memory.tread!(uint)(PC);
 		instructionCounter.count(instruction);
 		if (traceOnlyIfChanged && bp.traceRegisters.length) {
 			bool cancel = true;

@@ -163,6 +163,10 @@ struct Instruction {
 
 		uint SIZE_I() { return MSB - LSB + 1; }
 		uint SIZE_I(uint size) { MSB = LSB + size - 1; return size; }
+		
+		uint EXT(int offset, int size) {
+			return (v >> offset) & ((1 << size) - 1);
+		}
 	}
 
 	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/32 bits.");

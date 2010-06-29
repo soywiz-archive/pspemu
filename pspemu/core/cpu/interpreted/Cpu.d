@@ -94,7 +94,7 @@ class CpuInterpreted : public Cpu {
 				}
 			}
 
-			instruction.v = memory.read32(registers.PC);
+			instruction.v = memory.tread!(uint)(registers.PC);
 			lastValidPC = registers.PC;
 			mixin(genSwitch(PspInstructions));
 

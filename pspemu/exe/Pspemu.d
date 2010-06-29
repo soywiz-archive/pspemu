@@ -39,6 +39,8 @@ import pspemu.hle.Syscall;
 
 import pspemu.hle.kd.threadman;
 
+import std.windows.registry;
+
 class PspDisplay : Display {
 	Memory memory;
 
@@ -50,6 +52,18 @@ class PspDisplay : Display {
 }
 
 int main(string[] args) {
+	if (args.length >= 2 && args[1] == "/register") {
+		std.windows.registry.Registry.classesRoot.createKey(".elf").setValue(null, "dpspemu.executable");
+		std.windows.registry.Registry.classesRoot.createKey(".pbp").setValue(null, "dpspemu.executable");
+		std.windows.registry.Registry.classesRoot.createKey(".cso").setValue(null, "dpspemu.executable");
+		std.windows.registry.Registry.classesRoot.createKey(".prx").setValue(null, "dpspemu.executable");
+
+		auto reg = std.windows.registry.Registry.classesRoot.createKey("dpspemu.executable");
+		reg.setValue(null, "PSP executable file (.elf, .pbp, .cso, .prx)");
+		reg.createKey("DefaultIcon").setValue(null, "\"" ~ Application.executablePath ~ "\",0");
+		reg.createKey("shell").createKey("open").createKey("command").setValue(null, "\"" ~ Application.executablePath ~ "\" \"%1\"");
+		return 0;
+	}
 	//Thread.getThis.priority = +1;
 	
 	try { std.file.mkdirRecurse("pspfs/flash0/font"); } catch { }

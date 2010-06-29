@@ -123,7 +123,7 @@ class AllegrexDisassembler {
 		assert(memory !is null);
 		Instruction instruction;
 		try {
-			instruction.v = memory.read32(PC);
+			instruction.v = memory.tread!(uint)(PC);
 		} catch (MemoryException me) {
 			return ["Invalid Address"];
 		}

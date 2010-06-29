@@ -366,7 +366,7 @@ unittest {
 		assertTrue(cpu.registers.F[2] == 1.5f, "LWC1 1");
 		assertTrue(cpu.registers.F[3] == 1.6f, "LWC1 2");
 		assertTrue(cpu.registers.F[4] == 1.5f + 1.6f, "ADD.S");
-		assertTrue(cpu.registers.RF[4] == cpu.memory.read32(assembler.segments["data"] + 8), "SWC1");
+		assertTrue(cpu.registers.RF[4] == cpu.memory.tread!(uint)(assembler.segments["data"] + 8), "SWC1");
 		assertTrue(cpu.registers.RF[1] == 2, "CEIL.W.S");
 	});
 

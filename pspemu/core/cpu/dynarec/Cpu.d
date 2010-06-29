@@ -221,15 +221,15 @@ static extern(C) {
 		return false;
 	}
 
-	void MEMORY_WRITE_SB(uint addr, ubyte value) { lastCpu.memory.write8 (addr, value); }
-	void MEMORY_WRITE_SH(uint addr, ubyte value) { lastCpu.memory.write16(addr, value); }
-	void MEMORY_WRITE_SW(uint addr, ubyte value) { lastCpu.memory.write32(addr, value); }
+	void MEMORY_WRITE_SB(uint addr, uint value) { lastCpu.memory.twrite(addr, cast(ubyte)value); }
+	void MEMORY_WRITE_SH(uint addr, uint value) { lastCpu.memory.twrite(addr, cast(ushort)value); }
+	void MEMORY_WRITE_SW(uint addr, uint value) { lastCpu.memory.twrite(addr, cast(uint)value); }
 
-	uint MEMORY_READ_LB(uint addr) { return cast(int)cast(byte)lastCpu.memory.read8(addr); }
-	uint MEMORY_READ_LH(uint addr) { return cast(int)cast(short)lastCpu.memory.read16(addr); }
-	uint MEMORY_READ_LBU(uint addr) { return cast(uint)lastCpu.memory.read8(addr); }
-	uint MEMORY_READ_LHU(uint addr) { return cast(uint)lastCpu.memory.read16(addr); }
-	uint MEMORY_READ_LW(uint addr) { return cast(int)lastCpu.memory.read32(addr); }
+	uint MEMORY_READ_LB (uint addr) { return lastCpu.memory.tread!(byte)(addr); }
+	uint MEMORY_READ_LH (uint addr) { return lastCpu.memory.tread!(short)(addr); }
+	uint MEMORY_READ_LBU(uint addr) { return lastCpu.memory.tread!(ubyte)(addr); }
+	uint MEMORY_READ_LHU(uint addr) { return lastCpu.memory.tread!(ushort)(addr); }
+	uint MEMORY_READ_LW (uint addr) { return lastCpu.memory.tread!(uint)(addr); }
 	
 	void JUMP_PC(uint PC) {
 		lastCpu.registers.pcSet = PC;
@@ -578,7 +578,7 @@ class CpuDynaRec : Cpu {
 
 					debug (DEBUG_DYNA_CODE_GEN) writefln("EMIT:%08X", PC);
 
-					instructionInfo.set(PC, memory.read32(PC));
+					instructionInfo.set(PC, memory.tread!(uint)(PC));
 					instructionInfo.parseJumps();
 
 					// Jump.
@@ -590,7 +590,7 @@ class CpuDynaRec : Cpu {
 
 						instructionInfo.emitPreDelayed(PC, instructionInfo.jumpAddress, emiter, labelTrue, labelFalse);
 						labels[PC + 4] = emiter.createLabelAndSetHere();
-						delayedInstructionInfo.set(PC + 4, memory.read32(PC + 4));
+						delayedInstructionInfo.set(PC + 4, memory.tread!(uint)(PC + 4));
 						delayedInstructionInfo.inDelayedBranch = true;
 						delayedInstructionInfo.emitNonDelayed(emiter);
 						instructionInfo.emitPostDelayed(PC, instructionInfo.jumpAddress, emiter, labelTrue, labelFalse);

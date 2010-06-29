@@ -179,7 +179,6 @@ abstract class Module {
 	
 	template Parameters() {
 		void* vparam_ptr(T)(int n) {
-			//return &cpu.registers.R[4 + n];
 			if (n >= 8) {
 				return cpu.memory.getPointer(cpu.registers.SP + (n - 8) * 4);
 			} else {
@@ -188,7 +187,9 @@ abstract class Module {
 		}
 		T vparam_value(T)(int n) {
 			static if (is(T == string)) {
-				auto ptr = cast(char*)cpu.memory.getPointer(vparam_value!(uint)(n));
+				uint v = vparam_value!(uint)(n);
+				//writefln("---------%08X(%d)", v, n);
+				auto ptr = cast(char*)cpu.memory.getPointer(v);
 				return cast(string)ptr[0..std.c.string.strlen(ptr)];
 			} else {
 				return *cast(T *)vparam_ptr!(T)(n);
@@ -201,6 +202,7 @@ abstract class Module {
 		int current_vparam = 0;
 		T readparam(T)(int set = -1) {
 			int _align = T.sizeof / 4;
+			static if (is(T == string)) _align = 1;
 			if (set >= 0) current_vparam = set;
 			while (current_vparam % _align) current_vparam++;
 			auto ret = vparam_value!(T)(current_vparam);

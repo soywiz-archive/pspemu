@@ -1,7 +1,7 @@
 module pspemu.core.cpu.dynarec.ops.Memory;
 
 extern(C) {
-	typedef void function(uint addr, ubyte value) WriteFunc;
+	typedef void function(uint addr, uint value) WriteFunc;
 	typedef uint function(uint addr) ReadFunc;
 }
 
