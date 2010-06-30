@@ -45,33 +45,51 @@ struct ValueMask {
 		}
 		foreach (part; parts) {
 			switch (part) {
+				case "cstw", "cstz", "csty", "cstx":
+				case "absw", "absz", "absy", "absx":
+				case "mskw", "mskz", "msky", "mskx":
+				case "negw", "negz", "negy", "negx":
 				case "one", "two":
-				case "vt1": alloc(1); break;
-				case "vt5":
-				case "c0dr", "c0cr", "c1dr", "c1cr":
-				case "imm5":
-				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft": alloc(5); break;
-				case "fcond": alloc(4 ); break;
-				case "vs", "vt", "vd":
-				case "imm7" : alloc(7 ); break;
+				case "vt1":
+					alloc(1);
+				break;
+				case "vt2":
+				case "satw", "satz", "saty", "satx":
+				case "swzw", "swzz", "swzy", "swzx":
+					alloc(2);
+				break;
+				case "imm3":
+					alloc(3);
+				break;
+				case "fcond":
+					alloc(4);
+				break;
+				case "c0dr", "c0cr", "c1dr", "c1cr", "imm5", "vt5":
+				case "rs", "rd", "rt", "sa", "lsb", "msb", "fs", "fd", "ft":
+					alloc(5);
+				break;
+				case "vs", "vt", "vd", "imm7":
+					alloc(7 );
+				break;
 				case "imm14": alloc(14); break;
 				case "imm16": alloc(16); break;
 				case "imm20": alloc(20); break;
 				case "imm26": alloc(26); break;
 				default:
-					if ((part[0] != '0') && (part[0] != '1')) {
+					if ((part[0] != '0') && (part[0] != '1') && (part[0] != '-')) {
 						assert(0, "Unknown identifier");
 					} else {
 						for (int n = 0; n < part.length; n++) {
 							alloc(1);
-							if (part[n] == '0') {
-								set(0, 1);
-							} else if (part[n] == '1') {
-								set(1, 1);
-							} else {
-								//pragma(msg, part);
-								assert(0);
-								set(0, 0);
+							switch (part[n]) {
+								case '0': set(0, 1); break; 
+								case '1': set(1, 1); break;
+								case '-': set(0, 0); break;
+								default:
+									//pragma(msg, part);
+									assert(0);
+									set(0, 0);
+								break;
 							}
 						}
 					}
@@ -164,9 +182,9 @@ struct Instruction {
 		uint SIZE_I() { return MSB - LSB + 1; }
 		uint SIZE_I(uint size) { MSB = LSB + size - 1; return size; }
 		
-		uint EXT(int offset, int size) {
-			return (v >> offset) & ((1 << size) - 1);
-		}
+		uint EXT(int offset, int size) { return (v >> offset) & ((1 << size) - 1); }
+		
+		uint VT5_1() { return VT5 | (VT1 << 5); }
 	}
 
 	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/32 bits.");

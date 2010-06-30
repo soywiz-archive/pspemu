@@ -300,7 +300,7 @@ class DisplayForm : Form, IMessageFilter {
 				GlobalConfig.frameLimiting = mi.checked;
 			}).checked = GlobalConfig.frameLimiting;
 			addMenu("-");
-			addMenu("Associate extensions (.cso, .elf, .pbp)", (MenuItem mi, EventArgs ea) {
+			addMenu("Associate extensions (.cso, .elf, .pbp, .prx)", (MenuItem mi, EventArgs ea) {
 				RunAsAdmin(Application.executablePath, "/register");
 			});
 		});

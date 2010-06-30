@@ -71,6 +71,65 @@ final class Registers {
 		struct { float[8][4][4]   VF_CELLS ; } // matrix,column,row
 	}
 
+	struct VfpuPrefix {
+		/*
+		op VPFXS(110111:00:----:negw:negz:negy:negx:cstw:cstz:csty:cstx:absw:absz:absy:absx:swzw:swzz:swzy:swzx)
+		op VPFXT(110111:01:----:negw:negz:negy:negx:cstw:cstz:csty:cstx:absw:absz:absy:absx:swzw:swzz:swzy:swzx)
+		negw:1; negz:1; negy:1; negx:1;
+		cstw:1; cstz:1; csty:1; cstx:1;
+		absw:1; absz:1; absy:1; absx:1;
+		swzw:2; swzz:2; swzy:2; swzx:2;
+
+		op VPFXD(110111:10:------------:mskw:mskz:msky:mskx:satw:satz:saty:satx)
+		mskw:1; mskz:1; msky:1; mskx:1;
+		satw:2; satz:2; saty:2; satx:2;
+		*/
+		uint value = 0;
+		bool enabled = false;
+		
+		template PrefixSrc() {
+			int index(int i) { // swz(xyzw)
+				assert(i >= 0 && i < 4);
+				return (value >> (0 + i * 2)) & 3;
+			}
+
+			bool absolute(int i) { // abs(xyzw)
+				assert(i >= 0 && i < 4);
+				return (value >> (8 + i * 1)) & 1;
+			}
+
+			bool constant(int i) { // cst(xyzw)
+				assert(i >= 0 && i < 4);
+				return (value >> (12 + i * 1)) & 1;
+			}
+			
+			bool negate(int i) { // neg(xyzw)
+				assert(i >= 0 && i < 4);
+				return (value >> (16 + i * 1)) & 1;
+			}
+		}
+
+		template PrefixDst() {
+			int saturation(int i) { // sat(xyzw)
+				assert(i >= 0 && i < 4);
+				return (value >> (0 + i * 2)) & 3;
+			}
+
+			bool mask(int i) { // msk(xyzw)
+				assert(i >= 0 && i < 4);
+				return (value >> (8 + i * 1)) & 1;
+			}
+		}
+		
+		mixin PrefixSrc;
+		mixin PrefixDst;
+	}
+
+	union {
+		struct { VfpuPrefix vfpu_prefix_s, vfpu_prefix_t, vfpu_prefix_d; }
+		struct { VfpuPrefix[3] vfpu_prefixes; }
+	}
+
 	static class FP {
 		protected static int[string] aliases;
 
@@ -111,6 +170,7 @@ final class Registers {
 	
 	void copyFromVFPU(Registers that) {
 		this.VF[]  = that.VF[]; // Only if preserved!
+		this.vfpu_prefixes[] = that.vfpu_prefixes[];
 	}
 
 	static this() {
@@ -124,6 +184,8 @@ final class Registers {
 		PC = 0; nPC = 4;
 		R[0..$] = 0;
 		F[0..$] = 0.0;
+		VF[0..$] = 0.0;
+		vfpu_prefixes[0..3] = VfpuPrefix.init;
 		//D[0..$] = 0.0;
 	}
 

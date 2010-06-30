@@ -3,6 +3,6 @@ import pspemu.core.cpu.interpreted.Utils;
 
 template TemplateCpu_UNIMPLEMENTED() {
 	void UNIMPLEMENTED() {
-		assert(0, "Unimplemented");
+		throw(new Exception("Unimplemented")); assert(0, "Unimplemented");
 	}
 }

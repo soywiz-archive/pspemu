@@ -5,6 +5,8 @@ http://www.motioninjoy.com/help/sixaxis-dualshock-3-connecting-usb
 
 module pspemu.utils.XInput;
 
+import pspemu.utils.BindLibrary;
+
 import std.c.stdio;
 import std.stdio;
 
@@ -235,33 +237,7 @@ template XInput_Imports() {
 }
 
 static this() {
-	BindLibrary!("xinput1_3.dll", XInput_Imports);
+	BindLibrary!("xinput1_3.dll", XInput_Imports, "pspemu.utils.XInput.");
 }
 
-void BindLibrary(string dll, alias bindTemplate, string prefixTo = "", string prefixFrom = "")() {
-	HANDLE lib = LoadLibraryA(dll);
-	if (lib is null) throw(new Exception("Can't load library '" ~ dll ~ "'"));
-	
-	static string ProcessMember(string name) {
-		string dname = prefixTo ~ name;
-		string importName = prefixFrom ~ name;
-		return (
-			"{ static if (__traits(compiles, &" ~ dname ~ ")) {"
-				"void* addr = cast(void*)GetProcAddress(lib, \"" ~ importName ~ "\");"
-				"if (addr is null) throw(new Exception(\"Can't load '" ~ importName ~ "' from '" ~ dll ~ "'\"));"
-				"*cast(void**)&" ~ dname ~ " = addr;"
-			"} }"
-		); 
-	}
-	
-	static string ProcessMembers(alias T)() {
-		string s;
-		static if (T.length >= 1) {
-			s ~= ProcessMember(T[0]);
-			static if (T.length > 1) s ~= ProcessMembers!(T[1..$])();
-		}
-		return s;
-	}
-
-	mixin(ProcessMembers!(__traits(derivedMembers, bindTemplate))());
-}
+//void main() { }

@@ -197,7 +197,27 @@ void checkScale() {
 	emitFloat(v0.w);
 }
 
+void moveNormalRegister() {
+	float t = 5.0;
+	//int t2 = *(int *)&t;
+	ScePspFVector4 v;
+	asm volatile(
+		"mtv %1, S410\n"
+		"mtv %1, S411\n"
+		"mtv %1, S412\n"
+		"mtv %1, S413\n"
+		"sv.q   C410, 0x00+%0\n"
+		: "+m" (v) : "t" (t)
+	);
+	emitFloat(v.x);
+	emitFloat(v.y);
+	emitFloat(v.z);
+	emitFloat(v.w);
+	//Kprintf("%f, %f, %f, %f\n", v.x, v.y, v.z, v.w);
+}
+
 int main(int argc, char *argv[]) {
+	moveNormalRegister();
 	checkVectorCopy();
 	checkDot();
 	checkScale();

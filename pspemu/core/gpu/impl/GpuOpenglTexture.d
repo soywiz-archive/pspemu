@@ -6,6 +6,7 @@ module pspemu.core.gpu.impl.GpuOpenglTexture;
 import std.c.windows.windows;
 import std.windows.syserror;
 import std.stdio;
+import std.zlib;
 
 import pspemu.utils.Utils;
 

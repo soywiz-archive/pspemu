@@ -3,6 +3,7 @@ module pspemu.core.gpu.ops.Draw;
 //debug = EXTRACT_PRIM;
 //debug = EXTRACT_PRIM_COMPONENT;
 //debug = DEBUG_DRAWING;
+//debug = DEBUG_MATRIX;
 
 static assert(byte.sizeof  == 1);
 static assert(short.sizeof == 2);
@@ -158,6 +159,36 @@ template Gpu_Draw() {
 	
 	// draw PRIMitive
 	auto OP_PRIM() {
+		debug (DEBUG_MATRIX) {
+			writefln("gpu.state.viewMatrix:\n%s", gpu.state.viewMatrix);
+			writefln("gpu.state.worldMatrix:\n%s", gpu.state.worldMatrix);
+			writefln("gpu.state.projectionMatrix:\n%s", gpu.state.projectionMatrix);
+		}
+
+		// Matrixes for cubes
+		/*
+		gpu.state.viewMatrix.cells = [
+			1.000000, 0.000000, 0.000000, 0.000000,
+			0.000000, 1.000000, 0.000000, 0.000000,
+			0.000000, 0.000000, 1.000000, 0.000000,
+			0.000000, 0.000000, 0.000000, 1.000000
+		];
+
+		gpu.state.worldMatrix.cells = [
+			0.167461, -0.644470, 0.746048, 0.000000,
+			0.147636, -0.731812, -0.665314, 0.000000,
+			0.974747, 0.221561, -0.027400, 0.000000,
+			0.000000, 0.000000, -2.500000, 1.000000
+		];
+
+		gpu.state.projectionMatrix.cells = [
+			0.733063, 0.000000, 0.000000, 0.000000,
+			0.000000, 1.303223, 0.000000, 0.000000,
+			0.000000, 0.000000, -1.000977, -1.000000,
+			0.000000, 0.000000, -1.000488, 0.000000
+		];
+		*/
+	
 		auto vertexPointerBase = cast(ubyte*)gpu.memory.getPointer(gpu.state.vertexAddress);
 		auto indexPointerBase  = gpu.state.indexAddress ? cast(ubyte*)gpu.memory.getPointer(gpu.state.indexAddress) : null;
 

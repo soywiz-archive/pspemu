@@ -10,6 +10,7 @@ import dfl.all;
 import std.c.windows.windows;
 
 import pspemu.utils.Utils;
+import pspemu.utils.Path;
 
 import pspemu.gui.MainForm;
 import pspemu.gui.DisplayForm;
@@ -66,13 +67,13 @@ int main(string[] args) {
 	}
 	//Thread.getThis.priority = +1;
 	
-	try { std.file.mkdirRecurse("pspfs/flash0/font"); } catch { }
-	try { std.file.mkdirRecurse("pspfs/flash0/kd"); } catch { }
-	try { std.file.mkdirRecurse("pspfs/flash0/vsh"); } catch { }
-	try { std.file.mkdirRecurse("pspfs/flash1"); } catch { }
-	try { std.file.mkdirRecurse("pspfs/ms0/PSP/GAME/virtual"); } catch { }
-	try { std.file.mkdirRecurse("pspfs/ms0/PSP/PHOTO"); } catch { }
-	try { std.file.mkdirRecurse("pspfs/ms0/PSP/SAVEDATA"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/flash0/font"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/flash0/kd"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/flash0/vsh"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/flash1"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/ms0/PSP/GAME/virtual"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/ms0/PSP/PHOTO"); } catch { }
+	try { std.file.mkdirRecurse(ApplicationPaths.exe ~ "/pspfs/ms0/PSP/SAVEDATA"); } catch { }
 
 	// No file specified.
 	// Check if there is a file in the directory

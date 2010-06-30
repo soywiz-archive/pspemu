@@ -5,6 +5,8 @@ import std.stream, std.stdio, std.path, std.typecons;
 private import std.c.windows.windows;
 private import std.windows.syserror;
 
+public import pspemu.utils.String;
+
 private import core.thread;
 
 // Signed?
@@ -108,30 +110,13 @@ ulong readVarInt(Stream stream) {
 void swap(T)(ref T a, ref T b) { auto c = a; a = b; b = c; }
 T min(T)(T l, T r) { return (l < r) ? l : r; }
 T max(T)(T l, T r) { return (l > r) ? l : r; }
+T clamp(T)(T v, T l = 1.0, T r = 1.0) {
+	if (v < l) v = l;
+	if (v > r) v = r;
+	return v;
+}
 T xabs(T)(T v) { return (v >= 0) ? v : -v; }
 T sign(T)(T v) { if (v == 0) return 0; return (v > 0) ? 1 : -1; }
-
-static pure nothrow string tos(T)(T v, int base = 10, int pad = 0) {
-	if (v == 0) return "0";
-	const digits = "0123456789abcdef";
-	assert(base <= digits.length);
-	string r;
-	long vv = cast(long)v;
-	bool sign = (vv < 0);
-	if (sign) vv = -vv;
-	while (vv != 0) {
-		r = digits[cast(uint)(vv) % base] ~ r;
-		vv /= base;
-	}
-	while (r.length < pad) r = '0' ~ r;
-	if (sign) r = "-" ~ r;
-	return r;
-}
-
-unittest {
-	assert(tos(100) == "100");
-	assert(tos(-99) == "-99");
-}
 
 static pure string bitslice(string v, T, string name, uint start, uint count, bool asserts = false)() {
 	string r;
