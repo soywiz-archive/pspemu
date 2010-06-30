@@ -197,9 +197,9 @@ class GpuOpengl : GpuImplAbstract {
 						{
 							for (int n = 0; n < vertexList.length; n += 2) {
 								VertexState v1 = vertexList[n + 0], v2 = vertexList[n + 1], vertex = void;
-								vertex = v2;
 								
 								debug (DEBUG_CLEAR_MODE) if (state.clearingMode) writefln("(%f,%f,%f)-(%f,%f,%f)", v1.px, v1.py, v1.pz, v2.px, v2.py, v2.pz);
+								vertex = v2;
 								mixin(spriteVertexInterpolate("v1", "v1")); putVertex(vertex);
 								mixin(spriteVertexInterpolate("v2", "v1")); putVertex(vertex);
 								mixin(spriteVertexInterpolate("v2", "v2")); putVertex(vertex);
@@ -404,8 +404,8 @@ template OpenglUtils() {
 		void prepareMatrix() {
 			if (state.vertexType.transform2D) {
 				glMatrixMode(GL_PROJECTION); glLoadIdentity();
-				//glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
-				glOrtho(0, 512, 272, 0, 0, -0xFFFF);
+				glOrtho(0.0f, 512.0f, 272.0f, 0.0f, -1.0f, 1.0f);
+				//glOrtho(0, 512, 272, 0, 0, -0xFFFF);
 				//glTranslatef(0, 1, 0);
 				glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 			} else {
@@ -470,7 +470,7 @@ template OpenglUtils() {
 
 		glColorMask(ccolorMask, ccolorMask, ccolorMask, calphaMask);
 
-		//glClearDepth(0.0); glClear(GL_DEPTH_BUFFER_BIT);
+		//glClearDepth(0.0); glClear(GL_COLOR_BUFFER_BIT);
 
 		//if (state.clearFlags & ClearBufferMask.GU_COLOR_BUFFER_BIT) glClear(GL_DEPTH_BUFFER_BIT);
 	}

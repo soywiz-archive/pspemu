@@ -208,6 +208,7 @@ template Gpu_Draw() {
 			" texture(%d)"
 			" position(%d)"
 			" normal(%d)"
+			" clearingMode(%d)"
 			,
 			vertexCount, primitiveType, vertexSize,
 			vertexType.skinningWeightCount,
@@ -215,7 +216,8 @@ template Gpu_Draw() {
 			vertexType.color,
 			vertexType.texture,
 			vertexType.position,
-			vertexType.normal
+			vertexType.normal,
+			gpu.state.clearingMode
 		);
 		
 		void pad(ref ubyte* ptr, ubyte pad) {
