@@ -294,15 +294,15 @@ template TemplateCpu_VFPU() {
 	void OP_VMMOV() {
 		auto vsize = instruction.ONE_TWO;
 
-		debug (DEBUG_VFPU_I) writefln("OP_VMMOV(%d)(%d->%d)", vsize, instruction.VT, instruction.VD);
-
 		foreach (y; 0..vsize) {
-			loadVt(vsize, instruction.VT + y);
+			loadVs(vsize, instruction.VS + y);
 			{
-				VD[0..vsize] = VT[0..vsize];
+				VD[0..vsize] = VS[0..vsize];
 			}
 			saveVd(vsize, instruction.VD + y);
 		}
+
+		debug (DEBUG_VFPU_I) writefln("OP_VMMOV(%d)(%d->%d)", vsize, instruction.VT, instruction.VD);
 
 		registers.pcAdvance(4);
 	}
@@ -548,7 +548,7 @@ template TemplateCpu_VFPU() {
 
 		foreach (n, value; VT[0..4]) cpu.memory.twrite!(float)(address + n * 4, value);
 
-		debug (DEBUG_VFPU_I) writefln("OP_SV_Q(%s)", VT[0..4]);
+		debug (DEBUG_VFPU_I) writefln("OP_SV_Q(%d,%d)(%s)", instruction.VT5, instruction.VT1, VT[0..4]);
 
 		registers.pcAdvance(4);
 	}
@@ -1584,12 +1584,12 @@ template TemplateCpu_VFPU() {
 	}
 	
 	void _OP_VTFM_x(int vsize, bool half)() {
-		loadVt(vsize - 1);
+		loadVt(vsize - half);
 		{
-			VT[vsize - 1] = 1.0;
+			if (half) VT[vsize - 1] = 1.0;
 			foreach (y; 0..vsize) {
 				loadVs(vsize, instruction.VS + y);
-				VD[y] = 0.0f; foreach (x; 0..vsize) VD[x] += VS[x] * VT[x];
+				VD[y] = 0.0f; foreach (x; 0..vsize) VD[y] += VS[x] * VT[x];
 			}
 		}
 		saveVd(vsize);
@@ -1672,6 +1672,18 @@ template TemplateCpu_VFPU() {
 		auto vsize = instruction.ONE_TWO;
 		if (vsize == 1) OP_UNK();
 
+		debug (DEBUG_VFPU_I) {
+			foreach (i; 0..vsize) {
+				loadVt(vsize, instruction.VT + i);
+				writefln("OP_VMMUL.VT(%d)(%s)", instruction.VT + i, VT);
+			}
+
+			foreach (i; 0..vsize) {
+				loadVs(vsize, instruction.VS + i);
+				writefln("OP_VMMUL.VS(%d)(%s)", instruction.VS + i, VS);
+			}
+		}
+
 		foreach (i; 0..vsize) {
 			loadVt(vsize, instruction.VT + i);
             foreach (j; 0..vsize) {
@@ -1679,8 +1691,14 @@ template TemplateCpu_VFPU() {
 				VD[j] = 0.0f; foreach (k; 0..vsize) VD[j] += VS[k] * VT[k];
             }
 			saveVd(vsize, instruction.VD + i);
-			debug (DEBUG_VFPU_I) writefln("OP_VMMUL(%d)(%s)", i, VD);
         }
+
+		debug (DEBUG_VFPU_I) {
+			foreach (i; 0..vsize) {
+				loadVd(vsize, instruction.VD + i);
+				writefln("OP_VMMUL.VD(%d)(%s)", instruction.VD + i, VD);
+			}
+		}
 
 		registers.pcAdvance(4);
 	}

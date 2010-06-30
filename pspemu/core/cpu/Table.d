@@ -397,12 +397,12 @@ const PspInstructions_VFPU_IMP = [
 	ID("vrndf1",      VM("110100:00:001:00:010:two:0000000:one:vd"), "%zp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vrndf2",      VM("110100:00:001:00:011:two:0000000:one:vd"), "%zp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
-// Not implemented yet!
+////////////////////////////
+/// Not implemented yet!
+////////////////////////////
 	ID("vcmp",        VM("011011:000:vt:two:vs:one:0000:imm3"), "%Zn, %yp, %xp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("lv.s",        VM("110010:rs:vt5:imm14:vt2"), "%Xs, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-];
 
-const PspInstructions_VFPU = [
 	ID("vcmovf",      VM("110100:10:101:01:imm3:two:vs:one:vd"), "%zp, %yp, %v3", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vcmovt",      VM("110100:10:101:00:imm3:two:vs:one:vd"), "%zp, %yp, %v3", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
@@ -411,76 +411,66 @@ const PspInstructions_VFPU = [
 	ID("bvt",         VM("010010:01:000:imm3:01:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
 	ID("bvtl",        VM("010010:01:000:imm3:11:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
 
+	ID("vavg",        VM("110100:00:010:00111:two:vs:one:vd"), "%zp, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vf2id",       VM("110100:10:011:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vf2in",       VM("110100:10:000:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vf2iu",       VM("110100:10:010:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vf2iz",       VM("110100:10:001:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vi2f",        VM("110100:10:100:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
+	ID("vscmp",       VM("011011:101:vt:two:vs:one:vd"), "%zp, %yp, %xp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vmscl",       VM("111100:100:vt:two:vs:one:vd"), "%zm, %ym, %xs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
+	ID("vt4444.q",    VM("110100:00:010:11001:two:vs:one:vd"), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vt5551.q",    VM("110100:00:010:11010:two:vs:one:vd"), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vt5650.q",    VM("110100:00:010:11011:two:vs:one:vd"), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
+	ID("vmfvc",       VM("110100:00:010:10000:1:imm7:0:vd"), "%zs, %2s",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vmtvc",       VM("110100:00:010:10001:0:vs:1:imm7"), "%2d, %ys",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
+	//ID("mfvme",       VM(0x68000000, 0xFC000000), "%t, %i", ADDR_TYPE_NONE, 0),
+	//ID("mtvme",       VM(0xb0000000, 0xFC000000), "%t, %i", ADDR_TYPE_NONE, 0),
+];
+
+const PspInstructions_VFPU = [
 	ID("sv.s",        VM(0xE8000000, 0xFC000000), "%Xs, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("svl.q",       VM(0xF4000000, 0xFC000002), "%Xq, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("svr.q",       VM(0xF4000002, 0xFC000002), "%Xq, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vavg.p",      VM(0xD0470080, 0xFFFF8080), "%zp, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vavg.q",      VM(0xD0478080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vavg.t",      VM(0xD0478000, 0xFFFF8080), "%zt, %yt", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vbfy1.p",     VM(0xD0420080, 0xFFFF8080), "%zp, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vbfy1.q",     VM(0xD0428080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vbfy2.q",     VM(0xD0438080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+	ID("vfim.s",      VM(0xDF800000, 0xFF800000), "%xs, %vh",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
 	ID("vf2h.p",      VM(0xD0320080, 0xFFFF8080), "%zs, %yp",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vf2h.q",      VM(0xD0328080, 0xFFFF8080), "%zp, %yq",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2id.p",     VM(0xD2600080, 0xFFE08080), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2id.q",     VM(0xD2608080, 0xFFE08080), "%zq, %yq, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2id.s",     VM(0xD2600000, 0xFFE08080), "%zs, %ys, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2id.t",     VM(0xD2608000, 0xFFE08080), "%zt, %yt, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2in.p",     VM(0xD2000080, 0xFFE08080), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2in.q",     VM(0xD2008080, 0xFFE08080), "%zq, %yq, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2in.s",     VM(0xD2000000, 0xFFE08080), "%zs, %ys, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2in.t",     VM(0xD2008000, 0xFFE08080), "%zt, %yt, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iu.p",     VM(0xD2400080, 0xFFE08080), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iu.q",     VM(0xD2408080, 0xFFE08080), "%zq, %yq, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iu.s",     VM(0xD2400000, 0xFFE08080), "%zs, %ys, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iu.t",     VM(0xD2408000, 0xFFE08080), "%zt, %yt, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iz.p",     VM(0xD2200080, 0xFFE08080), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iz.q",     VM(0xD2208080, 0xFFE08080), "%zq, %yq, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iz.s",     VM(0xD2200000, 0xFFE08080), "%zs, %ys, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vf2iz.t",     VM(0xD2208000, 0xFFE08080), "%zt, %yt, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vfim.s",      VM(0xDF800000, 0xFF800000), "%xs, %vh",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
 	ID("vh2f.p",      VM(0xD0330080, 0xFFFF8080), "%zq, %yp",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vh2f.s",      VM(0xD0330000, 0xFFFF8080), "%zp, %ys",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vi2f.p",      VM(0xD2800080, 0xFFE08080), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vi2f.q",      VM(0xD2808080, 0xFFE08080), "%zq, %yq, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vi2f.s",      VM(0xD2800000, 0xFFE08080), "%zs, %ys, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vi2f.t",      VM(0xD2808000, 0xFFE08080), "%zt, %yt, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
 	ID("vi2s.p",      VM(0xD03F0080, 0xFFFF8080), "%zs, %yp",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vi2s.q",      VM(0xD03F8080, 0xFFFF8080), "%zp, %yq",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
 	ID("vi2us.p",     VM(0xD03E0080, 0xFFFF8080), "%zq, %yq",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vi2us.q",     VM(0xD03E8080, 0xFFFF8080), "%zq, %yq",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
 	ID("vidt.p",      VM(0xD0030080, 0xFFFFFF80), "%zp",           ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vidt.q",      VM(0xD0038080, 0xFFFFFF80), "%zq",           ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
 	ID("vlgb.s",      VM(0xD0370000, 0xFFFF8080), "%zs, %ys",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vmfvc",       VM(0xD0500000, 0xFFFF0080), "%zs, %2s",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vmscl.p",     VM(0xF2000080, 0xFF808080), "%zm, %ym, %xs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vmscl.q",     VM(0xF2008080, 0xFF808080), "%zo, %yo, %xs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vmscl.t",     VM(0xF2008000, 0xFF808080), "%zn, %yn, %xs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vmtvc",       VM(0xD0510000, 0xFFFF8000), "%2d, %ys",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vqmul.q",     VM(0xF2808080, 0xFF808080), "%zq, %yq, %xq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vs2i.p",      VM(0xD03B0080, 0xFFFF8080), "%zq, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vs2i.s",      VM(0xD03B0000, 0xFFFF8080), "%zp, %ys", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsbn.s",      VM(0x61000000, 0xFF808080), "%zs, %ys, %xs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsbz.s",      VM(0xD0360000, 0xFFFF8080), "%zs, %ys", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vscmp.p",     VM(0x6E800080, 0xFF808080), "%zp, %yp, %xp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vscmp.q",     VM(0x6E808080, 0xFF808080), "%zq, %yq, %xq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vscmp.s",     VM(0x6E800000, 0xFF808080), "%zs, %ys, %xs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vscmp.t",     VM(0x6E808000, 0xFF808080), "%zt, %yt, %xt", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsocp.p",     VM(0xD0450080, 0xFFFF8080), "%zq, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsocp.s",     VM(0xD0450000, 0xFFFF8080), "%zp, %ys", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsrt1.q",     VM(0xD0408080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsrt2.q",     VM(0xD0418080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vsrt4.q",     VM(0xD0498080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vt4444.q",    VM(0xD0598080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vt5551.q",    VM(0xD05A8080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vt5650.q",    VM(0xD05B8080, 0xFFFF8080), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vus2i.p",     VM(0xD03A0080, 0xFFFF8080), "%zq, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vus2i.s",     VM(0xD03A0000, 0xFFFF8080), "%zp, %ys", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vwb.q",       VM(0xF8000002, 0xFC000002), "%Xq, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vwbn.s",      VM(0xD3000000, 0xFF008080), "%zs, %xs, %I", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("mfvme",       VM(0x68000000, 0xFC000000), "%t, %i", ADDR_TYPE_NONE, 0),
-	ID("mtvme",       VM(0xb0000000, 0xFC000000), "%t, %i", ADDR_TYPE_NONE, 0),
 ];
 
 ID[] PspInstructions() {
