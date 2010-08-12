@@ -71,6 +71,7 @@ struct ValueMask {
 				case "vs", "vt", "vd", "imm7":
 					alloc(7 );
 				break;
+				case "imm8" : alloc(8 ); break;
 				case "imm14": alloc(14); break;
 				case "imm16": alloc(16); break;
 				case "imm20": alloc(20); break;
@@ -144,6 +145,7 @@ struct Instruction {
 			~ bitslice!("v", int , "IMM7", 0, 7)
 			// // SVQ(111110:rs:vt5:imm14:0:vt1)
 			~ bitslice!("v", uint, "VT1", 0, 1)
+			~ bitslice!("v", uint, "VT2", 0, 2)
 			~ bitslice!("v", int , "IMM14", 2, 14)
 			~ bitslice!("v", uint, "VT5", 16, 5)
 			~ bitslice!("v", uint, "IMM5", 16, 5)
@@ -185,6 +187,7 @@ struct Instruction {
 		uint EXT(int offset, int size) { return (v >> offset) & ((1 << size) - 1); }
 		
 		uint VT5_1() { return VT5 | (VT1 << 5); }
+		uint VT5_2() { return VT5 | (VT2 << 5); }
 	}
 
 	static assert (this.sizeof == 4, "Instruction length should be 4 bytes/32 bits.");

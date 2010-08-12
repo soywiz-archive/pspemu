@@ -436,6 +436,15 @@ template TemplateCpu_VFPU() {
 		registers.pcAdvance(4);
 	}
 
+	void OP_LV_S() {
+		VD[0] = cpu.memory.tread!(float)(cpu.registers.R[instruction.RS] + instruction.IMM14 * 4);
+		saveVd(1, instruction.VT5_2);
+		
+		debug (DEBUG_VFPU_I) writefln("OP_LV_S(%s)", VD[0..1]);
+		
+		registers.pcAdvance(4);
+	}
+
 	/*
 	+-------------+-----------+---------+----------------------------+-----+-----+
 	|31         26|25       21|20     16|15                        2 |  1  |  0  |
@@ -767,6 +776,29 @@ template TemplateCpu_VFPU() {
 			static if (N >= 2) { float r = VT[n]; }
 			mixin("VD[n] = (" ~ op ~ ");");
 		}
+
+		// No performance improvement with -O. See /sandbox/vector_ops.d
+		/*
+		string func(string op) {
+			string s = "VD[0..vsize] = " ~ stringInterpolate2(op,
+				['v', 'l', 'r'],
+				["VS[0..vsize]", "VS[0..vsize]", "VT[0..vsize]"]
+			) ~ "";
+			return ""
+				~ "static if (__traits(compiles, (" ~ s ~ "))) { "
+					~ s ~ ";"
+				~ "} else {"
+					~ "foreach (n; 0..vsize) {"
+						~ "static if (N >= 1) { float l = VS[n]; alias l v; }"
+						~ "static if (N >= 2) { float r = VT[n]; }"
+						~ "VD[n] = (" ~ op ~ ");"
+					~ "}"
+				~ "}"
+			;
+		}
+		//pragma(msg, func(op));
+		mixin(func(op));
+		*/
 		
 		saveVd(vsize);
 

@@ -1,5 +1,33 @@
 module pspemu.utils.String;
 
+import std.ctype;
+
+string stringInterpolate2(string base, char[] chars, string[] map) {
+	string r;
+	assert(chars.length == map.length);
+	for (int n = 0; n < base.length; n++) {
+		char c = base[n];
+		if (isalnum(c)) {
+			if (
+				((n == 0) || !isalnum(base[n - 1])) &&
+				((n == base.length - 1) || !isalnum(base[n + 1]))
+			) {
+				bool found = false;
+				foreach (k, c2; chars) {
+					if (c2 == c) {
+						found = true;
+						r ~= map[k];
+						break;
+					}
+				}
+				if (found) continue;
+			}
+		}
+		r ~= c;
+	}
+	return r;
+}
+
 static pure nothrow {
 	string stringInterpolate(string base, string[string] map) {
 		string r;

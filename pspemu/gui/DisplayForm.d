@@ -30,6 +30,7 @@ import pspemu.gui.Registers;
 import pspemu.Config;
 
 static const string svnRevision = import("svn.version");
+static const string dflVersion  = import("dfl.version");
 
 class DisplayForm : Form, IMessageFilter {
 	mixin MenuAdder;
@@ -316,10 +317,12 @@ class DisplayForm : Form, IMessageFilter {
 					"Compiler: %s v%.3f\n"
 					"Compiled on: %s\n"
 					"SVN revision: %s\n"
+					"DFL version: %s\n"
 					, __VENDOR__
 					, cast(float)(__VERSION__) / 1000
 					, __TIMESTAMP__
 					, svnRevision
+					, dflVersion
 				);
 				msgBox(str, "About", MsgBoxButtons.OK, MsgBoxIcon.INFORMATION, MsgBoxDefaultButton.BUTTON1);	
 			});
