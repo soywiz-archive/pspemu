@@ -5,12 +5,10 @@ import pspsdk.pspgum;
 import pspsdk.pspdebug;
 import pspsdk.pspkerneltypes;
 import pspsdk.pspthreadman;
+import pspsdk.psploadexec;
+import pspsdk.pspdisplay;
 import std.string;
 import std.math;
-
-extern (C) int sceKernelExitGame();
-extern (C) int sceDisplayWaitVblankStart();
-extern (C) int sceKernelRegisterExitCallback(int);
 
 align(16) static uint list[262144];
  
@@ -30,32 +28,34 @@ align(16) Vertex vertices[] = [
 ];
 
 /* Exit callback */
-extern (C) static int exit_callback(int arg1, int arg2, void *common) {
-	sceKernelExitGame();
-	return 0;
+extern (C) {
+	static int exit_callback(int arg1, int arg2, void *common) {
+		sceKernelExitGame();
+		return 0;
+	}
+
+	/* Callback thread */
+	static int CallbackThread(SceSize args, void *argp) {
+		int cbid;
+
+		cbid = sceKernelCreateCallback("Exit Callback", &exit_callback, null);
+		sceKernelRegisterExitCallback(cbid);
+
+		sceKernelSleepThreadCB();
+
+		return 0;
+	}
+
+	/* Sets up the callback thread and returns its thread id */
+	int SetupCallbacks() {
+		SceUID thid = 0;
+
+		thid = sceKernelCreateThread("update_thread", &CallbackThread, 0x11, 0xFA0, 0, null);
+		if(thid >= 0) sceKernelStartThread(thid, 0, null);
+
+		return thid;
+	}
 }
-
-/* Callback thread */
-extern (C) static int CallbackThread(SceSize args, void *argp) {
-	int cbid;
-
-	cbid = sceKernelCreateCallback("Exit Callback", &exit_callback, null);
-	sceKernelRegisterExitCallback(cbid);
-
-	sceKernelSleepThreadCB();
-
-	return 0;
-}
-
-/* Sets up the callback thread and returns its thread id */
-extern (C) int SetupCallbacks() {
-	SceUID thid = 0;
-
-	thid = sceKernelCreateThread("update_thread", &CallbackThread, 0x11, 0xFA0, 0, null);
-	if(thid >= 0) sceKernelStartThread(thid, 0, null);
-
-	return thid;
-} 
 
 bool running() { return true; }
 
