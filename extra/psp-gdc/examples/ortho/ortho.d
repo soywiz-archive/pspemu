@@ -1,31 +1,16 @@
-// http://psp.jim.sh/pspsdk-doc/pspmoduleinfo_8h.html
-
-// imports
-//
-extern (C) void pspDebugScreenInit();
-extern (C) void pspDebugScreenPrintf(char*,...);
-extern (C) void pspDebugScreenSetOffset(int);
-extern (C) void pspDebugScreenSetXY(int, int);
-
-
-extern (C) int sceKernelSleepThread();
-extern (C) int sceKernelExitGame();
-extern (C) int sceDisplayWaitVblankStart();
-
-alias uint SceSize;
-
-extern (C) int sceKernelCreateCallback(char*, int function(int, int, void*), void*);
-extern (C) int sceKernelRegisterExitCallback(int);
-extern (C) int sceKernelSleepThreadCB();
-extern (C) int sceKernelCreateThread(char *, int function(SceSize, void *), int, int, int, int);
-extern (C) int sceKernelStartThread(int, int, int);
-
 import pspsdk.pspctrl;
 import pspsdk.pspge;
 import pspsdk.pspgu;
 import pspsdk.pspgum;
+import pspsdk.pspdebug;
+import pspsdk.pspkerneltypes;
+import pspsdk.pspthreadman;
 import std.string;
 import std.math;
+
+extern (C) int sceKernelExitGame();
+extern (C) int sceDisplayWaitVblankStart();
+extern (C) int sceKernelRegisterExitCallback(int);
 
 align(16) static uint list[262144];
  
@@ -64,11 +49,11 @@ extern (C) static int CallbackThread(SceSize args, void *argp) {
 
 /* Sets up the callback thread and returns its thread id */
 extern (C) int SetupCallbacks() {
-	int thid = 0;
+	SceUID thid = 0;
 
-	thid = sceKernelCreateThread("update_thread", &CallbackThread, 0x11, 0xFA0, 0, 0);
+	thid = sceKernelCreateThread("update_thread", &CallbackThread, 0x11, 0xFA0, 0, null);
 	if(thid >= 0) {
-		  sceKernelStartThread(thid, 0, 0);
+		  sceKernelStartThread(thid, 0, null);
 	}
 
 	return thid;
