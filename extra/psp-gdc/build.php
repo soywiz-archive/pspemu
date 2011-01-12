@@ -44,8 +44,13 @@ class SourcesProcessor {
 	);
 	
 	public function __construct() {
-		$this->pspsdk_path  = trim(`psp-config --pspsdk-path`);
+		$this->pspsdk_path = trim(`psp-config --pspsdk-path 2> NUL`);
 		$this->dpspsdk_path = __DIR__;
+		if (empty($this->pspsdk_path)) {
+			if (is_file('c:/pspsdk/bin/psp-config.exe')) {
+				$this->pspsdk_path = trim(`c:/pspsdk/bin/psp-config.exe --pspsdk-path 2> NUL`);
+			}
+		}
 	}
 	
 	public function addFileToProcess($fileName) {
@@ -147,6 +152,8 @@ class SourcesProcessor {
 		$base_flags = "-I. -I\"{$this->pspsdk_path}/include\" -O2 -Wall -I\"{$this->dpspsdk_path}\" -D_PSP_FW_VERSION={$this->BUILD_INFO['PSP_FW_VERSION']} -L.. -L. -L\"{$this->pspsdk_path}/lib\"";
 		$psp_gcc = "{$this->pspsdk_path}/../../bin/psp-gcc";
 		$psp_gdc = "{$this->pspsdk_path}/../../bin/psp-gdc";
+		$mksfo = "{$this->pspsdk_path}/../../bin/mksfo";
+		$pack_pbp = "{$this->pspsdk_path}/../../bin/pack-pbp";
 		$psp_fixup_imports = "{$this->pspsdk_path}/../../bin/psp-fixup-imports";
 		$output_elf = 'output.elf';
 		
@@ -190,8 +197,8 @@ class SourcesProcessor {
 		if (is_file($output_elf)) {
 			`{$psp_fixup_imports} {$output_elf}`;
 			
-			`mksfo {$this->BUILD_INFO['PSP_EBOOT_TITLE']} PARAM.SFO`;
-			`pack-pbp EBOOT.PBP PARAM.SFO NULL NULL NULL NULL NULL {$output_elf} NULL`;
+			`{$mksfo} {$this->BUILD_INFO['PSP_EBOOT_TITLE']} PARAM.SFO`;
+			`{$pack_pbp} EBOOT.PBP PARAM.SFO NULL NULL NULL NULL NULL {$output_elf} NULL`;
 			
 			unlink('PARAM.SFO');
 			unlink($output_elf);
