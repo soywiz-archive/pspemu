@@ -44,7 +44,7 @@ int main() {
 	void* zbp  = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_4444);
 
 	sceGuInit();
-	sceGuStart(GU_DIRECT, cast(void *)list.ptr);
+	sceGuStart(GU_DIRECT, &list);
 	sceGuDrawBuffer(GU_PSM_8888, fbp0, BUF_WIDTH);
 	sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, fbp1, BUF_WIDTH);
 	sceGuDepthBuffer(zbp, BUF_WIDTH);
@@ -72,7 +72,7 @@ int main() {
 	while(running) {
 		SceCtrlData pad;
 
-		sceGuStart(GU_DIRECT, cast(void *)list.ptr);
+		sceGuStart(GU_DIRECT, &list);
 
 		sceGuClearColor(0);
 		sceGuClearDepth(0);
