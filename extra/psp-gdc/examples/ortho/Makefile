@@ -1,5 +1,7 @@
 TARGET = OrthoInD
-OBJS = module.o ortho.o 
+OBJS = 
+OBJS += module.o ortho.o 
+OBJS += ../../pspsdk/pspctrl.d
 
 CFLAGS = -O2 -Wall -I"../.."
 DFLAGS = $(CFLAGS)

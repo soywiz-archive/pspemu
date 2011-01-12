@@ -52,17 +52,14 @@ extern (C) int SetupCallbacks() {
 	SceUID thid = 0;
 
 	thid = sceKernelCreateThread("update_thread", &CallbackThread, 0x11, 0xFA0, 0, null);
-	if(thid >= 0) {
-		  sceKernelStartThread(thid, 0, null);
-	}
+	if(thid >= 0) sceKernelStartThread(thid, 0, null);
 
 	return thid;
 } 
 
 bool running() { return true; }
 
-int main()
-{
+int main() {
 	SetupCallbacks();
 	pspDebugScreenInit();
 	
@@ -78,12 +75,12 @@ int main()
 	sceGuInit();
 	sceGuStart(GU_DIRECT, cast(void *)list.ptr);
 	sceGuDrawBuffer(GU_PSM_8888, fbp0, BUF_WIDTH);
-	sceGuDispBuffer(SCR_WIDTH,SCR_HEIGHT,fbp1,BUF_WIDTH);
-	sceGuDepthBuffer(zbp,BUF_WIDTH);
-	sceGuOffset(2048 - (SCR_WIDTH/2),2048 - (SCR_HEIGHT/2));
-	sceGuViewport(2048,2048,SCR_WIDTH,SCR_HEIGHT);
-	sceGuDepthRange(65535,0);
-	sceGuScissor(0,0,SCR_WIDTH,SCR_HEIGHT);
+	sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, fbp1, BUF_WIDTH);
+	sceGuDepthBuffer(zbp, BUF_WIDTH);
+	sceGuOffset(2048 - (SCR_WIDTH / 2),2048 - (SCR_HEIGHT / 2));
+	sceGuViewport(2048, 2048, SCR_WIDTH, SCR_HEIGHT);
+	sceGuDepthRange(65535, 0);
+	sceGuScissor(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	sceGuEnable(GU_SCISSOR_TEST);
 	sceGuFrontFace(GU_CW);
 	sceGuShadeModel(GU_SMOOTH);
@@ -101,68 +98,64 @@ int main()
 
 	int val = 0;
 
-	while(running())
-	{
+	while(running) {
 		SceCtrlData pad;
- 
+
 		sceGuStart(GU_DIRECT, cast(void *)list.ptr);
- 
+
 		sceGuClearColor(0);
 		sceGuClearDepth(0);
-		sceGuClear(GU_COLOR_BUFFER_BIT|GU_DEPTH_BUFFER_BIT);
+		sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 
 		sceCtrlPeekBufferPositive(&pad, 1);
 
-		if(pad.Buttons & PSP_CTRL_UP)
-			pos.z += 1.0f / 100.0f;
-		if(pad.Buttons & PSP_CTRL_DOWN)
-			pos.z -= 1.0f / 100.0f;
+		if(pad.Buttons & PSP_CTRL_UP  ) pos.z += 1.0f / 100.0f;
+		if(pad.Buttons & PSP_CTRL_DOWN) pos.z -= 1.0f / 100.0f;
 
-		if(abs(pad.Lx-128) > 32)
-			pos.x += ((pad.Lx-128)/128.0f);
-		if(abs(pad.Ly-128) > 32)
-			pos.y += ((pad.Ly-128)/128.0f);
- 
+		if(abs(pad.x) > 0.25) pos.x += pad.x;
+		if(abs(pad.y) > 0.25) pos.y += pad.y;
+
 		sceGumMatrixMode(GU_PROJECTION);
 		sceGumLoadIdentity();
 		sceGumOrtho(0, 480, 272, 0, -1, 1);
 
 		sceGumMatrixMode(GU_VIEW);
 		sceGumLoadIdentity();
- 
+
 		sceGumMatrixMode(GU_MODEL);
 		sceGumLoadIdentity();
 
-                // Draw triangle
-                
-                sceGumTranslate(&pos);
-                sceGumRotateZ(val*0.03f);
+		// Draw triangle
+		{
+			sceGumTranslate(&pos);
+			sceGumRotateZ(val * 0.03f);
 
-                sceGumDrawArray(GU_TRIANGLES,GU_COLOR_8888|GU_VERTEX_32BITF|GU_TRANSFORM_3D,1*3,null,vertices.ptr);
+			sceGumDrawArray(GU_TRIANGLES,GU_COLOR_8888|GU_VERTEX_32BITF|GU_TRANSFORM_3D,1*3,null,vertices.ptr);
+		}
 
 		sceGuFinish();
-		sceGuSync(0,0);
+		sceGuSync(0, 0);
 
 		pspDebugScreenSetOffset(cast(int)fbp0);
-		pspDebugScreenSetXY(0,0);
+		pspDebugScreenSetXY(0, 0);
 
-		pspDebugScreenPrintf("x: %.2f y: %.2f z: %.2f",pos.x,pos.y,pos.z);
+		pspDebugScreenPrintf("x: %.2f y: %.2f z: %.2f", pos.x, pos.y, pos.z);
 
 		sceDisplayWaitVblankStart();
 
 		try {
-			throw(new Exception("Hello World"));
+			throw(new Exception("Exception test"));
 		} catch {
 			fbp0 = sceGuSwapBuffers();
 		} finally {
 			val++;
 		}
-
 	}
  
 	sceGuTerm();
 
 	//sceKernelSleepThread();
 	sceKernelExitGame();
+
 	return 0;
 }

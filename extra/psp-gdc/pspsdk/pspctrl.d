@@ -94,6 +94,9 @@ struct SceCtrlData {
 	ubyte 	Ly;
 	/** Reserved. */
 	ubyte 	Rsrv[6];
+	
+	float x() { return (Lx - 128) / 128.0f; }
+	float y() { return (Ly - 128) / 128.0f; }
 }
 
 struct SceCtrlLatch {
