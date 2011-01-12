@@ -2,6 +2,8 @@ TARGET = OrthoInD
 OBJS = 
 OBJS += module.o ortho.o 
 OBJS += ../../pspsdk/pspctrl.d
+OBJS += ../../pspsdk/utils/callback.d
+OBJS += ../../pspsdk/utils/vram.d
 
 CFLAGS = -O2 -Wall -I"../.."
 DFLAGS = $(CFLAGS)

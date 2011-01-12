@@ -7,6 +7,8 @@ import pspsdk.pspkerneltypes;
 import pspsdk.pspthreadman;
 import pspsdk.psploadexec;
 import pspsdk.pspdisplay;
+import pspsdk.utils.callback;
+import pspsdk.utils.vram;
 import std.string;
 import std.math;
 
@@ -22,55 +24,18 @@ struct Vertex {
 }
 
 align(16) Vertex vertices[] = [
-	{0xFF0000FF, 0.0f, -50.0f, 0.0f}, // Top, red
-	{0xFF00FF00, 50.0f, 50.0f, 0.0f}, // Right, green
-	{0xFFFF0000, -50.0f, 50.0f, 0.0f}, // Left, blue
+	{0xFF0000FF,   0.0f, -50.0f, 0.0f}, // Top, red
+	{0xFF00FF00,  50.0f,  50.0f, 0.0f}, // Right, green
+	{0xFFFF0000, -50.0f,  50.0f, 0.0f}, // Left, blue
 ];
-
-/* Exit callback */
-extern (C) {
-	static int exit_callback(int arg1, int arg2, void *common) {
-		sceKernelExitGame();
-		return 0;
-	}
-
-	/* Callback thread */
-	static int CallbackThread(SceSize args, void *argp) {
-		int cbid;
-
-		cbid = sceKernelCreateCallback("Exit Callback", &exit_callback, null);
-		sceKernelRegisterExitCallback(cbid);
-
-		sceKernelSleepThreadCB();
-
-		return 0;
-	}
-
-	/* Sets up the callback thread and returns its thread id */
-	int SetupCallbacks() {
-		SceUID thid = 0;
-
-		thid = sceKernelCreateThread("update_thread", &CallbackThread, 0x11, 0xFA0, 0, null);
-		if(thid >= 0) sceKernelStartThread(thid, 0, null);
-
-		return thid;
-	}
-}
-
-bool running() { return true; }
 
 int main() {
 	SetupCallbacks();
 	pspDebugScreenInit();
 	
-	//void* fbp0 = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_8888);
-	//void* fbp1 = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_8888);
-	//void* zbp = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_4444);
-	//void* base = sceGeEdramGetAddr();
-	void* base = null;
-	void* fbp0 = base;
-	void* fbp1 = fbp0 + (BUF_WIDTH * SCR_HEIGHT * 4);
-	void* zbp  = fbp1 + (BUF_WIDTH * SCR_HEIGHT * 4);
+	void* fbp0 = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_8888);
+	void* fbp1 = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_8888);
+	void* zbp  = getStaticVramBuffer(BUF_WIDTH,SCR_HEIGHT,GU_PSM_4444);
 
 	sceGuInit();
 	sceGuStart(GU_DIRECT, cast(void *)list.ptr);
