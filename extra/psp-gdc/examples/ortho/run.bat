@@ -1,2 +1,2 @@
 @echo off
-make && EBOOT.PBP
+..\..\..\..\dev\php\php ..\..\build.php ortho.d

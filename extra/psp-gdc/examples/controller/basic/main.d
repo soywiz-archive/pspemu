@@ -20,6 +20,13 @@ import pspsdk.pspctrl;
 import pspsdk.psploadexec;
 import pspsdk.utils.callback;
 
+version (BUILD_INFO) {
+	pragma(MODULE_NAME, "CONTROLTEST");
+	pragma(PSP_EBOOT_TITLE, "Controller Basic");
+	pragma(PSP_MAIN_THREAD_ATTR, THREAD_ATTR_USER | THREAD_ATTR_VFPU);
+	pragma(PSP_FW_VERSION, 150);
+}
+
 int main() {
 	SceCtrlData pad;
 

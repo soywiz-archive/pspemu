@@ -10,6 +10,10 @@ module pspsdk.pspgu;
 public import pspsdk.psptypes;// <psptypes.h>
 import pspsdk.pspge; // <pspge.h>
 
+version (BUILD_INFO) {
+	pragma(lib, pspgu);
+}
+
 /** @defgroup GU Graphics Utility Library
  *
  */

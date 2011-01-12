@@ -1,7 +1,6 @@
 import pspsdk.pspctrl;
 import pspsdk.pspge;
-import pspsdk.pspgu;
-import pspsdk.pspgum;
+import pspsdk.pspgu, pspsdk.pspgum;
 import pspsdk.pspdebug;
 import pspsdk.pspkerneltypes;
 import pspsdk.pspthreadman;
@@ -11,6 +10,13 @@ import pspsdk.utils.callback;
 import pspsdk.utils.vram;
 import std.string;
 import std.math;
+
+version (BUILD_INFO) {
+	pragma(MODULE_NAME, "Ortho In D");
+	pragma(PSP_EBOOT_TITLE, "Ortho In D");
+	pragma(PSP_MAIN_THREAD_ATTR, THREAD_ATTR_USER);
+	pragma(PSP_FW_VERSION, 150);
+}
 
 align(16) static uint list[262144];
  

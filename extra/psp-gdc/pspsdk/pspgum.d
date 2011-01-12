@@ -9,6 +9,9 @@ module pspsdk.pspgum;
 
 import pspsdk.psptypes;
 
+version (BUILD_INFO) {
+	pragma(lib, pspgum);
+}
 
 extern (C)
 {
