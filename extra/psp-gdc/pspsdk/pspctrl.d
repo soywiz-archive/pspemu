@@ -95,8 +95,16 @@ struct SceCtrlData {
 	/** Reserved. */
 	ubyte 	Rsrv[6];
 	
-	float x() { return (Lx - 128) / 128.0f; }
-	float y() { return (Ly - 128) / 128.0f; }
+	static private float normalize_xy(ubyte v) {
+		if (v <= 127) {
+			return (v - 127) / 127.0f;
+		} else {
+			return (v - 127) / 128.0f;
+		}
+	}
+	
+	float x() { return normalize_xy(Lx); }
+	float y() { return normalize_xy(Ly); }
 }
 
 struct SceCtrlLatch {
