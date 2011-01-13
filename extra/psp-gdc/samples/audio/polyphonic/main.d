@@ -26,11 +26,10 @@ extern (C) {
 }
 
 static const int SAMPLE_COUNT = 0x10000;
-float sample[SAMPLE_COUNT];
-
 static const int SAMPLE_RATE = 44100;
-
 static const int OCTAVE_COUNT = 6;
+
+float sample[SAMPLE_COUNT];
 
 float octaves[OCTAVE_COUNT][12];
 
@@ -38,6 +37,10 @@ struct Note {
 	int note;
 	int octave;
 	int duration;
+	
+	char[] toString() {
+		return std.string.format("Note(%d, %d, %d)", note, octave, duration);
+	}
 }
 
 struct ChannelState {
@@ -70,7 +73,7 @@ Note EIGHT_NOTE(int note, int octave, int duration) {
 	Note n;
 	n.note = note;
 	n.octave = octave;
-	n.duration = duration;
+	n.duration = SAMPLE_RATE * duration / 8;
 	return n;
 }
 
@@ -394,8 +397,10 @@ void audioOutCallback(int channel, ushort* buf, uint reqn)
 	}
 }
 
-extern (C) void audioOutCallback0(void *buf, uint reqn, void *userdata) { audioOutCallback(0, cast(ushort *)buf, reqn); }
-extern (C) void audioOutCallback1(void *buf, uint reqn, void *userdata) { audioOutCallback(1, cast(ushort *)buf, reqn); }
+extern (C) {
+	void audioOutCallback0(void *buf, uint reqn, void *userdata) { audioOutCallback(0, cast(ushort *)buf, reqn); }
+	void audioOutCallback1(void *buf, uint reqn, void *userdata) { audioOutCallback(1, cast(ushort *)buf, reqn); }
+}
 
 void createPitches(float base, float* target)
 {
@@ -414,8 +419,8 @@ int main()
 	pspDebugScreenPrintf("Soundtrack of the movie\n");
 	pspDebugScreenPrintf("\"Le fabuleux destin d'Amelie Poulain\"\n");
 	pspDebugScreenPrintf("by Yann Tiersen\n");
-
-        int i;
+	
+	int i;
 	int maxAt = SAMPLE_COUNT / 16;
 	for (i = 0; i < SAMPLE_COUNT; i++) {
 		float value;

@@ -23,7 +23,8 @@ class Logger {
 		std.format.doFormat(&put, _arguments, _argptr);
 		auto message = Message(std.c.time.time(null), level, component, text);
 		messages ~= message;
-		if (level >= Level.WARNING) {
+		//if (level >= Level.WARNING) {
+		if (level >= Level.INFO) {
 		//if (level >= Level.DEBUG) {
 			message.print();
 		}

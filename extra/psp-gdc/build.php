@@ -223,7 +223,7 @@ class SourcesProcessor {
 			unlink($output_elf);
 
 			//`{$output_elf}`;
-			system('EBOOT.PBP');
+			system(__DIR__ . '/../../pspemu_normal.exe EBOOT.PBP');
 		}
 	}
 }
