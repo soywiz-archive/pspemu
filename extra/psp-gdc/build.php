@@ -17,6 +17,8 @@ class SourcesProcessor {
 	protected $currentImports = array();
 	protected $currentContents;
 	
+	protected $importFolders = array();
+	
 	protected $filesToProcess = array();
 	protected $filesProcessed = array();
 
@@ -53,6 +55,10 @@ class SourcesProcessor {
 		}
 	}
 	
+	public function addImportFolder($filePath) {
+		$this->importFolders[] = $filePath;
+	}
+	
 	public function addFileToProcess($fileName) {
 		$fileName = realpath($fileName);
 		if (!isset($this->filesProcessed[$fileName])) {
@@ -63,7 +69,7 @@ class SourcesProcessor {
 	
 	public function addModuleToProcess($moduleName) {
 		$moduleRelativePath = str_replace('.', '/', $moduleName) . '.d';
-		foreach (array($this->dpspsdk_path) as $checkBasePath) {
+		foreach (array_merge($this->importFolders, array($this->dpspsdk_path)) as $checkBasePath) {
 			$moduleCandidatePath = "{$checkBasePath}/{$moduleRelativePath}";
 			if (is_file($moduleCandidatePath)) {
 				$this->addFileToProcess($moduleCandidatePath);
@@ -99,7 +105,12 @@ class SourcesProcessor {
 		$imports = array();
 		if (preg_match_all('@import\\s+(.*);@Umsi', $this->currentContents, $matches)) {
 			foreach ($matches[1] as $match) {
-				$imports = array_merge($imports, array_map('trim', explode(',', $match)));
+				$import_list = $match;
+				$import_list = preg_replace('@//[^\\r\\n]*[\\r\\n]@Umsi', '', $import_list);
+				$import_list = preg_replace('@/\\*(.*)\\*/@Umsi', '', $import_list);
+				//echo $import_list;
+
+				$imports = array_merge($imports, array_map('trim', explode(',', $import_list)));
 			}
 			$imports = array_unique($imports);
 		}
@@ -114,6 +125,12 @@ class SourcesProcessor {
 			'',
 			"PSP_MODULE_INFO({$this->BUILD_INFO['MODULE_NAME']}, 0, 1, 1);",
 			"PSP_MAIN_THREAD_ATTR({$this->BUILD_INFO['PSP_MAIN_THREAD_ATTR']});",
+			'void emitInt    (int   v) { asm("syscall 0x1010"); }',
+			'void emitFloat  (float v) { asm("syscall 0x1011"); }',
+			'void emitString (char *v) { asm("syscall 0x1012"); }',
+			'void emitComment(char *v) { asm("syscall 0x1012"); }',
+			'void emitMemoryBlock(void *address, unsigned int size) { asm("syscall 0x1013"); }',
+			'void emitHex(void *address, unsigned int size) { asm("syscall 0x1014"); }',
 		));
 	}
 
@@ -122,7 +139,8 @@ class SourcesProcessor {
 			if (preg_match_all('@pragma\\(\\s*(?<name>\\w+)\\s*,\\s*(?<value>.*)\\s*\\)\\s*;@Ums', $matches[1], $matches, PREG_SET_ORDER)) {
 				foreach ($matches as $match) {
 					if ($match['name'] == 'lib') {
-						$this->BUILD_INFO['LIBS'][] = trim($match['value']);
+						array_unshift($this->BUILD_INFO['LIBS'], trim($match['value']));
+						//$this->BUILD_INFO['LIBS'][] = trim($match['value']);
 					} else {
 						$this->BUILD_INFO[$match['name']] = trim($match['value']);
 					}
@@ -177,6 +195,7 @@ class SourcesProcessor {
 		foreach ($this->importFiles as $fileName) {
 			$objFile = basename($fileName) . '.o';
 			$objFiles[] = $objFile;
+			//echo "{$fileName}\n";
 			echo `{$psp_gdc} {$base_flags} -c -o {$objFile} {$fileName}`;
 		}
 		
@@ -210,6 +229,9 @@ class SourcesProcessor {
 }
 
 $sp = new SourcesProcessor();
+foreach (array_slice($argv, 1) as $arg) {
+	$sp->addImportFolder(dirname(realpath($arg)));
+}
 foreach (array_slice($argv, 1) as $arg) {
 	$sp->addFileToProcess($arg);
 }

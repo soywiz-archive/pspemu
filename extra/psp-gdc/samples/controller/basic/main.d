@@ -14,11 +14,7 @@
  * $Id: main.c 1095 2005-09-27 21:02:16Z jim $
  */
 
-import pspsdk.pspkernel;
-import pspsdk.pspdebug;
-import pspsdk.pspctrl;
-import pspsdk.psploadexec;
-import pspsdk.utils.callback;
+import pspsdk.all;
 
 version (BUILD_INFO) {
 	pragma(MODULE_NAME, "CONTROLTEST");

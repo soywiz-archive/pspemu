@@ -1,13 +1,4 @@
-import pspsdk.pspctrl;
-import pspsdk.pspge;
-import pspsdk.pspgu, pspsdk.pspgum;
-import pspsdk.pspdebug;
-import pspsdk.pspkerneltypes;
-import pspsdk.pspthreadman;
-import pspsdk.psploadexec;
-import pspsdk.pspdisplay;
-import pspsdk.utils.callback;
-import pspsdk.utils.vram;
+import pspsdk.all;
 import std.string;
 import std.math;
 
