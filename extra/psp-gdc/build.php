@@ -168,6 +168,8 @@ class SourcesProcessor {
 		//print_r($this);
 		
 		$base_flags = "-I. -I\"{$this->pspsdk_path}/include\" -O2 -Wall -I\"{$this->dpspsdk_path}\" -D_PSP_FW_VERSION={$this->BUILD_INFO['PSP_FW_VERSION']} -L.. -L. -L\"{$this->pspsdk_path}/lib\"";
+		$d_flags = "";
+		//$d_flags = "-fversion=Unix";
 		$psp_gcc = "{$this->pspsdk_path}/../../bin/psp-gcc";
 		$psp_gdc = "{$this->pspsdk_path}/../../bin/psp-gdc";
 		$mksfo = "{$this->pspsdk_path}/../../bin/mksfo";
@@ -196,7 +198,7 @@ class SourcesProcessor {
 			$objFile = basename($fileName) . '.o';
 			$objFiles[] = $objFile;
 			//echo "{$fileName}\n";
-			echo `{$psp_gdc} {$base_flags} -c -o {$objFile} {$fileName}`;
+			echo `{$psp_gdc} {$base_flags} {$d_flags} -c -o {$objFile} {$fileName}`;
 		}
 		
 		$libsStr = implode(' ', array_map(function($libName) {
