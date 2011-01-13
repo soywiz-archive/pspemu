@@ -47,7 +47,7 @@ class SourcesProcessor {
 	
 	public function __construct() {
 		$this->pspsdk_path = trim(`psp-config --pspsdk-path 2> NUL`);
-		$this->dpspsdk_path = __DIR__;
+		$this->dpspsdk_path = __DIR__ . '/import';
 		if (empty($this->pspsdk_path)) {
 			if (is_file('c:/pspsdk/bin/psp-config.exe')) {
 				$this->pspsdk_path = trim(`c:/pspsdk/bin/psp-config.exe --pspsdk-path 2> NUL`);

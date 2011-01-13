@@ -1,2 +1,2 @@
 @echo off
-..\..\..\..\..\dev\php\php ..\..\..\build.php main.d
+..\..\..\bin\php ..\..\..\build.php main.d
