@@ -1,2 +1,2 @@
 @echo off
-..\..\..\bin\php ..\..\..\build.php ortho.d
+..\..\..\bin\php ..\..\..\build.php ortho.d %*

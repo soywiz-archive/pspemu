@@ -1,2 +1,2 @@
 @echo off
-..\..\..\bin\php ..\..\..\build.php lines.d
+..\..\..\bin\php ..\..\..\build.php lines.d %*

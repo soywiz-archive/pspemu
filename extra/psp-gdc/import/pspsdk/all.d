@@ -19,6 +19,7 @@ public import
 	pspsdk.pspthreadman,
 	pspsdk.psploadexec,
 	pspsdk.pspdebug,
+	pspsdk.pspkdebug,
 	pspsdk.psputils,
 	
 	// d utilities

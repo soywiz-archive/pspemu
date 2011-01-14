@@ -9,8 +9,10 @@
 import pspsdk.all;
 
 import std.c.stdlib;
+import std.c.stdio;
 import std.c.time;
 import std.c.math;
+import std.stdio;
 
 version (BUILD_INFO) {
 	pragma(MODULE_NAME, "Lines Sample");
@@ -24,7 +26,7 @@ align (16) uint list[262144];
 struct Vertex {
 	float x = 0.0, y = 0.0, z = 0.0;
 	
-	char[] toString() { return std.string.format("Vertex(%f, %f, %f)", x, y, z); }
+	char[] toString() { return std.string.format("Vertex(%f, %f, %f)", this.x, this.y, this.z); }
 }
 
 static const uint BUF_WIDTH = (512);
@@ -73,6 +75,9 @@ float randf_between(float min = 0.0, float max = 1.0) {
 
 int main(char[][] args) {
 	SetupCallbacks();
+	RedirectOutputToKprintf();
+
+	writefln("Lines Sample");
 	
 	// initialize lines
 	srand(time(null));
@@ -80,11 +85,11 @@ int main(char[][] args) {
 	for (uint i = 0; i < position.length; ++i) {
 		position[i].x = randf_between(0, SCR_WIDTH - 1);
 		position[i].y = randf_between(0, SCR_HEIGHT - 1);
-		//emit(position[i].x);
-		//emit(position[i].y);
 
 		direction[i].x = randf_between(-1.0, +1.0) * SPEED;
 		direction[i].y = randf_between(-1.0, +1.0) * SPEED;
+
+		writefln("%d: POSITION(%s), DIRECTION(%s)", i, position[i].toString, direction[i].toString);
 	}
 
 	// setup GU
