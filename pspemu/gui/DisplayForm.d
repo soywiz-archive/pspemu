@@ -4,6 +4,7 @@ import dfl.all, dfl.internal.winapi;
 
 import std.stdio, std.c.time, core.memory;
 import std.typetuple;
+import std.conv;
 
 import pspemu.utils.Utils;
 import pspemu.utils.Path;
@@ -44,7 +45,7 @@ class DisplayForm : Form, IMessageFilter {
 	real             lastFps;
 
 	void updateTitle() {
-		text = std.string.format("D PSP Emulator - r%s - FPS: %.1f - %s", svnRevision, lastFps, enumToString(cpu.runningState));
+		text = std.string.format("D PSP Emulator - r%s - FPS: %.1f - %s", svnRevision, lastFps, to!string(cpu.runningState));
 	}
 
 	int resumeCount = 1;

@@ -8,7 +8,6 @@ module pspemu.hle.kd.audio; // kd/audio.prx (sceAudio_Driver)
 import std.c.windows.windows;
 
 import core.thread;
-import std.contracts;
 
 import pspemu.hle.Module;
 import pspemu.utils.Audio;

@@ -12,6 +12,7 @@ debug = GPU_UNKNOWN_COMMANDS;
 import core.thread;
 
 import std.stdio;
+import std.conv;
 
 import pspemu.utils.Utils;
 import pspemu.utils.Math;
@@ -121,7 +122,7 @@ class Gpu : PspHardwareComponent {
 			for (int n = 0; n < 0x100; n++) {
 				s ~= "case " ~ tos(n) ~ ":";
 				{
-					string opname = enumToString(cast(Opcode)n);
+					string opname = to!string(cast(Opcode)n);
 					string func = "OP_" ~ opname;
 					debug (DEBUG_GPU_SHOW_COMMAND) s ~= "writefln(\"%08X:%s: %06X\", memory.getPointerReverseOrNull(commandPointer), \"" ~ opname ~ "\", command.param24);";
 					s ~= "mixin(\"static if (__traits(compiles, " ~ func ~ ")) { " ~ func ~ "(); } else { unimplemented(); }\");";

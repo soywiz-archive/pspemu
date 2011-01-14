@@ -10,8 +10,6 @@ import std.zlib;
 
 import pspemu.utils.Utils;
 
-import std.contracts;
-
 import pspemu.utils.OpenGL;
 
 import pspemu.core.Memory;

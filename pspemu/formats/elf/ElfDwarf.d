@@ -2,7 +2,9 @@ module pspemu.formats.elf.ElfDwarf;
 
 import pspemu.formats.elf.Elf;
 
-import std.stream, std.string, std.stdio, std.algorithm;
+import std.stream, std.string, std.stdio;
+import std.algorithm;
+import std.range;
 
 import pspemu.utils.Utils;
 
@@ -121,7 +123,7 @@ class ElfDwarf {
 		08900368: is_stmt(1) basic_block(0) end_sequence(0) 'test_sprintf.c':15:0 
 		08900378: is_stmt(1) basic_block(0) end_sequence(0) 'test_sprintf.c':15:0 
 		*/
-		auto p = std.algorithm.lowerBound!("a < b")(pcs, PC + 1);
+		auto p = std.range.assumeSorted!("a < b")(pcs).lowerBound(PC + 1).release;
 		
 		if (!p.length) {
 			return null;

@@ -1,9 +1,10 @@
 module pspemu.utils.Logger;
 
-import std.format, std.stdio, std.typecons;
+import std.format, std.stdio;
+import std.conv;
 
 class Logger {
-	static mixin(defineEnum!("Level", ubyte, "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"));
+	enum Level : ubyte { TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL }
 
 	struct Message {
 		uint   time;
@@ -11,7 +12,7 @@ class Logger {
 		string component;
 		wstring text;
 		void print() {
-			.writefln("%-8s: %-10d: '%s'::'%s'", enumToString(level), time, component, text);
+			.writefln("%-8s: %-10d: '%s'::'%s'", to!string(level), time, component, text);
 		}
 	}
 

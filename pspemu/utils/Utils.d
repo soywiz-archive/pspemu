@@ -293,11 +293,11 @@ class TaskQueue {
 	alias executeAll opCall;
 }
 
-mixin(defineEnum!("RunningState", uint,
-	"RUNNING", 0,
-	"PAUSED" , 1,
-	"STOPPED", 2
-));
+enum RunningState {
+	RUNNING = 0,
+	PAUSED  = 1,
+	STOPPED = 2,
+}
 
 class HaltException : Exception { this(string type = "HALT") { super(type); } }
 

@@ -1105,23 +1105,23 @@ template Opengl11_Imports() {
 	void function(GLint x, GLint y, GLsizei width, GLsizei height) glViewport;
 }
 
-typedef void (* PFNGLARRAYELEMENTEXTPROC) (GLint i);
-typedef void (* PFNGLDRAWARRAYSEXTPROC) (GLenum mode, GLint first, GLsizei count);
-typedef void (* PFNGLVERTEXPOINTEREXTPROC) (GLint size, GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer);
-typedef void (* PFNGLNORMALPOINTEREXTPROC) (GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer);
-typedef void (* PFNGLCOLORPOINTEREXTPROC) (GLint size, GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer);
-typedef void (* PFNGLINDEXPOINTEREXTPROC) (GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer);
-typedef void (* PFNGLTEXCOORDPOINTEREXTPROC) (GLint size, GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer);
-typedef void (* PFNGLEDGEFLAGPOINTEREXTPROC) (GLsizei stride, GLsizei count, GLboolean *pointer);
-typedef void (* PFNGLGETPOINTERVEXTPROC) (GLenum pname, GLvoid* *params);
-typedef void (* PFNGLARRAYELEMENTARRAYEXTPROC)(GLenum mode, GLsizei count, GLvoid* pi);
-typedef void (* PFNGLDRAWRANGEELEMENTSWINPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid *indices);
-typedef void (* PFNGLADDSWAPHINTRECTWINPROC)  (GLint x, GLint y, GLsizei width, GLsizei height);
-typedef void (* PFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, GLvoid *data);
-typedef void (* PFNGLCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid *data);
-typedef void (* PFNGLGETCOLORTABLEEXTPROC) (GLenum target, GLenum format, GLenum type, GLvoid *data);
-typedef void (* PFNGLGETCOLORTABLEPARAMETERIVEXTPROC) (GLenum target, GLenum pname, GLint *params);
-typedef void (* PFNGLGETCOLORTABLEPARAMETERFVEXTPROC) (GLenum target, GLenum pname, GLfloat *params);
+alias void function(GLint i) PFNGLARRAYELEMENTEXTPROC;
+alias void function(GLenum mode, GLint first, GLsizei count) PFNGLDRAWARRAYSEXTPROC;
+alias void function(GLint size, GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer) PFNGLVERTEXPOINTEREXTPROC;
+alias void function(GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer) PFNGLNORMALPOINTEREXTPROC;
+alias void function(GLint size, GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer) PFNGLCOLORPOINTEREXTPROC;
+alias void function(GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer) PFNGLINDEXPOINTEREXTPROC;
+alias void function(GLint size, GLenum type, GLsizei stride, GLsizei count, GLvoid *pointer) PFNGLTEXCOORDPOINTEREXTPROC;
+alias void function(GLsizei stride, GLsizei count, GLboolean *pointer) PFNGLEDGEFLAGPOINTEREXTPROC;
+alias void function(GLenum pname, GLvoid* *params) PFNGLGETPOINTERVEXTPROC;
+alias void function(GLenum mode, GLsizei count, GLvoid* pi) PFNGLARRAYELEMENTARRAYEXTPROC;
+alias void function(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid *indices) PFNGLDRAWRANGEELEMENTSWINPROC;
+alias void function(GLint x, GLint y, GLsizei width, GLsizei height) PFNGLADDSWAPHINTRECTWINPROC;
+alias void function(GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, GLvoid *data) PFNGLCOLORTABLEEXTPROC;
+alias void function(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid *data) PFNGLCOLORSUBTABLEEXTPROC;
+alias void function(GLenum target, GLenum format, GLenum type, GLvoid *data) PFNGLGETCOLORTABLEEXTPROC;
+alias void function(GLenum target, GLenum pname, GLint *params) PFNGLGETCOLORTABLEPARAMETERIVEXTPROC;
+alias void function(GLenum target, GLenum pname, GLfloat *params) PFNGLGETCOLORTABLEPARAMETERFVEXTPROC;
 
 ///////////////////////////////////////////////////////////////////////////////
 // OPENGL 1.2                                                                //

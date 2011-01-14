@@ -1,7 +1,6 @@
 module pspemu.utils.Audio;
 
 import std.c.windows.windows;
-import std.contracts;
 import std.stdio;
 import core.thread;
 import std.stream;
