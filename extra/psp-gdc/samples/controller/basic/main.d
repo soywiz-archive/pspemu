@@ -16,6 +16,9 @@
 
 import pspsdk.all;
 
+import std.stdio;
+import std.string;
+
 version (BUILD_INFO) {
 	pragma(MODULE_NAME, "CONTROLTEST");
 	pragma(PSP_EBOOT_TITLE, "Controller Basic");
@@ -28,6 +31,7 @@ int main() {
 
 	pspDebugScreenInit();
 	SetupCallbacks();
+	//RedirectOutputToKprintf();
 
 	sceCtrlSetSamplingCycle(0);
 	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
@@ -57,6 +61,7 @@ int main() {
 			if (pad.Buttons & PSP_CTRL_LTRIGGER) pspDebugScreenPrintf("L-trigger pressed \n");
 			if (pad.Buttons & PSP_CTRL_RTRIGGER) pspDebugScreenPrintf("R-trigger pressed \n");
 		}
+		//emit(std.string.format("%d", pad.Buttons));
 	}
 
 	sceKernelExitGame();

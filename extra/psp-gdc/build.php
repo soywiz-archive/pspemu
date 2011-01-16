@@ -179,6 +179,7 @@ class SourcesProcessor {
 		//$d_flags = "";
 		//$d_flags = "-fversion=Unix";
 		$d_flags = implode(' ', $this->compilerOptions);
+		$d_flags .= " -J\"{$this->importFolders[0]}\"";
 		$psp_gcc = "{$this->pspsdk_path}/../../bin/psp-gcc";
 		$psp_gdc = "{$this->pspsdk_path}/../../bin/psp-gdc";
 		$mksfo = "{$this->pspsdk_path}/../../bin/mksfo";
