@@ -175,7 +175,9 @@ class SourcesProcessor {
 		
 		//print_r($this);
 		
-		$base_flags = "-I. -I\"{$this->pspsdk_path}/include\" -O2 -Wall -I\"{$this->dpspsdk_path}\" -D_PSP_FW_VERSION={$this->BUILD_INFO['PSP_FW_VERSION']} -L.. -L. -L\"{$this->pspsdk_path}/lib\"";
+		$base_flags = "-I. -I\"{$this->pspsdk_path}/include\" -Wall -I\"{$this->dpspsdk_path}\" -D_PSP_FW_VERSION={$this->BUILD_INFO['PSP_FW_VERSION']} -L.. -L. -L\"{$this->pspsdk_path}/lib\"";
+		$base_flags .= " -O2";
+		//$base_flags .= " -O3";
 		//$d_flags = "";
 		//$d_flags = "-fversion=Unix";
 		$d_flags = implode(' ', $this->compilerOptions);
