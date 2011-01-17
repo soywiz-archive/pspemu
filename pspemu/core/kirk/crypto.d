@@ -111,14 +111,8 @@ struct SHA1Context {
 
 //CMAC GLOBS
 static const AES_128 = 0;
-ubyte const_Rb[16] = [
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x87
-];
-ubyte const_Zero[16] = [
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-];
+ubyte[16] const_Rb   = [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x87 ];
+ubyte[16] const_Zero = [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ];
 //END
 
 /*
@@ -1032,93 +1026,31 @@ version (FULL_UNROLL) {
 	 */
     r = Nr >> 1;
     for (;;) {
-	t0 =
-	    Te0[(s0 >> 24)       ] ^
-	    Te1[(s1 >> 16) & 0xff] ^
-	    Te2[(s2 >>  8) & 0xff] ^
-	    Te3[(s3      ) & 0xff] ^
-	    rk[4];
-	t1 =
-	    Te0[(s1 >> 24)       ] ^
-	    Te1[(s2 >> 16) & 0xff] ^
-	    Te2[(s3 >>  8) & 0xff] ^
-	    Te3[(s0      ) & 0xff] ^
-	    rk[5];
-	t2 =
-	    Te0[(s2 >> 24)       ] ^
-	    Te1[(s3 >> 16) & 0xff] ^
-	    Te2[(s0 >>  8) & 0xff] ^
-	    Te3[(s1      ) & 0xff] ^
-	    rk[6];
-	t3 =
-	    Te0[(s3 >> 24)       ] ^
-	    Te1[(s0 >> 16) & 0xff] ^
-	    Te2[(s1 >>  8) & 0xff] ^
-	    Te3[(s2      ) & 0xff] ^
-	    rk[7];
+		t0 = Te0[(s0 >> 24)] ^ Te1[(s1 >> 16) & 0xff] ^ Te2[(s2 >>  8) & 0xff] ^ Te3[(s3) & 0xff] ^ rk[4];
+		t1 = Te0[(s1 >> 24)] ^ Te1[(s2 >> 16) & 0xff] ^ Te2[(s3 >>  8) & 0xff] ^ Te3[(s0) & 0xff] ^ rk[5];
+		t2 = Te0[(s2 >> 24)] ^ Te1[(s3 >> 16) & 0xff] ^ Te2[(s0 >>  8) & 0xff] ^ Te3[(s1) & 0xff] ^ rk[6];
+		t3 = Te0[(s3 >> 24)] ^ Te1[(s0 >> 16) & 0xff] ^ Te2[(s1 >>  8) & 0xff] ^ Te3[(s2) & 0xff] ^ rk[7];
 
-	rk += 8;
-	if (--r == 0) {
-	    break;
-	}
+		rk += 8;
+		if (--r == 0) break;
 
-	s0 =
-	    Te0[(t0 >> 24)       ] ^
-	    Te1[(t1 >> 16) & 0xff] ^
-	    Te2[(t2 >>  8) & 0xff] ^
-	    Te3[(t3      ) & 0xff] ^
-	    rk[0];
-	s1 =
-	    Te0[(t1 >> 24)       ] ^
-	    Te1[(t2 >> 16) & 0xff] ^
-	    Te2[(t3 >>  8) & 0xff] ^
-	    Te3[(t0      ) & 0xff] ^
-	    rk[1];
-	s2 =
-	    Te0[(t2 >> 24)       ] ^
-	    Te1[(t3 >> 16) & 0xff] ^
-	    Te2[(t0 >>  8) & 0xff] ^
-	    Te3[(t1      ) & 0xff] ^
-	    rk[2];
-	s3 =
-	    Te0[(t3 >> 24)       ] ^
-	    Te1[(t0 >> 16) & 0xff] ^
-	    Te2[(t1 >>  8) & 0xff] ^
-	    Te3[(t2      ) & 0xff] ^
-	    rk[3];
+		s0 = Te0[(t0 >> 24)] ^ Te1[(t1 >> 16) & 0xff] ^ Te2[(t2 >>  8) & 0xff] ^ Te3[(t3) & 0xff] ^ rk[0];
+		s1 = Te0[(t1 >> 24)] ^ Te1[(t2 >> 16) & 0xff] ^ Te2[(t3 >>  8) & 0xff] ^ Te3[(t0) & 0xff] ^ rk[1];
+		s2 = Te0[(t2 >> 24)] ^ Te1[(t3 >> 16) & 0xff] ^ Te2[(t0 >>  8) & 0xff] ^ Te3[(t1) & 0xff] ^ rk[2];
+		s3 = Te0[(t3 >> 24)] ^ Te1[(t0 >> 16) & 0xff] ^ Te2[(t1 >>  8) & 0xff] ^ Te3[(t2) & 0xff] ^ rk[3];
     }
 } /* ?FULL_UNROLL */
     /*
 	 * apply last round and
 	 * map cipher state to byte array block:
 	 */
-	s0 =
-		(Te4[(t0 >> 24)       ] & 0xff000000) ^
-		(Te4[(t1 >> 16) & 0xff] & 0x00ff0000) ^
-		(Te4[(t2 >>  8) & 0xff] & 0x0000ff00) ^
-		(Te4[(t3      ) & 0xff] & 0x000000ff) ^
-		rk[0];
+	s0 = (Te4[(t0 >> 24)] & 0xff000000) ^ (Te4[(t1 >> 16) & 0xff] & 0x00ff0000) ^ (Te4[(t2 >>  8) & 0xff] & 0x0000ff00) ^ (Te4[(t3) & 0xff] & 0x000000ff) ^ rk[0];
+	s1 = (Te4[(t1 >> 24)] & 0xff000000) ^ (Te4[(t2 >> 16) & 0xff] & 0x00ff0000) ^ (Te4[(t3 >>  8) & 0xff] & 0x0000ff00) ^ (Te4[(t0) & 0xff] & 0x000000ff) ^ rk[1];
+	s2 = (Te4[(t2 >> 24)] & 0xff000000) ^ (Te4[(t3 >> 16) & 0xff] & 0x00ff0000) ^ (Te4[(t0 >>  8) & 0xff] & 0x0000ff00) ^ (Te4[(t1) & 0xff] & 0x000000ff) ^ rk[2];
+	s3 = (Te4[(t3 >> 24)] & 0xff000000) ^ (Te4[(t0 >> 16) & 0xff] & 0x00ff0000) ^ (Te4[(t1 >>  8) & 0xff] & 0x0000ff00) ^ (Te4[(t2) & 0xff] & 0x000000ff) ^ rk[3];
 	PUTU32(ct     , s0);
-	s1 =
-		(Te4[(t1 >> 24)       ] & 0xff000000) ^
-		(Te4[(t2 >> 16) & 0xff] & 0x00ff0000) ^
-		(Te4[(t3 >>  8) & 0xff] & 0x0000ff00) ^
-		(Te4[(t0      ) & 0xff] & 0x000000ff) ^
-		rk[1];
 	PUTU32(ct +  4, s1);
-	s2 =
-		(Te4[(t2 >> 24)       ] & 0xff000000) ^
-		(Te4[(t3 >> 16) & 0xff] & 0x00ff0000) ^
-		(Te4[(t0 >>  8) & 0xff] & 0x0000ff00) ^
-		(Te4[(t1      ) & 0xff] & 0x000000ff) ^
-		rk[2];
 	PUTU32(ct +  8, s2);
-	s3 =
-		(Te4[(t3 >> 24)       ] & 0xff000000) ^
-		(Te4[(t0 >> 16) & 0xff] & 0x00ff0000) ^
-		(Te4[(t1 >>  8) & 0xff] & 0x0000ff00) ^
-		(Te4[(t2      ) & 0xff] & 0x000000ff) ^
-		rk[3];
 	PUTU32(ct + 12, s3);
 }
 
@@ -1184,28 +1116,28 @@ version (FULL_UNROLL) {
     t2 = Td0[s2 >> 24] ^ Td1[(s1 >> 16) & 0xff] ^ Td2[(s0 >>  8) & 0xff] ^ Td3[s3 & 0xff] ^ rk[38];
     t3 = Td0[s3 >> 24] ^ Td1[(s2 >> 16) & 0xff] ^ Td2[(s1 >>  8) & 0xff] ^ Td3[s0 & 0xff] ^ rk[39];
     if (Nr > 10) {
-	/* round 10: */
-	s0 = Td0[t0 >> 24] ^ Td1[(t3 >> 16) & 0xff] ^ Td2[(t2 >>  8) & 0xff] ^ Td3[t1 & 0xff] ^ rk[40];
-	s1 = Td0[t1 >> 24] ^ Td1[(t0 >> 16) & 0xff] ^ Td2[(t3 >>  8) & 0xff] ^ Td3[t2 & 0xff] ^ rk[41];
-	s2 = Td0[t2 >> 24] ^ Td1[(t1 >> 16) & 0xff] ^ Td2[(t0 >>  8) & 0xff] ^ Td3[t3 & 0xff] ^ rk[42];
-	s3 = Td0[t3 >> 24] ^ Td1[(t2 >> 16) & 0xff] ^ Td2[(t1 >>  8) & 0xff] ^ Td3[t0 & 0xff] ^ rk[43];
-	/* round 11: */
-	t0 = Td0[s0 >> 24] ^ Td1[(s3 >> 16) & 0xff] ^ Td2[(s2 >>  8) & 0xff] ^ Td3[s1 & 0xff] ^ rk[44];
-	t1 = Td0[s1 >> 24] ^ Td1[(s0 >> 16) & 0xff] ^ Td2[(s3 >>  8) & 0xff] ^ Td3[s2 & 0xff] ^ rk[45];
-	t2 = Td0[s2 >> 24] ^ Td1[(s1 >> 16) & 0xff] ^ Td2[(s0 >>  8) & 0xff] ^ Td3[s3 & 0xff] ^ rk[46];
-	t3 = Td0[s3 >> 24] ^ Td1[(s2 >> 16) & 0xff] ^ Td2[(s1 >>  8) & 0xff] ^ Td3[s0 & 0xff] ^ rk[47];
-	if (Nr > 12) {
-	    /* round 12: */
-	    s0 = Td0[t0 >> 24] ^ Td1[(t3 >> 16) & 0xff] ^ Td2[(t2 >>  8) & 0xff] ^ Td3[t1 & 0xff] ^ rk[48];
-	    s1 = Td0[t1 >> 24] ^ Td1[(t0 >> 16) & 0xff] ^ Td2[(t3 >>  8) & 0xff] ^ Td3[t2 & 0xff] ^ rk[49];
-	    s2 = Td0[t2 >> 24] ^ Td1[(t1 >> 16) & 0xff] ^ Td2[(t0 >>  8) & 0xff] ^ Td3[t3 & 0xff] ^ rk[50];
-	    s3 = Td0[t3 >> 24] ^ Td1[(t2 >> 16) & 0xff] ^ Td2[(t1 >>  8) & 0xff] ^ Td3[t0 & 0xff] ^ rk[51];
-	    /* round 13: */
-	    t0 = Td0[s0 >> 24] ^ Td1[(s3 >> 16) & 0xff] ^ Td2[(s2 >>  8) & 0xff] ^ Td3[s1 & 0xff] ^ rk[52];
-	    t1 = Td0[s1 >> 24] ^ Td1[(s0 >> 16) & 0xff] ^ Td2[(s3 >>  8) & 0xff] ^ Td3[s2 & 0xff] ^ rk[53];
-	    t2 = Td0[s2 >> 24] ^ Td1[(s1 >> 16) & 0xff] ^ Td2[(s0 >>  8) & 0xff] ^ Td3[s3 & 0xff] ^ rk[54];
-	    t3 = Td0[s3 >> 24] ^ Td1[(s2 >> 16) & 0xff] ^ Td2[(s1 >>  8) & 0xff] ^ Td3[s0 & 0xff] ^ rk[55];
-	}
+		/* round 10: */
+		s0 = Td0[t0 >> 24] ^ Td1[(t3 >> 16) & 0xff] ^ Td2[(t2 >>  8) & 0xff] ^ Td3[t1 & 0xff] ^ rk[40];
+		s1 = Td0[t1 >> 24] ^ Td1[(t0 >> 16) & 0xff] ^ Td2[(t3 >>  8) & 0xff] ^ Td3[t2 & 0xff] ^ rk[41];
+		s2 = Td0[t2 >> 24] ^ Td1[(t1 >> 16) & 0xff] ^ Td2[(t0 >>  8) & 0xff] ^ Td3[t3 & 0xff] ^ rk[42];
+		s3 = Td0[t3 >> 24] ^ Td1[(t2 >> 16) & 0xff] ^ Td2[(t1 >>  8) & 0xff] ^ Td3[t0 & 0xff] ^ rk[43];
+		/* round 11: */
+		t0 = Td0[s0 >> 24] ^ Td1[(s3 >> 16) & 0xff] ^ Td2[(s2 >>  8) & 0xff] ^ Td3[s1 & 0xff] ^ rk[44];
+		t1 = Td0[s1 >> 24] ^ Td1[(s0 >> 16) & 0xff] ^ Td2[(s3 >>  8) & 0xff] ^ Td3[s2 & 0xff] ^ rk[45];
+		t2 = Td0[s2 >> 24] ^ Td1[(s1 >> 16) & 0xff] ^ Td2[(s0 >>  8) & 0xff] ^ Td3[s3 & 0xff] ^ rk[46];
+		t3 = Td0[s3 >> 24] ^ Td1[(s2 >> 16) & 0xff] ^ Td2[(s1 >>  8) & 0xff] ^ Td3[s0 & 0xff] ^ rk[47];
+		if (Nr > 12) {
+			/* round 12: */
+			s0 = Td0[t0 >> 24] ^ Td1[(t3 >> 16) & 0xff] ^ Td2[(t2 >>  8) & 0xff] ^ Td3[t1 & 0xff] ^ rk[48];
+			s1 = Td0[t1 >> 24] ^ Td1[(t0 >> 16) & 0xff] ^ Td2[(t3 >>  8) & 0xff] ^ Td3[t2 & 0xff] ^ rk[49];
+			s2 = Td0[t2 >> 24] ^ Td1[(t1 >> 16) & 0xff] ^ Td2[(t0 >>  8) & 0xff] ^ Td3[t3 & 0xff] ^ rk[50];
+			s3 = Td0[t3 >> 24] ^ Td1[(t2 >> 16) & 0xff] ^ Td2[(t1 >>  8) & 0xff] ^ Td3[t0 & 0xff] ^ rk[51];
+			/* round 13: */
+			t0 = Td0[s0 >> 24] ^ Td1[(s3 >> 16) & 0xff] ^ Td2[(s2 >>  8) & 0xff] ^ Td3[s1 & 0xff] ^ rk[52];
+			t1 = Td0[s1 >> 24] ^ Td1[(s0 >> 16) & 0xff] ^ Td2[(s3 >>  8) & 0xff] ^ Td3[s2 & 0xff] ^ rk[53];
+			t2 = Td0[s2 >> 24] ^ Td1[(s1 >> 16) & 0xff] ^ Td2[(s0 >>  8) & 0xff] ^ Td3[s3 & 0xff] ^ rk[54];
+			t3 = Td0[s3 >> 24] ^ Td1[(s2 >> 16) & 0xff] ^ Td2[(s1 >>  8) & 0xff] ^ Td3[s0 & 0xff] ^ rk[55];
+		}
     }
 	rk += Nr << 2;
 } else { /* !FULL_UNROLL */
@@ -1214,93 +1146,31 @@ version (FULL_UNROLL) {
      */
     r = Nr >> 1;
     for (;;) {
-	t0 =
-	    Td0[(s0 >> 24)       ] ^
-	    Td1[(s3 >> 16) & 0xff] ^
-	    Td2[(s2 >>  8) & 0xff] ^
-	    Td3[(s1      ) & 0xff] ^
-	    rk[4];
-	t1 =
-	    Td0[(s1 >> 24)       ] ^
-	    Td1[(s0 >> 16) & 0xff] ^
-	    Td2[(s3 >>  8) & 0xff] ^
-	    Td3[(s2      ) & 0xff] ^
-	    rk[5];
-	t2 =
-	    Td0[(s2 >> 24)       ] ^
-	    Td1[(s1 >> 16) & 0xff] ^
-	    Td2[(s0 >>  8) & 0xff] ^
-	    Td3[(s3      ) & 0xff] ^
-	    rk[6];
-	t3 =
-	    Td0[(s3 >> 24)       ] ^
-	    Td1[(s2 >> 16) & 0xff] ^
-	    Td2[(s1 >>  8) & 0xff] ^
-	    Td3[(s0      ) & 0xff] ^
-	    rk[7];
+		t0 = Td0[(s0 >> 24)] ^ Td1[(s3 >> 16) & 0xff] ^ Td2[(s2 >>  8) & 0xff] ^ Td3[(s1) & 0xff] ^ rk[4];
+		t1 = Td0[(s1 >> 24)] ^ Td1[(s0 >> 16) & 0xff] ^ Td2[(s3 >>  8) & 0xff] ^ Td3[(s2) & 0xff] ^ rk[5];
+		t2 = Td0[(s2 >> 24)] ^ Td1[(s1 >> 16) & 0xff] ^ Td2[(s0 >>  8) & 0xff] ^ Td3[(s3) & 0xff] ^ rk[6];
+		t3 = Td0[(s3 >> 24)] ^ Td1[(s2 >> 16) & 0xff] ^ Td2[(s1 >>  8) & 0xff] ^ Td3[(s0) & 0xff] ^ rk[7];
 
-	rk += 8;
-	if (--r == 0) {
-	    break;
-	}
+		rk += 8;
+		if (--r == 0) break;
 
-	s0 =
-	    Td0[(t0 >> 24)       ] ^
-	    Td1[(t3 >> 16) & 0xff] ^
-	    Td2[(t2 >>  8) & 0xff] ^
-	    Td3[(t1      ) & 0xff] ^
-	    rk[0];
-	s1 =
-	    Td0[(t1 >> 24)       ] ^
-	    Td1[(t0 >> 16) & 0xff] ^
-	    Td2[(t3 >>  8) & 0xff] ^
-	    Td3[(t2      ) & 0xff] ^
-	    rk[1];
-	s2 =
-	    Td0[(t2 >> 24)       ] ^
-	    Td1[(t1 >> 16) & 0xff] ^
-	    Td2[(t0 >>  8) & 0xff] ^
-	    Td3[(t3      ) & 0xff] ^
-	    rk[2];
-	s3 =
-	    Td0[(t3 >> 24)       ] ^
-	    Td1[(t2 >> 16) & 0xff] ^
-	    Td2[(t1 >>  8) & 0xff] ^
-	    Td3[(t0      ) & 0xff] ^
-	    rk[3];
+		s0 = Td0[(t0 >> 24)] ^ Td1[(t3 >> 16) & 0xff] ^ Td2[(t2 >>  8) & 0xff] ^ Td3[(t1) & 0xff] ^ rk[0];
+		s1 = Td0[(t1 >> 24)] ^ Td1[(t0 >> 16) & 0xff] ^ Td2[(t3 >>  8) & 0xff] ^ Td3[(t2) & 0xff] ^ rk[1];
+		s2 = Td0[(t2 >> 24)] ^ Td1[(t1 >> 16) & 0xff] ^ Td2[(t0 >>  8) & 0xff] ^ Td3[(t3) & 0xff] ^ rk[2];
+		s3 = Td0[(t3 >> 24)] ^ Td1[(t2 >> 16) & 0xff] ^ Td2[(t1 >>  8) & 0xff] ^ Td3[(t0) & 0xff] ^ rk[3];
     }
 } /* ?FULL_UNROLL */
     /*
 	 * apply last round and
 	 * map cipher state to byte array block:
 	 */
-   	s0 =
-   		(Td4[(t0 >> 24)       ] & 0xff000000) ^
-   		(Td4[(t3 >> 16) & 0xff] & 0x00ff0000) ^
-   		(Td4[(t2 >>  8) & 0xff] & 0x0000ff00) ^
-   		(Td4[(t1      ) & 0xff] & 0x000000ff) ^
-   		rk[0];
+   	s0 = (Td4[(t0 >> 24)] & 0xff000000) ^ (Td4[(t3 >> 16) & 0xff] & 0x00ff0000) ^ (Td4[(t2 >>  8) & 0xff] & 0x0000ff00) ^ (Td4[(t1) & 0xff] & 0x000000ff) ^ rk[0];
+   	s1 = (Td4[(t1 >> 24)] & 0xff000000) ^ (Td4[(t0 >> 16) & 0xff] & 0x00ff0000) ^ (Td4[(t3 >>  8) & 0xff] & 0x0000ff00) ^ (Td4[(t2) & 0xff] & 0x000000ff) ^ rk[1];
+   	s2 = (Td4[(t2 >> 24)] & 0xff000000) ^ (Td4[(t1 >> 16) & 0xff] & 0x00ff0000) ^ (Td4[(t0 >>  8) & 0xff] & 0x0000ff00) ^ (Td4[(t3) & 0xff] & 0x000000ff) ^ rk[2];
+   	s3 = (Td4[(t3 >> 24)] & 0xff000000) ^ (Td4[(t2 >> 16) & 0xff] & 0x00ff0000) ^ (Td4[(t1 >>  8) & 0xff] & 0x0000ff00) ^ (Td4[(t0) & 0xff] & 0x000000ff) ^ rk[3];
 	PUTU32(pt     , s0);
-   	s1 =
-   		(Td4[(t1 >> 24)       ] & 0xff000000) ^
-   		(Td4[(t0 >> 16) & 0xff] & 0x00ff0000) ^
-   		(Td4[(t3 >>  8) & 0xff] & 0x0000ff00) ^
-   		(Td4[(t2      ) & 0xff] & 0x000000ff) ^
-   		rk[1];
 	PUTU32(pt +  4, s1);
-   	s2 =
-   		(Td4[(t2 >> 24)       ] & 0xff000000) ^
-   		(Td4[(t1 >> 16) & 0xff] & 0x00ff0000) ^
-   		(Td4[(t0 >>  8) & 0xff] & 0x0000ff00) ^
-   		(Td4[(t3      ) & 0xff] & 0x000000ff) ^
-   		rk[2];
 	PUTU32(pt +  8, s2);
-   	s3 =
-   		(Td4[(t3 >> 24)       ] & 0xff000000) ^
-   		(Td4[(t2 >> 16) & 0xff] & 0x00ff0000) ^
-   		(Td4[(t1 >>  8) & 0xff] & 0x0000ff00) ^
-   		(Td4[(t0      ) & 0xff] & 0x000000ff) ^
-   		rk[3];
 	PUTU32(pt + 12, s3);
 }
 
@@ -1472,14 +1342,13 @@ void AES_CMAC (AES_ctx *ctx, ubyte *input, int length, ubyte *mac )
     int n, i, flag;
     generate_subkey(ctx, K1.ptr, K2.ptr);
 
-    n = (length+15) / 16;       /* n is number of rounds */
+    n = (length + 15) / 16;       /* n is number of rounds */
 
-    if ( n == 0 ) 
-	{
+    if (n == 0) {
         n = 1;
         flag = 0;
     } else {
-		if ( (length%16) == 0 ) { /* last block is a complete block */
+		if ((length % 16) == 0) { /* last block is a complete block */
             flag = 1;
         } else { /* last block is not complete block */
             flag = 0;
@@ -1495,8 +1364,7 @@ void AES_CMAC (AES_ctx *ctx, ubyte *input, int length, ubyte *mac )
     }
 
     for ( i=0; i<16; i++ ) X[i] = 0;
-    for ( i=0; i<n-1; i++ ) 
-    {
+    for ( i=0; i<n-1; i++ )  {
         xor_128(X.ptr, &input[16 * i], Y.ptr); /* Y := Mi (+) X  */
 		AES_encrypt(ctx, Y.ptr, X.ptr); /* X := AES-128(KEY, Y); */ 
     }
@@ -1615,10 +1483,8 @@ void SHA1Input(SHA1Context *context, ubyte *message_array, uint length) {
             context.Length_High++;
             /* Force it to 32 bits */
             context.Length_High &= 0xFFFFFFFF;
-            if (context.Length_High == 0) {
-                /* Message is too long */
-                context.Corrupted = 1;
-            }
+			// Message is too long
+            if (context.Length_High == 0) context.Corrupted = 1;
         }
 
         if (context.Message_Block_Index == 64) {
@@ -1651,31 +1517,24 @@ void SHA1Input(SHA1Context *context, ubyte *message_array, uint length) {
  */
 void SHA1ProcessMessageBlock(SHA1Context *context)
 {
-    const uint K[] =            /* Constants defined in SHA-1   */      
-    [
-        0x5A827999,
-        0x6ED9EBA1,
-        0x8F1BBCDC,
-        0xCA62C1D6
-    ];
-    int         t;                  /* Loop counter                 */
-    uint    temp;               /* Temporary word value         */
-    uint    W[80];              /* Word sequence                */
-    uint    A, B, C, D, E;      /* Word buffers                 */
+    const uint K[] = [ 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6 ]; // Constants defined in SHA-1
+    
+    int  t;              // Loop counter
+    uint temp;           // Temporary word value
+    uint W[80];          // Word sequence
+    uint A, B, C, D, E;  // Word buffers
 
     /*
      *  Initialize the first 16 words in the array W
      */
-    for(t = 0; t < 16; t++)
-    {
-        W[t]  = (cast(uint) context.Message_Block[t * 4]) << 24;
+    for (t = 0; t < 16; t++) {
+        W[t]  = (cast(uint) context.Message_Block[t * 4 + 0]) << 24;
         W[t] |= (cast(uint) context.Message_Block[t * 4 + 1]) << 16;
         W[t] |= (cast(uint) context.Message_Block[t * 4 + 2]) << 8;
-        W[t] |= (cast(uint) context.Message_Block[t * 4 + 3]);
+        W[t] |= (cast(uint) context.Message_Block[t * 4 + 3]) << 0;
     }
 
-    for(t = 16; t < 80; t++)
-    {
+    for (t = 16; t < 80; t++) {
        W[t] = SHA1CircularShift(1,W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16]);
     }
 
@@ -1685,10 +1544,8 @@ void SHA1ProcessMessageBlock(SHA1Context *context)
     D = context.Message_Digest[3];
     E = context.Message_Digest[4];
 
-    for(t = 0; t < 20; t++)
-    {
-        temp =  SHA1CircularShift(5,A) +
-                ((B & C) | ((~B) & D)) + E + W[t] + K[0];
+    for(t = 0; t < 20; t++) {
+        temp =  SHA1CircularShift(5,A) + ((B & C) | ((~B) & D)) + E + W[t] + K[0];
         temp &= 0xFFFFFFFF;
         E = D;
         D = C;
@@ -1697,8 +1554,7 @@ void SHA1ProcessMessageBlock(SHA1Context *context)
         A = temp;
     }
 
-    for(t = 20; t < 40; t++)
-    {
+    for(t = 20; t < 40; t++) {
         temp = SHA1CircularShift(5,A) + (B ^ C ^ D) + E + W[t] + K[1];
         temp &= 0xFFFFFFFF;
         E = D;
@@ -1708,10 +1564,8 @@ void SHA1ProcessMessageBlock(SHA1Context *context)
         A = temp;
     }
 
-    for(t = 40; t < 60; t++)
-    {
-        temp = SHA1CircularShift(5,A) +
-               ((B & C) | (B & D) | (C & D)) + E + W[t] + K[2];
+    for(t = 40; t < 60; t++) {
+        temp = SHA1CircularShift(5,A) + ((B & C) | (B & D) | (C & D)) + E + W[t] + K[2];
         temp &= 0xFFFFFFFF;
         E = D;
         D = C;
@@ -1720,8 +1574,7 @@ void SHA1ProcessMessageBlock(SHA1Context *context)
         A = temp;
     }
 
-    for(t = 60; t < 80; t++)
-    {
+    for (t = 60; t < 80; t++) {
         temp = SHA1CircularShift(5,A) + (B ^ C ^ D) + E + W[t] + K[3];
         temp &= 0xFFFFFFFF;
         E = D;
@@ -1731,16 +1584,11 @@ void SHA1ProcessMessageBlock(SHA1Context *context)
         A = temp;
     }
 
-    context.Message_Digest[0] =
-                        (context.Message_Digest[0] + A) & 0xFFFFFFFF;
-    context.Message_Digest[1] =
-                        (context.Message_Digest[1] + B) & 0xFFFFFFFF;
-    context.Message_Digest[2] =
-                        (context.Message_Digest[2] + C) & 0xFFFFFFFF;
-    context.Message_Digest[3] =
-                        (context.Message_Digest[3] + D) & 0xFFFFFFFF;
-    context.Message_Digest[4] =
-                        (context.Message_Digest[4] + E) & 0xFFFFFFFF;
+    context.Message_Digest[0] = (context.Message_Digest[0] + A) & 0xFFFFFFFF;
+    context.Message_Digest[1] = (context.Message_Digest[1] + B) & 0xFFFFFFFF;
+    context.Message_Digest[2] = (context.Message_Digest[2] + C) & 0xFFFFFFFF;
+    context.Message_Digest[3] = (context.Message_Digest[3] + D) & 0xFFFFFFFF;
+    context.Message_Digest[4] = (context.Message_Digest[4] + E) & 0xFFFFFFFF;
 
     context.Message_Block_Index = 0;
 }
