@@ -157,6 +157,11 @@ class SourcesProcessor {
 		}
 	}
 	
+	static public function exec($cmd) {
+		echo "{$cmd}\n";
+		echo `{$cmd}`;
+	}
+	
 	public function build() {
 		$this->processAllFiles();
 		
@@ -193,7 +198,7 @@ class SourcesProcessor {
 	
 		//file_put_contents(__DIR__ . '/module.c', $this->buildModuleC());
 		file_put_contents('module.c', $this->buildModuleC());
-		echo `{$psp_gcc} {$base_flags} -c -o module.o module.c`;
+		static::exec("{$psp_gcc} {$base_flags} -c -o module.o module.c");
 		
 		/*
 		$fileList = implode(' ', array_map(function($fileName) {
@@ -210,7 +215,7 @@ class SourcesProcessor {
 			$objFile = basename($fileName) . '.o';
 			$objFiles[] = $objFile;
 			//echo "{$fileName}\n";
-			echo `{$psp_gdc} {$base_flags} {$d_flags} -c -o {$objFile} {$fileName}`;
+			static::exec("{$psp_gdc} {$base_flags} {$d_flags} -c -o {$objFile} {$fileName}");
 		}
 		
 		$libsStr = implode(' ', array_map(function($libName) {
@@ -218,7 +223,7 @@ class SourcesProcessor {
 		}, $this->BUILD_INFO['LIBS']));
 		
 		$objFilesStr = implode(' ', $objFiles);
-		echo `{$psp_gcc} {$base_flags} {$objFilesStr} {$libsStr} -o {$output_elf}`;
+		static::exec("{$psp_gcc} {$base_flags} {$objFilesStr} {$libsStr} -o {$output_elf}");
 
 		// BUILD CLEANUP.
 		unlink('module.c');
@@ -228,10 +233,10 @@ class SourcesProcessor {
 
 		// FIX AND EXECUTE
 		if (is_file($output_elf)) {
-			`{$psp_fixup_imports} {$output_elf}`;
+			static::exec("{$psp_fixup_imports} {$output_elf}");
 			
-			`{$mksfo} {$this->BUILD_INFO['PSP_EBOOT_TITLE']} PARAM.SFO`;
-			`{$pack_pbp} EBOOT.PBP PARAM.SFO NULL NULL NULL NULL NULL {$output_elf} NULL`;
+			static::exec("{$mksfo} {$this->BUILD_INFO['PSP_EBOOT_TITLE']} PARAM.SFO");
+			static::exec("{$pack_pbp} EBOOT.PBP PARAM.SFO NULL NULL NULL NULL NULL {$output_elf} NULL");
 			
 			unlink('PARAM.SFO');
 			unlink($output_elf);
