@@ -25,6 +25,8 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+module pspemu.core.kirk.crypto;
  
 alias ubyte u8;
 alias ushort u16;
