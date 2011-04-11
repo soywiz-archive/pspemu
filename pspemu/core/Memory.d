@@ -15,8 +15,8 @@ import pspemu.utils.Utils;
 
 import std.c.windows.windows;
 
-version = VERSION_CHECK_MEMORY;    /// Check more memory positions.
-version = VERSION_CHECK_ALIGNMENT; /// Check that read and writes are aligned.
+//version = VERSION_CHECK_MEMORY;    /// Check more memory positions.
+//version = VERSION_CHECK_ALIGNMENT; /// Check that read and writes are aligned.
 //version = VERSION_VIRTUAL_ALLOC;
 
 /**--------------------------------+
