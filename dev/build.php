@@ -84,7 +84,7 @@ class DModule {
 	}
 
 	protected function getModule() {
-		if (!preg_match('@module\\s+([^;]*);@Umsi', $this->fileSourceContents, $matches)) throw(new Exception("Can't find the module name."));
+		if (!preg_match('@module\\s+([^;]*);@Umsi', $this->fileSourceContents, $matches)) throw(new Exception("Can't find the module name at '{$this->fileSource}'."));
 		return $matches[1];
 	}
 

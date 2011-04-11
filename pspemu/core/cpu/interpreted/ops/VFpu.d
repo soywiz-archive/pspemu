@@ -1,7 +1,6 @@
 module pspemu.core.cpu.interpreted.ops.VFpu;
-import pspemu.core.cpu.interpreted.Utils;
 
-import std.math;
+import pspemu.All;
 
 //debug = DEBUG_VFPU_I;
 
@@ -427,8 +426,8 @@ template TemplateCpu_VFPU() {
 	// Load 4 Vfpu (Quad) regs from 16 byte aligned memory
 	// LVQ(110110:rs:vt5:imm14:0:vt1)
 	void OP_LV_Q() {
-		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
-		foreach (n, ref value; VD[0..4]) value = cpu.memory.tread!(float)(address + n * 4);
+		uint address = executionState.registers.R[instruction.RS] + instruction.IMM14 * 4;
+		foreach (n, ref value; VD[0..4]) value = executionState.memory.tread!(float)(address + n * 4);
 		saveVd(4, instruction.VT5_1);
 		
 		debug (DEBUG_VFPU_I) writefln("OP_LV_Q(%s)", VD[0..4]);
@@ -437,7 +436,7 @@ template TemplateCpu_VFPU() {
 	}
 
 	void OP_LV_S() {
-		VD[0] = cpu.memory.tread!(float)(cpu.registers.R[instruction.RS] + instruction.IMM14 * 4);
+		VD[0] = executionState.memory.tread!(float)(executionState.registers.R[instruction.RS] + instruction.IMM14 * 4);
 		saveVd(1, instruction.VT5_2);
 		
 		debug (DEBUG_VFPU_I) writefln("OP_LV_S(%s)", VD[0..1]);
@@ -470,28 +469,28 @@ template TemplateCpu_VFPU() {
         int m  = (vt >> 2) & 7;
         int i  = (vt >> 0) & 3;
 		
-		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4 - 12;
+		uint address = executionState.registers.R[instruction.RS] + instruction.IMM14 * 4 - 12;
 		int k = 4 - ((address >> 2) & 3);
 		debug (DEBUG_VFPU_I) float[] rows_d = new float[4];
 		uint address_start = address;
 		
         if ((vt & 32) != 0) {
             for (int j = 0; j < k; ++j) {
-				auto value = cpu.memory.tread!(float)(address);
+				auto value = executionState.memory.tread!(float)(address);
 				debug (DEBUG_VFPU_I) rows_d[j] = value;
-                cpu.registers.VF_CELLS[m][j][i] = value;
+                executionState.registers.VF_CELLS[m][j][i] = value;
 				address += 4;
             }
         } else {
             for (int j = 0; j < k; ++j) {
-				auto value = cpu.memory.tread!(float)(address);
+				auto value = executionState.memory.tread!(float)(address);
                 debug (DEBUG_VFPU_I) rows_d[j] = value;
-				cpu.registers.VF_CELLS[m][i][j] = value;
+				executionState.registers.VF_CELLS[m][i][j] = value;
 				address += 4;
             }
         }
 
-		debug (DEBUG_VFPU_I) writefln("OP_LVL_Q(0x%08X)(%s)(%s)", address_start, rows_d, cpu.memory.tread!(float[10])(address_start - 8));
+		debug (DEBUG_VFPU_I) writefln("OP_LVL_Q(0x%08X)(%s)(%s)", address_start, rows_d, executionState.memory.tread!(float[10])(address_start - 8));
 
 		//Logger.log(Logger.Level.WARNING, "Vfpu", "LVL.Q");
 		registers.pcAdvance(4);
@@ -502,7 +501,7 @@ template TemplateCpu_VFPU() {
         int m = (vt >> 2) & 7;
         int i = (vt >> 0) & 3;
 		
-        uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
+        uint address = executionState.registers.R[instruction.RS] + instruction.IMM14 * 4;
         int k = (address >> 2) & 3;
         address += (4 - k) << 2;
 		debug (DEBUG_VFPU_I) float[] rows_d = new float[4];
@@ -510,21 +509,21 @@ template TemplateCpu_VFPU() {
 
         if ((vt & 32) != 0) {
             for (int j = 4 - k; j < 4; ++j) {
-				auto value = cpu.memory.tread!(float)(address);
+				auto value = executionState.memory.tread!(float)(address);
 				debug (DEBUG_VFPU_I) rows_d[j] = value;
-                cpu.registers.VF_CELLS[m][j][i] = value;
+                executionState.registers.VF_CELLS[m][j][i] = value;
 				address += 4;
             }
         } else {
             for (int j = 4 - k; j < 4; ++j) {
-				auto value = cpu.memory.tread!(float)(address);
+				auto value = executionState.memory.tread!(float)(address);
 				debug (DEBUG_VFPU_I) rows_d[j] = value;
-				cpu.registers.VF_CELLS[m][i][j] = value;
+				executionState.registers.VF_CELLS[m][i][j] = value;
 				address += 4;
             }
         }
 
-		debug (DEBUG_VFPU_I) writefln("OP_LVR_Q(0x%08X)(%s)(%s)", address_start, rows_d, cpu.memory.tread!(float[10])(address_start - 8));
+		debug (DEBUG_VFPU_I) writefln("OP_LVR_Q(0x%08X)(%s)(%s)", address_start, rows_d, executionState.memory.tread!(float[10])(address_start - 8));
 
 		registers.pcAdvance(4);
 	}
@@ -553,9 +552,9 @@ template TemplateCpu_VFPU() {
 	// SVQ(111110:rs:vt5:imm14:0:vt1)
 	void OP_SV_Q() {
 		loadVt(4, instruction.VT5_1);
-		uint address = cpu.registers.R[instruction.RS] + instruction.IMM14 * 4;
+		uint address = executionState.registers.R[instruction.RS] + instruction.IMM14 * 4;
 
-		foreach (n, value; VT[0..4]) cpu.memory.twrite!(float)(address + n * 4, value);
+		foreach (n, value; VT[0..4]) executionState.memory.twrite!(float)(address + n * 4, value);
 
 		debug (DEBUG_VFPU_I) writefln("OP_SV_Q(%d,%d)(%s)", instruction.VT5, instruction.VT1, VT[0..4]);
 
@@ -674,7 +673,7 @@ template TemplateCpu_VFPU() {
 	// Move From Vfpu (C?)
 	// MFV(010010:00:011:rt:0:0000000:0:vd)
 	void OP_MFV() {
-		loadVd(1); cpu.registers.R[instruction.RT] = F_I(VD[0]);
+		loadVd(1); executionState.registers.R[instruction.RT] = F_I(VD[0]);
 
 		debug (DEBUG_VFPU_I) writefln("OP_MFV(%f)", VD[0]);
 
@@ -687,7 +686,7 @@ template TemplateCpu_VFPU() {
 	// Move To Vfpu (C?)
 	// MTV(010010:00:111:rt:0:0000000:0:vd)
 	void OP_MTV() {
-		VD[0] = I_F(cpu.registers.R[instruction.RT]);
+		VD[0] = I_F(executionState.registers.R[instruction.RT]);
 		saveVd(1);
 
 		debug (DEBUG_VFPU_I) writefln("OP_MTV(%f)", VD[0]);
@@ -1822,17 +1821,17 @@ template TemplateCpu_VFPU() {
 	}
 
 	void OP_VPFXD() {
-		cpu.registers.vfpu_prefix_d = Prefix(instruction.v, true);
+		executionState.registers.vfpu_prefix_d = Prefix(instruction.v, true);
 		debug (DEBUG_VFPU_I) writefln("OP_VPFXD(%020b)", (instruction.v & ((1 << 20) - 1)));
 		registers.pcAdvance(4);
 	}
 	void OP_VPFXT() {
-		cpu.registers.vfpu_prefix_t = Prefix(instruction.v, true);
+		executionState.registers.vfpu_prefix_t = Prefix(instruction.v, true);
 		debug (DEBUG_VFPU_I) writefln("OP_VPFXT(%020b)", (instruction.v & ((1 << 20) - 1)));
 		registers.pcAdvance(4);
 	}
 	void OP_VPFXS() {
-		cpu.registers.vfpu_prefix_s = Prefix(instruction.v, true);
+		executionState.registers.vfpu_prefix_s = Prefix(instruction.v, true);
 		debug (DEBUG_VFPU_I) writefln("OP_VPFXS(%020b)", (instruction.v & ((1 << 20) - 1)));
 		registers.pcAdvance(4);
 	}
@@ -1918,22 +1917,22 @@ template TemplateCpu_VFPU_Utils() {
 	
 	void loadVs(uint vsize, int vx) {
 		vfpuVectorGetPointer(vfpu_ptrlist[0..vsize], vx);
-		applyPrefixSrc(cpu.registers.vfpu_prefix_s, vfpu_ptrlist[0..vsize], VS[0..vsize], true);
+		applyPrefixSrc(executionState.registers.vfpu_prefix_s, vfpu_ptrlist[0..vsize], VS[0..vsize], true);
 	}
 
 	void loadVt(uint vsize, int vx) {
 		vfpuVectorGetPointer(vfpu_ptrlist[0..vsize], vx);
-		applyPrefixSrc(cpu.registers.vfpu_prefix_t, vfpu_ptrlist[0..vsize], VT[0..vsize], true);
+		applyPrefixSrc(executionState.registers.vfpu_prefix_t, vfpu_ptrlist[0..vsize], VT[0..vsize], true);
 	}
 
 	void loadVd(uint vsize, uint vx) {
 		vfpuVectorGetPointer(vfpu_ptrlist[0..vsize], vx);
-		applyPrefixSrc(cpu.registers.vfpu_prefix_d, vfpu_ptrlist[0..vsize], VD[0..vsize], false);
+		applyPrefixSrc(executionState.registers.vfpu_prefix_d, vfpu_ptrlist[0..vsize], VD[0..vsize], false);
 	}
 	
 	void saveVd(uint vsize, uint vx) {
 		vfpuVectorGetPointer(vfpu_ptrlist[0..vsize], vx);
-		applyPrefixDst(cpu.registers.vfpu_prefix_d, VD[0..vsize], vfpu_ptrlist[0..vsize], true);
+		applyPrefixDst(executionState.registers.vfpu_prefix_d, VD[0..vsize], vfpu_ptrlist[0..vsize], true);
 	}
 	
 	void loadVs(uint vsize) { loadVs(vsize, instruction.VS); }
@@ -1955,7 +1954,7 @@ template TemplateCpu_VFPU_Utils() {
 			order = ((vx & 32) != 0);
 		}
 		
-		if (order) foreach (n, ref value; row) value = &cpu.registers.VF_CELLS[matrix][offset + n][line];
-		else       foreach (n, ref value; row) value = &cpu.registers.VF_CELLS[matrix][line][offset + n];
+		if (order) foreach (n, ref value; row) value = &executionState.registers.VF_CELLS[matrix][offset + n][line];
+		else       foreach (n, ref value; row) value = &executionState.registers.VF_CELLS[matrix][line][offset + n];
 	}
 }

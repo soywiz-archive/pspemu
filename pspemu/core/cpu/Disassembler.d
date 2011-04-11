@@ -1,10 +1,6 @@
 module pspemu.core.cpu.Disassembler;
 
-import pspemu.core.Memory;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.cpu.Switch;
-import pspemu.core.cpu.Table;
-import pspemu.core.cpu.Registers;
+public import pspemu.All;
 
 import std.stdio, std.string;
 

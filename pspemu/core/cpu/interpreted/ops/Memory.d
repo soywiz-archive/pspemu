@@ -1,5 +1,6 @@
 module pspemu.core.cpu.interpreted.ops.Memory;
-import pspemu.core.cpu.interpreted.Utils;
+
+import pspemu.All;
 
 //debug = DEBUG_SB;
 

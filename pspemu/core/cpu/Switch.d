@@ -68,6 +68,12 @@ static pure nothrow {
 			"}"
 		);
 	}
+	
+	string repeat(string str, int count) {
+		string ret = "";
+		for (int n = 0; n < count; n++) ret ~= str;
+		return ret;
+	}
 
 	// Generate a set of switch for decoding instructions.
 	string genSwitch(InstructionDefinition[] ilist, string processor = "callFunction", uint _mask = 0x_FFFFFFFF, int level = 0) {
@@ -75,33 +81,35 @@ static pure nothrow {
 		
 		assert (level < 16);
 		
+		string indent_level = repeat("\t", level);
+		
 		if (ilist.length == 0) {
 			// ""
 		} else if (ilist.length == 1) {
-			r = "{mixin(" ~ processor ~ "(\"" ~ ilist[0].name ~ "\"));}";
+			r = indent_level ~ "{mixin(" ~ processor ~ "(\"" ~ ilist[0].name ~ "\"));}\n";
 		} if (ilist.length > 1) {
 			InstructionDefinition[512] ci; int ci_len;
 
 			uint[] cvalues;
 
 			uint mask = getCommonMask(cast(InstructionDefinition[])ilist, _mask);
-			r ~= "switch (instruction.v & " ~ getString(mask) ~ ") {";
+			r ~= indent_level ~ "switch (instruction.v & " ~ getString(mask) ~ ") {\n";
 			foreach (i; ilist) {
 				uint cvalue = i.opcode.value & mask;
 				if (inArray(cvalues, cvalue)) continue;
 
-				r ~= "case " ~ getString(cvalue) ~ ":";
+				r ~= indent_level ~ "\tcase " ~ getString(cvalue) ~ ":\n";
 				ci_len = 0;
 				foreach (i2; ilist) {
 					if ((i.opcode.value & mask) == (i2.opcode.value & mask)) ci[ci_len++] = i2;
 				}
 				r ~= genSwitch(ci[0..ci_len], processor, ~mask, level + 2);
-				r ~= "break;";
+				r ~= indent_level ~ "\tbreak;\n";
 				
 				cvalues ~= cvalue;
 			}
-			r ~= "default:{mixin(" ~ processor ~ "(\"unk\"));}\n";
-			r ~= "}";
+			r ~= indent_level ~ "\tdefault:{mixin(" ~ processor ~ "(\"unk\"));}\n";
+			r ~= indent_level ~ "}\n";
 		}
 		return r;
 	}

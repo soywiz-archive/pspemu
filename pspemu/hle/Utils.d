@@ -17,11 +17,11 @@ Interrupts.Callback createUserInterruptCallback(ModuleManager moduleManager, Cpu
 	return {
 		cpu.syscall(0x1001); // _pspemuHLEInterruptCallbackEnter
 		foreach (n, param; params) {
-			cpu.registers.R[4 + n] = param; // a0, a1...
+			executionState.registers.R[4 + n] = param; // a0, a1...
 		}
-		cpu.registers.RA = 0x08000300; // This address will call 0x1002 (_pspemuHLEInterruptCallbackReturn)
-		cpu.registers.pcSet(cast(uint)callback);
-		//writefln("PC: %08X. %08X", cpu.registers.PC, cast(uint)callback);
+		executionState.registers.RA = 0x08000300; // This address will call 0x1002 (_pspemuHLEInterruptCallbackReturn)
+		executionState.registers.pcSet(cast(uint)callback);
+		//writefln("PC: %08X. %08X", executionState.registers.PC, cast(uint)callback);
 		//moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
 	};
 }

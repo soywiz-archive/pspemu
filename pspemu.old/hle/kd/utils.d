@@ -142,7 +142,7 @@ class UtilsForUser : Module {
 		unimplemented();
 		return -1;
 		*/
-		return cast(clock_t)cpu.registers.CLOCKS; // @TODO: It's the thread CLOCK not the global CLOCK!
+		return cast(clock_t)executionState.registers.CLOCKS; // @TODO: It's the thread CLOCK not the global CLOCK!
 	}
 
 	/**

@@ -1,34 +1,6 @@
 module pspemu.exe.Test;
 
-import std.stream, std.stdio, core.thread, std.variant;
-
-import std.c.windows.windows;
-
-import pspemu.models.IDisplay;
-
-import pspemu.formats.Pbp;
-
-import pspemu.utils.Utils;
-import pspemu.utils.Assertion;
-
-import pspemu.models.IDisplay;
-import pspemu.models.IController;
-import pspemu.models.ISyscall;
-
-import pspemu.core.Memory;
-import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.interpreted.Cpu;
-import pspemu.core.cpu.Interrupts;
-import pspemu.core.cpu.Disassembler;
-import pspemu.core.gpu.Gpu;
-import pspemu.core.gpu.impl.GpuOpengl;
-
-import pspemu.hle.Module;
-import pspemu.hle.Loader;
-import pspemu.hle.Syscall;
-
-import std.file;
+public import pspemu.All;
 
 static do_unittest = false;
 
@@ -52,7 +24,7 @@ void testExtended(string executableFile) {
 	auto controller    = new Controller();
 	auto display       = new PspDisplay(memory);
 	auto gpu           = new Gpu(new GpuOpengl, memory);
-	auto cpu           = new Cpu(memory, gpu, display, controller);
+	auto cpu           = new executionState.memory. gpu, display, controller);
 	auto dissasembler  = new AllegrexDisassembler(memory);
 
 	// HLE.

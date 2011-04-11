@@ -1,10 +1,6 @@
 module pspemu.core.cpu.interpreted.ops.Jump;
 
-import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.Memory;
-
-import std.stdio;
+import pspemu.All;
 
 //debug = DEBUG_CALLS;
 

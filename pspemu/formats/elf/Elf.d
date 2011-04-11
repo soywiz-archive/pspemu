@@ -1,12 +1,6 @@
 module pspemu.formats.elf.Elf;
 
-import pspemu.utils.Utils;
-
-import pspemu.core.cpu.Instruction;
-
-import std.stdio, std.stream, std.string, std.math;
-
-import pspemu.utils.Logger;
+import pspemu.All;
 
 //debug = MODULE_LOADER;
 

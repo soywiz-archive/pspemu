@@ -3,7 +3,7 @@ module pspemu.core.cpu.Test;
 version (Unittest):
 
 import pspemu.core.Memory;
-import pspemu.core.cpu.Registers;
+import pspemu.core.executionState.registers.
 import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.Cpu;
 import pspemu.core.cpu.Assembler;
@@ -14,12 +14,12 @@ import std.c.stdlib, std.stdio, std.string, std.math;
 
 unittest {
 	auto cpu          = new Cpu();
-	auto assembler    = new AllegrexAssembler(cpu.memory);
-	auto dissasembler = new AllegrexDisassembler(cpu.memory);
+	auto assembler    = new AllegrexAssembler(executionState.memory.;
+	auto dissasembler = new AllegrexDisassembler(executionState.memory.;
 
 	void reset() { cpu.resetFast(); assembler.reset(); }
-	void dump() { cpu.registers.dump(); assembler.symbolDump(); }
-	void gotoText() { cpu.registers.pcSet(assembler.segments["text"]); }
+	void dump() { executionState.registers.dump(); assembler.symbolDump(); }
+	void gotoText() { executionState.registers.pcSet(assembler.segments["text"]); }
 	void gotoTextAndExecuteUntilHalt() {
 		gotoText();
 		cpu.executeUntilHalt();
@@ -27,7 +27,7 @@ unittest {
 	assertOnFail({
 		// If an assert failed, we will dump registers.
 		dump();
-		dissasembler.dump(cpu.registers.PC, -6, +6);
+		dissasembler.dump(executionState.registers.PC, -6, +6);
 		//assert(0);
 		exit(-1);
 	});
@@ -44,7 +44,7 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers["v0"] == 13, "(v0 = (7 + 11 - 5)) == 13");
+		assertTrue(executionState.registers."v0"] == 13, "(v0 = (7 + 11 - 5)) == 13");
 	});
 
 	testGroup("ADDIU", {
@@ -56,7 +56,7 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers["a0"] == 999, "a0 = 1000; a0--; (a0 == 999);");
+		assertTrue(executionState.registers."a0"] == 999, "a0 = 1000; a0--; (a0 == 999);");
 	});
 
 	testGroup("BGEZ", {
@@ -74,9 +74,9 @@ unittest {
 		//assertTrue(false, "");
 
 		foreach (step, expectedValue; [2, 2, 1, 1, 0, 0]) {
-			//writefln("PC: %08X, nPC: %08X, STEP: %d", cpu.registers.PC, cpu.registers.nPC, step);
+			//writefln("PC: %08X, nPC: %08X, STEP: %d", executionState.registers.PC, executionState.registers.nPC, step);
 			cpu.executeSingle();
-			assertTrue(cpu.registers["v0"] == expectedValue, format("v0 = 2; while (v--); step: %d; v0 = %d; v0 != %d", step, cpu.registers["v0"], expectedValue));
+			assertTrue(executionState.registers."v0"] == expectedValue, format("v0 = 2; while (v--); step: %d; v0 = %d; v0 != %d", step, executionState.registers."v0"], expectedValue));
 		}
 	});
 
@@ -96,13 +96,13 @@ unittest {
 
 		gotoText();
 		cpu.execute(3);
-		assertTrue(cpu.registers["r1"] == 1, "Simple function call");
-		assertTrue(cpu.registers["r2"] == 1, "Simple function call");
-		assertTrue(cpu.registers["r4"] == 0, "Simple function call");
-		assertTrue(cpu.registers["ra"] == assembler.getSymbolAddress("my_function") - 4, "Simple function call");
+		assertTrue(executionState.registers."r1"] == 1, "Simple function call");
+		assertTrue(executionState.registers."r2"] == 1, "Simple function call");
+		assertTrue(executionState.registers."r4"] == 0, "Simple function call");
+		assertTrue(executionState.registers."ra"] == assembler.getSymbolAddress("my_function") - 4, "Simple function call");
 		cpu.execute(3);
-		assertTrue(cpu.registers["r3"] == 1, "Simple function call");
-		assertTrue(cpu.registers["r4"] == 1, "Simple function call");
+		assertTrue(executionState.registers."r3"] == 1, "Simple function call");
+		assertTrue(executionState.registers."r4"] == 1, "Simple function call");
 	});
 
 	testGroup("BRANCH LIKELY", {
@@ -130,10 +130,10 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers["r1"] == 0, "Simple branch likely: No branch");
-		assertTrue(cpu.registers["r2"] == 1, "Simple branch likely: Branch");
+		assertTrue(executionState.registers."r1"] == 0, "Simple branch likely: No branch");
+		assertTrue(executionState.registers."r2"] == 1, "Simple branch likely: Branch");
 		//dump();
-		assertTrue(cpu.registers.PC    == assembler.getSymbolAddress("label2") + 8, "Simple branch likely: PC");
+		assertTrue(executionState.registers.PC    == assembler.getSymbolAddress("label2") + 8, "Simple branch likely: PC");
 	});
 	
 	testGroup("BRANCH LIKELY BEQL", {
@@ -149,7 +149,7 @@ unittest {
 
 		gotoTextAndExecuteUntilHalt();
 
-		assertTrue(cpu.registers["a0"] == 1, "BEQL");
+		assertTrue(executionState.registers."a0"] == 1, "BEQL");
 	});
 	
 	testGroup("LI + LUI + ORI + BITREV", {
@@ -165,9 +165,9 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers["a0"] == 0x_8000_1111, "LUI + ORI");
-		assertTrue(cpu.registers["a1"] == 0x_8888_0001, "BITREV");
-		assertTrue(cpu.registers["a2"] == cpu.registers["a0"], "LI MACRO");
+		assertTrue(executionState.registers."a0"] == 0x_8000_1111, "LUI + ORI");
+		assertTrue(executionState.registers."a1"] == 0x_8888_0001, "BITREV");
+		assertTrue(executionState.registers."a2"] == executionState.registers."a0"], "LI MACRO");
 	});
 
 	testGroup("MIN/MAX", {
@@ -184,9 +184,9 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[11] == +5, "MAX");
-		assertTrue(cpu.registers[12] == -5, "MIN");
-		assertTrue(cpu.registers[13] ==  0, "MIN 0");
+		assertTrue(executionState.registers.11] == +5, "MAX");
+		assertTrue(executionState.registers.12] == -5, "MIN");
+		assertTrue(executionState.registers.13] ==  0, "MIN 0");
 	});
 
 	testGroup("MULT/MFHI/MFLO", {
@@ -203,12 +203,12 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[1] == 2, "ADDI Check 1");
-		assertTrue(cpu.registers[2] == -3, "ADDI Check 2");
-		assertTrue(cpu.registers[3] == 2 * -3, "MULT R->LO");
-		assertTrue(cpu.registers[4] == 0xFFFFFFFF, "MULT R->HI");
-		assertTrue(cpu.registers.LO == cpu.registers[3], "MULT LO");
-		assertTrue(cpu.registers.HI == cpu.registers[4], "MULT HI");
+		assertTrue(executionState.registers.1] == 2, "ADDI Check 1");
+		assertTrue(executionState.registers.2] == -3, "ADDI Check 2");
+		assertTrue(executionState.registers.3] == 2 * -3, "MULT R->LO");
+		assertTrue(executionState.registers.4] == 0xFFFFFFFF, "MULT R->HI");
+		assertTrue(executionState.registers.LO == executionState.registers.3], "MULT LO");
+		assertTrue(executionState.registers.HI == executionState.registers.4], "MULT HI");
 	});
 
 	testGroup("MULTU", {
@@ -225,8 +225,8 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[3] == (2 * -3), "MULTU R->LO");
-		assertTrue(cpu.registers[4] == 0x00000001, "MULT R->HI");
+		assertTrue(executionState.registers.3] == (2 * -3), "MULTU R->LO");
+		assertTrue(executionState.registers.4] == 0x00000001, "MULT R->HI");
 	});
 
 	testGroup("MADD/MTHI/MTLO", {
@@ -249,15 +249,15 @@ unittest {
 		gotoText();
 
 		cpu.executeUntilHalt();
-		assertTrue(cpu.registers[1] == 2, "ADDI Check 1");
-		assertTrue(cpu.registers[2] == 3, "ADDI Check 2");
-		assertTrue(cpu.registers[3] == 7, "ADDI Check 3");
-		assertTrue(cpu.registers.LO == 7, "MTLO Check");
-		assertTrue(cpu.registers.HI == 7, "MTHI Check");
+		assertTrue(executionState.registers.1] == 2, "ADDI Check 1");
+		assertTrue(executionState.registers.2] == 3, "ADDI Check 2");
+		assertTrue(executionState.registers.3] == 7, "ADDI Check 3");
+		assertTrue(executionState.registers.LO == 7, "MTLO Check");
+		assertTrue(executionState.registers.HI == 7, "MTHI Check");
 
 		cpu.executeUntilHalt();
-		assertTrue(cpu.registers.LO == cpu.registers[3] + (cpu.registers[1] * cpu.registers[2]), "MADD LO");
-		assertTrue(cpu.registers.HI == cpu.registers[3] + (0), "MADD HI");
+		assertTrue(executionState.registers.LO == executionState.registers.3] + (executionState.registers.1] * executionState.registers.2]), "MADD LO");
+		assertTrue(executionState.registers.HI == executionState.registers.3] + (0), "MADD HI");
 	});
 
 	testGroup("MOVZ/MOVN", {
@@ -278,10 +278,10 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[11] == 2, "MOVZ 0");
-		assertTrue(cpu.registers[12] == 0, "MOVZ 1");
-		assertTrue(cpu.registers[21] == 0, "MOVN 0");
-		assertTrue(cpu.registers[22] == 2, "MOVN 1");
+		assertTrue(executionState.registers.11] == 2, "MOVZ 0");
+		assertTrue(executionState.registers.12] == 0, "MOVZ 1");
+		assertTrue(executionState.registers.21] == 0, "MOVN 0");
+		assertTrue(executionState.registers.22] == 2, "MOVN 1");
 	});
 
 	testGroup("LI", {
@@ -296,10 +296,10 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[2] == 0x_F33F_F33F, "LI 32 bits value");
-		assertTrue(cpu.registers[3] == -2, "LI negative number");
-		assertTrue(cpu.registers[4] == 0x_FEEF_0000, "LI upper value");
-		assertTrue(cpu.registers[5] == 0x_0000_FEEF, "LI lower value");
+		assertTrue(executionState.registers.2] == 0x_F33F_F33F, "LI 32 bits value");
+		assertTrue(executionState.registers.3] == -2, "LI negative number");
+		assertTrue(executionState.registers.4] == 0x_FEEF_0000, "LI upper value");
+		assertTrue(executionState.registers.5] == 0x_0000_FEEF, "LI lower value");
 	});
 
 	testGroup("LA", {
@@ -312,7 +312,7 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[2] == assembler.getSymbolAddress("values"), "LA");
+		assertTrue(executionState.registers.2] == assembler.getSymbolAddress("values"), "LA");
 	});
 
 	testGroup("LU USES R1", {
@@ -326,7 +326,7 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[1] != 0x_11111111, "LI should have used register r1");
+		assertTrue(executionState.registers.1] != 0x_11111111, "LI should have used register r1");
 	});
 
 	testGroup("NOR", {
@@ -342,9 +342,9 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers[2] == 0x_000FF000, "NOR CHECK 1");
-		assertTrue(cpu.registers[3] == 0x_F33FF33F, "NOR CHECK 2");
-		assertTrue(cpu.registers[4] == 0x_0CC00CC0, "NOR");
+		assertTrue(executionState.registers.2] == 0x_000FF000, "NOR CHECK 1");
+		assertTrue(executionState.registers.3] == 0x_F33FF33F, "NOR CHECK 2");
+		assertTrue(executionState.registers.4] == 0x_0CC00CC0, "NOR");
 	});
 
 	testGroup("FLOAT (LWC1/SWC1, ADD.S, CEIL.W.S)", {
@@ -363,11 +363,11 @@ unittest {
 		");
 
 		gotoTextAndExecuteUntilHalt();
-		assertTrue(cpu.registers.F[2] == 1.5f, "LWC1 1");
-		assertTrue(cpu.registers.F[3] == 1.6f, "LWC1 2");
-		assertTrue(cpu.registers.F[4] == 1.5f + 1.6f, "ADD.S");
-		assertTrue(cpu.registers.RF[4] == cpu.memory.tread!(uint)(assembler.segments["data"] + 8), "SWC1");
-		assertTrue(cpu.registers.RF[1] == 2, "CEIL.W.S");
+		assertTrue(executionState.registers.F[2] == 1.5f, "LWC1 1");
+		assertTrue(executionState.registers.F[3] == 1.6f, "LWC1 2");
+		assertTrue(executionState.registers.F[4] == 1.5f + 1.6f, "ADD.S");
+		assertTrue(executionState.registers.RF[4] == executionState.memory.tread!(uint)(assembler.segments["data"] + 8), "SWC1");
+		assertTrue(executionState.registers.RF[1] == 2, "CEIL.W.S");
 	});
 
 	testGroup("FLOAT CVT_S_W", {
@@ -385,8 +385,8 @@ unittest {
 
 		gotoTextAndExecuteUntilHalt();
 		//cpu.execute(5);
-		assertTrue(cpu.registers.RF[0] == 7, "MTC1");
-		assertTrue(cpu.registers.F[1] == 7.0, "CVT_S_W");
+		assertTrue(executionState.registers.RF[0] == 7, "MTC1");
+		assertTrue(executionState.registers.F[1] == 7.0, "CVT_S_W");
 	});
 
 	testGroup("SHIFT", {
@@ -412,17 +412,17 @@ unittest {
 		gotoTextAndExecuteUntilHalt();
 
 		// Arithmetic. Carries last bit. (two's complement)
-		assertTrue(cpu.registers["a0"] == 0xFFFFFFFE, "SRA -");
-		assertTrue(cpu.registers["a1"] == 0x0000000E, "SRA +");
+		assertTrue(executionState.registers."a0"] == 0xFFFFFFFE, "SRA -");
+		assertTrue(executionState.registers."a1"] == 0x0000000E, "SRA +");
 		
 		// Logic.
-		assertTrue(cpu.registers["a2"] == 0x00000002, "SRL -");
-		assertTrue(cpu.registers["a3"] == 0x0000000E, "SRL +");
+		assertTrue(executionState.registers."a2"] == 0x00000002, "SRL -");
+		assertTrue(executionState.registers."a3"] == 0x0000000E, "SRL +");
 		
-		assertTrue(cpu.registers["t0"] == 0x_1739A5CD, "ROTR 0");
-		assertTrue(cpu.registers["t1"] == 0x_D1739A5C, "ROTR 4");
-		assertTrue(cpu.registers["t2"] == 0x_A5CD1739, "ROTR 16");
-		assertTrue(cpu.registers["t3"] == 0x_39A5CD17, "ROTR 24");
+		assertTrue(executionState.registers."t0"] == 0x_1739A5CD, "ROTR 0");
+		assertTrue(executionState.registers."t1"] == 0x_D1739A5C, "ROTR 4");
+		assertTrue(executionState.registers."t2"] == 0x_A5CD1739, "ROTR 16");
+		assertTrue(executionState.registers."t3"] == 0x_39A5CD17, "ROTR 24");
 	});
 
 	testGroup("SIGN EXTEND", {
@@ -445,10 +445,10 @@ unittest {
 
 		gotoTextAndExecuteUntilHalt();
 
-		assertTrue(cpu.registers["a0"] == 0xFFFFFFFF, "SEB -");
-		assertTrue(cpu.registers["a1"] == 0x0000007F, "SEB +");
-		assertTrue(cpu.registers["a2"] == 0xFFFFFFF8, "SEH -");
-		assertTrue(cpu.registers["a3"] == 0x00007FF8, "SEH +");
+		assertTrue(executionState.registers."a0"] == 0xFFFFFFFF, "SEB -");
+		assertTrue(executionState.registers."a1"] == 0x0000007F, "SEB +");
+		assertTrue(executionState.registers."a2"] == 0xFFFFFFF8, "SEH -");
+		assertTrue(executionState.registers."a3"] == 0x00007FF8, "SEH +");
 	});
 
 	testGroup("EXT/INS", {
@@ -469,10 +469,10 @@ unittest {
 
 		gotoTextAndExecuteUntilHalt();
 		
-		assertTrue(cpu.registers["s0"] == 0x_0, "EXT 0,4");
-		assertTrue(cpu.registers["s1"] == 0x_2, "EXT 4,4");
-		assertTrue(cpu.registers["s2"] == 0x_73485, "EXT 12,20");
-		assertTrue(cpu.registers["s3"] == 0x_F7_34_5A_43, "INS 16,8");
+		assertTrue(executionState.registers."s0"] == 0x_0, "EXT 0,4");
+		assertTrue(executionState.registers."s1"] == 0x_2, "EXT 4,4");
+		assertTrue(executionState.registers."s2"] == 0x_73485, "EXT 12,20");
+		assertTrue(executionState.registers."s3"] == 0x_F7_34_5A_43, "INS 16,8");
 	});
 
 	testGroup("SLTIU", {
@@ -486,7 +486,7 @@ unittest {
 
 		gotoTextAndExecuteUntilHalt();
 		
-		assertTrue(cpu.registers["r1"] == 1, "SLTIU YES");
+		assertTrue(executionState.registers."r1"] == 1, "SLTIU YES");
 	});
 	
 	//WSBW

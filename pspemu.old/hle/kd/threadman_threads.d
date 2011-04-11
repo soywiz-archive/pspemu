@@ -95,13 +95,13 @@ template ThreadManForUser_Threads() {
 		pspThread.createStack(moduleManager.get!(SysMemUserForUser));
 		
 		// Set extra info.
-		pspThread.info.gpReg = cast(void *)cpu.registers.GP;
+		pspThread.info.gpReg = cast(void *)executionState.registers.GP;
 
 		// Set thread registers.
 		with (pspThread.registers) {
 			pspThread.registers.R[] = 0; // Clears all the registers (though it's not necessary).
 			pcSet(entry);
-			GP = cpu.registers.GP;
+			GP = executionState.registers.GP;
 			SP = pspThread.stack.block.high - 0x600;
 			//K0 = pspThread.stack.block.high - 0x600; //?
 			RA = 0x08000200; // sceKernelExitDeleteThread
@@ -124,9 +124,9 @@ template ThreadManForUser_Threads() {
 			writefln("sceKernelStartThread: Null");
 			return -1;
 		}
-		//writefln("sceKernelStartThread:%d,%d,%d", thid, arglen, cpu.memory.getPointerReverseOrNull(argp));
+		//writefln("sceKernelStartThread:%d,%d,%d", thid, arglen, executionState.memory.getPointerReverseOrNull(argp));
 		pspThread.registers.A0 = arglen;
-		pspThread.registers.A1 = cpu.memory.getPointerReverseOrNull(argp);
+		pspThread.registers.A1 = executionState.memory.getPointerReverseOrNull(argp);
 		pspThread.info.status  = PspThreadStatus.PSP_THREAD_RUNNING;
 		threadManager.addToRunningList(pspThread);
 

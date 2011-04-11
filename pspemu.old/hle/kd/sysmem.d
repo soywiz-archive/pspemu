@@ -14,7 +14,7 @@ class SysMemUserForUser : Module {
 		stackSize += 0x600;
 		auto segment = pspMemorySegmentStacks.allocByHigh(stackSize, std.string.format("Stack for %s", name));
 		//writefln("allocStack!!! %s Size(%d)", segment, stackSize);
-		if (fillFF) cpu.memory[segment.block.low..segment.block.high][] = 0xFF;
+		if (fillFF) executionState.memory[segment.block.low..segment.block.high][] = 0xFF;
 		return segment;
 	}
 

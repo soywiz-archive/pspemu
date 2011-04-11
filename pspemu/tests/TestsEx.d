@@ -2,43 +2,7 @@ module pspemu.tests.TestsEx;
 
 //version = USE_CPU_DYNAREC;
 
-import std.stream, std.stdio, core.thread, std.file;
-
-import std.c.windows.windows;
-
-import pspemu.models.IDisplay;
-
-import pspemu.formats.Pbp;
-
-import pspemu.utils.Utils;
-import pspemu.utils.Path;
-import pspemu.utils.Assertion;
-
-import pspemu.models.IDisplay;
-import pspemu.models.IController;
-import pspemu.models.ISyscall;
-
-import pspemu.core.Memory;
-import pspemu.core.cpu.Registers;
-
-import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.Interrupts;
-import pspemu.core.cpu.Disassembler;
-import pspemu.core.gpu.Gpu;
-
-version (USE_CPU_DYNAREC) {
-	//import pspemu.core.cpu.//dynarec.Cpu;
-} else {
-	import pspemu.core.cpu.interpreted.Cpu;
-}
-
-import pspemu.core.gpu.impl.GpuOpengl;
-
-import pspemu.hle.Module;
-import pspemu.hle.Loader;
-import pspemu.hle.Syscall;
-
-import std.file, std.regex;
+import pspemu.All;
 
 class PspDisplay : Display {
 	Memory memory;
@@ -55,6 +19,7 @@ class PspDisplay : Display {
 void main(string[] args) {
 	//test_dynarec(); return;
 
+	/+
 	// Components.
 	auto memory        = new Memory;
 	auto controller    = new Controller();
@@ -189,4 +154,5 @@ void main(string[] args) {
 	writefln("Results:");
 	writefln("  Total : %d", totalExecuted);
 	writefln("  Failed: %d", totalFailed);
+	+/
 }

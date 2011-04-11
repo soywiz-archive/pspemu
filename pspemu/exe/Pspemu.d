@@ -3,44 +3,7 @@ module pspemu.exe.Pspemu;
 //version = TRACE_FROM_BEGINING;
 //version = USE_CPU_DYNAREC;
 
-import std.stream, std.stdio, core.thread;
-
-import dfl.all;
-
-import std.c.windows.windows;
-
-import pspemu.utils.Utils;
-import pspemu.utils.Path;
-
-import pspemu.gui.MainForm;
-import pspemu.gui.DisplayForm;
-
-import pspemu.models.IDisplay;
-import pspemu.models.IController;
-import pspemu.models.ISyscall;
-
-import pspemu.formats.Pbp;
-
-import pspemu.core.Memory;
-import pspemu.core.cpu.Registers;
-import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.Disassembler;
-import pspemu.core.gpu.Gpu;
-import pspemu.core.gpu.impl.GpuOpengl;
-
-version (USE_CPU_DYNAREC) {
-	//im//port pspemu.core.cpu.dynarec.Cpu;
-} else {
-	import pspemu.core.cpu.interpreted.Cpu;
-}
-
-import pspemu.hle.Module;
-import pspemu.hle.Loader;
-import pspemu.hle.Syscall;
-
-import pspemu.hle.kd.threadman;
-
-import std.windows.registry;
+import pspemu.All;
 
 class PspDisplay : Display {
 	Memory memory;
@@ -130,10 +93,10 @@ int main(string[] args) {
 	cpu.errorHandler = (Cpu cpu, Object error) {
 		writefln("------------------------------------------------");
 		writefln("CPU Error: %s", error.toString());
-		cpu.registers.dump();
-		auto dissasembler = new AllegrexDisassembler(cpu.memory);
+		executionState.registers.dump();
+		auto dissasembler = new AllegrexDisassembler(executionState.memory.;
 		dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-		dissasembler.dump(cpu.registers.PC, -3, +3);
+		dissasembler.dump(executionState.registers.PC, -3, +3);
 		dissasembler.dump(cpu.lastValidPC, -3, +3);
 		moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
 		moduleManager.get!(ThreadManForUser).semaphoreManager.dumpSemaphores();

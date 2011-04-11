@@ -1,5 +1,6 @@
 module pspemu.core.cpu.interpreted.ops.Fpu;
-import pspemu.core.cpu.interpreted.Utils;
+
+import pspemu.All;
 
 import pspemu.core.cpu.interpreted.ops.Branch;
 

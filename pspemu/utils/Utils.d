@@ -74,7 +74,7 @@ T readInplace(T)(ref T t, Stream stream, long position = -1) {
 void writeZero(Stream stream, uint count) {
 	ubyte[1024] block;
 	while (count > 0) {
-		int w = min(count, block.length);
+		int w = tmin(count, block.length);
 		stream.write(block[0..w]);
 		count -= w;
 	}
@@ -108,8 +108,8 @@ ulong readVarInt(Stream stream) {
 }
 
 void swap(T)(ref T a, ref T b) { auto c = a; a = b; b = c; }
-T min(T)(T l, T r) { return (l < r) ? l : r; }
-T max(T)(T l, T r) { return (l > r) ? l : r; }
+T tmin(T)(T l, T r) { return (l < r) ? l : r; }
+T tmax(T)(T l, T r) { return (l > r) ? l : r; }
 T clamp(T)(T v, T l = 1.0, T r = 1.0) {
 	if (v < l) v = l;
 	if (v > r) v = r;

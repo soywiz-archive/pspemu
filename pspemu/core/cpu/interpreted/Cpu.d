@@ -1,5 +1,7 @@
 module pspemu.core.cpu.interpreted.Cpu;
 
+version = CACHED_SWITCH;
+
 const uint THREAD0_CALL_MASK = 0xFFFFF;
 //const uint THREAD0_CALL_MASK = 0xFFFF;
 //const uint THREAD0_CALL_MASK = 0xFFF;
@@ -8,6 +10,9 @@ const uint THREAD0_CALL_MASK = 0xFFFFF;
 
 //debug = DEBUG_GEN_SWITCH;
 
+public import pspemu.All;
+
+/*
 import pspemu.core.gpu.Gpu;
 import pspemu.models.IDisplay;
 import pspemu.models.IController;
@@ -20,6 +25,8 @@ import pspemu.core.cpu.Instruction;
 import pspemu.core.cpu.Table;
 import pspemu.core.cpu.Switch;
 import pspemu.core.cpu.interpreted.Utils;
+
+*/
 
 // OPS.
 import pspemu.core.cpu.interpreted.ops.Alu;
@@ -35,11 +42,11 @@ import pspemu.core.cpu.interpreted.ops.Unimplemented;
  * Class that will be on charge of the emulation of Allegrex main CPU.
  */
 class CpuInterpreted : public Cpu {
-	uint LOCAL_THREAD0_CALL_MASK = THREAD0_CALL_MASK;
+	/*uint LOCAL_THREAD0_CALL_MASK = THREAD0_CALL_MASK;
 
 	this(Memory memory, Gpu gpu, Display display, IController controller) {
 		super(memory, gpu, display, controller);
-	}
+	}*/
 
 	/**
 	 * Will execute a number of instructions.
@@ -48,10 +55,10 @@ class CpuInterpreted : public Cpu {
 	 *
 	 * @param  count  Maximum number of instructions to execute.
 	 */
-	void execute(uint count) {
+	void execute(ExecutionState executionState, uint count) {
 		// Shortcuts for registers and memory.
-		auto registers = this.registers;
-		auto memory    = this.memory;
+		auto registers = executionState.registers;
+		auto memory    = executionState.memory;
 		auto cpu       = this;
 
 		// Declaration for instruction struct that will allow to decode instructions easily.
@@ -71,12 +78,13 @@ class CpuInterpreted : public Cpu {
 		//writefln("Execute: %08X", count);
 		while (count--) {
 			// Equeue a THREAD Interrupt (to switch threads)
-			if (registers.PAUSED || ((count & LOCAL_THREAD0_CALL_MASK) == 0)) interrupts.queue(Interrupts.Type.THREAD0);
+			//if (registers.PAUSED || ((count & LOCAL_THREAD0_CALL_MASK) == 0)) interrupts.queue(Interrupts.Type.THREAD0);
 			
 			// Process interrupts if there are pending interrupts
 			// Process IRQ (Interrupt ReQuest)
-			if (interrupts.InterruptFlag) interrupts.process();
+			//if (interrupts.InterruptFlag) interrupts.process();
 
+			/*
 			if (runningState != RunningState.RUNNING) waitUntilResume();
 			
 			if (registers.PAUSED) {
@@ -93,11 +101,18 @@ class CpuInterpreted : public Cpu {
 					//breakpointStep.registers.
 				}
 			}
+			*/
 
 			instruction.v = memory.tread!(uint)(registers.PC);
-			lastValidPC = registers.PC;
-			mixin(genSwitch(PspInstructions));
-
+			executionState.lastValidPC = registers.PC;
+			version (CACHED_SWITCH) {
+				mixin(import("cached_switch_all.di"));
+			} else {
+				//pragma(msg, genSwitch(PspInstructions));
+				mixin(genSwitch(PspInstructions));
+			}
+			
+			/*
 			if (checkBreakpoints) {
 				if (traceStep) {
 					trace(breakpointStep, breakPointPrevPC, true);
@@ -106,6 +121,7 @@ class CpuInterpreted : public Cpu {
 					}
 				}
 			}
+			*/
 
 			registers.CLOCKS++;
 		}

@@ -1,14 +1,6 @@
 module pspemu.hle.Module;
 
-public import std.stdio, std.string, std.stream;
-public import pspemu.utils.Utils;
-public import pspemu.core.cpu.Cpu;
-
-public import pspemu.hle.Types;
-
-import pspemu.utils.Logger;
-
-import std.traits;
+public import pspemu.All;
 
 debug = DEBUG_SYSCALL;
 //debug = DEBUG_ALL_SYSCALLS;
@@ -90,7 +82,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		string parametersPrototypeString = _parametersPrototypeString;
 		debug (DEBUG_ALL_SYSCALLS) { } else { r ~= "debug (DEBUG_SYSCALL)"; }
 		r ~= "{";
-		r ~= ".writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, cpu.registers.PC);";
+		r ~= ".writef(\"%s; PC=%08X; \", moduleManager.currentThreadName, executionState.registers.PC);";
 		debug (DEBUG_ALL_SYSCALLS) {
 			r ~= ".writef(\"" ~ functionName ~ "()\"); ";
 		} else {
@@ -106,11 +98,11 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		if (return_value) {
 			r ~= "if (setReturnValue) {";
 			if (isPointerType!(ReturnType!(func))) {
-				r ~= "cpu.registers.V0 = cpu.memory.getPointerReverseOrNull(cast(void *)retval);";
+				r ~= "executionState.registers.V0 = executionState.memory.getPointerReverseOrNull(cast(void *)retval);";
 			} else {
-				r ~= "cpu.registers.V0 = (cast(uint *)&retval)[0];";
+				r ~= "executionState.registers.V0 = (cast(uint *)&retval)[0];";
 				if (ReturnType!(func).sizeof == 8) {
-					r ~= "cpu.registers.V1 = (cast(uint *)&retval)[1];";
+					r ~= "executionState.registers.V1 = (cast(uint *)&retval)[1];";
 				}
 			}
 			r ~= "}";
@@ -119,7 +111,7 @@ string getModuleMethodDelegate(alias func, uint nid = 0)() {
 		r ~= "{";
 		if (return_value) {
 			if (isPointerType!(ReturnType!(func)) || isClassType!(ReturnType!(func))) {
-				r ~= ".writefln(\" = 0x%08X\", cpu.registers.V0); ";
+				r ~= ".writefln(\" = 0x%08X\", executionState.registers.V0); ";
 			} else {
 				r ~= ".writefln(\" = %s\", retval); ";
 			}
@@ -149,6 +141,10 @@ abstract class Module {
 	ModuleManager moduleManager;
 	Nid currentExecutingNid;
 	bool setReturnValue;
+	
+	ExecutionState executionState() {
+		return ExecutionState.forCurrentThread;
+	}
 
 	void avoidAutosetReturnValue() {
 		setReturnValue = false;
@@ -156,7 +152,7 @@ abstract class Module {
 
 	// Will avoid obtaining the value from function.
 	void returnValue(uint value) {
-		cpu.registers.V0 = value;
+		executionState.registers.V0 = value;
 	}
 	
 	this() {
@@ -180,16 +176,16 @@ abstract class Module {
 	template Parameters() {
 		void* vparam_ptr(T)(int n) {
 			if (n >= 8) {
-				return cpu.memory.getPointer(cpu.registers.SP + (n - 8) * 4);
+				return executionState.memory.getPointer(executionState.registers.SP + (n - 8) * 4);
 			} else {
-				return &cpu.registers.R[4 + n];
+				return &executionState.registers.R[4 + n];
 			}
 		}
 		T vparam_value(T)(int n) {
 			static if (is(T == string)) {
 				uint v = vparam_value!(uint)(n);
 				//writefln("---------%08X(%d)", v, n);
-				auto ptr = cast(char*)cpu.memory.getPointer(v);
+				auto ptr = cast(char*)executionState.memory.getPointer(v);
 				return cast(string)ptr[0..std.c.string.strlen(ptr)];
 			} else {
 				return *cast(T *)vparam_ptr!(T)(n);
@@ -214,7 +210,7 @@ abstract class Module {
 			uint v = param(n);
 			if (v != 0) {
 				try {
-					return cpu.memory.getPointer(v);
+					return executionState.memory.getPointer(v);
 				} catch (Object o) {
 					// @TODO: Reenable?
 					throw(o);
@@ -294,63 +290,4 @@ abstract class Module {
 	void unimplemented_notice(string file = __FILE__, int line = __LINE__)() {
 		writefln("Unimplemented '%s' at '%s:%d'", onException(nids[currentExecutingNid].name, "<unknown>"), file, line);
 	}
-}
-
-class ModuleManager {
-	/**
-	 * A list of modules loaded.
-	 */
-	private Module[string] loadedModules;
-
-	Cpu cpu;
-
-	this(Cpu cpu) {
-		this.cpu = cpu;
-	}
-	
-	string delegate() getCurrentThreadName;
-
-	void reset() {
-		Logger.log(Logger.Level.DEBUG, "ModuleManager", "reset()");
-		foreach (loadedModule; loadedModules) loadedModule.shutdownModule();
-		loadedModules = null;
-		getCurrentThreadName = null;
-	}
-	
-	string currentThreadName() {
-		string s = getCurrentThreadName ? getCurrentThreadName() : "<unknown>";
-		return std.string.format("Thread('%-12s')", s);
-	}
-
-	/**
-	 * Obtains a singleton instance of the module by a given name.
-	 */
-	Module getName(string moduleName) {
-		if (moduleName !in loadedModules) {
-			auto loadedModule = cast(Module)(Module.getModule(moduleName).create);
-			loadedModule.cpu = cpu;
-			loadedModule.moduleManager = this;
-			loadedModule.init();
-			loadedModules[moduleName] = loadedModule;
-		}
-		return loadedModules[moduleName];
-	}
-
-	void dumpLoadedModules() {
-		writefln("LoadedModules {");
-		foreach (_module; loadedModules) writefln("  '%s'", _module);
-		writefln("}");
-	}
-
-	/**
-	 * Obtains a singleton instance of the module by a given type.
-	 */
-	Type get(alias Type)() {
-		return cast(Type)getName(Type.stringof);
-	}
-
-	/**
-	 * Alias for getting a module.
-	 */
-	alias getName opIndex;
 }

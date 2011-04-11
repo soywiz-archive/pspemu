@@ -20,17 +20,3 @@ interface IDebugSource {
 	bool lookupDebugSourceLine(ref DebugSourceLine debugSourceLine, uint address);
 	bool lookupDebugSymbol    (ref DebugSymbol debugSymbol, uint address);
 }
-
-template DebugSourceProxy() {
-	IDebugSource debugSource;
-
-	bool lookupDebugSourceLine(ref DebugSourceLine debugSourceLine, uint address) {
-		if (!debugSource) return false;
-		return debugSource.lookupDebugSourceLine(debugSourceLine, address);
-	}
-
-	bool lookupDebugSymbol(ref DebugSymbol debugSymbol, uint address) {
-		if (!debugSource) return false;
-		return debugSource.lookupDebugSymbol(debugSymbol, address);
-	}
-}

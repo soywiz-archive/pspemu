@@ -1,5 +1,7 @@
 module pspemu.core.cpu.dynarec.Cpu;
 
+version = CACHED_SWITCH;
+
 //debug = DEBUG_DYNA_CODE_GEN;
 
 public import pspemu.utils.EmiterX86;
@@ -353,7 +355,12 @@ class CpuDynaRec : Cpu {
 			}
 
 			count++;
-			mixin(genSwitch(PspInstructions_BCU));
+			//pragma(msg, genSwitch(PspInstructions_BCU));
+			version (CACHED_SWITCH) {
+				mixin(import("cached_switch_bcu.di"));
+			} else {
+				mixin(genSwitch(PspInstructions_BCU));
+			}
 		}
 		
 		void emitNonDelayed(EmiterMipsToX86 emiter) {
@@ -374,7 +381,12 @@ class CpuDynaRec : Cpu {
 				debug (DEBUG_DYNA_CODE_GEN) writefln("SYSCALL 0x%08X", instruction.CODE);
 				emiter.MIPS_SYSCALL(PC, instruction.CODE);
 			}
-			mixin(genSwitch(PspInstructions));
+
+			version (CACHED_SWITCH) {
+				mixin(import("cached_switch_all.di"));
+			} else {
+				mixin(genSwitch(PspInstructions));
+			}
 		}
 		
 		/*
@@ -415,7 +427,11 @@ class CpuDynaRec : Cpu {
 			void OP_BEQ () { CompareNormal(); emiter.JNE (labelFalse); } alias OP_BEQ OP_BEQL;
 			void OP_BNE () { CompareNormal(); emiter.JE  (labelFalse); }
 			void OP_BGEZ() { CompareZero  (); emiter.JNGE(labelFalse); }
-			mixin(genSwitch(PspInstructions));
+			version (CACHED_SWITCH) {
+				mixin(import("cached_switch_all.di"));
+			} else {
+				mixin(genSwitch(PspInstructions));
+			}
 		}
 		
 		void emitPreDelayed(uint PC, uint JumpPC, EmiterMipsToX86 emiter, Emiter.Label* labelTrue, Emiter.Label* labelFalse) {

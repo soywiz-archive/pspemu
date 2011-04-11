@@ -1,16 +1,6 @@
 module pspemu.core.cpu.Assembler;
 
-import pspemu.utils.SparseMemory;
-import pspemu.utils.Expression;
-import pspemu.utils.Utils;
-
-import pspemu.core.Memory;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.cpu.Switch;
-import pspemu.core.cpu.Table;
-import pspemu.core.cpu.Registers;
-
-import std.stdio, std.string, std.stream, std.regexp, std.traits, std.conv, std.ctype;
+public import pspemu.All;
 
 static InstructionDefinition[string] instructionsAvailable;
 static bool[string] macros;

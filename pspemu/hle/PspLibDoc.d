@@ -1,11 +1,5 @@
 module pspemu.hle.PspLibDoc;
 
-import pspemu.utils.Utils;
-import pspemu.utils.Expression;
-
-import std.stream, std.stdio, std.string;
-import std.xml;
-
 static const string psplibdoc_xml = import("psplibdoc.xml");
 
 template LazySingleton() {
@@ -20,7 +14,7 @@ template LazySingleton() {
 	}
 }
 
-class PspLibdoc {
+class DPspLibdoc {
 	mixin LazySingleton;
 
 	protected this() {

@@ -215,13 +215,13 @@ class DisplayForm : Form, IMessageFilter {
 			*/
 			addMenu("&Hex editor...", (MenuItem mi, EventArgs ea) {
 				try {
-					(new HexEditorForm(cpu.memory)).show();
+					(new HexEditorForm(executionState.memory)).show();
 				} catch (Object o) {
 					writefln("Error Initializing HexEditorForm: %s", o);
 				}
 			});
 			addMenu("&Registers...", (MenuItem mi, EventArgs ea) {
-				(new RegisterViewerForm(cpu.registers)).show();
+				(new RegisterViewerForm(executionState.registers)).show();
 			});
 			/*
 			addMenu("&GE viewer...");
@@ -374,10 +374,10 @@ class DisplayForm : Form, IMessageFilter {
 		keyChange(kea.keyCode, false);
 		switch (kea.keyCode) {
 			case Keys.F5:
-				cpu.registers.dump();
-				auto dissasembler = new AllegrexDisassembler(cpu.memory);
+				executionState.registers.dump();
+				auto dissasembler = new AllegrexDisassembler(executionState.memory);
 				dissasembler.registersType = AllegrexDisassembler.RegistersType.Symbolic;
-				dissasembler.dump(cpu.registers.PC, -6, 6);
+				dissasembler.dump(executionState.registers.PC, -6, 6);
 				moduleManager.get!(ThreadManForUser).threadManager.dumpThreads();
 				moduleManager.get!(ThreadManForUser).semaphoreManager.dumpSemaphores();
 			break;

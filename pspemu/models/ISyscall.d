@@ -1,5 +1,7 @@
 module pspemu.models.ISyscall;
 
+public import pspemu.All;
+
 interface ISyscall {
-	void opCall(int code);
+	void opCall(ExecutionState executionState, int code);
 }

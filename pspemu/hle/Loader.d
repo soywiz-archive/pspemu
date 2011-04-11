@@ -4,31 +4,7 @@ module pspemu.hle.Loader;
 //version = ALLOW_UNIMPLEMENTED_NIDS;
 //version = LOAD_DWARF_INFORMATION;
 
-import std.stream, std.stdio, std.string;
-
-import pspemu.utils.Utils;
-import pspemu.utils.Expression;
-
-import pspemu.formats.elf.Elf;
-import pspemu.formats.elf.ElfDwarf;
-import pspemu.formats.Pbp;
-
-import pspemu.hle.Module;
-import pspemu.hle.kd.iofilemgr;
-import pspemu.hle.kd.sysmem;
-import pspemu.hle.kd.threadman;
-import pspemu.hle.PspLibDoc;
-
-import pspemu.core.Memory;
-import pspemu.core.cpu.Cpu;
-import pspemu.core.cpu.Interrupts;
-import pspemu.core.cpu.Assembler;
-import pspemu.core.cpu.Instruction;
-import pspemu.core.cpu.InstructionCounter;
-
-import pspemu.models.IDebugSource;
-
-import pspemu.utils.Logger;
+public import pspemu.All;
 
 version (unittest) {
 	import pspemu.utils.SparseMemory;
@@ -88,19 +64,19 @@ class Loader : IDebugSource {
 
 	Elf elf;
 	ElfDwarf dwarf;
-	Cpu cpu;
+	ExecutionState executionState;
 	ModuleManager moduleManager;
 	AllegrexAssembler assembler, assemblerExe;
-	Memory memory() { return cpu.memory; }
+	Memory memory() { return executionState.memory; }
 	ModuleInfo moduleInfo;
 	ModuleImport[] moduleImports;
 	ModuleExport[] moduleExports;
 	
-	this(Cpu cpu, ModuleManager moduleManager) {
-		this.cpu           = cpu;
-		this.moduleManager = moduleManager;
-		this.assembler     = new AllegrexAssembler(memory);
-		this.assemblerExe  = new AllegrexAssembler(memory);
+	this(ExecutionState executionState, ModuleManager moduleManager) {
+		this.executionState = executionState;
+		this.moduleManager  = moduleManager;
+		this.assembler      = new AllegrexAssembler(memory);
+		this.assemblerExe   = new AllegrexAssembler(memory);
 	}
 
 	void load(Stream stream, string name = "<unknown>") {
@@ -150,8 +126,7 @@ class Loader : IDebugSource {
 	string lastLoadedFile;
 
 	void load(string fileName) {
-		memory.reset();
-		cpu.reset();
+		executionState.reset();
 		reset();
 		fileName = fileName.replace("\\", "/");
 
@@ -163,19 +138,19 @@ class Loader : IDebugSource {
 		load(new BufferedFile(lastLoadedFile = fileName, FileMode.In), fileName);
 	}
 
-	void reloadAndExecute() {
+	/*void reloadAndExecute() {
 		loadAndExecute(lastLoadedFile);
-	}
+	}*/
 
 	void reset() {
 		moduleManager.reset();
-		cpu.interrupts.registerCallback(
+		executionState.interrupts.registerCallback(
 			Interrupts.Type.THREAD0,
 			&moduleManager.get!(ThreadManForUser).threadManager.switchNextThread
 		);
 	}
 
-	void loadAndExecute(string fileName) {
+	/*void loadAndExecute(string fileName) {
 		load(fileName);
 		setRegisters();
 
@@ -183,14 +158,14 @@ class Loader : IDebugSource {
 
 		cpu.gpu.start(); // Start GPU.
 		cpu.start();     // Start CPU.
-	}
+	}*/
 
 	void loadDwarfInformation() {
 		try {
 			dwarf = new ElfDwarf;
 			dwarf.parseDebugLine(elf.SectionStream(".debug_line"));
 			dwarf.find(0x089004C8);
-			cpu.debugSource = this;
+			executionState.debugSource = this;
 			writefln("Loaded debug information");
 		} catch (Object o) {
 			writefln("Can't find debug information: '%s'", o);
@@ -335,9 +310,9 @@ class Loader : IDebugSource {
 			int count = 0;
 			writefln("unimplementedNids {");
 			foreach (moduleName, nids; unimplementedNids) {
-				writefln("  %s // %s:", moduleName, PspLibdoc.singleton.getPrxInfo(moduleName));
+				writefln("  %s // %s:", moduleName, DPspLibdoc.singleton.getPrxInfo(moduleName));
 				foreach (nid; nids) {
-					if (auto symbol = PspLibdoc.singleton.locate(nid, moduleName)) {
+					if (auto symbol = DPspLibdoc.singleton.locate(nid, moduleName)) {
 						writefln("    mixin(registerd!(0x%08X, %s));", nid, symbol.name);
 					} else {
 						writefln("    0x%08X:<Not found!>", nid);
@@ -346,7 +321,7 @@ class Loader : IDebugSource {
 				count += nids.length;
 			}
 			writefln("}");
-			//writefln("%s", PspLibdoc.singleton.prxs);
+			//writefln("%s", DPspLibdoc.singleton.prxs);
 			version (ALLOW_UNIMPLEMENTED_NIDS) {
 			} else {
 				throw(new Exception(std.string.format("Several unimplemented NIds. (%d)", count)));
@@ -393,9 +368,9 @@ class Loader : IDebugSource {
 		pspThread.switchToThisThread();
 
 		//cpu.traceStep = true; cpu.checkBreakpoints = true;
-		Logger.log(Logger.Level.DEBUG, "Loader", "PC: %08X", cpu.registers.PC);
-		Logger.log(Logger.Level.DEBUG, "Loader", "GP: %08X", cpu.registers.GP);
-		Logger.log(Logger.Level.DEBUG, "Loader", "SP: %08X", cpu.registers.SP);
+		Logger.log(Logger.Level.DEBUG, "Loader", "PC: %08X", executionState.registers.PC);
+		Logger.log(Logger.Level.DEBUG, "Loader", "GP: %08X", executionState.registers.GP);
+		Logger.log(Logger.Level.DEBUG, "Loader", "SP: %08X", executionState.registers.SP);
 	}
 }
 

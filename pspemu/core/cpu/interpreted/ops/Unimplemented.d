@@ -1,5 +1,6 @@
 module pspemu.core.cpu.interpreted.ops.Unimplemented;
-import pspemu.core.cpu.interpreted.Utils;
+
+import pspemu.All;
 
 template TemplateCpu_UNIMPLEMENTED() {
 	void UNIMPLEMENTED() {

@@ -1,12 +1,6 @@
 module pspemu.hle.ThreadManager;
 
-public import std.algorithm;
-public import core.thread;
-
-public import pspemu.hle.Module;
-public import pspemu.core.cpu.Registers;
-
-public import pspemu.hle.kd.sysmem; // kd/sysmem.prx (SysMemUserForUser)
+public import pspemu.All;
 
 //debug = DEBUG_CHECK_HOST_THREAD;
 
@@ -169,14 +163,14 @@ class PspThread {
 	
 	protected void switchTo() {
 		checkHostThread();
-		threadManager.cpu.registers.copyFrom(registers);
-		threadManager.cpu.registers.CLOCKS = 0;
+		threadManager.executionState.registers.copyFrom(registers);
+		threadManager.executionState.registers.CLOCKS = 0;
 		threadManager.currentThread = this;
 	}
 
 	protected void switchFrom() {
 		checkHostThread();
-		registers.copyFrom(threadManager.cpu.registers);
+		registers.copyFrom(threadManager.executionState.registers);
 	}
 	
 	void updatePreemptCount() {
@@ -189,11 +183,11 @@ class PspThread {
 			"Thread(ID=0x%06X, PC=0x%08X, SP=0x%08X, threadPreemptCount=0x%03X, currentPriority=0x%02X, stackSize=0x%05X\n"
 			"    paused=%d, alive=%d, callback='%s':%08X, Name='%s')\n"
 			"    resume-PC:%08X, resume-RA:%08X, resume-V0:%08X\n"
-			"    registers-V0:%08X, cpu.registers.V0:%08X, cpu.registers.CLOCKS:%08X",
+			"    registers-V0:%08X, executionState.registers.V0:%08X, executionState.registers.CLOCKS:%08X",
 			reinterpret!(uint)(this), registers.PC, registers.SP, info.threadPreemptCount, info.currentPriority,
 			info.stackSize, paused, alive, pausedName, reinterpret!(uint)(pausedCallback), name,
 			resumeRegisters.PC, resumeRegisters.RA, resumeRegisters.V0,
-			registers.V0, threadManager.cpu.registers.V0, threadManager.cpu.registers.CLOCKS
+			registers.V0, threadManager.executionState.registers.V0, threadManager.executionState.registers.CLOCKS
 		);
 	}
 
@@ -208,13 +202,13 @@ class PspThread {
 		//writefln("PspThread.switchToThisThread");
 		checkHostThread();
 
-		//threadManager.cpu.registers.PAUSED = paused;
+		//threadManager.executionState.registers.PAUSED = paused;
 		//registers.PAUSED = paused;
 		if (paused) {
 			executeHlePausedEnterCallback();
-			threadManager.cpu.registers.PAUSED = true;
+			threadManager.executionState.registers.PAUSED = true;
 		} else {
-			threadManager.cpu.registers.PAUSED = false;
+			threadManager.executionState.registers.PAUSED = false;
 			if (threadManager.currentThread != this) {
 				if (threadManager.currentThread) threadManager.currentThread.switchFrom();
 				this.switchTo();
@@ -229,13 +223,13 @@ class PspThread {
 		if (paused) throw(new Exception("PspThread::pauseAndYield(). Already paused!"));
 
 		// Stalls at syscall.
-		resumeRegisters.copyFrom(threadManager.cpu.registers);
-		threadManager.cpu.registers.pcSet(0x08000010);
+		resumeRegisters.copyFrom(threadManager.executionState.registers);
+		threadManager.executionState.registers.pcSet(0x08000010);
 
 		this.pausedName     = pausedName;
 		this.pausedCallback = pausedCallback;
 		this.paused = true;
-		threadManager.cpu.registers.PAUSED = true;
+		threadManager.executionState.registers.PAUSED = true;
 		//this.switchToOtherThread();
 
 		threadManager.threadManForUser.avoidAutosetReturnValue();
@@ -252,13 +246,13 @@ class PspThread {
 		switchToThisThread();
 		
 		this.registers.copyFrom(resumeRegisters);
-		threadManager.cpu.registers.copyFrom(resumeRegisters);
+		threadManager.executionState.registers.copyFrom(resumeRegisters);
 	}
 
 	void resumeAndReturn(uint value) {
 		checkHostThread();
 		resume();
-		threadManager.cpu.registers.V0 = value;
+		threadManager.executionState.registers.V0 = value;
 	}
 
 	void createStack(SysMemUserForUser sysMemUserForUser) {

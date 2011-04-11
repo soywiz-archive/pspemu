@@ -1,11 +1,6 @@
 module pspemu.gui.Registers;
 
-private import dfl.all;
-
-import std.stdio, std.string, std.stream;
-
-import pspemu.core.cpu.Registers;
-import pspemu.gui.Utils;
+public import pspemu.All;
 
 class RegisterViewer : ListView {
 	Registers registers;
