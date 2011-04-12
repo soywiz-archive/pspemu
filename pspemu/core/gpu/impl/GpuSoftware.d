@@ -1,6 +1,8 @@
 module pspemu.core.gpu.impl.GpuSoftware;
 
 import pspemu.core.gpu.Types;
+import pspemu.core.gpu.GpuState;
+import pspemu.core.gpu.GpuImpl;
 
 class GpuSoftware : GpuImplAbstract {
 	void init() {

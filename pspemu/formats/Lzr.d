@@ -3,6 +3,7 @@ module pspemu.formats.Lzr;
 import std.stdio, std.stream, std.string, std.file;
 
 class LZR {
+	/+
 	enum Error : int {
 		BUFFER_SIZE   = 0x80000104, // Output buffer is not enough.
 		INPUT_STREAM  = 0x80000108, // 
@@ -230,7 +231,7 @@ class LZR {
 
 		return Error.UNSUPPORTED;
 	}
-
+	+/
 }
 
 /*

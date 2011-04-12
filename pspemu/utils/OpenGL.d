@@ -1938,6 +1938,20 @@ void glUsing31() { }
 void glUsing32() { }
 void glUsing33() { }
 void glUsing40() { }
+/*
+void glUsing11() { }
+void glUsing12() { }
+void glUsing13() { }
+void glUsing14() { }
+void glUsing15() { }
+void glUsing20() { }
+void glUsing21() { }
+void glUsing30() { }
+void glUsing31() { }
+void glUsing32() { }
+void glUsing33() { }
+void glUsing40() { }
+*/
 
 void setVSync(bool enable = false) {
 	BindLibraryGl!(OpenglWinExt_Template, false);

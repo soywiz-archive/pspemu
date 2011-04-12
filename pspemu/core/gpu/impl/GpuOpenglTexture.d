@@ -183,6 +183,7 @@ class Texture {
 			break;
 			case PixelFormats.GU_PSM_T16: foreach (index; cast(ushort[])textureData) writeValue(index); break;
 			case PixelFormats.GU_PSM_T32: foreach (index; cast(uint[])textureData) writeValue(index); break;
+			default: throw(new Exception("Unexpected PixelFormat"));
 		}
 	}
 

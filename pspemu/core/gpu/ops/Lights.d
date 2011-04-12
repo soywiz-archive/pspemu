@@ -48,6 +48,8 @@ template Gpu_Lights() {
 				case LightType.GU_SPOTLIGHT:
 					position.t = 1.0;
 				break;
+				default:
+					throw(new Exception("Unexpected LightType"));
 			}
 		}
 	}));

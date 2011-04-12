@@ -305,8 +305,8 @@ class Audio {
 		int maxMixed = 0;
 
 		foreach (channel; channels) {
-			int channelMixLen = min(channel.samplesLeft, bufferTemp.length);
-			maxMixed = max(maxMixed, channelMixLen);
+			int channelMixLen = tmin(channel.samplesLeft, bufferTemp.length);
+			maxMixed = tmax(maxMixed, channelMixLen);
 			
 			if (channelMixLen) {
 				channel.read(bufferTemp2[0..channelMixLen]);
@@ -379,7 +379,7 @@ class Audio {
 				Sleep(1);
 				//Sleep(0);
 			}
-		} catch (Object o) {
+		} catch (Throwable o) {
 			writefln("Audio.playThread: %s", o);
 		} finally {
 			enforcemm(waveOutClose(waveOutHandle));

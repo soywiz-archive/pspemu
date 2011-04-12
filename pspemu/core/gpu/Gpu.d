@@ -55,7 +55,7 @@ class Gpu : PspHardwareComponent {
 		this.reset();
 	}
 
-	void reset() {
+	override void reset() {
 		this.state = GpuState.init;
 		this.displayLists    = new DisplayLists(1024);
 		this.externalActions = new TaskQueue;
@@ -129,12 +129,10 @@ class Gpu : PspHardwareComponent {
 				}
 				s ~= "break;";
 			}
-			/*
 			s ~= "default:";
 			s ~= "	writefln(\"default!!\");";
 			s ~= "	unimplemented();";
 			s ~= "	break;";
-			*/
 			s ~= "}";
 			return s;
 		}());
@@ -159,7 +157,7 @@ class Gpu : PspHardwareComponent {
 				lastCommandPointer = displayList.pointer;
 				executeSingleCommand(displayList);
 			}
-		} catch (Object o) {
+		} catch (Throwable o) {
 			writefln("Last command: %s", *lastCommandPointer);
 			throw(o);
 		} finally {
@@ -193,7 +191,7 @@ class Gpu : PspHardwareComponent {
 			}
 		} catch (HaltException e) {
 			Logger.log(Logger.Level.DEBUG, "Gpu", "Gpu.run HaltException: %s", e);
-		} catch (Object e) {
+		} catch (Throwable e) {
 			Logger.log(Logger.Level.CRITICAL, "Gpu", "Gpu.run exception: %s", e);
 		} finally {
 			Logger.log(Logger.Level.DEBUG, "Gpu", "Gpu.shutdown");

@@ -148,7 +148,7 @@ class ElfDwarf {
 	}
 
 	string normalizeDirectory(string directory) {
-		directory = std.string.replace(directory, "\\", "/");
+		directory = replace(directory, "\\", "/");
 		
 		string[] chunks;
 		string[] final_chunks;

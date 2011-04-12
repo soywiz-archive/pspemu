@@ -1,6 +1,8 @@
 module pspemu.formats.iso.Iso;
 
-import pspemu.formats.base;
+//import pspemu.formats.base;
+/+
+import std.stream;
 
 class ISOContainer : FileContainer {
 	// Types
@@ -190,3 +192,4 @@ class ISO : ISOContainer {
 		processDR(this);
 	}
 }
++/

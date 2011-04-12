@@ -1,8 +1,10 @@
 module pspemu.formats.iso.Cso;
 
-import kernel.vfs.base;
-import kernel.vfs.iso;
+//import kernel.vfs.base;
+//import kernel.vfs.iso;
+/+
 import etc.c.zlib;
+import std.stream;
 
 class CSOStream : Stream {
 	struct Header {
@@ -119,3 +121,4 @@ class CSOStream : Stream {
 		}
 	}
 }
++/

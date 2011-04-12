@@ -3,6 +3,7 @@ module pspemu.All;
 public version = STOP_AT_UNKNOWN_INSTRUCTION;
 public version = CACHED_SWITCH;
 
+/+
 // Hack. It shoudln't be here.
 // Create a PspHardwareComponents class with all the components there?
 public import pspemu.models.IDisplay;
@@ -118,3 +119,4 @@ version (USE_CPU_DYNAREC) {
 	public import pspemu.core.cpu.interpreted.Cpu;
 	public import pspemu.core.cpu.interpreted.Utils;
 }
++/

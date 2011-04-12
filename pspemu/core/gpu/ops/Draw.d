@@ -318,7 +318,7 @@ template Gpu_Draw() {
 					vertexType.skinningWeightCount
 				)
 			);
-		} catch (Object o) {
+		} catch (Throwable o) {
 			writefln("gpu.impl.draw Error");
 			//throw(o);
 		}

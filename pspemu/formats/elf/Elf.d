@@ -1,6 +1,14 @@
 module pspemu.formats.elf.Elf;
 
-import pspemu.All;
+//import pspemu.All;
+
+import pspemu.core.cpu.Instruction;
+
+import pspemu.utils.Utils;
+import pspemu.utils.Logger;
+
+import std.stream;
+import std.stdio;
 
 //debug = MODULE_LOADER;
 
@@ -244,7 +252,7 @@ class Elf {
 		foreach (ref sectionHeader; sectionHeaders) {
 			//writefln("%08X", sectionHeader.offset);
 			auto stream = SectionStream(sectionHeader);
-			auto text = stream.readString(min(11, cast(int)stream.size));
+			auto text = stream.readString(tmin(11, cast(int)stream.size));
 			//writefln("'%s'", text);
 			if (text == "\0.shstrtab\0") {
 				return sectionHeader;
@@ -385,8 +393,8 @@ class Elf {
 			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
 				switch (sectionHeader.type) {
 					case SectionHeader.Type.PROGBITS, SectionHeader.Type.NOBITS:
-						low  = min(low , sectionHeader.address);
-						high = max(high, sectionHeader.address + sectionHeader.size);
+						low  = tmin(low , sectionHeader.address);
+						high = tmax(high, sectionHeader.address + sectionHeader.size);
 					break;
 					default: break;
 				}
@@ -448,7 +456,7 @@ class Elf {
 			//throw(new Exception("Relocation not implemented yet!"));
 			try {
 				performRelocation(stream);
-			} catch (Object o) {
+			} catch (Throwable o) {
 				writefln("Error relocating: %s", o.toString);
 				throw(o);
 			}

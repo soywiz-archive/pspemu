@@ -13,9 +13,9 @@ class VFS {
 		ulong size;
 		uint mode;
 		uint attr;
-		d_time time_c;
-		d_time time_m;
-		d_time time_a;
+		std.date.d_time time_c;
+		std.date.d_time time_m;
+		std.date.d_time time_a;
 		Type type;
 
 		bool isfile() { return type == Type.File; }

@@ -145,7 +145,7 @@ class MemorySegment {
 
 	uint getMaxAvailableMemoryBlock() {
 		uint size = 0;
-		foreach (block; availableBlocks) size = pspemu.utils.Utils.max(size, block.size);
+		foreach (block; availableBlocks) size = pspemu.utils.Utils.tmax(size, block.size);
 		return size;
 	}
 
@@ -166,7 +166,7 @@ class MemorySegment {
 					}
 				}
 			}
-		} catch (Object o) {
+		} catch (Throwable o) {
 			writefln("MemorySegment.free: %s", o);
 		}
 	}
