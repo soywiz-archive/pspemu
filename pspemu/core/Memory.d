@@ -9,9 +9,13 @@ module pspemu.core.Memory;
 // mfzpsp:    http://mfzpsp.googlecode.com/svn/c/mfzpsp/src/core/memory.c
 // pcsp:      http://pcsp.googlecode.com/svn/trunk/pcsp-dbg/src/memory.h
 
-import std.stdio, std.stream, std.string, std.ctype, std.metastrings;
+import std.stdio;
+import std.stream;
+import std.string;
+import std.ctype;
+import std.metastrings;
 
-import pspemu.utils.Utils;
+//import pspemu.utils.Utils;
 
 import std.c.windows.windows;
 
@@ -253,7 +257,7 @@ class Memory : Stream {
 		auto ptr = cast(ubyte *)_ptr;
 
 		bool between(ubyte[] buffer) { return (ptr >= &buffer[0]) && (ptr < &buffer[$]); }
-		string checkMap(string name, uint mapStart) { return "if (between(" ~ name ~ ")) return (ptr - " ~ name ~ ".ptr) + " ~ tos(mapStart) ~ ";"; }
+		string checkMap(string name, uint mapStart) { return "if (between(" ~ name ~ ")) return (ptr - " ~ name ~ ".ptr) + " ~ to!string(mapStart) ~ ";"; }
 		
 		mixin(checkMap("scratchPad",  0x00010000));
 		mixin(checkMap("frameBuffer", 0x04000000));
@@ -381,9 +385,9 @@ class Memory : Stream {
 			 * @return Number of bytes readed. Will always be the number of requested bytes to read.
 			 */
 			size_t readBlock(void *_data, size_t len) {
-				u8 *data = cast(u8*)_data; int rlen = len;
+				ubyte *data = cast(ubyte*)_data; int rlen = len;
 				try {
-					while (len-- > 0) *data++ = tread!(u8)(cast(uint)streamPosition++);
+					while (len-- > 0) *data++ = tread!(ubyte)(cast(uint)streamPosition++);
 				} catch (Exception e) {
 					return 0;
 				}
@@ -399,7 +403,7 @@ class Memory : Stream {
 			 * @return Number of bytes written. Will always be the number of requested bytes to write.
 			 */
 			size_t writeBlock(const void *_data, size_t len) {
-				u8 *data = cast(u8*)_data; int rlen = len;
+				ubyte *data = cast(ubyte*)_data; int rlen = len;
 				try {
 					while (len-- > 0) twrite!(ubyte)(cast(uint)streamPosition++, *data++);
 				} catch (Exception e) {
