@@ -1,8 +1,0 @@
-string:"Checking sceRtcGetCurrentTick"
-int:1
-string:"Checking sceRtcGetDaysInMonth"
-string:"sceRtcGetDaysInMonth:2010, 4"
-int:30
-string:"Checking sceRtcGetDayOfWeek"
-string:"sceRtcGetDayOfWeek:2010, 4, 27"
-int:1
