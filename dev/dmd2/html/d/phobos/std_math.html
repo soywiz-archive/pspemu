@@ -1,0 +1,1538 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.math - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+
+<script>
+function listanchors()
+{
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+    values[n++] = a.name
+    }
+
+    values.sort();
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        newText += '<a href="#' + a + '"><span class="d_psymbol">'
+                + a + '</span></a> ';
+    }
+    if (newText != "") newText = "<p><b>Jump to:</b> " + newText + '</p>';
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+</script>
+
+</head>
+
+<body onload="listanchors()">
+<div id="heading">
+	<a href="http://www.digitalmars.com/"><img src="../dmlogo.gif" width="270" height="53" border="0" alt="www.digitalmars.com" align="left"></a>
+	<p align="right">D Programming Language 2.0</p>
+
+
+	<div id="headingNav">
+	<ul>	<li><a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Phobos/StdMath" title="Read/write comments and feedback">Comments</a></li>
+	<li><a href="../index.html" title="D Programming Language" class="dlink">D</a></li>
+	<li><a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a></li>
+	<li><a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a></li>
+	</ul>
+	</div>
+
+	<div id="lastupdate">Last update Sun Jul 10 10:47:28 2011
+</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input id="q" name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+<input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/d/2.0/phobos">
+<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+<input type="submit" id="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../lex.html" title="D Language Specification">Language</a></li>
+	<li><a href="phobos.html" title="D Runtime Library">Phobos</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="phobos.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bind.html" title="Function argument binding">std.bind</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_boxer.html" title="Box/unbox types">std.boxer</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_contracts.html" title="Think assert">std.contracts</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_cover.html" title="D coverage analyzer">std.cover</a></li>
+	<li><a href="std_cpuid.html" title="CPU identification">std.cpuid</a></li>
+	<li><a href="std_ctype.html" title="Simple character classification">std.ctype</a></li>
+	<li><a href="std_date.html" title="Date and time functions">std.date</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_demangle.html" title="Demangle D names">std.demangle</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_gc.html" title="Control the garbage collector">std.gc</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_gregorian.html" title="Gregorian Calendar">std.gregorian</a></li>
+	<li><a href="std_intrinsic.html" title="Compiler built in intrinsic functions">std.intrinsic</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_md5.html" title="Compute MD5 digests">std.md5</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_outofmemory.html" title="Out of memory exception">std.outofmemory</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_parallelism.html" title="High level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_process.html" title="Create/destroy threads">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_regexp.html" title="regular expressions (deprecated)">std.regexp</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdint.html" title="Integral types for various purposes">std.stdint</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_thread.html" title="Thread operations">std.thread</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_c_fenv.html" title="Floating point environment">std.c.fenv</a></li>
+	<li><a href="std_c_locale.html" title="Locale">std.c.locale</a></li>
+	<li><a href="std_c_math.html" title="Math">std.c.math</a></li>
+	<li><a href="std_c_process.html" title="Process">std.c.process</a></li>
+	<li><a href="std_c_stdarg.html" title="Variadic arguments">std.c.stdarg</a></li>
+	<li><a href="std_c_stddef.html" title="Standard definitions">std.c.stddef</a></li>
+	<li><a href="std_c_stdio.html" title="Standard I/O">std.c.stdio</a></li>
+	<li><a href="std_c_stdlib.html" title="Standard library">std.c.stdlib</a></li>
+	<li><a href="std_c_string.html" title="Strings">std.c.string</a></li>
+	<li><a href="std_c_time.html" title="Time">std.c.time</a></li>
+	<li><a href="std_c_wcharh.html" title="Wide characters">std.c.wcharh</a></li>
+	<li><a href="std_net_isemail.html" title="Validate email addresses">std.net.isemail</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+	<li><a href="phobos.html#std_windows" title="Modules specific to Windows">std.windows</a></li>
+	<li><a href="phobos.html#std_linux" title="Modules specific to Windows">std.linux</a></li>
+	<li><a href="phobos.html#std_c_windows" title="C Windows API">std.c.windows</a></li>
+	<li><a href="phobos.html#std_c_linux" title="C Linux API">std.c.linux</a></li>
+    </ul>
+    <h2><a href="phobos.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="phobos.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_time.html" title="Time">core.time</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div>
+<div id="content">
+    <h1>std.math</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\math.d -->
+Elementary mathematical functions
+<p></p>
+Contains the elementary mathematical functions (powers, roots,
+ and trignometric functions), and low-level floating-point operations.
+ Mathematical special functions are available in std.mathspecial.
+<p></p>
+
+
+ The functionality closely follows the IEEE754-2008 standard for
+ floating-point arithmetic, including the use of camelCase names rather
+ than C99-style lower case names. All of these functions behave correctly
+ when presented with an infinity or NaN.
+<p></p>
+
+
+ Unlike C, there is no global 'errno' variable. Consequently, almost all of
+ these functions are pure nothrow.
+
+<p></p>
+<b>Status:</b><br>
+The gamma and error functions have been superceded by improved versions in
+ std.mathspecial. They will be officially deprecated in std.<a name="math"></a><u>math</u> in DMD2.055.
+ The semantics and names of feqrel and approxEqual will be revised.
+
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/math.d">std/math.d</a>
+<p></p>
+<b>License:</b><br><a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>,
+                        Don Clugston
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/math.d">std/math.d</a><p></p>
+
+<dl><dt><div class="d_decl">real <a name="E"></a><u>E</u>;
+</div></dt>
+<dd>e = 2.718281... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="LOG2T"></a><u>LOG2T</u>;
+</div></dt>
+<dd>log<sub>2</sub>10 = 3.321928... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="LOG2E"></a><u>LOG2E</u>;
+</div></dt>
+<dd>log<sub>2</sub>e = 1.442695... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="LOG2"></a><u>LOG2</u>;
+</div></dt>
+<dd>log<sub>10</sub>2 = 0.301029... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="LOG10E"></a><u>LOG10E</u>;
+</div></dt>
+<dd>log<sub>10</sub>e = 0.434294... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="LN2"></a><u>LN2</u>;
+</div></dt>
+<dd>ln 2  = 0.693147... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="LN10"></a><u>LN10</u>;
+</div></dt>
+<dd>ln 10 = 2.302585... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="PI"></a><u>PI</u>;
+</div></dt>
+<dd>&pi; = 3.141592... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="PI_2"></a><u>PI_2</u>;
+</div></dt>
+<dd>&pi; / 2 = 1.570796... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="PI_4"></a><u>PI_4</u>;
+</div></dt>
+<dd>&pi; / 4 = 0.785398... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="M_1_PI"></a><u>M_1_PI</u>;
+</div></dt>
+<dd>1 / &pi; = 0.318309... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="M_2_PI"></a><u>M_2_PI</u>;
+</div></dt>
+<dd>2 / &pi; = 0.636619... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="M_2_SQRTPI"></a><u>M_2_SQRTPI</u>;
+</div></dt>
+<dd>2 / &radic;&pi; = 1.128379... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="SQRT2"></a><u>SQRT2</u>;
+</div></dt>
+<dd>&radic;2 = 1.414213... <p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="SQRT1_2"></a><u>SQRT1_2</u>;
+</div></dt>
+<dd>&radic;&frac12; = 0.707106... <p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe Num <a name="abs"></a><u>abs</u>(Num)(Num <i>x</i>);
+<br>pure nothrow @safe real <a name="abs"></a><u>abs</u>(Num)(Num <i>y</i>);
+</div></dt>
+<dd>Calculates the absolute value
+<p></p>
+For complex numbers, <a name="abs"></a><u>abs</u>(z) = sqrt( z.re<sup>2</sup> + z.im<sup>2</sup> )
+ = hypot(z.re, z.im).<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe creal <a name="conj"></a><u>conj</u>(creal <i>z</i>);
+<br>pure nothrow @safe ireal <a name="conj"></a><u>conj</u>(ireal <i>y</i>);
+</div></dt>
+<dd>Complex conjugate
+<p></p>
+<a name="conj"></a><u>conj</u>(x + iy) = x - iy
+<p></p>
+
+
+ Note that <i>z</i> * <a name="conj"></a><u>conj</u>(<i>z</i>) = <i>z</i>.re<sup>2</sup> - <i>z</i>.im<sup>2</sup>
+ is always a real number<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="cos"></a><u>cos</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns cosine of <i>x</i>. <i>x</i> is in radians.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="cos"></a><u>cos</u>(<i>x</i>)</th> <th>invalid?</th></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>            <td valign=top><span style="color:red">NAN</span></td> <td valign=top>yes</td>     </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top><span style="color:red">NAN</span></td> <td valign=top>yes</td>     </tr>
+      </table>
+<p></p>
+<span style="color:red">BUGS:</span><br>Results are undefined if |<i>x</i>| &gt;= 2<sup>64</sup>.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="sin"></a><u>sin</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns sine of <i>x</i>. <i>x</i> is in radians.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>               <th><a name="sin"></a><u>sin</u>(<i>x</i>)</th>      <th>invalid?</th></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>          <td valign=top><span style="color:red">NAN</span></td>      <td valign=top>yes</td></tr>
+      <tr><td valign=top>&plusmn;0.0</td>    <td valign=top>&plusmn;0.0</td> <td valign=top>no</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td>    <td valign=top><span style="color:red">NAN</span></td>      <td valign=top>yes</td></tr>
+      </table>
+<p></p>
+<span style="color:red">BUGS:</span><br>Results are undefined if |<i>x</i>| &gt;= 2<sup>64</sup>.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe creal <a name="sin"></a><u>sin</u>(creal <i>z</i>);
+<br>pure nothrow @safe ireal <a name="sin"></a><u>sin</u>(ireal <i>y</i>);
+</div></dt>
+<dd>sine, complex and imaginary
+<p></p>
+<a name="sin"></a><u>sin</u>(<i>z</i>) = <a name="sin"></a><u>sin</u>(<i>z</i>.re)*cosh(<i>z</i>.im) + cos(<i>z</i>.re)*sinh(<i>z</i>.im)i
+<p></p>
+
+
+ If both <a name="sin"></a><u>sin</u>(&theta;) and cos(&theta;) are required,
+ it is most efficient to use expi(&theta;).<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe creal <a name="cos"></a><u>cos</u>(creal <i>z</i>);
+<br>pure nothrow @safe real <a name="cos"></a><u>cos</u>(ireal <i>y</i>);
+</div></dt>
+<dd>cosine, complex and imaginary
+<p></p>
+<a name="cos"></a><u>cos</u>(<i>z</i>) = <a name="cos"></a><u>cos</u>(<i>z</i>.re)*cosh(<i>z</i>.im) - sin(<i>z</i>.re)*sinh(<i>z</i>.im)i<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="tan"></a><u>tan</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns tangent of <i>x</i>. <i>x</i> is in radians.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>             <th><a name="tan"></a><u>tan</u>(<i>x</i>)</th>       <th>invalid?</th></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>        <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+      <tr><td valign=top>&plusmn;0.0</td>  <td valign=top>&plusmn;0.0</td> <td valign=top>no</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td>  <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="acos"></a><u>acos</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="acos"></a><u>acos</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="acos"></a><u>acos</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the arc cosine of <i>x</i>,
+ returning a value ranging from 0 to &pi;.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>         <th><a name="acos"></a><u>acos</u>(<i>x</i>)</th> <th>invalid?</th></tr>
+      <tr><td valign=top>&gt;1.0</td>  <td valign=top><span style="color:red">NAN</span></td>  <td valign=top>yes</td></tr>
+      <tr><td valign=top>&lt;-1.0</td> <td valign=top><span style="color:red">NAN</span></td>  <td valign=top>yes</td></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>    <td valign=top><span style="color:red">NAN</span></td>  <td valign=top>yes</td></tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="asin"></a><u>asin</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="asin"></a><u>asin</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="asin"></a><u>asin</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the arc sine of <i>x</i>,
+ returning a value ranging from -&pi;/2 to &pi;/2.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>            <th><a name="asin"></a><u>asin</u>(<i>x</i>)</th>      <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td> <td valign=top>&plusmn;0.0</td> <td valign=top>no</td></tr>
+      <tr><td valign=top>&gt;1.0</td>     <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+      <tr><td valign=top>&lt;-1.0</td>    <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="atan"></a><u>atan</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="atan"></a><u>atan</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="atan"></a><u>atan</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the arc tangent of <i>x</i>,
+ returning a value ranging from -&pi;/2 to &pi;/2.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="atan"></a><u>atan</u>(<i>x</i>)</th>      <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&plusmn;0.0</td> <td valign=top>no</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="atan2"></a><u>atan2</u>(real <i>y</i>, real <i>x</i>);
+<br>pure nothrow @safe double <a name="atan2"></a><u>atan2</u>(double <i>y</i>, double <i>x</i>);
+<br>pure nothrow @safe float <a name="atan2"></a><u>atan2</u>(float <i>y</i>, float <i>x</i>);
+</div></dt>
+<dd>Calculates the arc tangent of <i>y</i> / <i>x</i>,
+ returning a value ranging from -&pi; to &pi;.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>y</i></th>                 <th><i>x</i></th>            <th>atan(<i>y</i>, <i>x</i>)</th></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>            <td valign=top>anything</td>     <td valign=top><span style="color:red">NAN</span></td> </tr>
+      <tr><td valign=top>anything</td>          <td valign=top><span style="color:red">NAN</span></td>       <td valign=top><span style="color:red">NAN</span></td> </tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&gt;0.0</td>     <td valign=top>&plusmn;0.0</td> </tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>+0.0</td>         <td valign=top>&plusmn;0.0</td> </tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&lt;0.0</td>     <td valign=top>&plusmn;&pi;</td></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>-0.0</td>         <td valign=top>&plusmn;&pi;</td></tr>
+      <tr><td valign=top>&gt;0.0</td>          <td valign=top>&plusmn;0.0</td> <td valign=top>&pi;/2</td> </tr>
+      <tr><td valign=top>&lt;0.0</td>          <td valign=top>&plusmn;0.0</td> <td valign=top>-&pi;/2</td> </tr>
+      <tr><td valign=top>&gt;0.0</td>          <td valign=top>&infin;</td>     <td valign=top>&plusmn;0.0</td> </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>anything</td>     <td valign=top>&plusmn;&pi;/2</td></tr>
+      <tr><td valign=top>&gt;0.0</td>          <td valign=top>-&infin;</td>    <td valign=top>&plusmn;&pi;</td> </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>&infin;</td>     <td valign=top>&plusmn;&pi;/4</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>-&infin;</td>    <td valign=top>&plusmn;3&pi;/4</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="cosh"></a><u>cosh</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="cosh"></a><u>cosh</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="cosh"></a><u>cosh</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the hyperbolic cosine of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="cosh"></a><u>cosh</u>(<i>x</i>)</th>      <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>&plusmn;0.0</td> <td valign=top>no</td> </tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="sinh"></a><u>sinh</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="sinh"></a><u>sinh</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="sinh"></a><u>sinh</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the hyperbolic sine of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="sinh"></a><u>sinh</u>(<i>x</i>)</th>           <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&plusmn;0.0</td>      <td valign=top>no</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>&plusmn;&infin;</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="tanh"></a><u>tanh</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="tanh"></a><u>tanh</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="tanh"></a><u>tanh</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the hyperbolic tangent of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="tanh"></a><u>tanh</u>(<i>x</i>)</th>      <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&plusmn;0.0</td> <td valign=top>no</td> </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>&plusmn;1.0</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="acosh"></a><u>acosh</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="acosh"></a><u>acosh</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="acosh"></a><u>acosh</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the inverse hyperbolic cosine of <i>x</i>.
+<p></p>
+Mathematically, <a name="acosh"></a><u>acosh</u>(<i>x</i>) = log(<i>x</i> + sqrt( <i>x</i>*<i>x</i> - 1))
+<p></p>
+
+
+ 
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th> <th>    <a name="acosh"></a><u>acosh</u>(<i>x</i>) </th></tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td> <td valign=top><span style="color:red">NAN</span> </td></tr>
+    <tr><td valign=top>&lt;1</td> <td valign=top>    <span style="color:red">NAN</span> </td></tr>
+    <tr><td valign=top>1</td> <td valign=top>     0       </td></tr>
+    <tr><td valign=top>+&infin;</td> <td valign=top>+&infin;</td></tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="asinh"></a><u>asinh</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="asinh"></a><u>asinh</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="asinh"></a><u>asinh</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the inverse hyperbolic sine of <i>x</i>.
+<p></p>
+Mathematically,
+<pre class="d_code">  <span class="d_psymbol">asinh</span>(<span class="d_param">x</span>) =  log( <span class="d_param">x</span> + sqrt( <span class="d_param">x</span>*<span class="d_param">x</span> + 1 )) <span class="d_comment">// if x &gt;= +0
+</span>  <span class="d_psymbol">asinh</span>(<span class="d_param">x</span>) = -log(-<span class="d_param">x</span> + sqrt( <span class="d_param">x</span>*<span class="d_param">x</span> + 1 )) <span class="d_comment">// if x &lt;= -0
+</span></pre>
+
+    <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th> <th>               <a name="asinh"></a><u>asinh</u>(<i>x</i>)       </th></tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td> <td valign=top>          <span style="color:red">NAN</span>         </td></tr>
+    <tr><td valign=top>&plusmn;0</td> <td valign=top>      &plusmn;0      </td></tr>
+    <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>&plusmn;&infin;</td></tr>
+    </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="atanh"></a><u>atanh</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="atanh"></a><u>atanh</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="atanh"></a><u>atanh</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates the inverse hyperbolic tangent of <i>x</i>,
+ returning a value from ranging from -1 to 1.
+<p></p>
+Mathematically, <a name="atanh"></a><u>atanh</u>(<i>x</i>) = log( (1+<i>x</i>)/(1-<i>x</i>) ) / 2
+<p></p>
+
+
+<p></p>
+
+
+ 
+ <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th> <th>    acosh(<i>x</i>) </th></tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td> <td valign=top><span style="color:red">NAN</span> </td></tr>
+    <tr><td valign=top>&plusmn;0</td> <td valign=top>&plusmn;0</td></tr>
+    <tr><td valign=top>-&infin;</td> <td valign=top>-0</td></tr>
+ </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe long <a name="rndtol"></a><u>rndtol</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns <i>x</i> rounded to a long value using the current rounding mode.
+ If the integer value of <i>x</i> is
+ greater than long.max, the result is
+ indeterminate.<p></p>
+
+</dd>
+<dt><div class="d_decl">real <a name="rndtonl"></a><u>rndtonl</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns <i>x</i> rounded to a long value using the FE_TONEAREST rounding mode.
+ If the integer value of <i>x</i> is
+ greater than long.max, the result is
+ indeterminate.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe float <a name="sqrt"></a><u>sqrt</u>(float <i>x</i>);
+</div></dt>
+<dd>Compute square root of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>         <th><a name="sqrt"></a><u>sqrt</u>(<i>x</i>)</th>   <th>invalid?</th></tr>
+      <tr><td valign=top>-0.0</td>      <td valign=top>-0.0</td>      <td valign=top>no</td></tr>
+      <tr><td valign=top>&lt;0.0</td>  <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>yes</td></tr>
+      <tr><td valign=top>+&infin;</td> <td valign=top>+&infin;</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe double <a name="sqrt"></a><u>sqrt</u>(double <i>x</i>);
+</div></dt>
+<dd>ditto
+<p></p>
+Compute square root of <i>x</i>.
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>         <th><a name="sqrt"></a><u>sqrt</u>(<i>x</i>)</th>   <th>invalid?</th></tr>
+      <tr><td valign=top>-0.0</td>      <td valign=top>-0.0</td>      <td valign=top>no</td></tr>
+      <tr><td valign=top>&lt;0.0</td>  <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>yes</td></tr>
+      <tr><td valign=top>+&infin;</td> <td valign=top>+&infin;</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="sqrt"></a><u>sqrt</u>(real <i>x</i>);
+</div></dt>
+<dd>ditto
+<p></p>
+Compute square root of <i>x</i>.
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>         <th><a name="sqrt"></a><u>sqrt</u>(<i>x</i>)</th>   <th>invalid?</th></tr>
+      <tr><td valign=top>-0.0</td>      <td valign=top>-0.0</td>      <td valign=top>no</td></tr>
+      <tr><td valign=top>&lt;0.0</td>  <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>yes</td></tr>
+      <tr><td valign=top>+&infin;</td> <td valign=top>+&infin;</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="exp"></a><u>exp</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="exp"></a><u>exp</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="exp"></a><u>exp</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculates e<span style="vertical-align:super;font-size:smaller"><i>x</i></span>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th>             <th>e<span style="vertical-align:super;font-size:smaller"><i>x</i></span></th> </tr>
+    <tr><td valign=top>+&infin;</td>     <td valign=top>+&infin;</td> </tr>
+    <tr><td valign=top>-&infin;</td>     <td valign=top>+0.0</td>      </tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td>        <td valign=top><span style="color:red">NAN</span></td>    </tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="expm1"></a><u>expm1</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculates the value of the natural logarithm base (e)
+ raised to the power of <i>x</i>, minus 1.
+<p></p>
+For very small <i>x</i>, <a name="expm1"></a><u>expm1</u>(<i>x</i>) is more accurate
+ than exp(<i>x</i>)-1.
+<p></p>
+
+
+  <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th>             <th>e<span style="vertical-align:super;font-size:smaller"><i>x</i></span>-1</th>  </tr>
+    <tr><td valign=top>&plusmn;0.0</td>  <td valign=top>&plusmn;0.0</td> </tr>
+    <tr><td valign=top>+&infin;</td>     <td valign=top>+&infin;</td>    </tr>
+    <tr><td valign=top>-&infin;</td>     <td valign=top>-1.0</td>         </tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td>        <td valign=top><span style="color:red">NAN</span></td>       </tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="exp2"></a><u>exp2</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculates 2<span style="vertical-align:super;font-size:smaller"><i>x</i></span>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th>             <th><a name="exp2"></a><u>exp2</u>(<i>x</i>)</th>   </tr>
+    <tr><td valign=top>+&infin;</td>     <td valign=top>+&infin;</td> </tr>
+    <tr><td valign=top>-&infin;</td>     <td valign=top>+0.0</td>      </tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td>        <td valign=top><span style="color:red">NAN</span></td>    </tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted creal <a name="expi"></a><u>expi</u>(real <i>y</i>);
+</div></dt>
+<dd>Calculate cos(<i>y</i>) + i sin(<i>y</i>).
+<p></p>
+On many CPUs (such as x86), this is a very efficient operation;
+ almost twice as fast as calculating sin(<i>y</i>) and cos(<i>y</i>) separately,
+ and is the preferred method when both are required.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="frexp"></a><u>frexp</u>(real <i>value</i>, out int <i>exp</i>);
+</div></dt>
+<dd>Separate floating point <i>value</i> into significand and exponent.
+<p></p>
+<b>Returns:</b><br>Calculate and return <i>x</i> and <i><i>exp</i></i> such that
+      <i>value</i> =<i>x</i>*2<span style="vertical-align:super;font-size:smaller"><i>exp</i></span> and
+      .5 &lt;= |<i>x</i>| &lt; 1.0
+<p></p>
+
+
+      <i>x</i> has same sign as <i>value</i>.
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>value</i></th>           <th>returns</th>         <th><i>exp</i></th></tr>
+      <tr><td valign=top>&plusmn;0.0</td>    <td valign=top>&plusmn;0.0</td>    <td valign=top>0</td></tr>
+      <tr><td valign=top>+&infin;</td>       <td valign=top>+&infin;</td>       <td valign=top>int.max</td></tr>
+      <tr><td valign=top>-&infin;</td>       <td valign=top>-&infin;</td>       <td valign=top>int.min</td></tr>
+      <tr><td valign=top>&plusmn;<span style="color:red">NAN</span></td> <td valign=top>&plusmn;<span style="color:red">NAN</span></td> <td valign=top>int.min</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted int <a name="ilogb"></a><u>ilogb</u>(real <i>x</i>);
+</div></dt>
+<dd>Extracts the exponent of <i>x</i> as a signed integral value.
+<p></p>
+If <i>x</i> is not a special value, the result is the same as
+ <span class="d_inlinecode">cast(int)logb(<i>x</i>)</span>.
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                <th><a name="ilogb"></a><u>ilogb</u>(<i>x</i>)</th>     <th>Range error?</th></tr>
+      <tr><td valign=top>0</td>                 <td valign=top>FP_ILOGB0</td>   <td valign=top>yes</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>int.max</td>     <td valign=top>no</td></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>            <td valign=top>FP_ILOGBNAN</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="ldexp"></a><u>ldexp</u>(real <i>n</i>, int <i>exp</i>);
+</div></dt>
+<dd>Compute <i>n</i> * 2<span style="vertical-align:super;font-size:smaller"><i>exp</i></span>
+<p></p>
+<b>References:</b><br>
+frexp<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="log"></a><u>log</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculate the natural logarithm of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th>            <th><a name="log"></a><u>log</u>(<i>x</i>)</th>    <th>divide by 0?</th> <th>invalid?</th></tr>
+    <tr><td valign=top>&plusmn;0.0</td> <td valign=top>-&infin;</td> <td valign=top>yes</td>          <td valign=top>no</td></tr>
+    <tr><td valign=top>&lt;0.0</td>     <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>no</td>           <td valign=top>yes</td></tr>
+    <tr><td valign=top>+&infin;</td>    <td valign=top>+&infin;</td> <td valign=top>no</td>           <td valign=top>no</td></tr>
+    </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="log10"></a><u>log10</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculate the base-10 logarithm of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>            <th><a name="log10"></a><u>log10</u>(<i>x</i>)</th>  <th>divide by 0?</th> <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td> <td valign=top>-&infin;</td> <td valign=top>yes</td>          <td valign=top>no</td></tr>
+      <tr><td valign=top>&lt;0.0</td>     <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>no</td>           <td valign=top>yes</td></tr>
+      <tr><td valign=top>+&infin;</td>    <td valign=top>+&infin;</td> <td valign=top>no</td>           <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="log1p"></a><u>log1p</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculates the natural logarithm of 1 + <i>x</i>.
+<p></p>
+For very small <i>x</i>, <a name="log1p"></a><u>log1p</u>(<i>x</i>) will be more accurate than
+      log(1 + <i>x</i>).
+<p></p>
+
+
+  <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+               <tr><th><i>x</i></th>            <th><a name="log1p"></a><u>log1p</u>(<i>x</i>)</th>     <th>divide by 0?</th> <th>invalid?</th></tr>
+  <tr><td valign=top>&plusmn;0.0</td> <td valign=top>&plusmn;0.0</td> <td valign=top>no</td>           <td valign=top>no</td></tr>
+  <tr><td valign=top>-1.0</td>         <td valign=top>-&infin;</td>    <td valign=top>yes</td>          <td valign=top>no</td></tr>
+  <tr><td valign=top>&lt;-1.0</td>    <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>no</td>           <td valign=top>yes</td></tr>
+  <tr><td valign=top>+&infin;</td>    <td valign=top>-&infin;</td>    <td valign=top>no</td>           <td valign=top>no</td></tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="log2"></a><u>log2</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculates the base-2 logarithm of <i>x</i>:
+ log<sub>2</sub><i>x</i>
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+               <tr><th><i>x</i></th>            <th><a name="log2"></a><u>log2</u>(<i>x</i>)</th>   <th>divide by 0?</th> <th>invalid?</th></tr>
+  <tr><td valign=top>&plusmn;0.0</td> <td valign=top>-&infin;</td> <td valign=top>yes</td>          <td valign=top>no</td> </tr>
+  <tr><td valign=top>&lt;0.0</td>     <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>no</td>           <td valign=top>yes</td> </tr>
+  <tr><td valign=top>+&infin;</td>    <td valign=top>+&infin;</td> <td valign=top>no</td>           <td valign=top>no</td> </tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="logb"></a><u>logb</u>(real <i>x</i>);
+</div></dt>
+<dd>Extracts the exponent of <i>x</i> as a signed integral value.
+<p></p>
+If <i>x</i> is subnormal, it is treated as if it were normalized.
+ For a positive, finite <i>x</i>:
+<p></p>
+
+
+ 1 &lt;= <i><i>x</i></i> * FLT_RADIX<span style="vertical-align:super;font-size:smaller">-<a name="logb"></a><u>logb</u>(<i>x</i>)</span> &lt; FLT_RADIX
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="logb"></a><u>logb</u>(<i>x</i>)</th>   <th>divide by 0?</th> </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>+&infin;</td> <td valign=top>no</td></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>-&infin;</td> <td valign=top>yes</td> </tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="modf"></a><u>modf</u>(real <i>x</i>, ref real <i>y</i>);
+</div></dt>
+<dd>Calculates the remainder from the calculation <i>x</i>/<i>y</i>.
+<p></p>
+<b>Returns:</b><br>The value of <i>x</i> - i * <i>y</i>, where i is the number of times that <i>y</i> can
+ be completely subtracted from <i>x</i>. The result has the same sign as <i>x</i>.
+<p></p>
+
+
+ <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+               <tr><th><i>x</i></th>              <th><i>y</i></th>             <th><a name="modf"></a><u>modf</u>(<i>x</i>, <i>y</i>)</th>   <th>invalid?</th></tr>
+  <tr><td valign=top>&plusmn;0.0</td>   <td valign=top>not 0.0</td>       <td valign=top>&plusmn;0.0</td> <td valign=top>no</td></tr>
+  <tr><td valign=top>&plusmn;&infin;</td>   <td valign=top>anything</td>      <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+  <tr><td valign=top>anything</td>       <td valign=top>&plusmn;0.0</td>  <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>yes</td></tr>
+  <tr><td valign=top>!=&plusmn;&infin;</td> <td valign=top>&plusmn;&infin;</td>  <td valign=top><i>x</i></td>            <td valign=top>no</td></tr>
+ </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="scalbn"></a><u>scalbn</u>(real <i>x</i>, int <i>n</i>);
+</div></dt>
+<dd>Efficiently calculates <i>x</i> * 2<span style="vertical-align:super;font-size:smaller"><i>n</i></span>.
+<p></p>
+<a name="scalbn"></a><u>scalbn</u> handles underflow and overflow in
+ the same fashion as the basic arithmetic operators.
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th>scalb(<i>x</i>)</th></tr>
+      <tr><td valign=top>&plusmn;&infin;</td>      <td valign=top>&plusmn;&infin;</td> </tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&plusmn;0.0</td> </tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="cbrt"></a><u>cbrt</u>(real <i>x</i>);
+</div></dt>
+<dd>Calculates the cube root of <i>x</i>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i><i>x</i></i></th>            <th><a name="cbrt"></a><u>cbrt</u>(<i>x</i>)</th>           <th>invalid?</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>&plusmn;0.0</td>      <td valign=top>no</td> </tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>            <td valign=top><span style="color:red">NAN</span></td>            <td valign=top>yes</td> </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>&plusmn;&infin;</td> <td valign=top>no</td> </tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="fabs"></a><u>fabs</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns |<i>x</i>|
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="fabs"></a><u>fabs</u>(<i>x</i>)</th></tr>
+      <tr><td valign=top>&plusmn;0.0</td>      <td valign=top>+0.0</td> </tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>+&infin;</td> </tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="hypot"></a><u>hypot</u>(real <i>x</i>, real <i>y</i>);
+</div></dt>
+<dd>Calculates the length of the
+ hypotenuse of a right-angled triangle with sides of length <i>x</i> and <i>y</i>.
+ The hypotenuse is the value of the square root of
+ the sums of the squares of <i>x</i> and <i>y</i>:
+<p></p>
+sqrt( + )
+<p></p>
+
+
+ Note that <a name="hypot"></a><u>hypot</u>(<i>x</i>, <i>y</i>), <a name="hypot"></a><u>hypot</u>(<i>y</i>, <i>x</i>) and
+ <a name="hypot"></a><u>hypot</u>(<i>x</i>, -<i>y</i>) are equivalent.
+<p></p>
+
+
+  <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+               <tr><th><i>x</i></th>            <th><i>y</i></th>            <th><a name="hypot"></a><u>hypot</u>(<i>x</i>, <i>y</i>)</th> <th>invalid?</th></tr>
+  <tr><td valign=top><i>x</i></td>            <td valign=top>&plusmn;0.0</td> <td valign=top>|<i>x</i>|</td>         <td valign=top>no</td></tr>
+  <tr><td valign=top>&plusmn;&infin;</td> <td valign=top><i>y</i></td>            <td valign=top>+&infin;</td>   <td valign=top>no</td></tr>
+  <tr><td valign=top>&plusmn;&infin;</td> <td valign=top><span style="color:red">NAN</span></td>       <td valign=top>+&infin;</td>   <td valign=top>no</td></tr>
+  </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="erf"></a><u>erf</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns the error function of <i>x</i>.
+<p></p>
+<img src="erf.gif" alt="error function"><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="erfc"></a><u>erfc</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns the complementary error function of <i>x</i>, which is 1 - erf(<i>x</i>).
+<p></p>
+<img src="erfc.gif" alt="complementary error function"><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="lgamma"></a><u>lgamma</u>(real <i>x</i>);
+</div></dt>
+<dd>Natural logarithm of gamma function.
+<p></p>
+Returns the base e (2.718...) logarithm of the absolute
+ value of the gamma function of the argument.
+<p></p>
+
+
+ For reals, <a name="lgamma"></a><u>lgamma</u> is equivalent to log(fabs(gamma(<i>x</i>))).
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>                 <th><a name="lgamma"></a><u>lgamma</u>(<i>x</i>)</th> <th>invalid?</th></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>            <td valign=top><span style="color:red">NAN</span></td>    <td valign=top>yes</td></tr>
+      <tr><td valign=top>integer &lt;= 0</td>      <td valign=top>+&infin;</td> <td valign=top>yes</td></tr>
+      <tr><td valign=top>&plusmn;&infin;</td> <td valign=top>+&infin;</td> <td valign=top>no</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="tgamma"></a><u>tgamma</u>(real <i>x</i>);
+</div></dt>
+<dd>The Gamma function, &#915;(<i>x</i>)
+<p></p>
+&#915;(<i>x</i>) is a generalisation of the factorial function
+  to real and complex numbers.
+  Like <i>x</i>!, &#915;(<i>x</i>+1) = <i>x</i>*&#915;(<i>x</i>).
+<p></p>
+
+
+  Mathematically, if z.re &gt; 0 then
+   &#915;(z) = <big>&#8747;<sub><small>0</small></sub><sup>&infin;</sup></big> t<sup>z-1</sup>e<sup>-t</sup> dt
+<p></p>
+
+
+    <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i></th>              <th>&#915;(<i>x</i>)</th>       <th>invalid?</th></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td>         <td valign=top><span style="color:red">NAN</span></td>            <td valign=top>yes</td></tr>
+      <tr><td valign=top>&plusmn;0.0</td>   <td valign=top>&plusmn;&infin;</td>      <td valign=top>yes</td></tr>
+      <tr><td valign=top>integer &gt;0</td> <td valign=top>(<i>x</i>-1)!</td>            <td valign=top>no</td></tr>
+      <tr><td valign=top>integer &lt;0</td> <td valign=top><span style="color:red">NAN</span></td>            <td valign=top>yes</td></tr>
+      <tr><td valign=top>+&infin;</td>      <td valign=top>+&infin;</td>         <td valign=top>no</td></tr>
+      <tr><td valign=top>-&infin;</td>      <td valign=top><span style="color:red">NAN</span></td>            <td valign=top>yes</td></tr>
+    </table>
+
+<p></p>
+<b>References:</b><br>
+<a href="http://en.wikipedia.org/wiki/Gamma_function">http://en.wikipedia.org/wiki/Gamma_function</a>,
+      <a href="http://www.netlib.org/cephes/ldoubdoc.html#gamma">http://www.netlib.org/cephes/ldoubdoc.html#gamma</a><p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="ceil"></a><u>ceil</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns the value of <i>x</i> rounded upward to the next integer
+ (toward positive infinity).<p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="floor"></a><u>floor</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns the value of <i>x</i> rounded downward to the next integer
+ (toward negative infinity).<p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="nearbyint"></a><u>nearbyint</u>(real <i>x</i>);
+</div></dt>
+<dd>Rounds <i>x</i> to the nearest integer value, using the current rounding
+ mode.
+<p></p>
+Unlike the rint functions, <a name="nearbyint"></a><u>nearbyint</u> does not raise the
+ FE_INEXACT exception.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="rint"></a><u>rint</u>(real <i>x</i>);
+</div></dt>
+<dd>Rounds <i>x</i> to the nearest integer value, using the current rounding
+ mode.
+ If the return value is not equal to <i>x</i>, the FE_INEXACT
+ exception is raised.
+ <b>nearbyint</b> performs
+ the same operation, but does not set the FE_INEXACT exception.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted long <a name="lrint"></a><u>lrint</u>(real <i>x</i>);
+</div></dt>
+<dd>Rounds <i>x</i> to the nearest integer value, using the current rounding
+ mode.
+<p></p>
+This is generally the fastest method to convert a floating-point number
+ to an integer. Note that the results from this function
+ depend on the rounding mode, if the fractional part of <i>x</i> is exactly 0.5.
+ If using the default rounding mode (ties round to even integers)
+ <a name="lrint"></a><u>lrint</u>(4.5) == 4, <a name="lrint"></a><u>lrint</u>(5.5)==6.<p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="round"></a><u>round</u>(real <i>x</i>);
+</div></dt>
+<dd>Return the value of <i>x</i> rounded to the nearest integer.
+ If the fractional part of <i>x</i> is exactly 0.5, the return value is rounded to
+ the even integer.<p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted long <a name="lround"></a><u>lround</u>(real <i>x</i>);
+</div></dt>
+<dd>Return the value of <i>x</i> rounded to the nearest integer.
+<p></p>
+If the fractional part of <i>x</i> is exactly 0.5, the return value is rounded
+ away from zero.<p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="trunc"></a><u>trunc</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns the integer portion of <i>x</i>, dropping the fractional portion.
+<p></p>
+This is also known as "chop" rounding.<p></p>
+
+</dd>
+<dt><div class="d_decl">nothrow @trusted real <a name="remainder"></a><u>remainder</u>(real <i>x</i>, real <i>y</i>);
+<br>nothrow @trusted real <a name="remquo"></a><u>remquo</u>(real <i>x</i>, real <i>y</i>, out int <i>n</i>);
+</div></dt>
+<dd>Calculate the <a name="remainder"></a><u>remainder</u> <i>x</i> REM <i>y</i>, following IEC 60559.
+<p></p>
+REM is the value of <i>x</i> - <i>y</i> * n, where n is the integer nearest the exact
+ value of <i>x</i> / <i>y</i>.
+ If |n - <i>x</i> / <i>y</i>| == 0.5, n is even.
+ If the result is zero, it has the same sign as <i>x</i>.
+ Otherwise, the sign of the result is the sign of <i>x</i> / <i>y</i>.
+ Precision mode has no effect on the <a name="remainder"></a><u>remainder</u> functions.
+<p></p>
+
+
+ remquo returns n in the parameter n.
+<p></p>
+
+
+ <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+               <tr><th><i>x</i></th>               <th><i>y</i></th>            <th><a name="remainder"></a><u>remainder</u>(<i>x</i>, <i>y</i>)</th> <th>n</th>   <th>invalid?</th></tr>
+  <tr><td valign=top>&plusmn;0.0</td>    <td valign=top>not 0.0</td>      <td valign=top>&plusmn;0.0</td>    <td valign=top>0.0</td> <td valign=top>no</td></tr>
+  <tr><td valign=top>&plusmn;&infin;</td>    <td valign=top>anything</td>     <td valign=top><span style="color:red">NAN</span></td>          <td valign=top>?</td>   <td valign=top>yes</td></tr>
+  <tr><td valign=top>anything</td>        <td valign=top>&plusmn;0.0</td> <td valign=top><span style="color:red">NAN</span></td>          <td valign=top>?</td>   <td valign=top>yes</td></tr>
+  <tr><td valign=top>!= &plusmn;&infin;</td> <td valign=top>&plusmn;&infin;</td> <td valign=top><i>x</i></td>               <td valign=top>?</td>   <td valign=top>no</td></tr>
+ </table>
+
+<p></p>
+<b>Note:</b><br>
+remquo not supported on windows<p></p>
+
+</dd>
+<dt><div class="d_decl">struct <a name="IeeeFlags"></a><u>IeeeFlags</u>;
+</div></dt>
+<dd>IEEE exception status flags ('sticky bits')
+<p></p>
+These flags indicate that an exceptional floating-point condition has occurred.
+ They indicate that a NaN or an infinity has been generated, that a result
+ is inexact, or that a signalling NaN has been encountered. If floating-point
+ exceptions are enabled (unmasked), a hardware exception will be generated
+ instead of setting these flags.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">    <span class="d_keyword">real</span> a=3.5;
+    <span class="d_comment">// Set all the flags to zero
+</span>    resetIeeeFlags();
+    <span class="d_keyword">assert</span>(!ieeeFlags.divByZero);
+    <span class="d_comment">// Perform a division by zero.
+</span>    a/=0.0L;
+    <span class="d_keyword">assert</span>(a==<span class="d_keyword">real</span>.infinity);
+    <span class="d_keyword">assert</span>(ieeeFlags.divByZero);
+    <span class="d_comment">// Create a NaN
+</span>    a*=0.0L;
+    <span class="d_keyword">assert</span>(ieeeFlags.invalid);
+    <span class="d_keyword">assert</span>(isNaN(a));
+
+    <span class="d_comment">// Check that calling func() has no effect on the
+</span>    <span class="d_comment">// status flags.
+</span>    <span class="d_psymbol">IeeeFlags</span> f = ieeeFlags;
+    func();
+    <span class="d_keyword">assert</span>(ieeeFlags == f);
+
+</pre>
+<p></p>
+
+<dl><dt><div class="d_decl">@property bool <a name="inexact"></a><u>inexact</u>();
+</div></dt>
+<dd>The result cannot be represented exactly, so rounding occured.
+ (example: x = sin(0.1); )<p></p>
+
+</dd>
+<dt><div class="d_decl">@property bool <a name="underflow"></a><u>underflow</u>();
+</div></dt>
+<dd>A zero was generated by <a name="underflow"></a><u>underflow</u> (example: x = real.min*real.epsilon/2;)<p></p>
+
+</dd>
+<dt><div class="d_decl">@property bool <a name="overflow"></a><u>overflow</u>();
+</div></dt>
+<dd>An infinity was generated by <a name="overflow"></a><u>overflow</u> (example: x = real.max*2;)<p></p>
+
+</dd>
+<dt><div class="d_decl">@property bool <a name="divByZero"></a><u>divByZero</u>();
+</div></dt>
+<dd>An infinity was generated by division by zero (example: x = 3/0.0; )<p></p>
+
+</dd>
+<dt><div class="d_decl">@property bool <a name="invalid"></a><u>invalid</u>();
+</div></dt>
+<dd>A machine NaN was generated. (example: x = real.infinity * 0.0; )<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">void <a name="resetIeeeFlags"></a><u>resetIeeeFlags</u>();
+</div></dt>
+<dd>Set all of the floating-point status flags to <b>false</b>.<p></p>
+
+</dd>
+<dt><div class="d_decl">@property IeeeFlags <a name="ieeeFlags"></a><u>ieeeFlags</u>();
+</div></dt>
+<dd>Return a snapshot of the current state of the floating-point status flags.<p></p>
+
+</dd>
+<dt><div class="d_decl">struct <a name="FloatingPointControl"></a><u>FloatingPointControl</u>;
+</div></dt>
+<dd>Control the Floating point hardware
+<p></p>
+Change the IEEE754 floating-point rounding mode and the floating-point
+  hardware exceptions.
+<p></p>
+
+
+  By default, the rounding mode is roundToNearest and all hardware exceptions
+  are disabled. For most applications, debugging is easier if the <i>division
+  by zero</i>, <i>overflow</i>, and <i>invalid operation</i> exceptions are enabled.
+  These three are combined into a <i>severeExceptions</i> value for convenience.
+  Note in particular that if <i>invalidException</i> is enabled, a hardware trap
+  will be generated whenever an uninitialized floating-point variable is used.
+<p></p>
+
+
+  All changes are temporary. The previous state is restored at the
+  end of the scope.
+<p></p>
+
+
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">  {
+    <span class="d_comment">// Enable hardware exceptions for division by zero, overflow to infinity,
+</span>    <span class="d_comment">// invalid operations, and uninitialized floating-point variables.
+</span>
+    <span class="d_psymbol">FloatingPointControl</span> fpctrl;
+    fpctrl.enableExceptions(<span class="d_psymbol">FloatingPointControl</span>.severeExceptions);
+
+    <span class="d_keyword">double</span> y = x*3.0; <span class="d_comment">// will generate a hardware exception, if x is uninitialized.
+</span>    <span class="d_comment">//
+</span>    fpctrl.rounding = <span class="d_psymbol">FloatingPointControl</span>.roundUp;
+
+    <span class="d_comment">// The hardware exceptions will be disabled when leaving this scope.
+</span>    <span class="d_comment">// The original rounding mode will also be restored.
+</span>  }
+
+</pre>
+<p></p>
+
+<dl><dt><div class="d_decl"><a name="severeExceptions"></a><u>severeExceptions</u></div></dt>
+<dd>Severe = The overflow, division by zero, and invalid exceptions.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="enableExceptions"></a><u>enableExceptions</u>(uint <i>exceptions</i>);
+</div></dt>
+<dd>Enable (unmask) specific hardware <i>exceptions</i>. Multiple <i>exceptions</i> may be ORed together.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="disableExceptions"></a><u>disableExceptions</u>(uint <i>exceptions</i>);
+</div></dt>
+<dd>Disable (mask) specific hardware <i>exceptions</i>. Multiple <i>exceptions</i> may be ORed together.<p></p>
+
+</dd>
+<dt><div class="d_decl">@property void <a name="rounding"></a><u>rounding</u>(RoundingMode <i>newMode</i>);
+</div></dt>
+<dd>Change the floating-point hardware <a name="rounding"></a><u>rounding</u> mode<p></p>
+
+</dd>
+<dt><div class="d_decl">static @property uint <a name="enabledExceptions"></a><u>enabledExceptions</u>();
+</div></dt>
+<dd>Return the exceptions which are currently enabled (unmasked)<p></p>
+
+</dd>
+<dt><div class="d_decl">static @property RoundingMode <a name="rounding"></a><u>rounding</u>();
+</div></dt>
+<dd>Return the currently active <a name="rounding"></a><u>rounding</u> mode<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted bool <a name="isNaN"></a><u>isNaN</u>(real <i>x</i>);
+</div></dt>
+<dd>Returns !=0 if e is a NaN.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted int <a name="isFinite"></a><u>isFinite</u>(real <i>e</i>);
+</div></dt>
+<dd>Returns !=0 if <i>e</i> is finite (not infinite or <span style="color:red">NAN</span>).<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted int <a name="isNormal"></a><u>isNormal</u>(X)(X <i>x</i>);
+</div></dt>
+<dd>Returns !=0 if x is normalized (not zero, subnormal, infinite, or <span style="color:red">NAN</span>).<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted int <a name="isSubnormal"></a><u>isSubnormal</u>(float <i>f</i>);
+<br>pure nothrow @trusted int <a name="isSubnormal"></a><u>isSubnormal</u>(double <i>d</i>);
+<br>pure nothrow @trusted int <a name="isSubnormal"></a><u>isSubnormal</u>(real <i>x</i>);
+</div></dt>
+<dd>Is number subnormal? (Also called "denormal".)
+ Subnormals have a 0 exponent and a 0 most significant mantissa bit.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted bool <a name="isInfinity"></a><u>isInfinity</u>(real <i>x</i>);
+</div></dt>
+<dd>Return !=0 if e is &plusmn;&infin;.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted bool <a name="isIdentical"></a><u>isIdentical</u>(real <i>x</i>, real <i>y</i>);
+</div></dt>
+<dd>Is the binary representation of <i>x</i> identical to <i>y</i>?
+<p></p>
+Same as ==, except that positive and negative zero are not identical,
+ and two <span style="color:red">NAN</span>s are identical if they have the same 'payload'.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted int <a name="signbit"></a><u>signbit</u>(real <i>x</i>);
+</div></dt>
+<dd>Return 1 if sign bit of e is set, 0 if not.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="copysign"></a><u>copysign</u>(real <i>to</i>, real <i>from</i>);
+</div></dt>
+<dd>Return a value composed of <i>to</i> with <i>from</i>'s sign bit.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe F <a name="sgn"></a><u>sgn</u>(F)(F <i>x</i>);
+</div></dt>
+<dd>Returns <span class="d_inlinecode">-1</span> if <span class="d_inlinecode">x &lt; 0</span>, <span class="d_inlinecode">x</span> if <span class="d_inlinecode">x == 0</span>, <span class="d_inlinecode">1</span> if
+<span class="d_inlinecode">x &gt; 0</span>, and <span style="color:red">NAN</span> if x==<span style="color:red">NAN</span>.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="NaN"></a><u>NaN</u>(ulong <i>payload</i>);
+</div></dt>
+<dd>Create a quiet <span style="color:red">NAN</span>, storing an integer inside the <i>payload</i>.
+<p></p>
+For floats, the largest possible <i>payload</i> is 0x3F_FFFF.
+ For doubles, it is 0x3_FFFF_FFFF_FFFF.
+ For 80-bit or 128-bit reals, it is 0x3FFF_FFFF_FFFF_FFFF.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted ulong <a name="getNaNPayload"></a><u>getNaNPayload</u>(real <i>x</i>);
+</div></dt>
+<dd>Extract an integral payload from a <span style="color:red">NAN</span>.
+<p></p>
+<b>Returns:</b><br>the integer payload as a ulong.
+<p></p>
+
+
+ For floats, the largest possible payload is 0x3F_FFFF.
+ For doubles, it is 0x3_FFFF_FFFF_FFFF.
+ For 80-bit or 128-bit reals, it is 0x3FFF_FFFF_FFFF_FFFF.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="nextUp"></a><u>nextUp</u>(real <i>x</i>);
+<br>pure nothrow @trusted double <a name="nextUp"></a><u>nextUp</u>(double <i>x</i>);
+<br>pure nothrow @trusted float <a name="nextUp"></a><u>nextUp</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculate the next largest floating point value after <i>x</i>.
+<p></p>
+Return the least number greater than <i>x</i> that is representable as a real;
+ thus, it gives the next point on the IEEE number line.
+<p></p>
+
+
+  <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th> <th>           <a name="nextUp"></a><u>nextUp</u>(<i>x</i>)   </th></tr>
+    <tr><td valign=top>-&infin;</td> <td valign=top>   -real.max   </td></tr>
+    <tr><td valign=top>&plusmn;0.0</td> <td valign=top>real.min_normal*real.epsilon </td></tr>
+    <tr><td valign=top>real.max</td> <td valign=top>    &infin; </td></tr>
+    <tr><td valign=top>&infin;</td> <td valign=top>    &infin; </td></tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td> <td valign=top>      <span style="color:red">NAN</span>   </td></tr>
+ </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="nextDown"></a><u>nextDown</u>(real <i>x</i>);
+<br>pure nothrow @safe double <a name="nextDown"></a><u>nextDown</u>(double <i>x</i>);
+<br>pure nothrow @safe float <a name="nextDown"></a><u>nextDown</u>(float <i>x</i>);
+</div></dt>
+<dd>Calculate the next smallest floating point value before <i>x</i>.
+<p></p>
+Return the greatest number less than <i>x</i> that is representable as a real;
+ thus, it gives the previous point on the IEEE number line.
+<p></p>
+
+
+  <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                 <tr><th><i>x</i></th> <th>           <a name="nextDown"></a><u>nextDown</u>(<i>x</i>)   </th></tr>
+    <tr><td valign=top>&infin;</td> <td valign=top>    real.max  </td></tr>
+    <tr><td valign=top>&plusmn;0.0</td> <td valign=top>-real.min_normal*real.epsilon </td></tr>
+    <tr><td valign=top>-real.max</td> <td valign=top>   -&infin; </td></tr>
+    <tr><td valign=top>-&infin;</td> <td valign=top>   -&infin; </td></tr>
+    <tr><td valign=top><span style="color:red">NAN</span></td> <td valign=top>      <span style="color:red">NAN</span>    </td></tr>
+ </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe T <a name="nextafter"></a><u>nextafter</u>(T)(T <i>x</i>, T <i>y</i>);
+</div></dt>
+<dd>Calculates the next representable value after x in the direction of y.
+<p></p>
+If y &gt; x, the result will be the next largest floating-point value;
+ if y &lt; x, the result will be the next smallest value.
+ If x == y, the result is y.
+
+<p></p>
+<b>Remarks:</b><br>
+This function is not generally very useful; it's almost always better to use
+ the faster functions nextUp() or nextDown() instead.
+<p></p>
+
+
+ The FE_INEXACT and FE_OVERFLOW exceptions will be raised if x is finite and
+ the function result is infinite. The FE_INEXACT and FE_UNDERFLOW
+ exceptions will be raised if the function value is subnormal, and x is
+ not equal to y.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="fdim"></a><u>fdim</u>(real <i>x</i>, real <i>y</i>);
+</div></dt>
+<dd>Returns the positive difference between <i>x</i> and <i>y</i>.
+<p></p>
+<b>Returns:</b><br><table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th><i>x</i>, <i>y</i></th>       <th><a name="fdim"></a><u>fdim</u>(<i>x</i>, <i>y</i>)</th></tr>
+      <tr><td valign=top><i>x</i> &gt; <i>y</i></td>  <td valign=top><i>x</i> - <i>y</i></td></tr>
+      <tr><td valign=top><i>x</i> &lt;= <i>y</i></td> <td valign=top>+0.0</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="fmax"></a><u>fmax</u>(real <i>x</i>, real <i>y</i>);
+</div></dt>
+<dd>Returns the larger of <i>x</i> and <i>y</i>.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="fmin"></a><u>fmin</u>(real <i>x</i>, real <i>y</i>);
+</div></dt>
+<dd>Returns the smaller of <i>x</i> and <i>y</i>.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @safe real <a name="fma"></a><u>fma</u>(real <i>x</i>, real <i>y</i>, real <i>z</i>);
+</div></dt>
+<dd>Returns (<i>x</i> * <i>y</i>) + <i>z</i>, rounding only once according to the
+ current rounding mode.
+<p></p>
+<span style="color:red">BUGS:</span><br>Not currently implemented - rounds twice.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted Unqual!(F) <a name="pow"></a><u>pow</u>(F, G)(F <i>x</i>, G <i>n</i>);
+</div></dt>
+<dd>Compute the value of x <span style="vertical-align:super;font-size:smaller">n</span>, where n is an integer<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted typeof(Unqual!(F).init * Unqual!(G).init) <a name="pow"></a><u>pow</u>(F, G)(F <i>x</i>, G <i>n</i>);
+</div></dt>
+<dd>Compute the value of an integer x, raised to the power of a positive
+ integer n.
+<p></p>
+If both x and n are 0, the result is 1.
+  If n is negative, an integer divide error will occur at runtime,
+ regardless of the value of x.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="pow"></a><u>pow</u>(I, F)(I <i>x</i>, F <i>y</i>);
+</div></dt>
+<dd>Computes integer to floating point powers.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted Unqual!(Largest!(F,G)) <a name="pow"></a><u>pow</u>(F, G)(F <i>x</i>, G <i>y</i>);
+</div></dt>
+<dd>Calculates x<span style="vertical-align:super;font-size:smaller">y</span>.
+<p></p>
+<table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+              <tr><th>x</th> <th>y</th> <th><a name="pow"></a><u>pow</u>(x, y)</th>
+      <th>div 0</th> <th>invalid?</th></tr>
+ <tr><td valign=top>anything</td>      <td valign=top>&plusmn;0.0</td>                <td valign=top>1.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>|x| &gt; 1</td>    <td valign=top>+&infin;</td>                  <td valign=top>+&infin;</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>|x| &lt; 1</td>    <td valign=top>+&infin;</td>                  <td valign=top>+0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>|x| &gt; 1</td>    <td valign=top>-&infin;</td>                  <td valign=top>+0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>|x| &lt; 1</td>    <td valign=top>-&infin;</td>                  <td valign=top>+&infin;</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>+&infin;</td>      <td valign=top>&gt; 0.0</td>                  <td valign=top>+&infin;</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>+&infin;</td>      <td valign=top>&lt; 0.0</td>                  <td valign=top>+0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>-&infin;</td>      <td valign=top>odd integer &gt; 0.0</td>      <td valign=top>-&infin;</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>-&infin;</td>      <td valign=top>&gt; 0.0, not odd integer</td> <td valign=top>+&infin;</td>
+      <td valign=top>no</td>        <td valign=top>no</td></tr>
+ <tr><td valign=top>-&infin;</td>      <td valign=top>odd integer &lt; 0.0</td>      <td valign=top>-0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>-&infin;</td>      <td valign=top>&lt; 0.0, not odd integer</td> <td valign=top>+0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>&plusmn;1.0</td>   <td valign=top>&plusmn;&infin;</td>          <td valign=top><span style="color:red">NAN</span></td>
+      <td valign=top>no</td>        <td valign=top>yes</td> </tr>
+ <tr><td valign=top>&lt; 0.0</td>      <td valign=top>finite, nonintegral</td>        <td valign=top><span style="color:red">NAN</span></td>
+      <td valign=top>no</td>        <td valign=top>yes</td></tr>
+ <tr><td valign=top>&plusmn;0.0</td>   <td valign=top>odd integer &lt; 0.0</td>      <td valign=top>&plusmn;&infin;</td>
+      <td valign=top>yes</td>       <td valign=top>no</td> </tr>
+ <tr><td valign=top>&plusmn;0.0</td>   <td valign=top>&lt; 0.0, not odd integer</td> <td valign=top>+&infin;</td>
+      <td valign=top>yes</td>       <td valign=top>no</td></tr>
+ <tr><td valign=top>&plusmn;0.0</td>   <td valign=top>odd integer &gt; 0.0</td>      <td valign=top>&plusmn;0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ <tr><td valign=top>&plusmn;0.0</td>   <td valign=top>&gt; 0.0, not odd integer</td> <td valign=top>+0.0</td>
+      <td valign=top>no</td>        <td valign=top>no</td> </tr>
+ </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted int <a name="feqrel"></a><u>feqrel</u>(X)(X <i>x</i>, X <i>y</i>);
+</div></dt>
+<dd>To what precision is x equal to y?
+<p></p>
+<b>Returns:</b><br>the number of mantissa bits which are equal in x and y.
+ eg, 0x1.F8p+60 and 0x1.F1p+60 are equal to 5 bits of precision.
+<p></p>
+
+
+      <table border=1 cellpadding=4 cellspacing=0>
+              <caption>Special Values</caption>
+                   <tr><th>x</th>      <th>y</th>          <th><a name="feqrel"></a><u>feqrel</u>(x, y)</th></tr>
+      <tr><td valign=top>x</td>      <td valign=top>x</td>          <td valign=top>real.mant_dig</td></tr>
+      <tr><td valign=top>x</td>      <td valign=top>&gt;= 2*x</td> <td valign=top>0</td></tr>
+      <tr><td valign=top>x</td>      <td valign=top>&lt;= x/2</td> <td valign=top>0</td></tr>
+      <tr><td valign=top><span style="color:red">NAN</span></td> <td valign=top>any</td>        <td valign=top>0</td></tr>
+      <tr><td valign=top>any</td>    <td valign=top><span style="color:red">NAN</span></td>     <td valign=top>0</td></tr>
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted real <a name="poly"></a><u>poly</u>(real <i>x</i>, const real[] <i>A</i>);
+</div></dt>
+<dd>Evaluate polynomial <i>A</i>(<i>x</i>) = a<sub>0</sub> + a<sub>1</sub><i>x</i> + a<sub>2</sub><i>x</i><sup>2</sup>
+                          + a<sub>3</sub><i>x</i><sup>3</sup>; ...
+<p></p>
+Uses Horner's rule <i>A</i>(<i>x</i>) = a<sub>0</sub> + <i>x</i>(a<sub>1</sub> + <i>x</i>(a<sub>2</sub>
+                         + <i>x</i>(a<sub>3</sub> + ...)))
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>real[] <i>A</i></td>
+<td valign=top>array of coefficients a<sub>0</sub>, a<sub>1</sub>, etc.</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="approxEqual"></a><u>approxEqual</u>(T, U, V)(T <i>lhs</i>, U <i>rhs</i>, V <i>maxRelDiff</i>, V <i>maxAbsDiff</i> = 1e-05);
+</div></dt>
+<dd>Computes whether <span class="d_inlinecode">lhs</span> is approximately equal to <span class="d_inlinecode">rhs</span>
+   admitting a maximum relative difference <span class="d_inlinecode">maxRelDiff</span> and a
+   maximum absolute difference <span class="d_inlinecode">maxAbsDiff</span>.
+<p></p>
+If the two inputs are ranges, <span class="d_inlinecode"><a name="approxEqual"></a><u>approxEqual</u></span> returns <b>true</b> if and
+   only if the ranges have the same number of elements and if <span class="d_inlinecode">  <a name="approxEqual"></a><u>approxEqual</u></span> evaluates to <span class="d_inlinecode"><b>true</b></span> for each pair of elements.<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="approxEqual"></a><u>approxEqual</u>(T, U)(T <i>lhs</i>, U <i>rhs</i>);
+</div></dt>
+<dd>Returns <span class="d_inlinecode"><a name="approxEqual"></a><u>approxEqual</u>(lhs, rhs, 1e-2, 1e-5)</span>.<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ 
+</div>
+
+
+<div id="copyright">
+Copyright Digital Mars 2000 - 2011.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

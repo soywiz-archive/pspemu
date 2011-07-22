@@ -1,0 +1,1661 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.xml - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+
+<script>
+function listanchors()
+{
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+    values[n++] = a.name
+    }
+
+    values.sort();
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        newText += '<a href="#' + a + '"><span class="d_psymbol">'
+                + a + '</span></a> ';
+    }
+    if (newText != "") newText = "<p><b>Jump to:</b> " + newText + '</p>';
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+</script>
+
+</head>
+
+<body onload="listanchors()">
+<div id="heading">
+	<a href="http://www.digitalmars.com/"><img src="../dmlogo.gif" width="270" height="53" border="0" alt="www.digitalmars.com" align="left"></a>
+	<p align="right">D Programming Language 2.0</p>
+
+
+	<div id="headingNav">
+	<ul>	<li><a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Phobos/StdXml" title="Read/write comments and feedback">Comments</a></li>
+	<li><a href="../index.html" title="D Programming Language" class="dlink">D</a></li>
+	<li><a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a></li>
+	<li><a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a></li>
+	</ul>
+	</div>
+
+	<div id="lastupdate">Last update Sun Jul 10 10:47:38 2011
+</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input id="q" name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+<input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/d/2.0/phobos">
+<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+<input type="submit" id="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../lex.html" title="D Language Specification">Language</a></li>
+	<li><a href="phobos.html" title="D Runtime Library">Phobos</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="phobos.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bind.html" title="Function argument binding">std.bind</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_boxer.html" title="Box/unbox types">std.boxer</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_contracts.html" title="Think assert">std.contracts</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_cover.html" title="D coverage analyzer">std.cover</a></li>
+	<li><a href="std_cpuid.html" title="CPU identification">std.cpuid</a></li>
+	<li><a href="std_ctype.html" title="Simple character classification">std.ctype</a></li>
+	<li><a href="std_date.html" title="Date and time functions">std.date</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_demangle.html" title="Demangle D names">std.demangle</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_gc.html" title="Control the garbage collector">std.gc</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_gregorian.html" title="Gregorian Calendar">std.gregorian</a></li>
+	<li><a href="std_intrinsic.html" title="Compiler built in intrinsic functions">std.intrinsic</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_md5.html" title="Compute MD5 digests">std.md5</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_outofmemory.html" title="Out of memory exception">std.outofmemory</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_parallelism.html" title="High level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_process.html" title="Create/destroy threads">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_regexp.html" title="regular expressions (deprecated)">std.regexp</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdint.html" title="Integral types for various purposes">std.stdint</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_thread.html" title="Thread operations">std.thread</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_c_fenv.html" title="Floating point environment">std.c.fenv</a></li>
+	<li><a href="std_c_locale.html" title="Locale">std.c.locale</a></li>
+	<li><a href="std_c_math.html" title="Math">std.c.math</a></li>
+	<li><a href="std_c_process.html" title="Process">std.c.process</a></li>
+	<li><a href="std_c_stdarg.html" title="Variadic arguments">std.c.stdarg</a></li>
+	<li><a href="std_c_stddef.html" title="Standard definitions">std.c.stddef</a></li>
+	<li><a href="std_c_stdio.html" title="Standard I/O">std.c.stdio</a></li>
+	<li><a href="std_c_stdlib.html" title="Standard library">std.c.stdlib</a></li>
+	<li><a href="std_c_string.html" title="Strings">std.c.string</a></li>
+	<li><a href="std_c_time.html" title="Time">std.c.time</a></li>
+	<li><a href="std_c_wcharh.html" title="Wide characters">std.c.wcharh</a></li>
+	<li><a href="std_net_isemail.html" title="Validate email addresses">std.net.isemail</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+	<li><a href="phobos.html#std_windows" title="Modules specific to Windows">std.windows</a></li>
+	<li><a href="phobos.html#std_linux" title="Modules specific to Windows">std.linux</a></li>
+	<li><a href="phobos.html#std_c_windows" title="C Windows API">std.c.windows</a></li>
+	<li><a href="phobos.html#std_c_linux" title="C Linux API">std.c.linux</a></li>
+    </ul>
+    <h2><a href="phobos.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="phobos.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_time.html" title="Time">core.time</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div>
+<div id="content">
+    <h1>std.xml</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\xml.d -->
+Classes and functions for creating and parsing XML
+<p></p>
+The basic architecture of this module is that there are standalone functions,
+classes for constructing an XML document from scratch (Tag, Element and
+Document), and also classes for parsing a pre-existing XML file (ElementParser
+and DocumentParser). The parsing classes <i>may</i> be used to build a
+Document, but that is not their primary purpose. The handling capabilities of
+DocumentParser and ElementParser are sufficiently customizable that you can
+make them do pretty much whatever you want.
+
+<p></p>
+<b>Example:</b><br>
+This example creates a DOM (Document Object Model) tree
+    from an XML file.
+<pre class="d_code"><span class="d_keyword">import</span> std.<span class="d_psymbol">xml</span>;
+<span class="d_keyword">import</span> std.stdio;
+<span class="d_keyword">import</span> std.string;
+
+<span class="d_comment">// books.xml is used in various samples throughout the Microsoft XML Core
+</span><span class="d_comment">// Services (MSXML) SDK.
+</span><span class="d_comment">//
+</span><span class="d_comment">// See http://msdn2.microsoft.com/en-us/library/ms762271(VS.85).aspx
+</span>
+<span class="d_keyword">void</span> main()
+{
+    string s = <span class="d_keyword">cast</span>(string)std.file.read(<span class="d_string">"books.xml"</span>);
+
+    <span class="d_comment">// Check for well-formedness
+</span>    check(s);
+
+    <span class="d_comment">// Make a DOM tree
+</span>    <span class="d_keyword">auto</span> doc = <span class="d_keyword">new</span> Document(s);
+
+    <span class="d_comment">// Plain-print it
+</span>    writefln(doc);
+}
+</pre>
+
+<p></p>
+<b>Example:</b><br>
+This example does much the same thing, except that the file is
+    deconstructed and reconstructed by hand. This is more work, but the
+    techniques involved offer vastly more power.
+<pre class="d_code"><span class="d_keyword">import</span> std.<span class="d_psymbol">xml</span>;
+<span class="d_keyword">import</span> std.stdio;
+<span class="d_keyword">import</span> std.string;
+
+<span class="d_keyword">struct</span> Book
+{
+    string id;
+    string author;
+    string title;
+    string genre;
+    string price;
+    string pubDate;
+    string description;
+}
+
+<span class="d_keyword">void</span> main()
+{
+    string s = <span class="d_keyword">cast</span>(string)std.file.read(<span class="d_string">"books.xml"</span>);
+
+    <span class="d_comment">// Check for well-formedness
+</span>    check(s);
+
+    <span class="d_comment">// Take it apart
+</span>    Book[] books;
+
+    <span class="d_keyword">auto</span> <span class="d_psymbol">xml</span> = <span class="d_keyword">new</span> DocumentParser(s);
+    <span class="d_psymbol">xml</span>.onStartTag[<span class="d_string">"book"</span>] = (ElementParser <span class="d_psymbol">xml</span>)
+    {
+        Book book;
+        book.id = <span class="d_psymbol">xml</span>.tag.attr[<span class="d_string">"id"</span>];
+
+        <span class="d_psymbol">xml</span>.onEndTag[<span class="d_string">"author"</span>]       = (<span class="d_keyword">in</span> Element e) { book.author      = e.text; };
+        <span class="d_psymbol">xml</span>.onEndTag[<span class="d_string">"title"</span>]        = (<span class="d_keyword">in</span> Element e) { book.title       = e.text; };
+        <span class="d_psymbol">xml</span>.onEndTag[<span class="d_string">"genre"</span>]        = (<span class="d_keyword">in</span> Element e) { book.genre       = e.text; };
+        <span class="d_psymbol">xml</span>.onEndTag[<span class="d_string">"price"</span>]        = (<span class="d_keyword">in</span> Element e) { book.price       = e.text; };
+        <span class="d_psymbol">xml</span>.onEndTag[<span class="d_string">"publish-date"</span>] = (<span class="d_keyword">in</span> Element e) { book.pubDate     = e.text; };
+        <span class="d_psymbol">xml</span>.onEndTag[<span class="d_string">"description"</span>]  = (<span class="d_keyword">in</span> Element e) { book.description = e.text; };
+
+        <span class="d_psymbol">xml</span>.parse();
+
+        books ~= book;
+    };
+    <span class="d_psymbol">xml</span>.parse();
+
+    <span class="d_comment">// Put it back together again;
+</span>    <span class="d_keyword">auto</span> doc = <span class="d_keyword">new</span> Document(<span class="d_keyword">new</span> Tag(<span class="d_string">"catalog"</span>));
+    <span class="d_keyword">foreach</span>(book;books)
+    {
+        <span class="d_keyword">auto</span> element = <span class="d_keyword">new</span> Element(<span class="d_string">"book"</span>);
+        element.tag.attr[<span class="d_string">"id"</span>] = book.id;
+
+        element ~= <span class="d_keyword">new</span> Element(<span class="d_string">"author"</span>,      book.author);
+        element ~= <span class="d_keyword">new</span> Element(<span class="d_string">"title"</span>,       book.title);
+        element ~= <span class="d_keyword">new</span> Element(<span class="d_string">"genre"</span>,       book.genre);
+        element ~= <span class="d_keyword">new</span> Element(<span class="d_string">"price"</span>,       book.price);
+        element ~= <span class="d_keyword">new</span> Element(<span class="d_string">"publish-date"</span>,book.pubDate);
+        element ~= <span class="d_keyword">new</span> Element(<span class="d_string">"description"</span>, book.description);
+
+        doc ~= element;
+    }
+
+    <span class="d_comment">// Pretty-print it
+</span>    writefln(join(doc.pretty(3),<span class="d_string">"\n"</span>));
+}
+</pre>
+<p></p>
+<b>License:</b><br><a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br>Janice Caron
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/xml.d">std/xml.d</a><p></p>
+
+<dl><dt><div class="d_decl">bool <a name="isChar"></a><u>isChar</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is a character according to the XML standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isSpace"></a><u>isSpace</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is whitespace according to the XML standard
+<p></p>
+Only the following characters are considered whitespace in XML - space, tab,
+ carriage return and linefeed
+
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isDigit"></a><u>isDigit</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is a digit according to the XML standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isLetter"></a><u>isLetter</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is a letter according to the XML standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isIdeographic"></a><u>isIdeographic</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is an ideographic character according to the
+ XML standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isBaseChar"></a><u>isBaseChar</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is a base character according to the XML
+ standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isCombiningChar"></a><u>isCombiningChar</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is a combining character according to the
+ XML standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isExtender"></a><u>isExtender</u>(dchar <i>c</i>);
+</div></dt>
+<dd>Returns <b>true</b> if the character is an extender according to the XML standard
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dchar <i>c</i></td>
+<td valign=top>the character to be tested</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">S <a name="encode"></a><u>encode</u>(S)(S <i>s</i>);
+</div></dt>
+<dd>Encodes a string by replacing all characters which need to be escaped with
+ appropriate predefined XML entities.
+<p></p>
+<a name="encode"></a><u>encode</u>() escapes certain characters (ampersand, quote, apostrophe, less-than
+ and greater-than), and similarly, decode() unescapes them. These functions
+ are provided for convenience only. You do not need to use them when using
+ the std.xml classes, because then all the encoding and decoding will be done
+ for you automatically.
+<p></p>
+
+
+ If the string is not modified, the original will be returned.
+
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>s</td>
+<td valign=top>The string to be encoded</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The encoded string
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> writefln(<span class="d_psymbol">encode</span>(<span class="d_string">"a &gt; b"</span>)); <span class="d_comment">// writes "a &amp;gt; b"
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">enum <a name="DecodeMode"></a><u>DecodeMode</u>;
+</div></dt>
+<dd>Mode to use for decoding.
+<p></p>
+<dl>NONE</dl> Do not decode
+ <dl>LOOSE</dl> Decode, but ignore errors
+ <dl>STRICT</dl> Decode, and throw exception on error<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="decode"></a><u>decode</u>(string <i>s</i>, DecodeMode <i>mode</i> = (DecodeMode).LOOSE);
+</div></dt>
+<dd>Decodes a string by unescaping all predefined XML entities.
+<p></p>
+encode() escapes certain characters (ampersand, quote, apostrophe, less-than
+ and greater-than), and similarly, <a name="decode"></a><u>decode</u>() unescapes them. These functions
+ are provided for convenience only. You do not need to use them when using
+ the std.xml classes, because then all the encoding and decoding will be done
+ for you automatically.
+<p></p>
+
+
+ This function decodes the entities &amp;amp;, &amp;quot;, &amp;apos;,
+ &amp;lt; and &amp;gt,
+ as well as decimal and hexadecimal entities such as &amp;#x20AC;
+<p></p>
+
+
+ If the string does not contain an ampersand, the original will be returned.
+<p></p>
+
+
+ Note that the "<i>mode</i>" parameter can be one of DecodeMode.NONE (do not
+ <a name="decode"></a><u>decode</u>), DecodeMode.LOOSE (<a name="decode"></a><u>decode</u>, but ignore errors), or DecodeMode.STRICT
+ (<a name="decode"></a><u>decode</u>, and throw a DecodeException in the event of an error).
+
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>s</i></td>
+<td valign=top>The string to be decoded</td></tr>
+<tr><td valign=top>DecodeMode <i>mode</i></td>
+<td valign=top>(optional) Mode to use for decoding. (Defaults to LOOSE).</td></tr>
+</table><p></p>
+<b>Throws:</b><br>DecodeException if <i>mode</i> == DecodeMode.STRICT and <a name="decode"></a><u>decode</u> fails
+
+<p></p>
+<b>Returns:</b><br>The decoded string
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> writefln(<span class="d_psymbol">decode</span>(<span class="d_string">"a &amp;gt; b"</span>)); <span class="d_comment">// writes "a &gt; b"
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="Document"></a><u>Document</u>: std.xml.Element;
+</div></dt>
+<dd>Class representing an XML document.
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a><p></p>
+
+<dl><dt><div class="d_decl">string <a name="prolog"></a><u>prolog</u>;
+</div></dt>
+<dd>Contains all text which occurs before the root element.
+ Defaults to &lt;?xml version="1.0"?&gt;<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="epilog"></a><u>epilog</u>;
+</div></dt>
+<dd>Contains all text which occurs after the root element.
+ Defaults to the empty string<p></p>
+
+</dd>
+<dt><div class="d_decl">this(string <i>s</i>);
+</div></dt>
+<dd>Constructs a Document by parsing XML text.
+<p></p>
+This function creates a complete DOM (Document Object Model) tree.
+<p></p>
+
+
+ The input to this function MUST be valid XML.
+ This is enforced by DocumentParser'<i>s</i> in contract.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>s</i></td>
+<td valign=top>the complete XML text.</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">this(const(Tag) <i>tag</i>);
+</div></dt>
+<dd>Constructs a Document from a Tag.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(Tag) <i>tag</i></td>
+<td valign=top>the start <i>tag</i> of the document.</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two Documents for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Document d1,d2;
+ <span class="d_keyword">if</span> (d1 == d2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two Documents
+<p></p>
+You should rarely need to call this function. It exists so that
+ Documents can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Document d1,d2;
+ <span class="d_keyword">if</span> (d1 &lt; d2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of a Document
+<p></p>
+You should rarely need to call this function. It exists so that
+ Documents can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns the string representation of a Document. (That is, the
+ complete XML of a document).<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="Element"></a><u>Element</u>: std.xml.Item;
+</div></dt>
+<dd>Class representing an XML element.
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a><p></p>
+
+<dl><dt><div class="d_decl">Tag <a name="tag"></a><u>tag</u>;
+</div></dt>
+<dd>The start <a name="tag"></a><u>tag</u> of the element<p></p>
+
+</dd>
+<dt><div class="d_decl">Item[] <a name="items"></a><u>items</u>;
+</div></dt>
+<dd>The element's <a name="items"></a><u>items</u><p></p>
+
+</dd>
+<dt><div class="d_decl">Text[] <a name="texts"></a><u>texts</u>;
+</div></dt>
+<dd>The element's text items<p></p>
+
+</dd>
+<dt><div class="d_decl">CData[] <a name="cdatas"></a><u>cdatas</u>;
+</div></dt>
+<dd>The element's CData items<p></p>
+
+</dd>
+<dt><div class="d_decl">Comment[] <a name="comments"></a><u>comments</u>;
+</div></dt>
+<dd>The element's <a name="comments"></a><u>comments</u><p></p>
+
+</dd>
+<dt><div class="d_decl">ProcessingInstruction[] <a name="pis"></a><u>pis</u>;
+</div></dt>
+<dd>The element's processing instructions<p></p>
+
+</dd>
+<dt><div class="d_decl">Element[] <a name="elements"></a><u>elements</u>;
+</div></dt>
+<dd>The element's child <a name="elements"></a><u>elements</u><p></p>
+
+</dd>
+<dt><div class="d_decl">this(string <i>name</i>, string <i>interior</i> = null);
+</div></dt>
+<dd>Constructs an Element given a <i>name</i> and a string to be used as a Text
+ <i>interior</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>name</i></td>
+<td valign=top>the <i>name</i> of the element.</td></tr>
+<tr><td valign=top>string <i>interior</i></td>
+<td valign=top>(optional) the string <i>interior</i>.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> element = <span class="d_keyword">new</span> Element(<span class="d_string">"title"</span>,<span class="d_string">"Serenity"</span>)
+     <span class="d_comment">// constructs the element &lt;title&gt;Serenity&lt;/title&gt;
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">this(const(Tag) <i>tag_</i>);
+</div></dt>
+<dd>Constructs an Element from a Tag.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>tag</td>
+<td valign=top>the start or empty tag of the element.</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="opCatAssign"></a><u>opCatAssign</u>(Text <i>item</i>);
+</div></dt>
+<dd>Append a text <i>item</i> to the interior of this element
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>Text <i>item</i></td>
+<td valign=top>the <i>item</i> you wish to append.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> Element element;
+ element ~= <span class="d_keyword">new</span> Text(<span class="d_string">"hello"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="opCatAssign"></a><u>opCatAssign</u>(CData <i>item</i>);
+</div></dt>
+<dd>Append a CData <i>item</i> to the interior of this element
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>CData <i>item</i></td>
+<td valign=top>the <i>item</i> you wish to append.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> Element element;
+ element ~= <span class="d_keyword">new</span> CData(<span class="d_string">"hello"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="opCatAssign"></a><u>opCatAssign</u>(Comment <i>item</i>);
+</div></dt>
+<dd>Append a comment to the interior of this element
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>Comment <i>item</i></td>
+<td valign=top>the <i>item</i> you wish to append.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> Element element;
+ element ~= <span class="d_keyword">new</span> Comment(<span class="d_string">"hello"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="opCatAssign"></a><u>opCatAssign</u>(ProcessingInstruction <i>item</i>);
+</div></dt>
+<dd>Append a processing instruction to the interior of this element
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ProcessingInstruction <i>item</i></td>
+<td valign=top>the <i>item</i> you wish to append.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> Element element;
+ element ~= <span class="d_keyword">new</span> ProcessingInstruction(<span class="d_string">"hello"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="opCatAssign"></a><u>opCatAssign</u>(Element <i>item</i>);
+</div></dt>
+<dd>Append a complete element to the interior of this element
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>Element <i>item</i></td>
+<td valign=top>the <i>item</i> you wish to append.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> Element element;
+ Element other = <span class="d_keyword">new</span> Element(<span class="d_string">"br"</span>);
+ element ~= other;
+    <span class="d_comment">// appends element representing &lt;br /&gt;
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two Elements for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Element e1,e2;
+ <span class="d_keyword">if</span> (e1 == e2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two Elements
+<p></p>
+You should rarely need to call this function. It exists so that Elements
+ can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Element e1,e2;
+ <span class="d_keyword">if</span> (e1 &lt; e2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of an Element
+<p></p>
+You should rarely need to call this function. It exists so that Elements
+ can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="text"></a><u>text</u>(DecodeMode <i>mode</i> = (DecodeMode).LOOSE);
+</div></dt>
+<dd>Returns the decoded interior of an element.
+<p></p>
+The element is assumed to containt <a name="text"></a><u>text</u> <i>only</i>. So, for
+ example, given XML such as "&lt;title&gt;Good &amp;amp;
+ Bad&lt;/title&gt;", will return "Good &amp; Bad".
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>DecodeMode <i>mode</i></td>
+<td valign=top>(optional) Mode to use for decoding. (Defaults to LOOSE).</td></tr>
+</table><p></p>
+<b>Throws:</b><br>DecodeException if decode fails<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string[] <a name="pretty"></a><u>pretty</u>(uint <i>indent</i> = 2);
+</div></dt>
+<dd>Returns an indented string representation of this item
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>uint <i>indent</i></td>
+<td valign=top>(optional) number of spaces by which to <i>indent</i> this
+          element. Defaults to 2.</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns the string representation of an Element
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> element = <span class="d_keyword">new</span> Element(<span class="d_string">"br"</span>);
+ writefln(element.<span class="d_psymbol">toString</span>); <span class="d_comment">// writes "&lt;br /&gt;"
+</span></pre>
+<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">enum <a name="TagType"></a><u>TagType</u>;
+</div></dt>
+<dd>Tag types.
+<p></p>
+<dl>START</dl> Used for start tags
+ <dl>END</dl> Used for end tags
+ <dl>EMPTY</dl> Used for empty tags<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="Tag"></a><u>Tag</u>;
+</div></dt>
+<dd>Class representing an XML tag.
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+<p></p>
+
+
+ The class invariant guarantees
+ <ul>
+ <li> that <b>type</b> is a valid enum TagType value</li>
+ <li> that <b>name</b> consists of valid characters</li>
+ <li> that each attribute name consists of valid characters</li>
+ </ul><p></p>
+
+<dl><dt><div class="d_decl">TagType <a name="type"></a><u>type</u>;
+</div></dt>
+<dd>Type of tag<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="name"></a><u>name</u>;
+</div></dt>
+<dd>Tag <a name="name"></a><u>name</u><p></p>
+
+</dd>
+<dt><div class="d_decl">string[string] <a name="attr"></a><u>attr</u>;
+</div></dt>
+<dd>Associative array of attributes<p></p>
+
+</dd>
+<dt><div class="d_decl">this(string <i>name</i>, TagType <i>type</i> = (TagType).START);
+</div></dt>
+<dd>Constructs an instance of Tag with a specified <i>name</i> and <i>type</i>
+<p></p>
+The constructor does not initialize the attributes. To initialize the
+ attributes, you access the <b>attr</b> member variable.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>name</i></td>
+<td valign=top>the Tag's <i>name</i></td></tr>
+<tr><td valign=top>TagType <i>type</i></td>
+<td valign=top>(optional) the Tag's <i>type</i>. If omitted, defaults to
+          TagType.START.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> tag = <span class="d_keyword">new</span> Tag(<span class="d_string">"img"</span>,Tag.EMPTY);
+ tag.attr[<span class="d_string">"src"</span>] = <span class="d_string">"http://example.com/example.jpg"</span>;
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two Tags for equality
+<p></p>
+You should rarely need to call this function. It exists so that Tags
+ can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Tag tag1,tag2
+ <span class="d_keyword">if</span> (tag1 == tag2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two Tags
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Tag tag1,tag2
+ <span class="d_keyword">if</span> (tag1 &lt; tag2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of a Tag
+<p></p>
+You should rarely need to call this function. It exists so that Tags
+ can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns the string representation of a Tag
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> tag = <span class="d_keyword">new</span> Tag(<span class="d_string">"book"</span>,TagType.START);
+ writefln(tag.<span class="d_psymbol">toString</span>); <span class="d_comment">// writes "&lt;book&gt;"
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isStart"></a><u>isStart</u>();
+</div></dt>
+<dd>Returns <b>true</b> if the Tag is a start tag
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">if</span> (tag.<span class="d_psymbol">isStart</span>) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEnd"></a><u>isEnd</u>();
+</div></dt>
+<dd>Returns <b>true</b> if the Tag is an end tag
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">if</span> (tag.<span class="d_psymbol">isEnd</span>) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEmpty"></a><u>isEmpty</u>();
+</div></dt>
+<dd>Returns <b>true</b> if the Tag is an empty tag
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">if</span> (tag.<span class="d_psymbol">isEmpty</span>) { }
+</pre>
+<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="Comment"></a><u>Comment</u>: std.xml.Item;
+</div></dt>
+<dd>Class representing a comment<p></p>
+
+<dl><dt><div class="d_decl">this(string <i>content</i>);
+</div></dt>
+<dd>Construct a comment
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>content</i></td>
+<td valign=top>the body of the comment</td></tr>
+</table><p></p>
+<b>Throws:</b><br>CommentException if the comment body is illegal (contains "--"
+ or exactly equals "-")
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> item = <span class="d_keyword">new</span> Comment(<span class="d_string">"This is a comment"</span>);
+    <span class="d_comment">// constructs &lt;!--This is a comment--&gt;
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two comments for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Comment item1,item2;
+ <span class="d_keyword">if</span> (item1 == item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two comments
+<p></p>
+You should rarely need to call this function. It exists so that Comments
+ can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Comment item1,item2;
+ <span class="d_keyword">if</span> (item1 &lt; item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of a Comment
+<p></p>
+You should rarely need to call this function. It exists so that Comments
+ can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns a string representation of this comment<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEmptyXML"></a><u>isEmptyXML</u>();
+</div></dt>
+<dd>Returns <b>false</b> always<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="CData"></a><u>CData</u>: std.xml.Item;
+</div></dt>
+<dd>Class representing a Character Data section<p></p>
+
+<dl><dt><div class="d_decl">this(string <i>content</i>);
+</div></dt>
+<dd>Construct a chraracter data section
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>content</i></td>
+<td valign=top>the body of the character data segment</td></tr>
+</table><p></p>
+<b>Throws:</b><br>CDataException if the segment body is illegal (contains "]]&gt;")
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> item = <span class="d_keyword">new</span> CData(<span class="d_string">"&lt;b&gt;hello&lt;/b&gt;"</span>);
+    <span class="d_comment">// constructs &lt;![CDATA[&lt;b&gt;hello&lt;/b&gt;]]&gt;
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two CDatas for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> CData item1,item2;
+ <span class="d_keyword">if</span> (item1 == item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two CDatas
+<p></p>
+You should rarely need to call this function. It exists so that CDatas
+ can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> CData item1,item2;
+ <span class="d_keyword">if</span> (item1 &lt; item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of a CData
+<p></p>
+You should rarely need to call this function. It exists so that CDatas
+ can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns a string representation of this CData section<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEmptyXML"></a><u>isEmptyXML</u>();
+</div></dt>
+<dd>Returns <b>false</b> always<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="Text"></a><u>Text</u>: std.xml.Item;
+</div></dt>
+<dd>Class representing a text (aka Parsed Character Data) section<p></p>
+
+<dl><dt><div class="d_decl">this(string <i>content</i>);
+</div></dt>
+<dd>Construct a text (aka PCData) section
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>content</i></td>
+<td valign=top>the text. This function encodes the text before
+      insertion, so it is safe to insert any text</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> Text = <span class="d_keyword">new</span> CData(<span class="d_string">"a &lt; b"</span>);
+    <span class="d_comment">// constructs a &amp;lt; b
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two text sections for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Text item1,item2;
+ <span class="d_keyword">if</span> (item1 == item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two text sections
+<p></p>
+You should rarely need to call this function. It exists so that Texts
+ can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> Text item1,item2;
+ <span class="d_keyword">if</span> (item1 &lt; item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of a text section
+<p></p>
+You should rarely need to call this function. It exists so that Texts
+ can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns a string representation of this Text section<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEmptyXML"></a><u>isEmptyXML</u>();
+</div></dt>
+<dd>Returns <b>true</b> if the content is the empty string<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="XMLInstruction"></a><u>XMLInstruction</u>: std.xml.Item;
+</div></dt>
+<dd>Class representing an XML Instruction section<p></p>
+
+<dl><dt><div class="d_decl">this(string <i>content</i>);
+</div></dt>
+<dd>Construct an XML Instruction section
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>content</i></td>
+<td valign=top>the body of the instruction segment</td></tr>
+</table><p></p>
+<b>Throws:</b><br>XIException if the segment body is illegal (contains "&gt;")
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> item = <span class="d_keyword">new</span> XMLInstruction(<span class="d_string">"ATTLIST"</span>);
+    <span class="d_comment">// constructs &lt;!ATTLIST&gt;
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two XML instructions for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> XMLInstruction item1,item2;
+ <span class="d_keyword">if</span> (item1 == item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two XML instructions
+<p></p>
+You should rarely need to call this function. It exists so that
+ XmlInstructions can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> XMLInstruction item1,item2;
+ <span class="d_keyword">if</span> (item1 &lt; item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of an XMLInstruction
+<p></p>
+You should rarely need to call this function. It exists so that
+ XmlInstructions can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns a string representation of this XmlInstruction<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEmptyXML"></a><u>isEmptyXML</u>();
+</div></dt>
+<dd>Returns <b>false</b> always<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="ProcessingInstruction"></a><u>ProcessingInstruction</u>: std.xml.Item;
+</div></dt>
+<dd>Class representing a Processing Instruction section<p></p>
+
+<dl><dt><div class="d_decl">this(string <i>content</i>);
+</div></dt>
+<dd>Construct a Processing Instruction section
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>content</i></td>
+<td valign=top>the body of the instruction segment</td></tr>
+</table><p></p>
+<b>Throws:</b><br>PIException if the segment body is illegal (contains "?&gt;")
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">auto</span> item = <span class="d_keyword">new</span> ProcessingInstruction(<span class="d_string">"php"</span>);
+    <span class="d_comment">// constructs &lt;?php?&gt;
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two processing instructions for equality
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> ProcessingInstruction item1,item2;
+ <span class="d_keyword">if</span> (item1 == item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares two processing instructions
+<p></p>
+You should rarely need to call this function. It exists so that
+ ProcessingInstructions can be used as associative array keys.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> ProcessingInstruction item1,item2;
+ <span class="d_keyword">if</span> (item1 &lt; item2) { }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of a ProcessingInstruction
+<p></p>
+You should rarely need to call this function. It exists so that
+ ProcessingInstructions can be used as associative array keys.<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns a string representation of this ProcessingInstruction<p></p>
+
+</dd>
+<dt><div class="d_decl">const const bool <a name="isEmptyXML"></a><u>isEmptyXML</u>();
+</div></dt>
+<dd>Returns <b>false</b> always<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">abstract class <a name="Item"></a><u>Item</u>;
+</div></dt>
+<dd>Abstract base class for XML items<p></p>
+
+<dl><dt><div class="d_decl">abstract bool <a name="opEquals"></a><u>opEquals</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares with another Item of same type for equality<p></p>
+
+</dd>
+<dt><div class="d_decl">abstract int <a name="opCmp"></a><u>opCmp</u>(Object <i>o</i>);
+</div></dt>
+<dd>Compares with another Item of same type<p></p>
+
+</dd>
+<dt><div class="d_decl">abstract hash_t <a name="toHash"></a><u>toHash</u>();
+</div></dt>
+<dd>Returns the hash of this item<p></p>
+
+</dd>
+<dt><div class="d_decl">abstract const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns a string representation of this item<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string[] <a name="pretty"></a><u>pretty</u>(uint <i>indent</i>);
+</div></dt>
+<dd>Returns an indented string representation of this item
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>uint <i>indent</i></td>
+<td valign=top>number of spaces by which to <i>indent</i> child elements</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">abstract const const bool <a name="isEmptyXML"></a><u>isEmptyXML</u>();
+</div></dt>
+<dd>Returns <b>true</b> if the item represents empty XML text<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="DocumentParser"></a><u>DocumentParser</u>: std.xml.ElementParser;
+</div></dt>
+<dd>Class for parsing an XML Document.
+<p></p>
+This is a subclass of ElementParser. Most of the useful functions are
+ documented there.
+
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+
+<p></p>
+<span style="color:red">BUGS:</span><br>Currently only supports UTF documents.
+<p></p>
+
+
+      If there is an encoding attribute in the prolog, it is ignored.<p></p>
+
+<dl><dt><div class="d_decl">this(string <i>xmlText_</i>);
+</div></dt>
+<dd>Constructs a DocumentParser.
+<p></p>
+The input to this function MUST be valid XML.
+ This is enforced by the function's in contract.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>xmltext</td>
+<td valign=top>the entire XML document as text</td></tr>
+</table><p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">class <a name="ElementParser"></a><u>ElementParser</u>;
+</div></dt>
+<dd>Class for parsing an XML element.
+<p></p>
+<b>Standards:</b><br><a href="http://www.w3.org/TR/1998/REC-xml-19980210">XML 1.0</a>
+<p></p>
+
+
+ Note that you cannot construct instances of this class directly. You can
+ construct a DocumentParser (which is a subclass of <a name="ElementParser"></a><u>ElementParser</u>), but
+ otherwise, Instances of <a name="ElementParser"></a><u>ElementParser</u> will be created for you by the
+ library, and passed your way via onStartTag handlers.<p></p>
+
+<dl><dt><div class="d_decl">const const const(Tag) <a name="tag"></a><u>tag</u>();
+</div></dt>
+<dd>The Tag at the start of the element being parsed. You can read this to
+ determine the <a name="tag"></a><u>tag</u>'s name and attributes.<p></p>
+
+</dd>
+<dt><div class="d_decl">void delegate(ElementParser parser)[string] <a name="onStartTag"></a><u>onStartTag</u>;
+</div></dt>
+<dd>Register a handler which will be called whenever a start tag is
+ encountered which matches the specified name. You can also pass <b>null</b> as
+ the name, in which case the handler will be called for any unmatched
+ start tag.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever a &lt;podcast&gt; start tag is encountered
+</span> <span class="d_psymbol">onStartTag</span>[<span class="d_string">"podcast"</span>] = (ElementParser xml)
+ {
+     <span class="d_comment">// Your code here
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+
+ <span class="d_comment">// call myEpisodeStartHandler (defined elsewhere) whenever an &lt;episode&gt;
+</span> <span class="d_comment">// start tag is encountered
+</span> <span class="d_psymbol">onStartTag</span>[<span class="d_string">"episode"</span>] = &amp;myEpisodeStartHandler;
+
+ <span class="d_comment">// call delegate dg for all other start tags
+</span> <span class="d_psymbol">onStartTag</span>[<span class="d_keyword">null</span>] = dg;
+</pre>
+
+ This library will supply your function with a new instance of
+ ElementHandler, which may be used to parse inside the element whose
+ start tag was just found, or to identify the tag attributes of the
+ element, etc.
+<p></p>
+
+
+ Note that your function will be called for both start tags and empty
+ tags. That is, we make no distinction between &lt;br&gt;&lt;/br&gt;
+ and &lt;br/&gt;.<p></p>
+
+</dd>
+<dt><div class="d_decl">void delegate(in const(Element) element)[string] <a name="onEndTag"></a><u>onEndTag</u>;
+</div></dt>
+<dd>Register a handler which will be called whenever an end tag is
+ encountered which matches the specified name. You can also pass <b>null</b> as
+ the name, in which case the handler will be called for any unmatched
+ end tag.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever a &lt;/podcast&gt; end tag is encountered
+</span> <span class="d_psymbol">onEndTag</span>[<span class="d_string">"podcast"</span>] = (<span class="d_keyword">in</span> Element e)
+ {
+     <span class="d_comment">// Your code here
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+
+ <span class="d_comment">// call myEpisodeEndHandler (defined elsewhere) whenever an &lt;/episode&gt;
+</span> <span class="d_comment">// end tag is encountered
+</span> <span class="d_psymbol">onEndTag</span>[<span class="d_string">"episode"</span>] = &amp;myEpisodeEndHandler;
+
+ <span class="d_comment">// call delegate dg for all other end tags
+</span> <span class="d_psymbol">onEndTag</span>[<span class="d_keyword">null</span>] = dg;
+</pre>
+
+ Note that your function will be called for both start tags and empty
+ tags. That is, we make no distinction between &lt;br&gt;&lt;/br&gt;
+ and &lt;br/&gt;.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="onText"></a><u>onText</u>(Handler <i>handler</i>);
+</div></dt>
+<dd>Register a <i>handler</i> which will be called whenever text is encountered.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever text is encountered
+</span> <span class="d_psymbol">onText</span> = (string s)
+ {
+     <span class="d_comment">// Your code here
+</span>
+     <span class="d_comment">// The passed parameter s will have been decoded by the time you see
+</span>     <span class="d_comment">// it, and so may contain any character.
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="onTextRaw"></a><u>onTextRaw</u>(Handler <i>handler</i>);
+</div></dt>
+<dd>Register an alternative <i>handler</i> which will be called whenever text
+ is encountered. This differs from onText in that onText will decode
+ the text, wheras <a name="onTextRaw"></a><u>onTextRaw</u> will not. This allows you to make design
+ choices, since onText will be more accurate, but slower, while
+ <a name="onTextRaw"></a><u>onTextRaw</u> will be faster, but less accurate. Of course, you can
+ still call decode() within your <i>handler</i>, if you want, but you'd
+ probably want to use <a name="onTextRaw"></a><u>onTextRaw</u> only in circumstances where you
+ know that decoding is unnecessary.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever text is encountered
+</span> onText = (string s)
+ {
+     <span class="d_comment">// Your code here
+</span>
+     <span class="d_comment">// The passed parameter s will NOT have been decoded.
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="onCData"></a><u>onCData</u>(Handler <i>handler</i>);
+</div></dt>
+<dd>Register a <i>handler</i> which will be called whenever a character data
+ segement is encountered.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever a CData section is encountered
+</span> <span class="d_psymbol">onCData</span> = (string s)
+ {
+     <span class="d_comment">// Your code here
+</span>
+     <span class="d_comment">// The passed parameter s does not include the opening &lt;![CDATA[
+</span>     <span class="d_comment">// nor closing ]]&gt;
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="onComment"></a><u>onComment</u>(Handler <i>handler</i>);
+</div></dt>
+<dd>Register a <i>handler</i> which will be called whenever a comment is
+ encountered.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever a comment is encountered
+</span> <span class="d_psymbol">onComment</span> = (string s)
+ {
+     <span class="d_comment">// Your code here
+</span>
+     <span class="d_comment">// The passed parameter s does not include the opening &lt;!-- nor
+</span>     <span class="d_comment">// closing --&gt;
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="onPI"></a><u>onPI</u>(Handler <i>handler</i>);
+</div></dt>
+<dd>Register a <i>handler</i> which will be called whenever a processing
+ instruction is encountered.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever a processing instruction is encountered
+</span> <span class="d_psymbol">onPI</span> = (string s)
+ {
+     <span class="d_comment">// Your code here
+</span>
+     <span class="d_comment">// The passed parameter s does not include the opening &lt;? nor
+</span>     <span class="d_comment">// closing ?&gt;
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="onXI"></a><u>onXI</u>(Handler <i>handler</i>);
+</div></dt>
+<dd>Register a <i>handler</i> which will be called whenever an XML instruction is
+ encountered.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_comment">// Call this function whenever an XML instruction is encountered
+</span> <span class="d_comment">// (Note: XML instructions may only occur preceeding the root tag of a
+) <span class="d_comment">// document</span>.
+</span> onPI = (string s)
+ {
+     <span class="d_comment">// Your code here
+</span>
+     <span class="d_comment">// The passed parameter s does not include the opening &lt;! nor
+</span>     <span class="d_comment">// closing &gt;
+</span>     <span class="d_comment">//
+</span>     <span class="d_comment">// This is a a closure, so code here may reference
+</span>     <span class="d_comment">// variables which are outside of this scope
+</span> };
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="parse"></a><u>parse</u>();
+</div></dt>
+<dd>Parse an XML element.
+<p></p>
+Parsing will continue until the end of the current element. Any items
+ encountered for which a handler has been registered will invoke that
+ handler.
+
+<p></p>
+<b>Throws:</b><br>various kinds of XMLException<p></p>
+
+</dd>
+<dt><div class="d_decl">const const string <a name="toString"></a><u>toString</u>();
+</div></dt>
+<dd>Returns that part of the element which has already been parsed<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">void <a name="check"></a><u>check</u>(string <i>s</i>);
+</div></dt>
+<dd>Check an entire XML document for well-formedness
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string <i>s</i></td>
+<td valign=top>the document to be checked, passed as a string</td></tr>
+</table><p></p>
+<b>Throws:</b><br>CheckException if the document is not well formed
+<p></p>
+
+
+ CheckException'<i>s</i> toString() method will yield the complete heirarchy of
+ parse failure (the XML equivalent of a stack trace), giving the line and
+ column number of every failure at every level.<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="XMLException"></a><u>XMLException</u>: object.Exception;
+</div></dt>
+<dd>The base class for exceptions thrown by this module <p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="CommentException"></a><u>CommentException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during Comment constructor<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="CDataException"></a><u>CDataException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during CData constructor<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="XIException"></a><u>XIException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during XMLInstruction constructor<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="PIException"></a><u>PIException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during ProcessingInstruction constructor<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="TextException"></a><u>TextException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during Text constructor<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="DecodeException"></a><u>DecodeException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during decode()<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="InvalidTypeException"></a><u>InvalidTypeException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown if comparing with wrong type<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="TagException"></a><u>TagException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown when parsing for Tags<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="CheckException"></a><u>CheckException</u>: std.xml.XMLException;
+</div></dt>
+<dd>Thrown during check()<p></p>
+
+<dl><dt><div class="d_decl">CheckException <a name="err"></a><u>err</u>;
+</div></dt>
+<dd>Parent in heirarchy<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="msg"></a><u>msg</u>;
+</div></dt>
+<dd>Name of production rule which failed to parse,
+ or specific error message<p></p>
+
+</dd>
+<dt><div class="d_decl">size_t <a name="line"></a><u>line</u>;
+</div></dt>
+<dd>Line number at which parse failure occurred<p></p>
+
+</dd>
+<dt><div class="d_decl">size_t <a name="column"></a><u>column</u>;
+</div></dt>
+<dd>Column number at which parse failure occurred<p></p>
+
+</dd>
+</dl>
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ 
+</div>
+
+
+<div id="copyright">
+Copyright Janice Caron 2008 - 2009.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

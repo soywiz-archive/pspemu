@@ -1,0 +1,567 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.exception - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+
+<script>
+function listanchors()
+{
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+    values[n++] = a.name
+    }
+
+    values.sort();
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        newText += '<a href="#' + a + '"><span class="d_psymbol">'
+                + a + '</span></a> ';
+    }
+    if (newText != "") newText = "<p><b>Jump to:</b> " + newText + '</p>';
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+</script>
+
+</head>
+
+<body onload="listanchors()">
+<div id="heading">
+	<a href="http://www.digitalmars.com/"><img src="../dmlogo.gif" width="270" height="53" border="0" alt="www.digitalmars.com" align="left"></a>
+	<p align="right">D Programming Language 2.0</p>
+
+
+	<div id="headingNav">
+	<ul>	<li><a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Phobos/StdException" title="Read/write comments and feedback">Comments</a></li>
+	<li><a href="../index.html" title="D Programming Language" class="dlink">D</a></li>
+	<li><a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a></li>
+	<li><a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a></li>
+	</ul>
+	</div>
+
+	<div id="lastupdate">Last update Sun Jul 10 10:47:26 2011
+</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input id="q" name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+<input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/d/2.0/phobos">
+<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+<input type="submit" id="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../lex.html" title="D Language Specification">Language</a></li>
+	<li><a href="phobos.html" title="D Runtime Library">Phobos</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="phobos.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bind.html" title="Function argument binding">std.bind</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_boxer.html" title="Box/unbox types">std.boxer</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_contracts.html" title="Think assert">std.contracts</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_cover.html" title="D coverage analyzer">std.cover</a></li>
+	<li><a href="std_cpuid.html" title="CPU identification">std.cpuid</a></li>
+	<li><a href="std_ctype.html" title="Simple character classification">std.ctype</a></li>
+	<li><a href="std_date.html" title="Date and time functions">std.date</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_demangle.html" title="Demangle D names">std.demangle</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_gc.html" title="Control the garbage collector">std.gc</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_gregorian.html" title="Gregorian Calendar">std.gregorian</a></li>
+	<li><a href="std_intrinsic.html" title="Compiler built in intrinsic functions">std.intrinsic</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_md5.html" title="Compute MD5 digests">std.md5</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_outofmemory.html" title="Out of memory exception">std.outofmemory</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_parallelism.html" title="High level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_process.html" title="Create/destroy threads">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_regexp.html" title="regular expressions (deprecated)">std.regexp</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdint.html" title="Integral types for various purposes">std.stdint</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_thread.html" title="Thread operations">std.thread</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_c_fenv.html" title="Floating point environment">std.c.fenv</a></li>
+	<li><a href="std_c_locale.html" title="Locale">std.c.locale</a></li>
+	<li><a href="std_c_math.html" title="Math">std.c.math</a></li>
+	<li><a href="std_c_process.html" title="Process">std.c.process</a></li>
+	<li><a href="std_c_stdarg.html" title="Variadic arguments">std.c.stdarg</a></li>
+	<li><a href="std_c_stddef.html" title="Standard definitions">std.c.stddef</a></li>
+	<li><a href="std_c_stdio.html" title="Standard I/O">std.c.stdio</a></li>
+	<li><a href="std_c_stdlib.html" title="Standard library">std.c.stdlib</a></li>
+	<li><a href="std_c_string.html" title="Strings">std.c.string</a></li>
+	<li><a href="std_c_time.html" title="Time">std.c.time</a></li>
+	<li><a href="std_c_wcharh.html" title="Wide characters">std.c.wcharh</a></li>
+	<li><a href="std_net_isemail.html" title="Validate email addresses">std.net.isemail</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+	<li><a href="phobos.html#std_windows" title="Modules specific to Windows">std.windows</a></li>
+	<li><a href="phobos.html#std_linux" title="Modules specific to Windows">std.linux</a></li>
+	<li><a href="phobos.html#std_c_windows" title="C Windows API">std.c.windows</a></li>
+	<li><a href="phobos.html#std_c_linux" title="C Linux API">std.c.linux</a></li>
+    </ul>
+    <h2><a href="phobos.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="phobos.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_time.html" title="Time">core.time</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div>
+<div id="content">
+    <h1>std.exception</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\exception.d -->
+This module defines functions related to exceptions and general error
+    handling. It also defines functions intended to aid in unit testing.
+<p></p>
+Synopsis of some of std.<a name="exception"></a><u>exception</u>'s functions:
+<pre class="d_code">string synopsis()
+{
+   FILE* f = enforce(fopen(<span class="d_string">"some/file"</span>));
+   <span class="d_comment">// f is not null from here on
+</span>   FILE* g = enforceEx!(WriteException)(fopen(<span class="d_string">"some/other/file"</span>, <span class="d_string">"w"</span>));
+   <span class="d_comment">// g is not null from here on
+</span>
+   Exception e = collectException(write(g, readln(f)));
+   <span class="d_keyword">if</span> (e)
+   {
+       ... an <span class="d_psymbol">exception</span> occurred...
+       ... We have the <span class="d_psymbol">exception</span> to play around <span class="d_keyword">with</span>...
+   }
+
+   string msg = collectExceptionMsg(write(g, readln(f)));
+   <span class="d_keyword">if</span> (msg)
+   {
+       ... an <span class="d_psymbol">exception</span> occurred...
+       ... We have the message from the <span class="d_psymbol">exception</span> but not the <span class="d_psymbol">exception</span>...
+   }
+
+   <span class="d_keyword">char</span>[] line;
+   enforce(readln(f, line));
+   <span class="d_keyword">return</span> assumeUnique(line);
+}
+</pre>
+
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a>
+<p></p>
+<b>Authors:</b><br><a href="http://erdani.org">Andrei Alexandrescu</a> and Jonathan M Davis
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/exception.d">std/exception.d</a><p></p>
+
+<dl><dt><div class="d_decl">void <a name="assertNotThrown"></a><u>assertNotThrown</u>(T : Throwable = Exception, E)(lazy E <i>expression</i>, string <i>msg</i> = null, string <i>file</i> = __FILE__, size_t <i>line</i> = __LINE__);
+</div></dt>
+<dd>Asserts that the given expression does <i>not</i> throw the given type
+    of <span class="d_inlinecode">Throwable</span>. If a <span class="d_inlinecode">Throwable</span> of the given type is thrown,
+    it is caught and does not escape <a name="assertNotThrown"></a><u>assertNotThrown</u>. Rather, an
+    <span class="d_inlinecode">AssertError</span> is thrown. However, any other <span class="d_inlinecode">Throwable</span>s will escape.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>T</td>
+<td valign=top>The <span class="d_inlinecode">Throwable</span> to test for.</td></tr>
+<tr><td valign=top>expression</td>
+<td valign=top>The expression to test.</td></tr>
+<tr><td valign=top>msg</td>
+<td valign=top>Optional message to output on test failure.</td></tr>
+</table><p></p>
+<b>Throws:</b><br><span class="d_inlinecode">AssertError</span> if the given <span class="d_inlinecode">Throwable</span> is thrown.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_psymbol">assertNotThrown</span>!TimeException(std.datetime.TimeOfDay(0, 0, 0));
+<span class="d_psymbol">assertNotThrown</span>(std.datetime.TimeOfDay(23, 59, 59));  <span class="d_comment">//Exception is default.
+</span>
+<span class="d_keyword">assert</span>(collectExceptionMsg!AssertError(<span class="d_psymbol">assertNotThrown</span>!TimeException(
+                            std.datetime.TimeOfDay(12, 0, 60))) ==
+       <span class="d_string">`assertNotThrown failed: TimeException was thrown.`</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="assertThrown"></a><u>assertThrown</u>(T : Throwable = Exception, E)(lazy E <i>expression</i>, string <i>msg</i> = null, string <i>file</i> = __FILE__, size_t <i>line</i> = __LINE__);
+</div></dt>
+<dd>Asserts that the given expression throws the given type of <span class="d_inlinecode">Throwable</span>.
+    The <span class="d_inlinecode">Throwable</span> is caught and does not escape <a name="assertThrown"></a><u>assertThrown</u>. However,
+    any other <span class="d_inlinecode">Throwable</span>s <i>will</i> escape, and if no <span class="d_inlinecode">Throwable</span>
+    of the given type is thrown, then an <span class="d_inlinecode">AssertError</span> is thrown.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>T</td>
+<td valign=top>The <span class="d_inlinecode">Throwable</span> to test for.</td></tr>
+<tr><td valign=top>expression</td>
+<td valign=top>The expression to test.</td></tr>
+<tr><td valign=top>msg</td>
+<td valign=top>Optional message to output on test failure.</td></tr>
+</table><p></p>
+<b>Throws:</b><br><span class="d_inlinecode">AssertError</span> if the given <span class="d_inlinecode">Throwable</span> is not thrown.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_psymbol">assertThrown</span>!TimeException(std.datetime.TimeOfDay(-1, 15, 30));
+<span class="d_psymbol">assertThrown</span>(std.datetime.TimeOfDay(12, 15, 60));  <span class="d_comment">//Exception is default.
+</span>
+<span class="d_keyword">assert</span>(collectExceptionMsg!AssertError(<span class="d_psymbol">assertThrown</span>!AssertError(
+                            std.datetime.TimeOfDay(12, 0, 0))) ==
+       <span class="d_string">`assertThrown failed: No AssertError was thrown.`</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">@safe T <a name="enforce"></a><u>enforce</u>(T, string file = __FILE__, int line = __LINE__)(T <i>value</i>, lazy const(char)[] <i>msg</i> = null);
+</div></dt>
+<dd>If <span class="d_inlinecode">!!value</span> is <b>true</b>, <span class="d_inlinecode">value</span> is returned. Otherwise,
+    <span class="d_inlinecode">new Exception(msg)</span> is thrown.
+<p></p>
+<b>Note:</b><br>
+<span class="d_inlinecode"><a name="enforce"></a><u>enforce</u></span> is used to throw exceptions and is therefore intended to
+        aid in error handling. It is <i>not</i> intended for verifying the logic
+        of your program. That is what <span class="d_inlinecode">assert</span> is for. Also, do not use
+        <span class="d_inlinecode"><a name="enforce"></a><u>enforce</u></span> inside of contracts (i.e. inside of <span class="d_inlinecode">in</span> and <span class="d_inlinecode">out</span>
+        blocks and <span class="d_inlinecode">invariant</span>s), because they will be compiled out when
+        compiling with <i>-release</i>. Use <span class="d_inlinecode">assert</span> in contracts.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">auto</span> f = <span class="d_psymbol">enforce</span>(fopen(<span class="d_string">"data.txt"</span>));
+<span class="d_keyword">auto</span> line = readln(f);
+<span class="d_psymbol">enforce</span>(line.length, <span class="d_string">"Expected a non-empty line."</span>));
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="enforce"></a><u>enforce</u>(T, string file = __FILE__, int line = __LINE__)(T <i>value</i>, scope void delegate() <i>dg</i>);
+</div></dt>
+<dd>If <span class="d_inlinecode">!!value</span> is <b>true</b>, <span class="d_inlinecode">value</span> is returned. Otherwise, the given
+    delegate is called.<p></p>
+
+</dd>
+<dt><div class="d_decl">@safe T <a name="enforce"></a><u>enforce</u>(T)(T <i>value</i>, lazy Throwable <i>ex</i>);
+</div></dt>
+<dd>If <span class="d_inlinecode">!!value</span> is <b>true</b>, <span class="d_inlinecode">value</span> is returned. Otherwise, <span class="d_inlinecode">ex</span> is thrown.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">auto</span> f = <span class="d_psymbol">enforce</span>(fopen(<span class="d_string">"data.txt"</span>));
+<span class="d_keyword">auto</span> line = readln(f);
+<span class="d_psymbol">enforce</span>(line.length, <span class="d_keyword">new</span> IOException); <span class="d_comment">// expect a non-empty line
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">@safe T <a name="errnoEnforce"></a><u>errnoEnforce</u>(T, string file = __FILE__, int line = __LINE__)(T <i>value</i>, lazy string <i>msg</i> = null);
+</div></dt>
+<dd>If <span class="d_inlinecode">!!value</span> is <b>true</b>, <span class="d_inlinecode">value</span> is returned. Otherwise,
+    <span class="d_inlinecode">new ErrnoException(msg)</span> is thrown. <span class="d_inlinecode">ErrnoException</span> assumes that the
+    last operation set <span class="d_inlinecode">errno</span> to an error code.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">auto</span> f = <span class="d_psymbol">errnoEnforce</span>(fopen(<span class="d_string">"data.txt"</span>));
+<span class="d_keyword">auto</span> line = readln(f);
+enforce(line.length); <span class="d_comment">// expect a non-empty line
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">@safe T <a name="enforceEx"></a><u>enforceEx</u>(E, T)(T <i>value</i>, lazy string <i>msg</i> = "");
+</div></dt>
+<dd>If <span class="d_inlinecode">!!value</span> is <b>true</b>, <span class="d_inlinecode">value</span> is returned. Otherwise, <span class="d_inlinecode">new E(msg)</span>
+    is thrown.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"> <span class="d_keyword">auto</span> f = <span class="d_psymbol">enforceEx</span>!FileMissingException(fopen(<span class="d_string">"data.txt"</span>));
+ <span class="d_keyword">auto</span> line = readln(f);
+ <span class="d_psymbol">enforceEx</span>!DataCorruptionException(line.length);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="collectException"></a><u>collectException</u>(T = Exception, E)(lazy E <i>expression</i>, ref E <i>result</i>);
+</div></dt>
+<dd>Catches and returns the exception thrown from the given expression.
+    If no exception is thrown, then <b>null</b> is returned and <span class="d_inlinecode">result</span> is
+    set to the result of the expression.
+<p></p>
+Note that while <span class="d_inlinecode"><a name="collectException"></a><u>collectException</u></span> <i>can</i> be used to collect any
+    <span class="d_inlinecode">Throwable</span> and not just <span class="d_inlinecode">Exception</span>s, it is generally ill-advised to
+    catch anything that is neither an <span class="d_inlinecode">Exception</span> nor a type derived from
+    <span class="d_inlinecode">Exception</span>. So, do not use <span class="d_inlinecode"><a name="collectException"></a><u>collectException</u></span> to collect
+    non-<span class="d_inlinecode">Exception</span>s unless you're sure that that's what you really want to
+    do.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>T</td>
+<td valign=top>The type of exception to catch.</td></tr>
+<tr><td valign=top>expression</td>
+<td valign=top>The expression which may throw an exception.</td></tr>
+<tr><td valign=top>result</td>
+<td valign=top>The result of the expression if no exception is thrown.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">int</span>[] a = <span class="d_keyword">new</span> <span class="d_keyword">int</span>[3];
+<span class="d_keyword">int</span> b;
+<span class="d_keyword">assert</span>(<span class="d_psymbol">collectException</span>(a[4], b));
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="collectException"></a><u>collectException</u>(T : Throwable = Exception, E)(lazy E <i>expression</i>);
+</div></dt>
+<dd>Catches and returns the exception thrown from the given expression.
+    If no exception is thrown, then <b>null</b> is returned. <span class="d_inlinecode">E</span> can be
+    <span class="d_inlinecode">void</span>.
+<p></p>
+Note that while <span class="d_inlinecode"><a name="collectException"></a><u>collectException</u></span> <i>can</i> be used to collect any
+    <span class="d_inlinecode">Throwable</span> and not just <span class="d_inlinecode">Exception</span>s, it is generally ill-advised to
+    catch anything that is neither an <span class="d_inlinecode">Exception</span> nor a type derived from
+    <span class="d_inlinecode">Exception</span>. So, do not use <span class="d_inlinecode"><a name="collectException"></a><u>collectException</u></span> to collect
+    non-<span class="d_inlinecode">Exception</span>s unless you're sure that that's what you really want to
+    do.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>T</td>
+<td valign=top>The type of exception to catch.</td></tr>
+<tr><td valign=top>expression</td>
+<td valign=top>The expression which may throw an exception.</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="collectExceptionMsg"></a><u>collectExceptionMsg</u>(T = Exception, E)(lazy E <i>expression</i>);
+</div></dt>
+<dd>Catches the exception thrown from the given expression and returns the
+    msg property of that exception. If no exception is thrown, then <b>null</b> is
+    returned. <span class="d_inlinecode">E</span> can be <span class="d_inlinecode">void</span>.
+<p></p>
+If an exception is thrown but it has an empty message, then
+    <span class="d_inlinecode">emptyExceptionMsg</span> is returned.
+<p></p>
+
+
+    Note that while <span class="d_inlinecode"><a name="collectExceptionMsg"></a><u>collectExceptionMsg</u></span> <i>can</i> be used to collect any
+    <span class="d_inlinecode">Throwable</span> and not just <span class="d_inlinecode">Exception</span>s, it is generally ill-advised to
+    catch anything that is neither an <span class="d_inlinecode">Exception</span> nor a type derived from
+    <span class="d_inlinecode">Exception</span>. So, do not use <span class="d_inlinecode"><a name="collectExceptionMsg"></a><u>collectExceptionMsg</u></span> to collect
+    non-<span class="d_inlinecode">Exception</span>s unless you're sure that that's what you really want to
+    do.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>T</td>
+<td valign=top>The type of exception to catch.</td></tr>
+<tr><td valign=top>expression</td>
+<td valign=top>The expression which may throw an exception.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">void</span> throwFunc() {<span class="d_keyword">throw</span> <span class="d_keyword">new</span> Exception(<span class="d_string">"My Message."</span>);}
+<span class="d_keyword">assert</span>(<span class="d_psymbol">collectExceptionMsg</span>(throwFunc()) == <span class="d_string">"My Message."</span>);
+
+<span class="d_keyword">void</span> nothrowFunc() {}
+<span class="d_keyword">assert</span>(<span class="d_psymbol">collectExceptionMsg</span>(nothrowFunc()) <span class="d_keyword">is</span> <span class="d_keyword">null</span>);
+
+<span class="d_keyword">void</span> throwEmptyFunc() {<span class="d_keyword">throw</span> <span class="d_keyword">new</span> Exception(<span class="d_string">""</span>);}
+<span class="d_keyword">assert</span>(<span class="d_psymbol">collectExceptionMsg</span>(throwEmptyFunc()) == emptyExceptionMsg);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="emptyExceptionMsg"></a><u>emptyExceptionMsg</u>;
+</div></dt>
+<dd>Value that collectExceptionMsg returns when it catches an exception
+    with an empty exception message.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow immutable(T)[] <a name="assumeUnique"></a><u>assumeUnique</u>(T)(ref T[] <i>array</i>);
+</div></dt>
+<dd>Casts a mutable array to an immutable array in an idiomatic
+ manner. Technically, <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u></span> just inserts a cast,
+ but its name documents assumptions on the part of the
+ caller. <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u>(arr)</span> should only be called when
+ there are no more active mutable aliases to elements of <span class="d_inlinecode">arr</span>. To strenghten this assumption, <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u>(arr)</span>
+ also clears <span class="d_inlinecode">arr</span> before returning. Essentially <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u>(arr)</span> indicates commitment from the caller that there
+ is no more mutable access to any of <span class="d_inlinecode">arr</span>'s elements
+ (transitively), and that all future accesses will be done through
+ the immutable array returned by <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u></span>.
+<p></p>
+Typically, <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u></span> is used to return arrays from
+ functions that have allocated and built them.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"> string letters()
+ {
+   <span class="d_keyword">char</span>[] result = <span class="d_keyword">new</span> <span class="d_keyword">char</span>['z' - 'a' + 1];
+   <span class="d_keyword">foreach</span> (i, <span class="d_keyword">ref</span> e; result)
+   {
+     e = 'a' + i;
+   }
+   <span class="d_keyword">return</span> <span class="d_psymbol">assumeUnique</span>(result);
+ }
+</pre>
+
+ The use in the example above is correct because <span class="d_inlinecode">result</span>
+ was private to <span class="d_inlinecode">letters</span> and is unaccessible in writing
+ after the function returns. The following example shows an
+ incorrect use of <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u></span>.
+
+<p></p>
+<b>Bad:</b><br>
+<pre class="d_code"> <span class="d_keyword">private</span> <span class="d_keyword">char</span>[] buffer;
+ string letters(<span class="d_keyword">char</span> first, <span class="d_keyword">char</span> last)
+ {
+   <span class="d_keyword">if</span> (first &gt;= last) <span class="d_keyword">return</span> <span class="d_keyword">null</span>; <span class="d_comment">// fine
+</span>   <span class="d_keyword">auto</span> sneaky = buffer;
+   sneaky.length = last - first + 1;
+   <span class="d_keyword">foreach</span> (i, <span class="d_keyword">ref</span> e; sneaky)
+   {
+     e = 'a' + i;
+   }
+   <span class="d_keyword">return</span> <span class="d_psymbol">assumeUnique</span>(sneaky); <span class="d_comment">// BAD
+</span> }
+</pre>
+
+ The example above wreaks havoc on client code because it is
+ modifying arrays that callers considered immutable. To obtain an
+ immutable array from the writable array <span class="d_inlinecode">buffer</span>, replace
+ the last line with:
+<pre class="d_code"> <span class="d_keyword">return</span> to!(string)(sneaky); <span class="d_comment">// not that sneaky anymore
+</span></pre>
+
+ The call will duplicate the array appropriately.
+<p></p>
+
+
+ Checking for uniqueness during compilation is possible in certain
+ cases (see the <span class="d_inlinecode">unique</span> and <span class="d_inlinecode">lent</span> keywords in
+ the <a href="http://archjava.fluid.cs.cmu.edu/papers/oopsla02.pdf">ArchJava</a>
+ language), but complicates the language considerably. The downside
+ of <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u></span>'s convention-based usage is that at this
+ time there is no formal checking of the correctness of the
+ assumption; on the upside, the idiomatic use of <span class="d_inlinecode"><a name="assumeUnique"></a><u>assumeUnique</u></span> is simple and rare enough to be tolerable.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure nothrow @trusted bool <a name="pointsTo"></a><u>pointsTo</u>(S, T)(ref const S <i>source</i>, ref const T <i>target</i>);
+</div></dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if <span class="d_inlinecode">source</span>'s representation embeds a pointer
+that points to <span class="d_inlinecode">target</span>'s representation or somewhere inside
+it. Note that evaluating <span class="d_inlinecode"><a name="pointsTo"></a><u>pointsTo</u>(x, x)</span> checks whether <span class="d_inlinecode">x</span> has
+internal pointers.<p></p>
+
+</dd>
+<dt><div class="d_decl">class <a name="ErrnoException"></a><u>ErrnoException</u>: object.Exception;
+</div></dt>
+<dd>Thrown if errors that set <span class="d_inlinecode">errno</span> occur.<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ 
+</div>
+
+
+<div id="copyright">
+Copyright Andrei Alexandrescu 2008-, Jonathan M Davis 2011-.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

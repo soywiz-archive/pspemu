@@ -1,0 +1,590 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.date - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+
+<script>
+function listanchors()
+{
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+    values[n++] = a.name
+    }
+
+    values.sort();
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        newText += '<a href="#' + a + '"><span class="d_psymbol">'
+                + a + '</span></a> ';
+    }
+    if (newText != "") newText = "<p><b>Jump to:</b> " + newText + '</p>';
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+</script>
+
+</head>
+
+<body onload="listanchors()">
+<div id="heading">
+	<a href="http://www.digitalmars.com/"><img src="../dmlogo.gif" width="270" height="53" border="0" alt="www.digitalmars.com" align="left"></a>
+	<p align="right">D Programming Language 2.0</p>
+
+
+	<div id="headingNav">
+	<ul>	<li><a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Phobos/StdDate" title="Read/write comments and feedback">Comments</a></li>
+	<li><a href="../index.html" title="D Programming Language" class="dlink">D</a></li>
+	<li><a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a></li>
+	<li><a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a></li>
+	</ul>
+	</div>
+
+	<div id="lastupdate">Last update Sun Jul 10 10:47:20 2011
+</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input id="q" name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+<input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/d/2.0/phobos">
+<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+<input type="submit" id="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../lex.html" title="D Language Specification">Language</a></li>
+	<li><a href="phobos.html" title="D Runtime Library">Phobos</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="phobos.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bind.html" title="Function argument binding">std.bind</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_boxer.html" title="Box/unbox types">std.boxer</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_contracts.html" title="Think assert">std.contracts</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_cover.html" title="D coverage analyzer">std.cover</a></li>
+	<li><a href="std_cpuid.html" title="CPU identification">std.cpuid</a></li>
+	<li><a href="std_ctype.html" title="Simple character classification">std.ctype</a></li>
+	<li><a href="std_date.html" title="Date and time functions">std.date</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_demangle.html" title="Demangle D names">std.demangle</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_gc.html" title="Control the garbage collector">std.gc</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_gregorian.html" title="Gregorian Calendar">std.gregorian</a></li>
+	<li><a href="std_intrinsic.html" title="Compiler built in intrinsic functions">std.intrinsic</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_md5.html" title="Compute MD5 digests">std.md5</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_outofmemory.html" title="Out of memory exception">std.outofmemory</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_parallelism.html" title="High level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_process.html" title="Create/destroy threads">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_regexp.html" title="regular expressions (deprecated)">std.regexp</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdint.html" title="Integral types for various purposes">std.stdint</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_thread.html" title="Thread operations">std.thread</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_c_fenv.html" title="Floating point environment">std.c.fenv</a></li>
+	<li><a href="std_c_locale.html" title="Locale">std.c.locale</a></li>
+	<li><a href="std_c_math.html" title="Math">std.c.math</a></li>
+	<li><a href="std_c_process.html" title="Process">std.c.process</a></li>
+	<li><a href="std_c_stdarg.html" title="Variadic arguments">std.c.stdarg</a></li>
+	<li><a href="std_c_stddef.html" title="Standard definitions">std.c.stddef</a></li>
+	<li><a href="std_c_stdio.html" title="Standard I/O">std.c.stdio</a></li>
+	<li><a href="std_c_stdlib.html" title="Standard library">std.c.stdlib</a></li>
+	<li><a href="std_c_string.html" title="Strings">std.c.string</a></li>
+	<li><a href="std_c_time.html" title="Time">std.c.time</a></li>
+	<li><a href="std_c_wcharh.html" title="Wide characters">std.c.wcharh</a></li>
+	<li><a href="std_net_isemail.html" title="Validate email addresses">std.net.isemail</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+	<li><a href="phobos.html#std_windows" title="Modules specific to Windows">std.windows</a></li>
+	<li><a href="phobos.html#std_linux" title="Modules specific to Windows">std.linux</a></li>
+	<li><a href="phobos.html#std_c_windows" title="C Windows API">std.c.windows</a></li>
+	<li><a href="phobos.html#std_c_linux" title="C Linux API">std.c.linux</a></li>
+    </ul>
+    <h2><a href="phobos.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="phobos.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_time.html" title="Time">core.time</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div>
+<div id="content">
+    <h1>std.date</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\date.d -->
+<span style="color:red">Scheduled for deprecation in August 2011. Please use std.datetime instead.</span>
+<p></p>
+Dates are represented in several formats. The <a name="date"></a><u>date</u> implementation
+ revolves around a central type, <span class="d_inlinecode">d_time</span>, from which other
+ formats are converted to and from.  Dates are calculated using the
+ Gregorian calendar.
+
+<p></p>
+<b>References:</b><br>
+<a href="http://wikipedia.org/wiki/Gregorian_calendar">Gregorian
+ calendar (Wikipedia)</a>
+
+<p></p>
+<b>License:</b><br><a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/date.d">std/date.d</a><p></p>
+
+<dl><dt><div class="d_decl">alias <a name="d_time"></a><u>d_time</u>;
+</div></dt>
+<dd><span class="d_inlinecode"><a name="d_time"></a><u>d_time</u></span> is a signed arithmetic type giving the time elapsed
+ since January 1, 1970.  Negative values are for dates preceding
+ 1970. The time unit used is Ticks.  Ticks are milliseconds or
+ smaller intervals.
+<p></p>
+The usual arithmetic operations can be performed on <a name="d_time"></a><u>d_time</u>, such as adding,
+ subtracting, etc. Elapsed time in Ticks can be computed by subtracting a
+ starting <a name="d_time"></a><u>d_time</u> from an ending <a name="d_time"></a><u>d_time</u>.<p></p>
+
+</dd>
+<dt><div class="d_decl">d_time <a name="d_time_nan"></a><u>d_time_nan</u>;
+</div></dt>
+<dd>A value for d_time that does not represent a valid time.<p></p>
+
+</dd>
+<dt><div class="d_decl">struct <a name="Date"></a><u>Date</u>;
+</div></dt>
+<dd>Time broken down into its components.<p></p>
+
+<dl><dt><div class="d_decl">int <a name="year"></a><u>year</u>;
+</div></dt>
+<dd>use int.min as "nan" <a name="year"></a><u>year</u> value<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="month"></a><u>month</u>;
+</div></dt>
+<dd>1..12<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="day"></a><u>day</u>;
+</div></dt>
+<dd>1..31<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="hour"></a><u>hour</u>;
+</div></dt>
+<dd>0..23<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="minute"></a><u>minute</u>;
+</div></dt>
+<dd>0..59<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="second"></a><u>second</u>;
+</div></dt>
+<dd>0..59<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="ms"></a><u>ms</u>;
+</div></dt>
+<dd>0..999<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="weekday"></a><u>weekday</u>;
+</div></dt>
+<dd>0: not specified, 1..7: Sunday..Saturday<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="tzcorrection"></a><u>tzcorrection</u>;
+</div></dt>
+<dd>-1200..1200 correction in hours<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="parse"></a><u>parse</u>(string <i>s</i>);
+</div></dt>
+<dd>Parse date out of string <i>s</i>[] and store it in this Date instance.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl"><a name="ticksPerSecond"></a><u>ticksPerSecond</u></div></dt>
+<dd>Will be at least 1000<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="toISO8601YearWeek"></a><u>toISO8601YearWeek</u>(d_time <i>t</i>, out int <i>year</i>, out int <i>week</i>);
+</div></dt>
+<dd>Compute <i>year</i> and <i>week</i> [1..53] from <i>t</i>. The ISO 8601 <i>week</i> 1 is the first <i>week</i>
+ of the <i>year</i> that includes January 4. Monday is the first day of the <i>week</i>.
+<p></p>
+<b>References:</b><br>
+<a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601 (Wikipedia)</a><p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="hourFromTime"></a><u>hourFromTime</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Calculates the hour from <i>time</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>d_time <i>time</i></td>
+<td valign=top>The <i>time</i> to compute the hour from.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The calculated hour, 0..23.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="minFromTime"></a><u>minFromTime</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Calculates the minute from <i>time</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>d_time <i>time</i></td>
+<td valign=top>The <i>time</i> to compute the minute from.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The calculated minute, 0..59.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="secFromTime"></a><u>secFromTime</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Calculates the second from <i>time</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>d_time <i>time</i></td>
+<td valign=top>The <i>time</i> to compute the second from.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The calculated second, 0..59.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="msFromTime"></a><u>msFromTime</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Calculates the milisecond from <i>time</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>d_time <i>time</i></td>
+<td valign=top>The <i>time</i> to compute the milisecond from.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The calculated milisecond, 0..999.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure uint <a name="daysInYear"></a><u>daysInYear</u>(uint <i>year</i>);
+</div></dt>
+<dd>Calculates the number of days that exists in a <i>year</i>.
+<p></p>
+Leap years have 366 days, while other years have 365.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>uint <i>year</i></td>
+<td valign=top>The <i>year</i> to compute the number of days from.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The number of days in the <i>year</i>, 365 or 366.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure int <a name="dayFromYear"></a><u>dayFromYear</u>(int <i>year</i>);
+</div></dt>
+<dd>Calculates the number of days elapsed since 1 January 1970
+ until 1 January of the given <i>year</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>int <i>year</i></td>
+<td valign=top>The <i>year</i> to compute the number of days from.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The number of days elapsed.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"> writeln(<span class="d_psymbol">dayFromYear</span>(1970)); <span class="d_comment">// writes '0'
+</span> writeln(<span class="d_psymbol">dayFromYear</span>(1971)); <span class="d_comment">// writes '365'
+</span> writeln(<span class="d_psymbol">dayFromYear</span>(1972)); <span class="d_comment">// writes '730'
+</span></pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">pure int <a name="yearFromTime"></a><u>yearFromTime</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Calculates the year from the d_time <i>t</i>.<p></p>
+
+</dd>
+<dt><div class="d_decl">pure bool <a name="inLeapYear"></a><u>inLeapYear</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Determines if d_time <i>t</i> is a leap year.
+<p></p>
+A leap year is every 4 years except years ending in 00 that are not
+ divsible by 400.
+
+<p></p>
+<b>Returns:</b><br>!=0 if it is a leap year.
+
+<p></p>
+<b>References:</b><br>
+<a href="http://en.wikipedia.org/wiki/Leap_year">Wikipedia</a><p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="monthFromTime"></a><u>monthFromTime</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Calculates the month from the d_time <i>t</i>.
+<p></p>
+<b>Returns:</b><br>Integer in the range 0..11, where
+        0 represents January and 11 represents December.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="dateFromTime"></a><u>dateFromTime</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Compute which day in a month a d_time <i>t</i> is.
+<p></p>
+<b>Returns:</b><br>Integer in the range 1..31<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="weekDay"></a><u>weekDay</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Compute which day of the week a d_time <i>t</i> is.
+<p></p>
+<b>Returns:</b><br>Integer in the range 0..6, where 0 represents Sunday
+        and 6 represents Saturday.<p></p>
+
+</dd>
+<dt><div class="d_decl">d_time <a name="UTCtoLocalTime"></a><u>UTCtoLocalTime</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Convert from UTC to local time.<p></p>
+
+</dd>
+<dt><div class="d_decl">d_time <a name="localTimetoUTC"></a><u>localTimetoUTC</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Convert from local time to UTC.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="dateFromNthWeekdayOfMonth"></a><u>dateFromNthWeekdayOfMonth</u>(int <i>year</i>, int <i>month</i>, int <i>weekday</i>, int <i>n</i>);
+</div></dt>
+<dd>Determine the date in the <i>month</i>, 1..31, of the nth
+ <i>weekday</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>int <i>year</i></td>
+<td valign=top><i>year</i></td></tr>
+<tr><td valign=top>int <i>month</i></td>
+<td valign=top><i>month</i>, 1..12</td></tr>
+<tr><td valign=top>int <i>weekday</i></td>
+<td valign=top>day of week 0..6 representing Sunday..Saturday</td></tr>
+<tr><td valign=top>int <i>n</i></td>
+<td valign=top>nth occurrence of that <i>weekday</i> in the <i>month</i>, 1..5, where
+            5 also means "the last occurrence in the <i>month</i>"</td></tr>
+</table><p></p>
+<b>Returns:</b><br>the date in the <i>month</i>, 1..31, of the nth <i>weekday</i><p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="daysInMonth"></a><u>daysInMonth</u>(int <i>year</i>, int <i>month</i>);
+</div></dt>
+<dd>Determine the number of days in a <i>month</i>, 1..31.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>int <i>month</i></td>
+<td valign=top>1..12</td></tr>
+</table><p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="UTCtoString"></a><u>UTCtoString</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Converts UTC <i>time</i> into a text string of the form:
+ "Www Mmm dd hh:mm:ss GMT+-TZ yyyy".
+ For example, "Tue Apr 02 02:04:57 GMT-0800 1996".
+ If <i>time</i> is invalid, i.e. is d_time_nan,
+ the string "Invalid date" is returned.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">  d_time lNow;
+  <span class="d_keyword">char</span>[] lNowString;
+
+  <span class="d_comment">// Grab the date and time relative to UTC
+</span>  lNow = std.date.getUTCtime();
+  <span class="d_comment">// Convert this into the local date and time for display.
+</span>  lNowString = std.date.<span class="d_psymbol">UTCtoString</span>(lNow);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">deprecated alias <a name="toString"></a><u>toString</u>;
+</div></dt>
+<dd>Alias for UTCtoString (deprecated).<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="toUTCString"></a><u>toUTCString</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Converts <i>t</i> into a text string of the form: "Www, dd Mmm yyyy hh:mm:ss UTC".
+ If <i>t</i> is invalid, "Invalid date" is returned.<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="toDateString"></a><u>toDateString</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Converts the date portion of <i>time</i> into a text string of the form: "Www Mmm dd
+ yyyy", for example, "Tue Apr 02 1996".
+ If <i>time</i> is invalid, "Invalid date" is returned.<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="toTimeString"></a><u>toTimeString</u>(d_time <i>time</i>);
+</div></dt>
+<dd>Converts the <i>time</i> portion of t into a text string of the form: "hh:mm:ss
+ GMT+-TZ", for example, "02:04:57 GMT-0800".
+ If t is invalid, "Invalid date" is returned.
+ The input must be in UTC, and the output is in local <i>time</i>.<p></p>
+
+</dd>
+<dt><div class="d_decl">d_time <a name="parse"></a><u>parse</u>(string <i>s</i>);
+</div></dt>
+<dd>Parses <i>s</i> as a textual date string, and returns it as a d_time.  If
+ the string is not a valid date, <span class="d_inlinecode">d_time_nan</span> is returned.<p></p>
+
+</dd>
+<dt><div class="d_decl">d_time <a name="getUTCtime"></a><u>getUTCtime</u>();
+</div></dt>
+<dd>Get current UTC time.<p></p>
+
+</dd>
+<dt><div class="d_decl">typedef <a name="DosFileTime"></a><u>DosFileTime</u>;
+</div></dt>
+<dd>Type representing the DOS file date/time format.<p></p>
+
+</dd>
+<dt><div class="d_decl">d_time <a name="toDtime"></a><u>toDtime</u>(DosFileTime <i>time</i>);
+</div></dt>
+<dd>Convert from DOS file date/<i>time</i> to d_time.<p></p>
+
+</dd>
+<dt><div class="d_decl">DosFileTime <a name="toDosFileTime"></a><u>toDosFileTime</u>(d_time <i>t</i>);
+</div></dt>
+<dd>Convert from d_time to DOS file date/time.<p></p>
+
+</dd>
+<dt><div class="d_decl">ulong[] <a name="benchmark"></a><u>benchmark</u>(fun...)(uint <i>times</i>, ulong[] <i>result</i> = null);
+</div></dt>
+<dd>Benchmarks code for speed assessment and comparison.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>fun</td>
+<td valign=top>aliases of callable objects (e.g. function names). Each should
+take no arguments.</td></tr>
+<tr><td valign=top>times</td>
+<td valign=top>The number of times each function is to be executed.</td></tr>
+<tr><td valign=top>result</td>
+<td valign=top>The optional store for the return value. If <span class="d_inlinecode"><b>null</b></span> is
+passed in, new store is allocated appropriately.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>An array of <span class="d_inlinecode">n</span> <span class="d_inlinecode">uint</span>s. Element at slot <span class="d_inlinecode">i</span> contains the
+number of milliseconds spent in calling the <span class="d_inlinecode">i</span>th function <span class="d_inlinecode">times</span> times.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">int</span> a;
+<span class="d_keyword">void</span> f0() { }
+<span class="d_keyword">void</span> f1() { <span class="d_keyword">auto</span> b = a; }
+<span class="d_keyword">void</span> f2() { <span class="d_keyword">auto</span> b = to!(string)(a); }
+<span class="d_keyword">auto</span> r = <span class="d_psymbol">benchmark</span>!(f0, f1, f2)(10_000_000);
+</pre>
+<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ 
+</div>
+
+
+<div id="copyright">
+Copyright Digital Mars 2000 - 2009.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

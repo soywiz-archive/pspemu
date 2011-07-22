@@ -1,0 +1,748 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.format - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+
+<script>
+function listanchors()
+{
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+    values[n++] = a.name
+    }
+
+    values.sort();
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        newText += '<a href="#' + a + '"><span class="d_psymbol">'
+                + a + '</span></a> ';
+    }
+    if (newText != "") newText = "<p><b>Jump to:</b> " + newText + '</p>';
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+</script>
+
+</head>
+
+<body onload="listanchors()">
+<div id="heading">
+	<a href="http://www.digitalmars.com/"><img src="../dmlogo.gif" width="270" height="53" border="0" alt="www.digitalmars.com" align="left"></a>
+	<p align="right">D Programming Language 2.0</p>
+
+
+	<div id="headingNav">
+	<ul>	<li><a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Phobos/StdFormat" title="Read/write comments and feedback">Comments</a></li>
+	<li><a href="../index.html" title="D Programming Language" class="dlink">D</a></li>
+	<li><a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a></li>
+	<li><a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a></li>
+	</ul>
+	</div>
+
+	<div id="lastupdate">Last update Sun Jul 10 10:47:26 2011
+</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input id="q" name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+<input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/d/2.0/phobos">
+<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+<input type="submit" id="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../lex.html" title="D Language Specification">Language</a></li>
+	<li><a href="phobos.html" title="D Runtime Library">Phobos</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="phobos.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bind.html" title="Function argument binding">std.bind</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_boxer.html" title="Box/unbox types">std.boxer</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_contracts.html" title="Think assert">std.contracts</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_cover.html" title="D coverage analyzer">std.cover</a></li>
+	<li><a href="std_cpuid.html" title="CPU identification">std.cpuid</a></li>
+	<li><a href="std_ctype.html" title="Simple character classification">std.ctype</a></li>
+	<li><a href="std_date.html" title="Date and time functions">std.date</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_demangle.html" title="Demangle D names">std.demangle</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_gc.html" title="Control the garbage collector">std.gc</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_gregorian.html" title="Gregorian Calendar">std.gregorian</a></li>
+	<li><a href="std_intrinsic.html" title="Compiler built in intrinsic functions">std.intrinsic</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_md5.html" title="Compute MD5 digests">std.md5</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_outofmemory.html" title="Out of memory exception">std.outofmemory</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_parallelism.html" title="High level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_process.html" title="Create/destroy threads">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_regexp.html" title="regular expressions (deprecated)">std.regexp</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdint.html" title="Integral types for various purposes">std.stdint</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_thread.html" title="Thread operations">std.thread</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_c_fenv.html" title="Floating point environment">std.c.fenv</a></li>
+	<li><a href="std_c_locale.html" title="Locale">std.c.locale</a></li>
+	<li><a href="std_c_math.html" title="Math">std.c.math</a></li>
+	<li><a href="std_c_process.html" title="Process">std.c.process</a></li>
+	<li><a href="std_c_stdarg.html" title="Variadic arguments">std.c.stdarg</a></li>
+	<li><a href="std_c_stddef.html" title="Standard definitions">std.c.stddef</a></li>
+	<li><a href="std_c_stdio.html" title="Standard I/O">std.c.stdio</a></li>
+	<li><a href="std_c_stdlib.html" title="Standard library">std.c.stdlib</a></li>
+	<li><a href="std_c_string.html" title="Strings">std.c.string</a></li>
+	<li><a href="std_c_time.html" title="Time">std.c.time</a></li>
+	<li><a href="std_c_wcharh.html" title="Wide characters">std.c.wcharh</a></li>
+	<li><a href="std_net_isemail.html" title="Validate email addresses">std.net.isemail</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+	<li><a href="phobos.html#std_windows" title="Modules specific to Windows">std.windows</a></li>
+	<li><a href="phobos.html#std_linux" title="Modules specific to Windows">std.linux</a></li>
+	<li><a href="phobos.html#std_c_windows" title="C Windows API">std.c.windows</a></li>
+	<li><a href="phobos.html#std_c_linux" title="C Linux API">std.c.linux</a></li>
+    </ul>
+    <h2><a href="phobos.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="phobos.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_time.html" title="Time">core.time</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div>
+<div id="content">
+    <h1>std.format</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\format.d -->
+This module implements the formatting functionality for strings and
+   I/O. It's comparable to C99's <span class="d_inlinecode">vsprintf()</span> and uses a similar
+   <a name="format"></a><u>format</u> encoding scheme.
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>, <a href="http://erdani.com">   Andrei Alexandrescu</a>
+
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/format.d">std/format.d</a><p></p>
+
+<dl><dt><div class="d_decl">class <a name="FormatError"></a><u>FormatError</u>: object.Error;
+</div></dt>
+<dd>Signals a mismatch between a format and its corresponding argument.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formattedWrite"></a><u>formattedWrite</u>(Writer, Char, A...)(Writer <i>w</i>, in Char[] <i>fmt</i>, A <i>args</i>);
+</div></dt>
+<dd>Interprets variadic argument list <span class="d_inlinecode">args</span>, formats them according
+   to <span class="d_inlinecode">fmt</span>, and sends the resulting characters to <span class="d_inlinecode">w</span>. The
+   encoding of the output is the same as <span class="d_inlinecode">Char</span>. type <span class="d_inlinecode">Writer</span>
+   must satisfy <a href="std_range.html#isOutputRange!(Writer, Char)"><span class="d_inlinecode">std.range.isOutputRange!(Writer, Char)</span></a>.
+<p></p>
+The variadic arguments are normally consumed in order. POSIX-style
+   <a href="http://opengroup.org/onlinepubs/009695399/functions/printf.html">   positional parameter syntax</a> is also supported. Each argument is
+   formatted into a sequence of chars according to the format
+   specification, and the characters are passed to <span class="d_inlinecode">w</span>. As many
+   arguments as specified in the format string are consumed and
+   formatted. If there are fewer arguments than format specifiers, a
+   <span class="d_inlinecode">FormatError</span> is thrown. If there are more remaining arguments
+   than needed by the format specification, they are ignored but only
+   if at least one argument was formatted.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>w</td>
+<td valign=top>Output is sent do this writer. Typical output writers include
+   <a href="std_range.html#Appender!string"><span class="d_inlinecode">std.range.Appender!string</span></a> and <a href="std_stdio.html#BlockingTextWriter"><span class="d_inlinecode">std.stdio.BlockingTextWriter</span></a>.</td></tr>
+<tr><td valign=top>fmt</td>
+<td valign=top>Format string.</td></tr>
+<tr><td valign=top>args</td>
+<td valign=top>Variadic argument list.</td></tr>
+</table><p></p>
+<b>Throws:</b><br>Mismatched arguments and formats result in a <span class="d_inlinecode">  FormatError</span> being thrown.
+
+<p></p>
+<b>Format String:</b><br>
+<a name="format-string"><i>Format strings</i></a>
+   consist of characters interspersed with <i>format
+   specifications</i>. Characters are simply copied to the output (such
+   as putc) after any necessary conversion to the corresponding UTF-8
+   sequence.
+<p></p>
+
+
+   The format string has the following grammar:
+<p></p>
+
+
+<pre><i>FormatString</i>:
+    <i>FormatStringItem</i>*
+<i>FormatStringItem</i>:
+    <b>'%%'</b>
+    <b>'%'</b> <i>Position</i> <i>Flags</i> <i>Width</i> <i>Precision</i> <i>FormatChar</i>
+    <b>'%('</b> <i>FormatString</i> <b>'%)'</b>
+    <i>OtherCharacterExceptPercent</i>
+<i>Position</i>:
+    <i>empty</i>
+    <i>Integer</i> <b>'$'</b>
+<i>Flags</i>:
+    <i>empty</i>
+    <b>'-'</b> <i>Flags</i>
+    <b>'+'</b> <i>Flags</i>
+    <b>'#'</b> <i>Flags</i>
+    <b>'0'</b> <i>Flags</i>
+    <b>' '</b> <i>Flags</i>
+<i>Width</i>:
+    <i>empty</i>
+    <i>Integer</i>
+    <b>'*'</b>
+<i>Precision</i>:
+    <i>empty</i>
+    <b>'.'</b>
+    <b>'.'</b> <i>Integer</i>
+    <b>'.*'</b>
+<i>Integer</i>:
+    <i>Digit</i>
+    <i>Digit</i> <i>Integer</i>
+<i>Digit</i>:
+    <b>'0'</b>|<b>'1'</b>|<b>'2'</b>|<b>'3'</b>|<b>'4'</b>|<b>'5'</b>|<b>'6'</b>|<b>'7'</b>|<b>'8'</b>|<b>'9'</b>
+<i>FormatChar</i>:
+    <b>'s'</b>|<b>'b'</b>|<b>'d'</b>|<b>'o'</b>|<b>'x'</b>|<b>'X'</b>|<b>'e'</b>|<b>'E'</b>|<b>'f'</b>|<b>'F'</b>|<b>'g'</b>|<b>'G'</b>|<b>'a'</b>|<b>'A'</b>
+</pre>
+<p></p>
+
+
+    <table cellspacing=0 cellpadding=5 valign=top class=book><caption>Flags affect formatting depending on the specifier as
+    follows.</caption><tr><th>Flag</th> <th>Types&nbsp;affected</th> <th>Semantics</th></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>'-'</b></td> <td valign=top>numeric</td> <td valign=top>Left justify the result in
+        the field.  It overrides any <b>0</b> flag.</td></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>'+'</b></td> <td valign=top>numeric</td> <td valign=top>Prefix positive numbers in
+    a signed conversion with a <b>+</b>.  It overrides any <i>space</i>
+    flag.</td></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>'#'</b></td> <td valign=top>integral (<b>'o'</b>)</td> <td valign=top>Add to
+    precision as necessary so that the first digit of the octal
+    formatting is a '0', even if both the argument and the <i>   Precision</i> are zero.</td></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>'#'</b></td> <td valign=top>integral (<b>'x'</b>, <b>'X'</b>)</td> <td valign=top>If
+       non-zero, prefix result with <b>0x</b> (<b>0X</b>).</td></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>'#'</b></td> <td valign=top>floating</td> <td valign=top>Always insert the decimal
+       point and print trailing zeros.</td></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>'#'</b></td> <td valign=top>numeric (<b>'0'</b>)</td> <td valign=top>Use leading
+    zeros to pad rather than spaces (except for the floating point
+    values <span class="d_inlinecode">nan</span> and <span class="d_inlinecode">infinity</span>).  Ignore if there's a <i>   Precision</i>.</td></tr>
+<p></p>
+
+
+    <tr><td valign=top><b>' '</b></td> <td valign=top>integral (<b>'d'</b>)</td> <td valign=top>Prefix positive
+    numbers in a signed conversion with a space.</td></tr></table>
+<p></p>
+
+
+    <dt><i>Width</i>
+    <dd>
+    Specifies the minimum field width.
+    If the width is a <b>*</b>, the next argument, which must be
+    of type <b>int</b>, is taken as the width.
+    If the width is negative, it is as if the <b>-</b> was given
+    as a <i>Flags</i> character.
+<p></p>
+
+
+    <dt><i>Precision</i>
+    <dd> Gives the precision for numeric conversions.
+    If the precision is a <b>*</b>, the next argument, which must be
+    of type <b>int</b>, is taken as the precision. If it is negative,
+    it is as if there was no <i>Precision</i>.
+<p></p>
+
+
+    <dt><i>FormatChar</i>
+    <dd>
+    <dl>
+        <dt><b>'s'</b>
+        <dd>The corresponding argument is formatted in a manner consistent
+        with its type:
+        <dl>
+            <dt><b>bool</b>
+            <dd>The result is <tt>'<b>true</b>'</tt> or <tt>'<b>false</b>'</tt>.
+            <dt>integral types
+            <dd>The <b>%d</b> format is used.
+            <dt>floating point types
+            <dd>The <b>%g</b> format is used.
+            <dt>string types
+            <dd>The result is the string converted to UTF-8.
+            A <i>Precision</i> specifies the maximum number of characters
+            to use in the result.
+            <dt>classes derived from <b>Object</b>
+            <dd>The result is the string returned from the class instance's
+            <b>.toString()</b> method.
+            A <i>Precision</i> specifies the maximum number of characters
+            to use in the result.
+            <dt>non-string static and dynamic arrays
+            <dd>The result is [s<sub>0</sub>, s<sub>1</sub>, ...]
+            where s<sub>k</sub> is the kth element
+            formatted with the default format.
+        </dl>
+<p></p>
+
+
+        <dt><b>'b','d','o','x','X'</b>
+        <dd> The corresponding argument must be an integral type
+        and is formatted as an integer. If the argument is a signed type
+        and the <i>FormatChar</i> is <b>d</b> it is converted to
+        a signed string of characters, otherwise it is treated as
+        unsigned. An argument of type <b>bool</b> is formatted as '1'
+        or '0'. The base used is binary for <b>b</b>, octal for <b>o</b>,
+        decimal
+        for <b>d</b>, and hexadecimal for <b>x</b> or <b>X</b>.
+        <b>x</b> formats using lower case letters, <b>X</b> uppercase.
+        If there are fewer resulting digits than the <i>Precision</i>,
+        leading zeros are used as necessary.
+        If the <i>Precision</i> is 0 and the number is 0, no digits
+        result.
+<p></p>
+
+
+        <dt><b>'e','E'</b>
+        <dd> A floating point number is formatted as one digit before
+        the decimal point, <i>Precision</i> digits after, the <i>FormatChar</i>,
+        &plusmn;, followed by at least a two digit exponent: <i>d.dddddd</i>e<i>&plusmn;dd</i>.
+        If there is no <i>Precision</i>, six
+        digits are generated after the decimal point.
+        If the <i>Precision</i> is 0, no decimal point is generated.
+<p></p>
+
+
+        <dt><b>'f','F'</b>
+        <dd> A floating point number is formatted in decimal notation.
+        The <i>Precision</i> specifies the number of digits generated
+        after the decimal point. It defaults to six. At least one digit
+        is generated before the decimal point. If the <i>Precision</i>
+        is zero, no decimal point is generated.
+<p></p>
+
+
+        <dt><b>'g','G'</b>
+        <dd> A floating point number is formatted in either <b>e</b> or
+        <b>f</b> format for <b>g</b>; <b>E</b> or <b>F</b> format for
+        <b>G</b>.
+        The <b>f</b> format is used if the exponent for an <b>e</b> format
+        is greater than -5 and less than the <i>Precision</i>.
+        The <i>Precision</i> specifies the number of significant
+        digits, and defaults to six.
+        Trailing zeros are elided after the decimal point, if the fractional
+        part is zero then no decimal point is generated.
+<p></p>
+
+
+        <dt><b>'a','A'</b>
+        <dd> A floating point number is formatted in hexadecimal
+        exponential notation 0x<i>h.hhhhhh</i>p<i>&plusmn;d</i>.
+        There is one hexadecimal digit before the decimal point, and as
+        many after as specified by the <i>Precision</i>.
+        If the <i>Precision</i> is zero, no decimal point is generated.
+        If there is no <i>Precision</i>, as many hexadecimal digits as
+        necessary to exactly represent the mantissa are generated.
+        The exponent is written in as few digits as possible,
+        but at least one, is in decimal, and represents a power of 2 as in
+        <i>h.hhhhhh</i>*2<sup><i>&plusmn;d</i></sup>.
+        The exponent for zero is zero.
+        The hexadecimal digits, x and p are in upper case if the
+        <i>FormatChar</i> is upper case.
+    </dl>
+<p></p>
+
+
+    Floating point NaN's are formatted as <b>nan</b> if the
+    <i>FormatChar</i> is lower case, or <b>NAN</b> if upper.
+    Floating point infinities are formatted as <b>inf</b> or
+    <b>infinity</b> if the
+    <i>FormatChar</i> is lower case, or <b>INF</b> or <b>INFINITY</b> if upper.
+    </dl>
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.c.stdio;
+<span class="d_keyword">import</span> std.format;
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">auto</span> writer = appender!string();
+    <span class="d_psymbol">formattedWrite</span>(writer, <span class="d_string">"%s is the ultimate %s."</span>, 42, <span class="d_string">"answer"</span>);
+    <span class="d_keyword">assert</span>(writer.data == <span class="d_string">"42 is the ultimate answer."</span>);
+    <span class="d_comment">// Clear the writer
+</span>    writer = appender!string();
+    <span class="d_psymbol">formattedWrite</span>(writer, <span class="d_string">"Date: %2$s %1$s"</span>, <span class="d_string">"October"</span>, 5);
+    <span class="d_keyword">assert</span>(writer.data == <span class="d_string">"Date: 5 October"</span>);
+}
+</pre>
+
+The positional and non-positional styles can be mixed in the same
+format string. (POSIX leaves this behavior undefined.) The internal
+counter for non-positional parameters tracks the next parameter after
+the largest positional parameter already used.<p></p>
+
+</dd>
+<dt><div class="d_decl">uint <a name="formattedRead"></a><u>formattedRead</u>(R, Char, S...)(ref R <i>r</i>, const(Char)[] <i>fmt</i>, S <i>args</i>);
+</div></dt>
+<dd>Reads characters from input range <span class="d_inlinecode">r</span>, converts them according
+   to <span class="d_inlinecode">fmt</span>, and writes them to <span class="d_inlinecode">args</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">string s = <span class="d_string">"hello!124:34.5"</span>;
+string a;
+<span class="d_keyword">int</span> b;
+<span class="d_keyword">double</span> c;
+<span class="d_psymbol">formattedRead</span>(s, <span class="d_string">"%s!%s:%s"</span>, &amp;a, &amp;b, &amp;c);
+<span class="d_keyword">assert</span>(a == <span class="d_string">"hello"</span> &amp;&amp; b == 124 &amp;&amp; c == 34.5);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">struct <a name="FormatSpec"></a><u>FormatSpec</u>(Char);
+</div></dt>
+<dd>A compiled version of an individual format specifier, backwards
+ compatible with <span class="d_inlinecode">printf</span> specifiers.<p></p>
+
+<dl><dt><div class="d_decl">int <a name="width"></a><u>width</u>;
+</div></dt>
+<dd>Minimum width, default <span class="d_inlinecode">0</span>.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="precision"></a><u>precision</u>;
+</div></dt>
+<dd>Precision. Its semantics depends on the argument type. For
+       floating point numbers, precision dictates the number of
+       decimals printed.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="DYNAMIC"></a><u>DYNAMIC</u>;
+</div></dt>
+<dd>Special value for width and precision. <span class="d_inlinecode"><a name="DYNAMIC"></a><u>DYNAMIC</u></span> width or
+       precision means that they were specified with <span class="d_inlinecode">'*'</span> in the
+       format string and are passed at runtime through the varargs.<p></p>
+
+</dd>
+<dt><div class="d_decl">int <a name="UNSPECIFIED"></a><u>UNSPECIFIED</u>;
+</div></dt>
+<dd>Special value for precision, meaning the format specifier
+       contained no explicit precision.<p></p>
+
+</dd>
+<dt><div class="d_decl">char <a name="spec"></a><u>spec</u>;
+</div></dt>
+<dd>The actual format specifier, <span class="d_inlinecode">'s'</span> by default.<p></p>
+
+</dd>
+<dt><div class="d_decl">ubyte <a name="indexStart"></a><u>indexStart</u>;
+</div></dt>
+<dd>Index of the argument for positional parameters, from <span class="d_inlinecode">1</span> to
+       <span class="d_inlinecode">ubyte.max</span>. (<span class="d_inlinecode">0</span> means not used).<p></p>
+
+</dd>
+<dt><div class="d_decl">ubyte <a name="indexEnd"></a><u>indexEnd</u>;
+</div></dt>
+<dd>Index of the last argument for positional parameter range, from
+       <span class="d_inlinecode">1</span> to <span class="d_inlinecode">ubyte.max</span>. (<span class="d_inlinecode">0</span> means not used).<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="flDash"></a><u>flDash</u>;
+</div></dt>
+<dd>The format specifier contained a <span class="d_inlinecode">'-'</span> (<span class="d_inlinecode">printf</span>
+         compatibility).<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="flZero"></a><u>flZero</u>;
+</div></dt>
+<dd>The format specifier contained a <span class="d_inlinecode">'0'</span> (<span class="d_inlinecode">printf</span>
+         compatibility).<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="flSpace"></a><u>flSpace</u>;
+</div></dt>
+<dd>The format specifier contained a <span class="d_inlinecode">' '</span> (<span class="d_inlinecode">printf</span>
+         compatibility).<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="flPlus"></a><u>flPlus</u>;
+</div></dt>
+<dd>The format specifier contained a <span class="d_inlinecode">'+'</span> (<span class="d_inlinecode">printf</span>
+         compatibility).<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="flHash"></a><u>flHash</u>;
+</div></dt>
+<dd>The format specifier contained a <span class="d_inlinecode">'#'</span> (<span class="d_inlinecode">printf</span>
+         compatibility).<p></p>
+
+</dd>
+<dt><div class="d_decl">const(Char)[] <a name="nested"></a><u>nested</u>;
+</div></dt>
+<dd>In case of a compound format specifier starting with <span class="d_inlinecode">      "%("</span> and ending with <span class="d_inlinecode">"%)"</span>, <span class="d_inlinecode">nested</span>
+       contains the string contained within the two separators.<p></p>
+
+</dd>
+<dt><div class="d_decl">const(Char)[] <a name="trailing"></a><u>trailing</u>;
+</div></dt>
+<dd><span class="d_inlinecode">trailing</span> contains the rest of the format string.<p></p>
+
+</dd>
+<dt><div class="d_decl">auto this(in Char[] <i>fmt</i>);
+</div></dt>
+<dd>Given a string format specification <i>fmt</i>, parses a format
+       specifier. The string is assumed to start with the character
+       immediately following the <span class="d_inlinecode">'%'</span>. The string is advanced to
+       right after the end of the format specifier.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd><span class="d_inlinecode">void[]</span> is formatted like <span class="d_inlinecode">ubyte[]</span>.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd><span class="d_inlinecode">enum</span> is formatted like its base value.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Integrals are formatted like <span class="d_inlinecode">printf</span> does.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, D, Char)(Writer <i>w</i>, D <i>obj</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Floating-point values are formatted like <span class="d_inlinecode">printf</span> does.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd><span class="d_inlinecode">bool</span> is formatted as "<b>true</b>" or "<b>false</b>" with %s and as "1" or
+   "0" with integral-specific format specs.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Individual characters (<span class="d_inlinecode">char</span>, <span class="d_inlinecode">wchar</span>, or <span class="d_inlinecode">dchar</span>) are
+   formatted as Unicode characters with %s and as integers with
+   integral-specific format specs.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Strings are formatted like printf does.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Input ranges are formatted like arrays.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd><span class="d_inlinecode">void[0]</span> is formatted as "[]".<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Pointers are formatted as hex integers.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Objects are formatted by calling <span class="d_inlinecode">toString</span>.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Interfaces are formatted by casting to <span class="d_inlinecode">Object</span> and then calling
+   <span class="d_inlinecode">toString</span>.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Associative arrays are formatted by using <span class="d_inlinecode">':'</span> and <span class="d_inlinecode">' '</span> as
+   separators.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Structs are formatted using by calling toString member function
+   of the struct. toString must have one of the following signatures:
+<pre class="d_code">   <span class="d_keyword">void</span> toString(<span class="d_keyword">void</span> <span class="d_keyword">delegate</span>(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[]) sink, FormatSpec fmt);
+   <span class="d_keyword">void</span> toString(<span class="d_keyword">void</span> <span class="d_keyword">delegate</span>(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[]) sink, string fmt);
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, ref T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Static-size arrays are formatted just like arrays.<p></p>
+
+</dd>
+<dt><div class="d_decl">void <a name="formatValue"></a><u>formatValue</u>(Writer, T, Char)(Writer <i>w</i>, T <i>val</i>, ref FormatSpec!(Char) <i>f</i>);
+</div></dt>
+<dd>Delegates are formatted by 'Attributes ReturnType delegate(Parameters)'<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="unformatValue"></a><u>unformatValue</u>(T, Range, Char)(ref Range <i>input</i>, ref FormatSpec!(Char) <i>spec</i>);
+</div></dt>
+<dd>Reads an array (except for string types) and returns it.<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="unformatValue"></a><u>unformatValue</u>(T, Range, Char)(ref Range <i>input</i>, ref FormatSpec!(Char) <i>spec</i>);
+</div></dt>
+<dd>Reads a string and returns it.<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="unformatValue"></a><u>unformatValue</u>(T, Range, Char)(ref Range <i>input</i>, ref FormatSpec!(Char) <i>spec</i>);
+</div></dt>
+<dd>Reads an integral value and returns it.<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="unformatValue"></a><u>unformatValue</u>(T, Range, Char)(ref Range <i>input</i>, ref FormatSpec!(Char) <i>spec</i>);
+</div></dt>
+<dd>Reads one character.<p></p>
+
+</dd>
+<dt><div class="d_decl">T <a name="unformatValue"></a><u>unformatValue</u>(T, Range, Char)(ref Range <i>input</i>, ref FormatSpec!(Char) <i>spec</i>);
+</div></dt>
+<dd>Reads a floating-point value and returns it.<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ 
+</div>
+
+
+<div id="copyright">
+Copyright Digital Mars 2000-.
+
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

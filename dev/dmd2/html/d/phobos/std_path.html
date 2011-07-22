@@ -1,0 +1,727 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.path - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+
+<script>
+function listanchors()
+{
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+    values[n++] = a.name
+    }
+
+    values.sort();
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        newText += '<a href="#' + a + '"><span class="d_psymbol">'
+                + a + '</span></a> ';
+    }
+    if (newText != "") newText = "<p><b>Jump to:</b> " + newText + '</p>';
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+</script>
+
+</head>
+
+<body onload="listanchors()">
+<div id="heading">
+	<a href="http://www.digitalmars.com/"><img src="../dmlogo.gif" width="270" height="53" border="0" alt="www.digitalmars.com" align="left"></a>
+	<p align="right">D Programming Language 2.0</p>
+
+
+	<div id="headingNav">
+	<ul>	<li><a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Phobos/StdPath" title="Read/write comments and feedback">Comments</a></li>
+	<li><a href="../index.html" title="D Programming Language" class="dlink">D</a></li>
+	<li><a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a></li>
+	<li><a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a></li>
+	</ul>
+	</div>
+
+	<div id="lastupdate">Last update Sun Jul 10 10:47:31 2011
+</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input id="q" name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+<input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/d/2.0/phobos">
+<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+<input type="submit" id="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../lex.html" title="D Language Specification">Language</a></li>
+	<li><a href="phobos.html" title="D Runtime Library">Phobos</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="phobos.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bind.html" title="Function argument binding">std.bind</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_boxer.html" title="Box/unbox types">std.boxer</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_contracts.html" title="Think assert">std.contracts</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_cover.html" title="D coverage analyzer">std.cover</a></li>
+	<li><a href="std_cpuid.html" title="CPU identification">std.cpuid</a></li>
+	<li><a href="std_ctype.html" title="Simple character classification">std.ctype</a></li>
+	<li><a href="std_date.html" title="Date and time functions">std.date</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_demangle.html" title="Demangle D names">std.demangle</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_gc.html" title="Control the garbage collector">std.gc</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_gregorian.html" title="Gregorian Calendar">std.gregorian</a></li>
+	<li><a href="std_intrinsic.html" title="Compiler built in intrinsic functions">std.intrinsic</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_md5.html" title="Compute MD5 digests">std.md5</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_outofmemory.html" title="Out of memory exception">std.outofmemory</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_parallelism.html" title="High level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_process.html" title="Create/destroy threads">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_regexp.html" title="regular expressions (deprecated)">std.regexp</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdint.html" title="Integral types for various purposes">std.stdint</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_thread.html" title="Thread operations">std.thread</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_c_fenv.html" title="Floating point environment">std.c.fenv</a></li>
+	<li><a href="std_c_locale.html" title="Locale">std.c.locale</a></li>
+	<li><a href="std_c_math.html" title="Math">std.c.math</a></li>
+	<li><a href="std_c_process.html" title="Process">std.c.process</a></li>
+	<li><a href="std_c_stdarg.html" title="Variadic arguments">std.c.stdarg</a></li>
+	<li><a href="std_c_stddef.html" title="Standard definitions">std.c.stddef</a></li>
+	<li><a href="std_c_stdio.html" title="Standard I/O">std.c.stdio</a></li>
+	<li><a href="std_c_stdlib.html" title="Standard library">std.c.stdlib</a></li>
+	<li><a href="std_c_string.html" title="Strings">std.c.string</a></li>
+	<li><a href="std_c_time.html" title="Time">std.c.time</a></li>
+	<li><a href="std_c_wcharh.html" title="Wide characters">std.c.wcharh</a></li>
+	<li><a href="std_net_isemail.html" title="Validate email addresses">std.net.isemail</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+	<li><a href="phobos.html#std_windows" title="Modules specific to Windows">std.windows</a></li>
+	<li><a href="phobos.html#std_linux" title="Modules specific to Windows">std.linux</a></li>
+	<li><a href="phobos.html#std_c_windows" title="C Windows API">std.c.windows</a></li>
+	<li><a href="phobos.html#std_c_linux" title="C Linux API">std.c.linux</a></li>
+    </ul>
+    <h2><a href="phobos.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="phobos.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_time.html" title="Time">core.time</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div>
+<div id="content">
+    <h1>std.path</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\path.d -->
+This module is used to parse file names. All the operations work
+ only on strings; they don't perform any input/output
+ operations. This means that if a <a name="path"></a><u>path</u> contains a directory name
+ with a dot, functions like <span class="d_inlinecode">getExt()</span> will work with it just as
+ if it was a file. To differentiate these cases, use the std.file
+ module first (i.e. <span class="d_inlinecode">std.file.isDir()</span>).
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>,
+            Grzegorz Adam Hankiewicz, Thomas K&uuml;hne, Bill Baxter,
+            <a href="http://erdani.org">Andrei Alexandrescu</a>
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/path.d">std/path.d</a><p></p>
+
+<dl><dt><div class="d_decl">string <a name="sep"></a><u>sep</u>;
+</div></dt>
+<dd>String used to separate directory names in a path. Under
+  Windows this is a backslash, under Linux a slash. <p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="altsep"></a><u>altsep</u>;
+</div></dt>
+<dd>Alternate version of sep[] used in Windows (a slash). Under
+  Linux this is empty. <p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="pathsep"></a><u>pathsep</u>;
+</div></dt>
+<dd>Path separator string. A semi colon under Windows, a colon
+  under Linux. <p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="linesep"></a><u>linesep</u>;
+</div></dt>
+<dd>String used to separate lines, \r\n under Windows and \n
+ under Linux. 
+ String used to separate lines.<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="curdir"></a><u>curdir</u>;
+</div></dt>
+<dd>String representing the current directory.<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="pardir"></a><u>pardir</u>;
+</div></dt>
+<dd>String representing the parent directory.<p></p>
+
+</dd>
+<dt><div class="d_decl">alias <a name="fcmp"></a><u>fcmp</u>;
+</div></dt>
+<dd>Compare file names.
+<p></p>
+<b>Returns:</b><br><table border=1 cellpadding=4 cellspacing=0>
+      <tr> <td> &lt; 0        <td> filename1 &lt; filename2
+      <tr> <td> = 0   <td> filename1 == filename2
+      <tr> <td> &gt; 0        <td> filename1 &gt; filename2
+      </table><p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="getExt"></a><u>getExt</u>(string <i>fullname</i>);
+</div></dt>
+<dd>Extracts the extension from a filename or path.
+<p></p>
+This function will search <i>fullname</i> from the end until the
+ first dot, path separator or first character of <i>fullname</i> is
+ reached. Under Windows, the drive letter separator (<i>colon</i>)
+ also terminates the search.
+
+<p></p>
+<b>Returns:</b><br>If a dot was found, characters to its right are
+ returned. If a path separator was found, or <i>fullname</i> didn't
+ contain any dots or path separators, returns <b>null</b>.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">getExt</span>(<span class="d_string">r"d:\path\foo.bat"</span>) <span class="d_comment">// "bat"
+</span>     <span class="d_psymbol">getExt</span>(<span class="d_string">r"d:\path.two\bar"</span>) <span class="d_comment">// null
+</span> }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">getExt</span>(<span class="d_string">r"/home/user.name/bar."</span>)  <span class="d_comment">// ""
+</span>     <span class="d_psymbol">getExt</span>(<span class="d_string">r"d:\\path.two\\bar"</span>)     <span class="d_comment">// "two\\bar"
+</span>     <span class="d_psymbol">getExt</span>(<span class="d_string">r"/home/user/.resource"</span>)  <span class="d_comment">// "resource"
+</span> }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="getName"></a><u>getName</u>(string <i>fullname</i>);
+</div></dt>
+<dd>Returns the extensionless version of a filename or path.
+<p></p>
+This function will search <i>fullname</i> from the end until the
+ first dot, path separator or first character of <i>fullname</i> is
+ reached. Under Windows, the drive letter separator (<i>colon</i>)
+ also terminates the search.
+
+<p></p>
+<b>Returns:</b><br>If a dot was found, characters to its left are
+ returned. If a path separator was found, or <i>fullname</i> didn't
+ contain any dots or path separators, returns <b>null</b>.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">getName</span>(<span class="d_string">r"d:\path\foo.bat"</span>) =&gt; <span class="d_string">"d:\path\foo"</span>
+     <span class="d_psymbol">getName</span>(<span class="d_string">r"d:\path.two\bar"</span>) =&gt; <span class="d_keyword">null</span>
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">getName</span>(<span class="d_string">"/home/user.name/bar."</span>)  =&gt; <span class="d_string">"/home/user.name/bar"</span>
+     <span class="d_psymbol">getName</span>(<span class="d_string">r"d:\path.two\bar"</span>) =&gt; <span class="d_string">"d:\path"</span>
+     <span class="d_psymbol">getName</span>(<span class="d_string">"/home/user/.resource"</span>) =&gt; <span class="d_string">"/home/user/"</span>
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">Char[] <a name="basename"></a><u>basename</u>(Char, ExtChar = immutable(char))(Char[] <i>fullname</i>, ExtChar[] <i>extension</i> = null);
+</div></dt>
+<dd>Extracts the base name of a path and optionally chops off a
+ specific suffix.
+<p></p>
+This function will search <span class="d_param">fullname</span> from the end until
+ the first path separator or first character of <span class="d_param">fullname</span>
+ is reached. Under Windows, the drive letter separator (<i>colon</i>)
+ also terminates the search. After the search has ended, keep the
+ portion to the right of the separator if found, or the entire
+ <span class="d_param">fullname</span> otherwise. If the kept portion has suffix
+ <span class="d_param">extension</span>, remove that suffix. Return the remaining string.
+
+<p></p>
+<b>Returns:</b><br>The portion of <span class="d_param">fullname</span> left after the path
+ part and the extension part, if any, have been removed.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">basename</span>(<span class="d_string">r"d:\path\foo.bat"</span>) =&gt; <span class="d_string">"foo.bat"</span>
+     <span class="d_psymbol">basename</span>(<span class="d_string">r"d:\path\foo"</span>, <span class="d_string">".bat"</span>) =&gt; <span class="d_string">"foo"</span>
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">basename</span>(<span class="d_string">"/home/user.name/bar."</span>)  =&gt; <span class="d_string">"bar."</span>
+     <span class="d_psymbol">basename</span>(<span class="d_string">"/home/user.name/bar."</span>, <span class="d_string">"."</span>)  =&gt; <span class="d_string">"bar"</span>
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">alias <a name="getBaseName"></a><u>getBaseName</u>;
+</div></dt>
+<dd>Alias for <span class="d_param">basename</span>, kept for backward
+ compatibility. New code should use <span class="d_param">basename</span>. <p></p>
+
+</dd>
+<dt><div class="d_decl">Char[] <a name="dirname"></a><u>dirname</u>(Char)(Char[] <i>fullname</i>);
+</div></dt>
+<dd>Extracts the directory part of a path.
+<p></p>
+This function will search <span class="d_inlinecode">fullname</span> from the end until the
+ first path separator or first character of <span class="d_inlinecode">fullname</span> is
+ reached. Under Windows, the drive letter separator (<i>colon</i>)
+ also terminates the search.
+
+<p></p>
+<b>Returns:</b><br>If a path separator was found, all the characters to its
+ left without any trailing path separators are returned. Otherwise,
+ <span class="d_inlinecode">"."</span> is returned.
+<p></p>
+
+
+ The found path separator will be included in the returned string
+ if and only if it represents the root.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">r"d:\path\foo.bat"</span>) == <span class="d_string">r"d:\path"</span>);
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">r"d:\path"</span>) == <span class="d_string">r"d:\"</span>);
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">"d:foo.bat"</span>) == <span class="d_string">"d:."</span>);
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">"foo.bat"</span>) == <span class="d_string">"."</span>);
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">"/home/user"</span>) == <span class="d_string">"/home"</span>);
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">"/home"</span>) == <span class="d_string">"/"</span>);
+     <span class="d_keyword">assert</span>(<span class="d_psymbol">dirname</span>(<span class="d_string">"user"</span>) == <span class="d_string">"."</span>);
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">alias <a name="getDirName"></a><u>getDirName</u>;
+</div></dt>
+<dd>Alias for <span class="d_param">dirname</span>, kept for backward
+ compatibility. New code should use <span class="d_param">dirname</span>. <p></p>
+
+</dd>
+<dt><div class="d_decl">Char[] <a name="getDrive"></a><u>getDrive</u>(Char)(Char[] <i>fullname</i>);
+</div></dt>
+<dd>Extracts the drive letter of a path.
+<p></p>
+This function will search fullname for a colon from the beginning.
+
+<p></p>
+<b>Returns:</b><br>If a colon is found, all the characters to its left
+ plus the colon are returned.  Otherwise, <b>null</b> is returned.
+<p></p>
+
+
+ Under Linux, this function always returns <b>null</b> immediately.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_psymbol">getDrive</span>(<span class="d_string">r"d:\path\foo.bat"</span>) =&gt; <span class="d_string">"d:"</span>
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="defaultExt"></a><u>defaultExt</u>(string <i>filename</i>, string <i>ext</i>);
+</div></dt>
+<dd>Appends a default extension to a <i>filename</i>.
+<p></p>
+This function first searches <i>filename</i> for an extension and
+ appends <i>ext</i> if there is none. <i>ext</i> should not have any leading
+ dots, one will be inserted between <i>filename</i> and <i>ext</i> if <i>filename</i>
+ doesn't already end with one.
+
+<p></p>
+<b>Returns:</b><br><i>filename</i> if it contains an extension, otherwise <i>filename</i>
+ + <i>ext</i>.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_psymbol">defaultExt</span>(<span class="d_string">"foo.txt"</span>, <span class="d_string">"raw"</span>) =&gt; <span class="d_string">"foo.txt"</span>
+ <span class="d_psymbol">defaultExt</span>(<span class="d_string">"foo."</span>, <span class="d_string">"raw"</span>) =&gt; <span class="d_string">"foo.raw"</span>
+ <span class="d_psymbol">defaultExt</span>(<span class="d_string">"bar"</span>, <span class="d_string">"raw"</span>) =&gt; <span class="d_string">"bar.raw"</span>
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="addExt"></a><u>addExt</u>(string <i>filename</i>, string <i>ext</i>);
+</div></dt>
+<dd>Adds or replaces an extension to a <i>filename</i>.
+<p></p>
+This function first searches <i>filename</i> for an extension and
+ replaces it with <i>ext</i> if found.  If there is no extension, <i>ext</i>
+ will be appended. <i>ext</i> should not have any leading dots, one will
+ be inserted between <i>filename</i> and <i>ext</i> if <i>filename</i> doesn't already
+ end with one.
+
+<p></p>
+<b>Returns:</b><br><i>filename</i> + <i>ext</i> if <i>filename</i> is extensionless. Otherwise
+ strips <i>filename</i>'s extension off, appends <i>ext</i> and returns the
+ result.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_psymbol">addExt</span>(<span class="d_string">"foo.txt"</span>, <span class="d_string">"raw"</span>) =&gt; <span class="d_string">"foo.raw"</span>
+ <span class="d_psymbol">addExt</span>(<span class="d_string">"foo."</span>, <span class="d_string">"raw"</span>) =&gt; <span class="d_string">"foo.raw"</span>
+ <span class="d_psymbol">addExt</span>(<span class="d_string">"bar"</span>, <span class="d_string">"raw"</span>) =&gt; <span class="d_string">"bar.raw"</span>
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="isabs"></a><u>isabs</u>(in char[] <i>path</i>);
+</div></dt>
+<dd>Checks if <i>path</i> is absolute.
+<p></p>
+<b>Returns:</b><br>non-zero if the <i>path</i> starts from the root directory (Linux) or
+ drive letter and root directory (Windows),
+ zero otherwise.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">isabs</span>(<span class="d_string">r"relative\path"</span>) =&gt; 0
+     <span class="d_psymbol">isabs</span>(<span class="d_string">r"\relative\path"</span>) =&gt; 0
+     <span class="d_psymbol">isabs</span>(<span class="d_string">r"d:\absolute"</span>) =&gt; 1
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">isabs</span>(<span class="d_string">"/home/user"</span>) =&gt; 1
+     <span class="d_psymbol">isabs</span>(<span class="d_string">"foo"</span>) =&gt; 0
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="rel2abs"></a><u>rel2abs</u>(string <i>path</i>);
+</div></dt>
+<dd>Converts a relative <i>path</i> into an absolute <i>path</i>.<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="join"></a><u>join</u>(const(char)[] <i>p1</i>, const(char)[] <i>p2</i>, const(char)[][] <i>more</i>...);
+</div></dt>
+<dd>Joins two or <i>more</i> path components.
+<p></p>
+If <i>p1</i> doesn't have a trailing path separator, one will be appended
+ to it before concatenating <i>p2</i>.
+
+<p></p>
+<b>Returns:</b><br><i>p1</i> ~ <i>p2</i>. However, if <i>p2</i> is an absolute path, only <i>p2</i>
+ will be returned.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">join</span>(<span class="d_string">r"c:\foo"</span>, <span class="d_string">"bar"</span>) =&gt; <span class="d_string">r"c:\foo\bar"</span>
+     <span class="d_psymbol">join</span>(<span class="d_string">"foo"</span>, <span class="d_string">r"d:\bar"</span>) =&gt; <span class="d_string">r"d:\bar"</span>
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">join</span>(<span class="d_string">"/foo/"</span>, <span class="d_string">"bar"</span>) =&gt; <span class="d_string">"/foo/bar"</span>
+     <span class="d_psymbol">join</span>(<span class="d_string">"/foo"</span>, <span class="d_string">"/bar"</span>) =&gt; <span class="d_string">"/bar"</span>
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="fncharmatch"></a><u>fncharmatch</u>(dchar <i>c1</i>, dchar <i>c2</i>);
+</div></dt>
+<dd>Matches filename characters.
+<p></p>
+Under Windows, the comparison is done ignoring case. Under Linux
+ an exact match is performed.
+
+<p></p>
+<b>Returns:</b><br>non zero if <i>c1</i> matches <i>c2</i>, zero otherwise.
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">fncharmatch</span>('a', 'b') =&gt; 0
+     <span class="d_psymbol">fncharmatch</span>('A', 'a') =&gt; 1
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">fncharmatch</span>('a', 'b') =&gt; 0
+     <span class="d_psymbol">fncharmatch</span>('A', 'a') =&gt; 0
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">bool <a name="fnmatch"></a><u>fnmatch</u>(const(char)[] <i>filename</i>, const(char)[] <i>pattern</i>);
+</div></dt>
+<dd>Matches a <i>pattern</i> against a <i>filename</i>.
+<p></p>
+Some characters of <i>pattern</i> have special a meaning (they are
+ <i>meta-characters</i>) and <b>can't</b> be escaped. These are:
+ <p><table>
+ <tr><td><b>*</b></td>
+     <td>Matches 0 or more instances of any character.</td></tr>
+ <tr><td><b>?</b></td>
+     <td>Matches exactly one instances of any character.</td></tr>
+ <tr><td><b>[</b><i>chars</i><b>]</b></td>
+     <td>Matches one instance of any character that appears
+     between the brackets.</td></tr>
+ <tr><td><b>[!</b><i>chars</i><b>]</b></td>
+     <td>Matches one instance of any character that does not appear
+     between the brackets after the exclamation mark.</td></tr>
+ </table><p>
+ Internally individual character comparisons are done calling
+ fncharmatch(), so its rules apply here too. Note that path
+ separators and dots don't stop a meta-character from matching
+ further portions of the <i>filename</i>.
+
+<p></p>
+<b>Returns:</b><br>non zero if <i>pattern</i> matches <i>filename</i>, zero otherwise.
+
+<p></p>
+<b>See Also:</b><br>fncharmatch().
+
+<p></p>
+<b>Throws:</b><br>Nothing.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">version</span>(Windows)
+ {
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"*"</span>) =&gt; 1
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">r"foo/foo\bar"</span>, <span class="d_string">"f*b*r"</span>) =&gt; 1
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"f?bar"</span>) =&gt; 0
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">"Goo.bar"</span>, <span class="d_string">"[fg]???bar"</span>) =&gt; 1
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">r"d:\foo\bar"</span>, <span class="d_string">"d*foo?bar"</span>) =&gt; 1
+ }
+ <span class="d_keyword">version</span>(Posix)
+ {
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">"Go*.bar"</span>, <span class="d_string">"[fg]???bar"</span>) =&gt; 0
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">"/foo*home/bar"</span>, <span class="d_string">"?foo*bar"</span>) =&gt; 1
+     <span class="d_psymbol">fnmatch</span>(<span class="d_string">"foobar"</span>, <span class="d_string">"foo?bar"</span>) =&gt; 1
+ }
+</pre>
+<p></p>
+
+</dd>
+<dt><div class="d_decl">string <a name="expandTilde"></a><u>expandTilde</u>(string <i>inputPath</i>);
+</div></dt>
+<dd>Performs tilde expansion in paths.
+<p></p>
+There are two ways of using tilde expansion in a path. One
+ involves using the tilde alone or followed by a path separator. In
+ this case, the tilde will be expanded with the value of the
+ environment variable <i>HOME</i>.  The second way is putting
+ a username after the tilde (i.e. <tt>~john/Mail</tt>). Here,
+ the username will be searched for in the user database
+ (i.e. <tt>/etc/passwd</tt> on Unix systems) and will expand to
+ whatever path is stored there.  The username is considered the
+ string after the tilde ending at the first instance of a path
+ separator.
+<p></p>
+
+
+ Note that using the <i>~user</i> syntax may give different
+ values from just <i>~</i> if the environment variable doesn't
+ match the value stored in the user database.
+<p></p>
+
+
+ When the environment variable version is used, the path won't
+ be modified if the environment variable doesn't exist or it
+ is empty. When the database version is used, the path won't be
+ modified if the user doesn't exist in the database or there is
+ not enough memory to perform the query.
+
+<p></p>
+<b>Returns:</b><br><i>inputPath</i> with the tilde expanded, or just <i>inputPath</i>
+ if it could not be expanded.
+ For Windows, <a name="expandTilde"></a><u>expandTilde</u>() merely returns its argument <i>inputPath</i>.
+
+<p></p>
+<b>Throws:</b><br>std.outofmemory.OutOfMemoryException if there is not enough
+ memory to perform
+ the database lookup for the <i>~user</i> syntax.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"> <span class="d_keyword">import</span> std.path;
+
+ <span class="d_keyword">void</span> process_file(string filename)
+ {
+     string path = <span class="d_psymbol">expandTilde</span>(filename);
+     ...
+ }
+</pre>
+
+<pre class="d_code"> <span class="d_keyword">import</span> std.path;
+
+ string RESOURCE_DIR_TEMPLATE = <span class="d_string">"~/.applicationrc"</span>;
+ string RESOURCE_DIR;    <span class="d_comment">// This gets expanded in main().
+</span>
+ <span class="d_keyword">int</span> main(string[] args)
+ {
+     RESOURCE_DIR = <span class="d_psymbol">expandTilde</span>(RESOURCE_DIR_TEMPLATE);
+     ...
+ }
+</pre>
+<p></p>
+<b>Version:</b><br>Available since v0.143.
+<p></p>
+<b>Authors:</b><br>Grzegorz Adam Hankiewicz, Thomas Kühne.<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ 
+</div>
+
+
+<div id="copyright">
+Copyright Digital Mars 2000-.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+
