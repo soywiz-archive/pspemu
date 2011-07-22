@@ -1,0 +1,7 @@
+[compileoptions]
+buildtype = EXECUTABLE
+out = obj
+outname = ..\\pspemu.exe
+buildtool = xfbuild pspemu\\main.d +xstd +xcore -Jimport -O -release -d -noboundscheck +o=pspemu.exe dfl/olepro32_dfl.lib dfl/shell32_dfl.lib dfl/user32_dfl.lib gdi32.lib comctl32.lib advapi32.lib comdlg32.lib ole32.lib uuid.lib ws2_32.lib import\\psp.res
+extraOptions = -od$DEEBUILDER.OUTPUTPATH\n-of$DEEBUILDER.OUTPUTEXE\n$DEEBUILDER.SRCLIBS.-I\n$DEEBUILDER.SRCFOLDERS.-I\n$DEEBUILDER.SRCMODULES\n-Jimport\n-O\n-release\n-noboundscheck\nimport/psp.res\ndfl/olepro32_dfl.lib\ndfl/shell32_dfl.lib\ndfl/user32_dfl.lib\ngdi32.lib\ncomctl32.lib\nadvapi32.lib\ncomdlg32.lib\nole32.lib\nuuid.lib\nws2_32.lib
+

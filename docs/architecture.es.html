@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Arquitectura</title>
+</head>
+<body>
+
+<h1>Introducción</h1>
+
+<p>En la versión 3.1 del emulador ha habido un cambio radical de arquitectura de ejecución en diversos aspectos:</p>
+<ul>
+	<li><a href="#cpu_threads_and_sync_primitives">Hilos de CPU y primitivas de sincronización</a></li>
+	<li><a href="#component_sync">Sincronización entre componentes</a></li>
+	<li><a href="#hle_switching">Intercambio de HLE</a></li>
+</ul>
+
+<a name="cpu_threads_and_sync_primitives"></a>
+<h1>Hilos de CPU y primitivas de sincronización</h1>
+
+	<h2>Hilo en guest, hilo en host</h2>
+	
+	<p>
+		Los hilos del "guest" (invitado) son los hilos de la plataforma emulada. Un hilo de la CPU de la PSP en este caso.
+	</p>
+	<p>
+		Los hilos del "host" (anfitrión) son los hilos nativos de la plataforma que emula. En este caso un hilo de Windows
+		(o de Linux y Mac en un futuro).
+	</p>
+	
+	<p>
+		Generalmente los emuladores suelen ejecutar la CPU en un único thread. Incluyendo la versiones 1.0 y 2.0 del emulador.
+		Es decir, ejecutamos unas cuantas instrucciones y cada X instrucciones o cuando se produce una interrupción,
+		se hace el intercambio de ejecución de hilos. En emuladores LLE (Low Level Emulation) esto es indispensable,
+		ya que la gestión de los hilos la hace el propio procesador mediante las interrupciones y un código encargado
+		del cambio de threads. Sin embargo en las emulaciones HLE (High Level Emulation) con threads emulados a este nivel,
+		es posible crear un hilo en host por cada hilo en ejecución en el guest. 
+	</p>
+
+	<h2>Primitivas de sincronización simuladas en host</h2>
+	
+	<p>
+		Para mantener los hilos en sincronía hacen falta las primitivas de sincronización. Existen diversas primitivas
+		de sincronización que permiten esperar a otros hilos, pero todas se pueden emular con alguna de ellas. En el caso
+		del emulador, se emulan todas las primitivas mediante eventos. Un evento es una primitiva de sincronización que permite
+		a un hilo esperar hasta que otro mande una señal. En cuanto se manda la señal, el sistema operativo "despierta" esos
+		hilos dormidos. 
+	</p>
+	
+	<p>
+		Cuando un hilo del guest se queda en espera de la señal de alguna primitiva de sincronización a nivel de host se puede
+		querer salir de ahí por dos motivos: que se haya cumplido la condición, o que se haya parado la emulación. Así que cuando
+		se espera a una primitiva, se crea un WaitMultipleObjects al que se añaden la primitiva que controla la parada de ejecución
+		de la emulación en el host, y la primitiva que controla el cambio de estado en la primitiva del guest.
+		En la PSP, algunas esperas además permiten la ejecución de callbacks planificados que deberían despertar al hilo del host
+		y realizar ese callback.
+		El módulo pspemu.utils.sync.WaitObject permite la ejecución de callbacks en cuanto se cumple una de las condiciones. Así que
+		los WaitObject de finalización de ejecución y de callbacks encolados, tienen callbacks asociados. En de la finalización
+		de ejecución se encarga de lanzar un HaltException, y el de la cola de callbacks de llamar desde ese hilo de guest a las
+		funciones encoladas en el guest.    
+	</p>
+	
+	<h3>Eventos</h3>
+	
+	<p>
+		Los eventos de la PSP no corresponden con los eventos de Windows. En la PSP puedes resperar que se seteen un conjunto de bits
+		de un flag que se guarda y despertar solamente en esa condición.
+		La forma en la que se emula esto actualmente es creando un WaitEvent que se dispara cuando hay un cambio en esos flags.
+		Y hay un bucle while que comprueba que estos flags sean los esperados. Si no son los esperados, se vuelve a esperar a un cambio.
+		El hilo del host se despierta obvaimente más veces de lo necesario, pero como no hay sleeps de polling siguen sin haber cuellos
+		de botella. Simplemente se despertará, hará una operación rapidísima y se volverá a dormir.
+	</p>
+	
+	<h3>Semáforos</h3>
+	
+	<p>TODO</p>
+
+	<h3>Sleeps y Delays</h3>
+	
+	<p>TODO</p>
+
+<a name="#component_sync"></a>
+<h1>Sincronización entre componentes</h1>
+	
+	<p>
+		Anteriormente los componentes se sincronizaban mediante "polling".
+		La peor técnica para el multithreading, que acaba produciendo cuellos de botella.
+		El polling consiste en esperar un tiempo determinado y comprobar tras ese tiempo si la condición de ha cumplido.
+		El esperar un tiempo determinado, hace que en procesadores rápidos o en eventos que se producen rápido se pierda un tiempo precioso
+		en esa espera de "tiempo determinado". Los tiempos determinados nunca se van a ajustar a todos los casos. Mientras que las
+		primitivas de sincronización se ajustan a la perfección, con tiempos precisos y sin cuellos de botella.
+	</p>
+	
+	<p>
+		Para evitar esto se inventaron las primitivas de sincronización, que permiten que un
+		hilo no obtenga la ejecución cuando se hace un cambio de hilo si no se ha cumplido
+		la condición.
+	</p>
+
+	<p>
+		Ahora todos los componentes se envían señales y hacen uso de las primitivas de
+		sincronización que ofrece el sistema operativo.
+	</p>
+	
+	<p>
+		Actualmente D no soporta la espera de varios eventos/mutex/semáforos simultáneamente.
+		Así que mientras no lo implementen he creado el paquete pspemu.utils.sync, que permite
+		crear WaitEvent y WaitMultipleObjects. 
+	</p>
+</body>
+
+<a name="hle_switching"></a>
+<h1>Intercambio de HLE</h1>
+
+	<p>
+		En una emulación HLE hay determinados momentos en los que se para la ejecución de la CPU y se empieza a ejecutar
+		código de alto nivel implementado en el host.
+	</p>
+	
+	<h2>Cpu -&gt; HLE</h2>
+	
+	<p>
+		El cambio de la cpu a la ejecuión HLE la hago mediante una syscall especial. Esa syscall se encarga de leer los 4 bytes
+		siguientes que contienen un puntero a una estructura del HOST que guarda información con el método a ejecutar. Al terminar
+		vuelve a la ejecución habiendo cambiado los registros pertinentes y cambiando el registro PC (y nPC (con un +4)) al valor del registro RA.
+		Para simplificar la implementación de estas funciones (que son muchas y están distribuidas en módulos) creé las clases ModuleManager y ModuleNative.
+		El ModuleNative se encarga de crear un delegado que extrae los registros pertinentes y llama a un método registrado. Esto se hace mediante
+		los traits de D, que son una especie de Reflection en tiempo de compilación. 
+	</p>
+	
+	<h2>HLE -&gt; Cpu</h2>
+	
+	<p>
+		En algunos métodos HLE es posible tener que llamar a callbacks o funciones que están implementadas con código del guest.
+		Para ello se guardan los registros actuales, se cambian los registros con los parámetros que se quieran hacer y se llama a una 
+		ejecución de Cpu con el ThreadState actual. Luego se resume la ejecución HLE.
+	</p>
+
+</html>

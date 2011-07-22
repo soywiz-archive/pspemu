@@ -1,0 +1,2 @@
+Inicialmente se determina si el modulo es de Kernel o de usuario.
+Si es de Kernel se direccionaa 88XXXXXX si es de usuario se deja en 08XXXXXX
