@@ -418,7 +418,8 @@ else
 }
     private 
 {
-    static Mutex slock();
+    @property static Mutex slock();
+
 
     __gshared Context* sm_cbeg;
 

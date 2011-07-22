@@ -4,7 +4,7 @@ import pspemu.hle.ModuleNative;
 import pspemu.hle.HleEmulatorState;
 import pspemu.utils.String;
 import std.stream;
-import std.intrinsic;
+import core.bitop;
 import pspemu.utils.StructUtils;
 import pspemu.utils.MathUtils;
 import pspemu.utils.audio.wav;

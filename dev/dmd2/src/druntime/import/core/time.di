@@ -133,19 +133,34 @@ return getUnitsFromHNSecs!(units)(hnsecs);
 
 }
 }
-        @property alias get!("weeks") weeks;
+        @property const pure nothrow long weeks()
+{
+return get!("weeks")();
+}
 
-        @property alias get!("days") days;
+        @property const pure nothrow long days()
+{
+return get!("days")();
+}
 
-        @property alias get!("hours") hours;
+        @property const pure nothrow long hours()
+{
+return get!("hours")();
+}
 
-        @property alias get!("minutes") minutes;
+        @property const pure nothrow long minutes()
+{
+return get!("minutes")();
+}
 
-        @property alias get!("seconds") seconds;
+        @property const pure nothrow long seconds()
+{
+return get!("seconds")();
+}
 
         @property const pure nothrow FracSec fracSec();
 
-        template total(string units) if (units == "weeks" || units == "days" || units == "hours" || units == "minutes" || units == "seconds" || units == "msecs" || units == "usecs" || units == "hnsecs" || units == "nsecs")
+        @property template total(string units) if (units == "weeks" || units == "days" || units == "hours" || units == "minutes" || units == "seconds" || units == "msecs" || units == "usecs" || units == "hnsecs" || units == "nsecs")
 {
 const pure nothrow long total()
 {
@@ -160,6 +175,7 @@ return getUnitsFromHNSecs!(units)(_hnsecs);
 
 }
 }
+
         string toString()
 {
 return _toStringImpl();
@@ -232,15 +248,30 @@ return to!("seconds",T) * unitsPerSec;
 
 }
 }
-    @property alias to!("seconds",long) seconds;
+    @property const pure nothrow long seconds()
+{
+return to!("seconds",long)();
+}
 
-        @property alias to!("msecs",long) msecs;
+        @property const pure nothrow long msecs()
+{
+return to!("msecs",long)();
+}
 
-    @property alias to!("usecs",long) usecs;
+    @property const pure nothrow long usecs()
+{
+return to!("usecs",long)();
+}
 
-    @property alias to!("hnsecs",long) hnsecs;
+    @property const pure nothrow long hnsecs()
+{
+return to!("hnsecs",long)();
+}
 
-    @property alias to!("nsecs",long) nsecs;
+    @property const pure nothrow long nsecs()
+{
+return to!("nsecs",long)();
+}
 
     static template from(string units) if (units == "seconds" || units == "msecs" || units == "usecs" || units == "hnsecs" || units == "nsecs")
 {

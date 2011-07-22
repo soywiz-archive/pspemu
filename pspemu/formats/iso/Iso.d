@@ -6,7 +6,7 @@ import std.stdio;
 import std.datetime;
 import std.stream;
 import std.string;
-import std.intrinsic;
+import core.bitop;
 import pspemu.core.exceptions.NotImplementedException;
 import pspemu.utils.MathUtils;
 

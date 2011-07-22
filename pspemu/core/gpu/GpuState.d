@@ -9,7 +9,7 @@ import pspemu.core.gpu.Types;
 import pspemu.utils.MathUtils;
 import pspemu.utils.StructUtils;
 import pspemu.utils.String;
-import std.intrinsic;
+import core.bitop;
 //import pspemu.utils.Utils;
 
 import pspemu.hle.kd.ge.Types;

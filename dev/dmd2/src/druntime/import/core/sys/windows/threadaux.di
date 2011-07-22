@@ -98,7 +98,9 @@ return OpenThread(SYNCHRONIZE | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION | 
 return enumProcessThreads(GetCurrentProcessId(),dg,context);
 }
 
-    static void impersonate_thread(uint id, void function() fn);
+    extern (C) alias void function() externCVoidFunc;
+
+    static void impersonate_thread(uint id, externCVoidFunc fn);
 
 }
     public 

@@ -1,6 +1,6 @@
 module pspemu.utils.imaging.SimplePng;
 
-import std.intrinsic;
+import core.bitop;
 import std.stdio;
 import std.stream;
 import std.file;
@@ -9,7 +9,7 @@ import etc.c.zlib;
 import pspemu.utils.StructUtils;
 
 class SimplePng {
-	alias std.intrinsic.bswap BE;
+	alias core.bitop.bswap BE;
 	
 	static public void write(uint[] pixels32, int width, int height, string file) {
 		scope stream = new BufferedFile(file, FileMode.OutNew);
@@ -26,7 +26,7 @@ class SimplePng {
 	
 	        //auto crc = etc.c.zlib.crc32(0, fullData.ptr, fullData.length);
 	        file.write(BE(std.zlib.crc32(0, fullData)));
-	        //file.write(std.intrinsic.bswap(crc));
+	        //file.write(core.bitop.bswap(crc));
         }
 
         static struct PNG_IHDR { align(1):

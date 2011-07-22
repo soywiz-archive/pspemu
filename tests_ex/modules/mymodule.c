@@ -20,14 +20,8 @@ PSP_MODULE_INFO("TESTPRX", 0x1000, 1, 1);
 
 int main(int argc, char **argv)
 {
-	int i;
-	
 	printf(WELCOME_MESSAGE);
-
-	for(i = 0; i < argc; i++)
-	{
-		printf("Arg %d: %s\n", i, argv[i]);
-	}
+	//sceKernelSignalSema((SceUID)(void *)argv[0], 1);
 
 	//sceKernelSleepThread();
 

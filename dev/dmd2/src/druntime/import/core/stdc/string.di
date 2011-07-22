@@ -36,6 +36,7 @@ extern (C) nothrow @system
     char* strerror(int errnum);
     pure size_t strlen(in char* s);
 
+    char* strdup(in char* s);
 }
 
 

@@ -31,6 +31,8 @@ return processorName;
 }
     __gshared CacheInfo[5] datacache;
 
+    @property 
+{
     bool x87onChip()
 {
 return (features & FPU_BIT) != 0;
@@ -148,6 +150,7 @@ return probablyIntel && family == 15;
 {
 return family < 6 || family == 6 && model < 15 && !probablyIntel;
 }
+}
     __gshared public 
 {
     uint stepping;
@@ -167,10 +170,11 @@ return family < 6 || family == 6 && model < 15 && !probablyIntel;
     uint amdmiscfeatures = 0;
     uint maxCores = 1;
     uint maxThreads = 1;
-    bool hyperThreadingBit()
+    @property bool hyperThreadingBit()
 {
 return (features & HTT_BIT) != 0;
 }
+
     enum : uint
 {
 FPU_BIT = 1,

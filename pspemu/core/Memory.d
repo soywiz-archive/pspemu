@@ -84,8 +84,8 @@ class Memory : Stream {
 
 	static struct Segments {
 		const scratchPad  = Segment(0x00_010000, 0x00004000);
-		//const frameBuffer = Segment(0x04_000000, 0x00200000);
-		const frameBuffer = Segment(0x04_000000, 0x00800000); // http://hitmen.c02.at/files/yapspd/psp_doc/chap10.html#sec10
+		const frameBuffer = Segment(0x04_000000, 0x00200000);
+		//const frameBuffer = Segment(0x04_000000, 0x00800000); // http://hitmen.c02.at/files/yapspd/psp_doc/chap10.html#sec10
 		// 0x04_00_00_00 = VRAM 
 		// 0x04_20_00_00 = SWIZZLED ZBUFFER
 		// 0x04_40_00_00 = VRAM MIRRORED

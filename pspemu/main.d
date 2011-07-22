@@ -65,6 +65,8 @@ import pspemu.core.gpu.Commands;
 
 
 void executeSandboxTests(string[] args) {
+	auto localFileSystem = new LocalFileSystem("__unexistant_path__");
+	auto opened = localFileSystem.dopen("aaaa");
 }
 
 void executeIsoListing(string[] args) {

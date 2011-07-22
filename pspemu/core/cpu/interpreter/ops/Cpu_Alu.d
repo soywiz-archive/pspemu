@@ -23,7 +23,7 @@ template TemplateCpu_ALU() {
 	void OP_SUB () { mixin(CE("$rd = #rs - #rt;")); }
 	void OP_SUBU() { mixin(CE("$rd = $rs - $rt;")); }
 
-	// TODO: Check std.intrinsic
+	// TODO: Check core.intrinsic
 	// Count Leading Ones in Word
 	void OP_CLO() { mixin(CE("$rd = CLO($rs);")); }
 	// Count Leading Zeros in Word
@@ -177,12 +177,12 @@ template TemplateCpu_ALU_Utils() {
 				return vd.i;
 			} else {
 				// CHECK?
-				return std.intrinsic.bswap(v);
+				return core.bitop.bswap(v);
 			}
 		}
 
 		// Count Leading Zeros in Word
-		uint CLZ(uint v) { return (v != 0) ? (31 - std.intrinsic.bsr(v)) : 32; }
+		uint CLZ(uint v) { return (v != 0) ? (31 - core.bitop.bsr(v)) : 32; }
 		// Count Leading Ones in Word
 		uint CLO(uint v) { return CLZ(~v); }
 

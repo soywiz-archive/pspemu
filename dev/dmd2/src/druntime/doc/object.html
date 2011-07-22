@@ -124,7 +124,7 @@ Walter Bright, Sean Kelly<br><br>
 <dd>Compares two instances for &lt;, ==, or &gt;.<br><br>
 
 </dd>
-<dt><big>size_t <u>tsize</u>();
+<dt><big>@property size_t <u>tsize</u>();
 </big></dt>
 <dd>Returns size of the type.<br><br>
 
@@ -134,7 +134,7 @@ Walter Bright, Sean Kelly<br><br>
 <dd>Swaps two instances of the type.<br><br>
 
 </dd>
-<dt><big>TypeInfo <u>next</u>();
+<dt><big>@property TypeInfo <u>next</u>();
 </big></dt>
 <dd>Get TypeInfo for '<u>next</u>' type, as defined by what kind of type this is,
  <b>null</b> if none.<br><br>
@@ -146,7 +146,7 @@ Walter Bright, Sean Kelly<br><br>
  an array with a <b>null</b> ptr and a length equal to the type size will be returned.<br><br>
 
 </dd>
-<dt><big>uint <u>flags</u>();
+<dt><big>@property uint <u>flags</u>();
 </big></dt>
 <dd>Get <u>flags</u> for type: 1 means GC should scan for pointers<br><br>
 
@@ -166,7 +166,7 @@ Walter Bright, Sean Kelly<br><br>
 <dd>Run the <u>postblit</u> on the object and all its sub-objects<br><br>
 
 </dd>
-<dt><big>size_t <u>talign</u>();
+<dt><big>@property size_t <u>talign</u>();
 </big></dt>
 <dd>Return alignment of type<br><br>
 

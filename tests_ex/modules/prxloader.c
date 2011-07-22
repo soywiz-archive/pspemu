@@ -54,6 +54,7 @@ void *getModuleInfo(void);
 int main(void)
 {
 	SceUID modid;
+	//SceUID semaid;
 	SceModule *mod;
 	int i;
 	int ret;
@@ -77,8 +78,8 @@ int main(void)
 	printf("Module ID %08X\n", (modid != 0));
 	mod = sceKernelFindModuleByUID(modid);
 	printf("mod %p\n", mod);
-	if(mod != NULL)
-	{
+
+	if (mod != NULL) {
 		printf("Attr %04X, Version %x.%x\n", mod->attribute, mod->version[0], mod->version[1]);
 		printf("Name %s\n", mod->modname);
 		printf("Text %08X, Size %08X, Data Size %08X\n", mod->text_addr, mod->text_size, mod->data_size);
@@ -88,8 +89,12 @@ int main(void)
 		{
 			printf("Segment[%d] %08X %08X\n", i, mod->segmentaddr[i], mod->segmentsize[i]);
 		}
-
-		ret = sceKernelStartModule(modid, 0, NULL, &fd, NULL);
+		
+		//semaid = sceKernelCreateSema("wait_module", 0, 0, 1, NULL);
+		{
+			ret = sceKernelStartModule(modid, 0, NULL, &fd, NULL);
+		}
+		//sceKernelWaitSema(semaid, 1, NULL);
 
 		/* Let's test the module's exports */
 		printf("Module Info %p\n", getModuleInfo());

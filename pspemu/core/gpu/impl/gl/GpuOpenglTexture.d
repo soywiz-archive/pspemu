@@ -7,7 +7,7 @@ import std.c.windows.windows;
 import std.windows.syserror;
 import std.stdio;
 import std.zlib;
-import std.intrinsic;
+import core.bitop;
 
 import std.datetime;
 

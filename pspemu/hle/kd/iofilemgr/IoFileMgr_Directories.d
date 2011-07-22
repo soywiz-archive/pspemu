@@ -59,9 +59,10 @@ template IoFileMgrForKernel_Directories() {
 		dirname = getAbsolutePathFromRelative(dirname);
 		logInfo("sceIoDopen('%s')", dirname);
 		try {
-			return uniqueIdFactory.add!DirHandle(fsroot.dopen(dirname));
+			auto fs = fsroot.dopen(dirname);
+			return uniqueIdFactory.add!DirHandle(fs);
 		} catch (Throwable o) {
-			logError("sceIoDopen: %s", o);
+			//logError("sceIoDopen: %s", o);
 			return -1;
 		}
 	}

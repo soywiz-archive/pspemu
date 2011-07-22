@@ -21,7 +21,7 @@ private
 
     alias bool function() ModuleUnitTester;
     alias bool function(Object) CollectHandler;
-    alias Throwable.TraceInfo function( void* ptr = null ) TraceHandler;
+    alias Throwable.TraceInfo function( void* ptr ) TraceHandler;
 
     extern (C) void rt_setCollectHandler( CollectHandler h );
     extern (C) CollectHandler rt_getCollectHandler();
@@ -364,7 +364,7 @@ extern (C) bool runModuleUnitTests()
                     }
                     catch( Throwable e )
                     {
-                        console( e.toString )( "\n" );
+                        console( e.toString() )( "\n" );
                         failed++;
                     }
                 }

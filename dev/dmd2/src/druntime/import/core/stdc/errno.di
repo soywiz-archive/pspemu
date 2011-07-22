@@ -4,8 +4,16 @@ extern (C) int getErrno();
 
 extern (C) int setErrno(int);
 
-alias getErrno errno;
-alias setErrno errno;
+@property int errno()
+{
+return getErrno();
+}
+
+@property int errno(int n)
+{
+return setErrno(n);
+}
+
 extern (C) nothrow version (Windows)
 {
     enum EPERM = 1;

@@ -28,9 +28,9 @@ import core.bitop;
 string myToStringx(ulong n)
 {   enum s = "0123456789";
     if (n < 10)
-        return s[cast(size_t)n..cast(size_t)n+1];
+	return s[cast(size_t)n..cast(size_t)n+1];
     else
-        return myToStringx(n / 10) ~ myToStringx(n % 10);
+	return myToStringx(n / 10) ~ myToStringx(n % 10);
 }
 
 string myToString(ulong n)

@@ -110,142 +110,142 @@ Don Clugston, Tomas Lindquist Olsen &lt;tomas@famolsen.dk&gt;
  the remaining levels are set to uint.max (== entire memory space)<br><br>
 
 </dd>
-<dt><big>bool <u>x87onChip</u>();
+<dt><big>@property bool <u>x87onChip</u>();
 </big></dt>
 <dd>Does it have an x87 FPU on-chip?<br><br>
 
 </dd>
-<dt><big>bool <u>mmx</u>();
+<dt><big>@property bool <u>mmx</u>();
 </big></dt>
 <dd>Is MMX supported?<br><br>
 
 </dd>
-<dt><big>bool <u>sse</u>();
+<dt><big>@property bool <u>sse</u>();
 </big></dt>
 <dd>Is SSE supported?<br><br>
 
 </dd>
-<dt><big>bool <u>sse2</u>();
+<dt><big>@property bool <u>sse2</u>();
 </big></dt>
 <dd>Is SSE2 supported?<br><br>
 
 </dd>
-<dt><big>bool <u>sse3</u>();
+<dt><big>@property bool <u>sse3</u>();
 </big></dt>
 <dd>Is SSE3 supported?<br><br>
 
 </dd>
-<dt><big>bool <u>ssse3</u>();
+<dt><big>@property bool <u>ssse3</u>();
 </big></dt>
 <dd>Is SSSE3 supported?<br><br>
 
 </dd>
-<dt><big>bool <u>sse41</u>();
+<dt><big>@property bool <u>sse41</u>();
 </big></dt>
 <dd>Is SSE4.1 supported?<br><br>
 
 </dd>
-<dt><big>bool <u>sse42</u>();
+<dt><big>@property bool <u>sse42</u>();
 </big></dt>
 <dd>Is SSE4.2 supported?<br><br>
 
 </dd>
-<dt><big>bool <u>sse4a</u>();
+<dt><big>@property bool <u>sse4a</u>();
 </big></dt>
 <dd>Is SSE4a supported?<br><br>
 
 </dd>
-<dt><big>bool <u>amd3dnow</u>();
+<dt><big>@property bool <u>amd3dnow</u>();
 </big></dt>
 <dd>Is AMD 3DNOW supported?<br><br>
 
 </dd>
-<dt><big>bool <u>amd3dnowExt</u>();
+<dt><big>@property bool <u>amd3dnowExt</u>();
 </big></dt>
 <dd>Is AMD 3DNOW Ext supported?<br><br>
 
 </dd>
-<dt><big>bool <u>amdMmx</u>();
+<dt><big>@property bool <u>amdMmx</u>();
 </big></dt>
 <dd>Are AMD extensions to MMX supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasFxsr</u>();
+<dt><big>@property bool <u>hasFxsr</u>();
 </big></dt>
 <dd>Is fxsave/fxrstor supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasCmov</u>();
+<dt><big>@property bool <u>hasCmov</u>();
 </big></dt>
 <dd>Is cmov supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasRdtsc</u>();
+<dt><big>@property bool <u>hasRdtsc</u>();
 </big></dt>
 <dd>Is rdtsc supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasCmpxchg8b</u>();
+<dt><big>@property bool <u>hasCmpxchg8b</u>();
 </big></dt>
 <dd>Is cmpxchg8b supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasCmpxchg16b</u>();
+<dt><big>@property bool <u>hasCmpxchg16b</u>();
 </big></dt>
 <dd>Is cmpxchg8b supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasSysEnterSysExit</u>();
+<dt><big>@property bool <u>hasSysEnterSysExit</u>();
 </big></dt>
 <dd>Is SYSENTER/SYSEXIT supported?<br><br>
 
 </dd>
-<dt><big>bool <u>has3dnowPrefetch</u>();
+<dt><big>@property bool <u>has3dnowPrefetch</u>();
 </big></dt>
 <dd>Is 3DNow prefetch supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasLahfSahf</u>();
+<dt><big>@property bool <u>hasLahfSahf</u>();
 </big></dt>
 <dd>Are LAHF and SAHF supported in 64-bit mode?<br><br>
 
 </dd>
-<dt><big>bool <u>hasPopcnt</u>();
+<dt><big>@property bool <u>hasPopcnt</u>();
 </big></dt>
 <dd>Is POPCNT supported?<br><br>
 
 </dd>
-<dt><big>bool <u>hasLzcnt</u>();
+<dt><big>@property bool <u>hasLzcnt</u>();
 </big></dt>
 <dd>Is LZCNT supported?<br><br>
 
 </dd>
-<dt><big>bool <u>isX86_64</u>();
+<dt><big>@property bool <u>isX86_64</u>();
 </big></dt>
 <dd>Is this an Intel64 or AMD 64?<br><br>
 
 </dd>
-<dt><big>bool <u>isItanium</u>();
+<dt><big>@property bool <u>isItanium</u>();
 </big></dt>
 <dd>Is this an IA64 (Itanium) processor?<br><br>
 
 </dd>
-<dt><big>bool <u>hyperThreading</u>();
+<dt><big>@property bool <u>hyperThreading</u>();
 </big></dt>
 <dd>Is hyperthreading supported?<br><br>
 
 </dd>
-<dt><big>uint <u>threadsPerCPU</u>();
+<dt><big>@property uint <u>threadsPerCPU</u>();
 </big></dt>
 <dd>Returns number of threads per CPU<br><br>
 
 </dd>
-<dt><big>uint <u>coresPerCPU</u>();
+<dt><big>@property uint <u>coresPerCPU</u>();
 </big></dt>
 <dd>Returns number of cores in CPU<br><br>
 
 </dd>
-<dt><big>bool <u>preferAthlon</u>();
+<dt><big>@property bool <u>preferAthlon</u>();
 </big></dt>
 <dd>Optimisation hints for assembly code.
  For forward compatibility, the CPU is compared against different
@@ -270,12 +270,12 @@ The major 32-bit x86 microarchitecture 'dynasties' have been:
  Does this CPU perform better on AMD K7 code than PentiumPro..Core2 code?<br><br>
 
 </dd>
-<dt><big>bool <u>preferPentium4</u>();
+<dt><big>@property bool <u>preferPentium4</u>();
 </big></dt>
 <dd>Does this CPU perform better on Pentium4 code than PentiumPro..Core2 code?<br><br>
 
 </dd>
-<dt><big>bool <u>preferPentium1</u>();
+<dt><big>@property bool <u>preferPentium1</u>();
 </big></dt>
 <dd>Does this CPU perform better on Pentium I code than Pentium Pro code?<br><br>
 

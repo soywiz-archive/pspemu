@@ -52,14 +52,18 @@ class LocalDirHandle : DirHandle {
 	public this(VirtualFileSystem virtualFileSystem, string path) {
 		super(virtualFileSystem);
 		this.path = path;
+		init();
+	}
+	
+	void init() {
+		//throw(new Exception("BUG"));
 		
-		if (!std.file.exists(path)) throw(new Exception(std.string.format("Path '%s' doesn't exists", path)));
-		
-		foreach (DirEntry entry; dirEntries(path, SpanMode.shallow, true)) {
-			entries ~= entry;
+		if (!std.file.exists(path)) {
+			throw(new Exception(std.string.format("Path '%s' doesn't exists", path)));
+		} else {
+			foreach (DirEntry entry; dirEntries(path, SpanMode.shallow, true)) entries ~= entry;
+			std.algorithm.sort!("a.name < b.name")(entries);
 		}
-		
-		std.algorithm.sort!("a.name < b.name")(entries);
 	}
 	
 	bool hasMore() {
@@ -143,7 +147,14 @@ class LocalFileSystem : VirtualFileSystem {
 	}
 	
 	override DirHandle dopen(string file) {
-		return new LocalDirHandle(this, getInternalPath(file));
+		string internalPath = getInternalPath(file);
+		
+		// Bug in DMD. Throwing the Exception in the constructor, crashes the program.
+		if (!std.file.exists(internalPath)) {
+			throw(new Exception(std.string.format("Path '%s' doesn't exists", internalPath)));
+		}
+
+		return new LocalDirHandle(this, internalPath);
 	}
 
 	override void dclose(DirHandle handle) {

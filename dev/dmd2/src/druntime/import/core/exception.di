@@ -3,7 +3,7 @@ module core.exception;
 import core.stdc.stdio;
 private 
 {
-    alias void function(string file, size_t line, string msg = null) errorHandlerType;
+    alias void function(string file, size_t line, string msg) errorHandlerType;
     __gshared errorHandlerType assertHandler = null;
 
 }
