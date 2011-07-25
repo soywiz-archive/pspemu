@@ -227,7 +227,8 @@ class ModuleLoader {
 		modulePsp.sceModule = cast(SceModule*)memoryManager.memory.getPointer(memoryManager.allocHeap(PspPartition.Kernel0, "ModuleInfo", SceModule.sizeof));
 		//modulePsp.sceModule.
 		modulePsp.sceModule.modname[0..27] = moduleInfo.name[0..27];
-		modulePsp.sceModule.gp_value = moduleInfo.gp;
+		//modulePsp.sceModule.gp_value = moduleInfo.gp;
+		modulePsp.sceModule.gp_value = GP;
 		modulePsp.sceModule.entry_addr = PC;
 		
 		modulePsp.dwarf = this.dwarf;

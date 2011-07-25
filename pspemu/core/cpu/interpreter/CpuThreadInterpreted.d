@@ -117,6 +117,7 @@ class CpuThreadInterpreted : CpuThreadBase {
 			    		.writef("   %s: %08X", Registers.aliasesInv[k], value);
 			    		if ((k % 4) == 3) .writefln("");
 			    	}
+			    	.writefln("   pc: %08X", registers.PC);
 			    }
 			}
 			
