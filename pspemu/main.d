@@ -209,8 +209,8 @@ int main2(string[] args) {
 		writefln("Arguments:");
 		writefln("  --help              - Show this help");
 		writefln("  --sandbox_tests     - Run test sandbox code (only for developers)");
-		writefln("  --unit_tests        - Run unittestson 'tests_ex' folder (only for developers)");
-		writefln("  --extended_tests    - Run unittestson 'tests_ex' folder (only for developers)");
+		writefln("  --unit_tests        - Run unittestson 'pspautotests' folder (only for developers)");
+		writefln("  --extended_tests    - Run unittestson 'pspautotests' folder (only for developers)");
 		writefln("  --trace             - Enables cpu tracing at start");
 		writefln("  --log               - Enables logging");
 		writefln("  --nolog             - Disables logging");
@@ -289,7 +289,7 @@ int main2(string[] args) {
 		
 		writefln("%s", args);
 		
-		foreach (std.file.DirEntry dirEntry; dirEntries(r"tests_ex", SpanMode.depth, true)) {
+		foreach (std.file.DirEntry dirEntry; dirEntries(r"pspautotests", SpanMode.depth, true)) {
 			if (std.string.indexOf(dirEntry.name, ".svn") != -1) continue;
 			if (std.path.getExt(dirEntry.name) != "expected") continue;
 			bool filter = false;
