@@ -4607,7 +4607,7 @@
 "name" : "sleep",
 "kind" : "function",
 "type" : "void(Duration val)",
-"line" : 1090}
+"line" : 1087}
 ,
 {
 "name" : "sleep",
@@ -5328,128 +5328,128 @@
 {
 "name" : "Duration",
 "kind" : "struct",
-"line" : 93,
+"line" : 99,
 "members" : [
 {
 "name" : "opCmp",
 "kind" : "function",
 "type" : "const pure nothrow int(in const(Duration) rhs)",
-"line" : 113}
+"line" : 121}
 ,
 {
-"name" : "opBinary(string op,D) if ((op == \"+\" || op == \"-\") && (is(TUnqual!(D) == Duration) || is(TUnqual!(D) == TickDuration)))",
+"name" : "opBinary(string op,D) if ((op == \"+\" || op == \"-\") && (is(_Unqual!(D) == Duration) || is(_Unqual!(D) == TickDuration)))",
 "kind" : "template",
-"line" : 169,
+"line" : 172,
 "members" : [
 {
 "name" : "opBinary",
 "kind" : "function",
 "type" : "const pure nothrow Duration(in D rhs)",
-"line" : 169}
+"line" : 172}
 ]
 }
 ,
 {
-"name" : "opOpAssign(string op,D) if ((op == \"+\" || op == \"-\") && (is(TUnqual!(D) == Duration) || is(TUnqual!(D) == TickDuration)))",
+"name" : "opOpAssign(string op,D) if ((op == \"+\" || op == \"-\") && (is(_Unqual!(D) == Duration) || is(_Unqual!(D) == TickDuration)))",
 "kind" : "template",
-"line" : 297,
+"line" : 295,
 "members" : [
 {
 "name" : "opOpAssign",
 "kind" : "function",
 "type" : "pure nothrow Duration(in D rhs)",
-"line" : 297}
+"line" : 295}
 ]
 }
 ,
 {
 "name" : "opBinary(string op) if (op == \"*\")",
 "kind" : "template",
-"line" : 425,
+"line" : 423,
 "members" : [
 {
 "name" : "opBinary",
 "kind" : "function",
 "type" : "const pure nothrow Duration(long value)",
-"line" : 425}
+"line" : 423}
 ]
 }
 ,
 {
 "name" : "opOpAssign(string op) if (op == \"*\")",
 "kind" : "template",
-"line" : 467,
+"line" : 465,
 "members" : [
 {
 "name" : "opOpAssign",
 "kind" : "function",
 "type" : "pure nothrow Duration(long value)",
-"line" : 467}
+"line" : 465}
 ]
 }
 ,
 {
 "name" : "opBinary(string op) if (op == \"\/\")",
 "kind" : "template",
-"line" : 523,
+"line" : 521,
 "members" : [
 {
 "name" : "opBinary",
 "kind" : "function",
 "type" : "const pure Duration(long value)",
-"line" : 523}
+"line" : 521}
 ]
 }
 ,
 {
 "name" : "opOpAssign(string op) if (op == \"\/\")",
 "kind" : "template",
-"line" : 571,
+"line" : 569,
 "members" : [
 {
 "name" : "opOpAssign",
 "kind" : "function",
 "type" : "pure Duration(long value)",
-"line" : 571}
+"line" : 569}
 ]
 }
 ,
 {
 "name" : "opBinaryRight(string op) if (op == \"*\")",
 "kind" : "template",
-"line" : 629,
+"line" : 627,
 "members" : [
 {
 "name" : "opBinaryRight",
 "kind" : "function",
 "type" : "const pure nothrow Duration(long value)",
-"line" : 629}
+"line" : 627}
 ]
 }
 ,
 {
 "name" : "opUnary(string op) if (op == \"-\")",
 "kind" : "template",
-"line" : 662,
+"line" : 660,
 "members" : [
 {
 "name" : "opUnary",
 "kind" : "function",
 "type" : "const pure nothrow Duration()",
-"line" : 662}
+"line" : 660}
 ]
 }
 ,
 {
 "name" : "get(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\")",
 "kind" : "template",
-"line" : 699,
+"line" : 697,
 "members" : [
 {
 "name" : "get",
 "kind" : "function",
 "type" : "const pure nothrow long()",
-"line" : 699}
+"line" : 697}
 ]
 }
 ,
@@ -5457,48 +5457,48 @@
 "name" : "weeks",
 "kind" : "function",
 "type" : "const pure nothrow @property long()",
-"line" : 746}
+"line" : 744}
 ,
 {
 "name" : "days",
 "kind" : "function",
 "type" : "const pure nothrow @property long()",
-"line" : 773}
+"line" : 771}
 ,
 {
 "name" : "hours",
 "kind" : "function",
 "type" : "const pure nothrow @property long()",
-"line" : 801}
+"line" : 799}
 ,
 {
 "name" : "minutes",
 "kind" : "function",
 "type" : "const pure nothrow @property long()",
-"line" : 829}
+"line" : 827}
 ,
 {
 "name" : "seconds",
 "kind" : "function",
 "type" : "const pure nothrow @property long()",
-"line" : 857}
+"line" : 855}
 ,
 {
 "name" : "fracSec",
 "kind" : "function",
 "type" : "const pure nothrow @property FracSec()",
-"line" : 887}
+"line" : 891}
 ,
 {
 "name" : "total(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\")",
 "kind" : "template",
-"line" : 948,
+"line" : 951,
 "members" : [
 {
 "name" : "total",
 "kind" : "function",
 "type" : "const pure nothrow long()",
-"line" : 948}
+"line" : 951}
 ]
 }
 ,
@@ -5506,99 +5506,99 @@
 "name" : "toString",
 "kind" : "function",
 "type" : "string()",
-"line" : 995}
+"line" : 998}
 ,
 {
 "name" : "toString",
 "kind" : "function",
 "type" : "const pure nothrow string()",
-"line" : 1007}
+"line" : 1010}
 ,
 {
 "name" : "isNegative",
 "kind" : "function",
 "type" : "const pure nothrow @property bool()",
-"line" : 1023}
+"line" : 1026}
 ,
 {
 "name" : "_toStringImpl",
 "kind" : "function",
 "type" : "const pure nothrow string()",
-"line" : 1044}
+"line" : 1047}
 ,
 {
 "name" : "this",
 "kind" : "constructor",
 "type" : "pure nothrow ref @safe Duration(long hnsecs)",
-"line" : 1185}
+"line" : 1188}
 ,
 {
 "name" : "_hnsecs",
 "kind" : "variable",
 "type" : "long",
-"line" : 1191}
+"line" : 1194}
 ]
 }
 ,
 {
 "name" : "dur(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\")",
 "kind" : "template",
-"line" : 1208,
+"line" : 1211,
 "members" : [
 {
 "name" : "dur",
 "kind" : "function",
 "type" : "pure nothrow Duration(long length)",
-"line" : 1208}
+"line" : 1211}
 ]
 }
 ,
 {
 "name" : "TickDuration",
 "kind" : "struct",
-"line" : 1243,
+"line" : 1246,
 "members" : [
 {
 "name" : "ticksPerSec",
 "kind" : "variable",
 "type" : "immutable(long)",
-"line" : 1252}
+"line" : 1255}
 ,
 {
 "name" : "appOrigin",
 "kind" : "variable",
 "type" : "immutable(TickDuration)",
-"line" : 1258}
+"line" : 1261}
 ,
 {
 "name" : "length",
 "kind" : "variable",
 "type" : "long",
-"line" : 1314}
+"line" : 1317}
 ,
 {
 "name" : "to(string units,T) if ((units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\") && (__traits(isIntegral,T) && T.sizeof >= 4))",
 "kind" : "template",
-"line" : 1324,
+"line" : 1327,
 "members" : [
 {
 "name" : "to",
 "kind" : "function",
 "type" : "const pure nothrow T()",
-"line" : 1324}
+"line" : 1327}
 ]
 }
 ,
 {
 "name" : "to(string units,T) if ((units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\") && __traits(isFloating,T))",
 "kind" : "template",
-"line" : 1348,
+"line" : 1351,
 "members" : [
 {
 "name" : "to",
 "kind" : "function",
 "type" : "const pure nothrow T()",
-"line" : 1348}
+"line" : 1351}
 ]
 }
 ,
@@ -5606,94 +5606,94 @@
 "name" : "seconds",
 "kind" : "function",
 "type" : "const pure nothrow @property @safe long()",
-"line" : 1374}
+"line" : 1377}
 ,
 {
 "name" : "msecs",
 "kind" : "function",
 "type" : "const pure nothrow @property @safe long()",
-"line" : 1397}
+"line" : 1400}
 ,
 {
 "name" : "usecs",
 "kind" : "function",
 "type" : "const pure nothrow @property @safe long()",
-"line" : 1405}
+"line" : 1408}
 ,
 {
 "name" : "hnsecs",
 "kind" : "function",
 "type" : "const pure nothrow @property @safe long()",
-"line" : 1411}
+"line" : 1414}
 ,
 {
 "name" : "nsecs",
 "kind" : "function",
 "type" : "const pure nothrow @property @safe long()",
-"line" : 1417}
+"line" : 1420}
 ,
 {
 "name" : "from(string units) if (units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\")",
 "kind" : "template",
-"line" : 1427,
+"line" : 1430,
 "members" : [
 {
 "name" : "from",
 "kind" : "function",
 "type" : "pure nothrow TickDuration(long value)",
-"line" : 1427}
+"line" : 1430}
 ]
 }
 ,
 {
 "name" : "opCast(T) if (is(T == Duration))",
 "kind" : "template",
-"line" : 1558,
+"line" : 1561,
 "members" : [
 {
 "name" : "opCast",
 "kind" : "function",
 "type" : "const pure nothrow Duration()",
-"line" : 1558}
+"line" : 1561}
 ]
 }
 ,
 {
 "name" : "opOpAssign(string op) if (op == \"+\" || op == \"-\")",
 "kind" : "template",
-"line" : 1601,
+"line" : 1604,
 "members" : [
 {
 "name" : "opOpAssign",
 "kind" : "function",
 "type" : "pure nothrow void(in TickDuration rhs)",
-"line" : 1601}
+"line" : 1604}
 ]
 }
 ,
 {
 "name" : "opBinary(string op) if (op == \"-\" || op == \"+\")",
 "kind" : "template",
-"line" : 1621,
+"line" : 1624,
 "members" : [
 {
 "name" : "opBinary",
 "kind" : "function",
 "type" : "const pure nothrow TickDuration(in TickDuration rhs)",
-"line" : 1621}
+"line" : 1624}
 ]
 }
 ,
 {
 "name" : "opUnary(string op) if (op == \"-\")",
 "kind" : "template",
-"line" : 1639,
+"line" : 1642,
 "members" : [
 {
 "name" : "opUnary",
 "kind" : "function",
 "type" : "const pure nothrow TickDuration()",
-"line" : 1639}
+"line" : 1642}
 ]
 }
 ,
@@ -5701,63 +5701,63 @@
 "name" : "opEquals",
 "kind" : "function",
 "type" : "const pure nothrow @safe bool(ref const const(TickDuration) rhs)",
-"line" : 1663}
+"line" : 1666}
 ,
 {
 "name" : "opCmp",
 "kind" : "function",
 "type" : "const pure nothrow @safe int(ref const const(TickDuration) rhs)",
-"line" : 1678}
+"line" : 1681}
 ,
 {
 "name" : "opOpAssign(string op,T) if (op == \"*\" && (__traits(isIntegral,T) || __traits(isFloating,T)))",
 "kind" : "template",
-"line" : 1703,
+"line" : 1706,
 "members" : [
 {
 "name" : "opOpAssign",
 "kind" : "function",
 "type" : "pure nothrow void(T value)",
-"line" : 1703}
+"line" : 1706}
 ]
 }
 ,
 {
 "name" : "opOpAssign(string op,T) if (op == \"\/\" && (__traits(isIntegral,T) || __traits(isFloating,T)))",
 "kind" : "template",
-"line" : 1735,
+"line" : 1738,
 "members" : [
 {
 "name" : "opOpAssign",
 "kind" : "function",
 "type" : "pure void(T value)",
-"line" : 1735}
+"line" : 1738}
 ]
 }
 ,
 {
 "name" : "opBinary(string op,T) if (op == \"*\" && (__traits(isIntegral,T) || __traits(isFloating,T)))",
 "kind" : "template",
-"line" : 1767,
+"line" : 1770,
 "members" : [
 {
 "name" : "opBinary",
 "kind" : "function",
 "type" : "const pure nothrow TickDuration(T value)",
-"line" : 1767}
+"line" : 1770}
 ]
 }
 ,
 {
 "name" : "opBinary(string op,T) if (op == \"\/\" && (__traits(isIntegral,T) || __traits(isFloating,T)))",
 "kind" : "template",
-"line" : 1797,
+"line" : 1800,
 "members" : [
 {
 "name" : "opBinary",
 "kind" : "function",
 "type" : "const pure TickDuration(T value)",
-"line" : 1797}
+"line" : 1800}
 ]
 }
 ,
@@ -5765,70 +5765,83 @@
 "name" : "this",
 "kind" : "constructor",
 "type" : "pure nothrow ref @safe TickDuration(long ticks)",
-"line" : 1812}
+"line" : 1815}
 ,
 {
 "name" : "currSystemTick",
 "kind" : "function",
 "type" : "@property @trusted TickDuration()",
-"line" : 1843}
+"line" : 1846}
 ]
 }
 ,
 {
 "name" : "convert(string from,string to) if ((from == \"years\" || from == \"months\") && (to == \"years\" || to == \"months\"))",
 "kind" : "template",
-"line" : 1918,
+"line" : 1921,
 "members" : [
 {
 "name" : "convert",
 "kind" : "function",
 "type" : "pure nothrow long(long value)",
-"line" : 1918}
+"line" : 1921}
 ]
 }
 ,
 {
 "name" : "convert(string from,string to) if ((from == \"weeks\" || from == \"days\" || from == \"hours\" || from == \"minutes\" || from == \"seconds\" || from == \"msecs\" || from == \"usecs\" || from == \"hnsecs\") && (to == \"weeks\" || to == \"days\" || to == \"hours\" || to == \"minutes\" || to == \"seconds\" || to == \"msecs\" || to == \"usecs\" || to == \"hnsecs\"))",
 "kind" : "template",
-"line" : 1989,
+"line" : 1992,
 "members" : [
 {
 "name" : "convert",
 "kind" : "function",
 "type" : "pure nothrow long(long value)",
-"line" : 1989}
+"line" : 1992}
 ]
 }
 ,
 {
 "name" : "convert(string from,string to) if (from == \"nsecs\" && (to == \"weeks\" || to == \"days\" || to == \"hours\" || to == \"minutes\" || to == \"seconds\" || to == \"msecs\" || to == \"usecs\" || to == \"hnsecs\" || to == \"nsecs\") || to == \"nsecs\" && (from == \"weeks\" || from == \"days\" || from == \"hours\" || from == \"minutes\" || from == \"seconds\" || from == \"msecs\" || from == \"usecs\" || from == \"hnsecs\" || from == \"nsecs\"))",
 "kind" : "template",
-"line" : 2088,
+"line" : 2091,
 "members" : [
 {
 "name" : "convert",
 "kind" : "function",
 "type" : "pure nothrow long(long value)",
-"line" : 2088}
+"line" : 2091}
 ]
 }
 ,
 {
 "name" : "FracSec",
 "kind" : "struct",
-"line" : 2170,
+"line" : 2175,
 "members" : [
 {
 "name" : "from(string units) if (units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\")",
 "kind" : "template",
-"line" : 2184,
+"line" : 2191,
 "members" : [
 {
 "name" : "from",
 "kind" : "function",
 "type" : "pure FracSec(long value)",
-"line" : 2184}
+"line" : 2191}
+]
+}
+,
+{
+"name" : "opUnary(string op) if (op == \"-\")",
+"kind" : "template",
+"line" : 2240,
+"members" : [
+{
+"name" : "opUnary",
+"kind" : "function",
+"type" : "const nothrow FracSec()",
+"line" : 2240}
 ]
 }
 ,
@@ -5836,112 +5849,112 @@
 "name" : "msecs",
 "kind" : "function",
 "type" : "const pure nothrow @property int()",
-"line" : 2233}
+"line" : 2266}
 ,
 {
 "name" : "msecs",
 "kind" : "function",
 "type" : "pure @property void(int milliseconds)",
-"line" : 2264}
+"line" : 2301}
 ,
 {
 "name" : "usecs",
 "kind" : "function",
 "type" : "const pure nothrow @property int()",
-"line" : 2303}
+"line" : 2341}
 ,
 {
 "name" : "usecs",
 "kind" : "function",
 "type" : "pure @property void(int microseconds)",
-"line" : 2334}
+"line" : 2376}
 ,
 {
 "name" : "hnsecs",
 "kind" : "function",
 "type" : "const pure nothrow @property int()",
-"line" : 2374}
+"line" : 2417}
 ,
 {
 "name" : "hnsecs",
 "kind" : "function",
 "type" : "pure @property void(int hnsecs)",
-"line" : 2405}
+"line" : 2452}
 ,
 {
 "name" : "nsecs",
 "kind" : "function",
 "type" : "const pure nothrow @property int()",
-"line" : 2447}
+"line" : 2495}
 ,
 {
 "name" : "nsecs",
 "kind" : "function",
 "type" : "pure @property void(long nsecs)",
-"line" : 2481}
+"line" : 2533}
 ,
 {
 "name" : "toString",
 "kind" : "function",
 "type" : "string()",
-"line" : 2531}
+"line" : 2584}
 ,
 {
 "name" : "toString",
 "kind" : "function",
 "type" : "const pure nothrow string()",
-"line" : 2543}
+"line" : 2596}
 ,
 {
 "name" : "_toStringImpl",
 "kind" : "function",
 "type" : "const pure nothrow string()",
-"line" : 2565}
+"line" : 2618}
 ,
 {
 "name" : "_valid",
 "kind" : "function",
 "type" : "pure bool(int hnsecs)",
-"line" : 2657}
+"line" : 2710}
 ,
 {
 "name" : "_enforceValid",
 "kind" : "function",
 "type" : "pure void(int hnsecs)",
-"line" : 2667}
+"line" : 2722}
 ,
 {
 "name" : "this",
 "kind" : "constructor",
 "type" : "pure ref FracSec(int hnsecs)",
-"line" : 2682}
+"line" : 2737}
 ,
 {
 "name" : "_hnsecs",
 "kind" : "variable",
 "type" : "int",
-"line" : 2696}
+"line" : 2751}
 ]
 }
 ,
 {
 "name" : "TimeException",
 "kind" : "class",
-"line" : 2703,
+"line" : 2758,
 "base" : "Exception",
 "members" : [
 {
 "name" : "this",
 "kind" : "constructor",
 "type" : "nothrow TimeException(string msg, string file = __FILE__, uint line = cast(uint)__LINE__, Throwable next = cast(Throwable)null)",
-"line" : 2712}
+"line" : 2767}
 ]
 }
 ,
 {
 "name" : "hnsecsPer(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\")",
 "kind" : "template",
-"line" : 2730,
+"line" : 2785,
 "members" : [
 ]
 }
@@ -5949,39 +5962,39 @@
 {
 "name" : "splitUnitsFromHNSecs(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\")",
 "kind" : "template",
-"line" : 2783,
+"line" : 2838,
 "members" : [
 {
 "name" : "splitUnitsFromHNSecs",
 "kind" : "function",
 "type" : "pure nothrow long(ref long hnsecs)",
-"line" : 2783}
+"line" : 2838}
 ]
 }
 ,
 {
 "name" : "getUnitsFromHNSecs(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\")",
 "kind" : "template",
-"line" : 2835,
+"line" : 2890,
 "members" : [
 {
 "name" : "getUnitsFromHNSecs",
 "kind" : "function",
 "type" : "pure nothrow long(long hnsecs)",
-"line" : 2835}
+"line" : 2890}
 ]
 }
 ,
 {
 "name" : "removeUnitsFromHNSecs(string units) if (units == \"weeks\" || units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\")",
 "kind" : "template",
-"line" : 2880,
+"line" : 2935,
 "members" : [
 {
 "name" : "removeUnitsFromHNSecs",
 "kind" : "function",
 "type" : "pure nothrow long(long hnsecs)",
-"line" : 2880}
+"line" : 2935}
 ]
 }
 ,
@@ -5989,12 +6002,12 @@
 "name" : "validTimeUnits",
 "kind" : "function",
 "type" : "bool(string[] units...)",
-"line" : 2908}
+"line" : 2963}
 ,
 {
 "name" : "nextLargerTimeUnits(string units) if (units == \"days\" || units == \"hours\" || units == \"minutes\" || units == \"seconds\" || units == \"msecs\" || units == \"usecs\" || units == \"hnsecs\" || units == \"nsecs\")",
 "kind" : "template",
-"line" : 2943,
+"line" : 2998,
 "members" : [
 ]
 }
@@ -6003,12 +6016,12 @@
 "name" : "numToString",
 "kind" : "function",
 "type" : "pure nothrow string(long value)",
-"line" : 2998}
+"line" : 3053}
 ,
 {
-"name" : "TUnqual(T)",
+"name" : "_Unqual(T)",
 "kind" : "template",
-"line" : 3038,
+"line" : 3093,
 "members" : [
 ]
 }

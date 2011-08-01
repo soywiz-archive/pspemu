@@ -21,12 +21,9 @@
 #include "type.h"
 #include "el.h"
 #include "parser.h"
-#if TARGET_MAC
-#include "TG.h"
-#else
+
 #undef MEM_PH_MALLOC
 #define MEM_PH_MALLOC mem_fmalloc
-#endif
 
 static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
@@ -57,10 +54,6 @@ targ_size_t type_size(type *t)
 
     type_debug(t);
     tyb = tybasic(t->Tty);
-#if TARGET_MAC
-    if (!ANSI && tyb == TYenum)
-        tyb = tybasic(t->Tnext->Tty);
-#endif
 #ifdef DEBUG
     if (tyb >= TYMAX)
         /*type_print(t),*/
@@ -75,9 +68,6 @@ targ_size_t type_size(type *t)
             // in case program plays games with function pointers
             case TYffunc:
             case TYfpfunc:
-#if TARGET_MAC
-            case TYpsfunc:
-#endif
 #if TX86
             case TYnfunc:       /* in case program plays games with function pointers */
             case TYhfunc:
@@ -252,11 +242,7 @@ type *type_alloc(tym_t ty)
         type_list = t->Tnext;
     }
     else
-#if TX86
         t = (type *) mem_fmalloc(sizeof(type));
-#else
-        t = (type *) MEM_PH_MALLOC(sizeof(type));
-#endif
     tzero.Tty = ty;
     *t = tzero;
 #if SRCPOS_4TYPES
@@ -281,12 +267,7 @@ type *type_alloc(tym_t ty)
 type *type_alloc_template(symbol *s)
 {   type *t;
 
-#if TX86
     t = (type *) mem_fcalloc(sizeof(typetemp_t));
-#else
-    t = (type *) MEM_PH_MALLOC(sizeof(typetemp_t));
-    memset(t, 0, sizeof(typetemp_t));
-#endif
     t->Tty = TYtemplate;
     if (s->Stemplate->TMprimary)
         s = s->Stemplate->TMprimary;
@@ -317,7 +298,6 @@ type *type_fake(tym_t ty)
 {   type *t;
 
 #if MARS
-if (ty == TYstruct) *(char*)0=0;
     assert(ty != TYstruct);
 #endif
     t = type_alloc(ty);
@@ -434,8 +414,7 @@ STATIC type * __near type_allocbasic(tym_t ty)
 }
 
 void type_init()
-{   int i;
-
+{
     tsbool    = type_allocbasic(TYbool);
     tswchar_t = type_allocbasic(TYwchar_t);
     tsdchar   = type_allocbasic(TYdchar);
@@ -455,29 +434,15 @@ void type_init()
     tsullong  = type_allocbasic(TYullong);
     tsfloat   = type_allocbasic(TYfloat);
     tsdouble  = type_allocbasic(TYdouble);
-    tsifloat   = type_allocbasic(TYifloat);
-    tsidouble  = type_allocbasic(TYidouble);
-    tscfloat   = type_allocbasic(TYcfloat);
-    tscdouble  = type_allocbasic(TYcdouble);
-#if TX86
     tsreal64  = type_allocbasic(TYdouble_alias);
     tsldouble  = type_allocbasic(TYldouble);
+    tsifloat   = type_allocbasic(TYifloat);
+    tsidouble  = type_allocbasic(TYidouble);
     tsildouble  = type_allocbasic(TYildouble);
+    tscfloat   = type_allocbasic(TYcfloat);
+    tscdouble  = type_allocbasic(TYcdouble);
     tscldouble  = type_allocbasic(TYcldouble);
-#else
-#if TARGET_POWERPC
-// for powerPC the size of  long double is user determined
-    if (config.flags & CFGldblisdbl) {
-        tsldouble = type_allocbasic(TYdouble);  /* ldouble is same as double per user's request */
-    } else {
-        tsldouble = type_allocbasic(TYldouble);
-    }
-#else
-    tsldouble = type_allocbasic(TYldouble);
-#endif
-    tscomp = type_allocbasic(TYcomp);
-    chartype = tschar;                          /* default is signed chars */
-#endif
+
     if (I64)
     {
         TYptrdiff = TYllong;
@@ -493,6 +458,11 @@ void type_init()
         tssize = tsuns;
     }
 
+    // Type of trace function
+    tstrace = type_fake(I16 ? TYffunc : TYnfunc);
+    tstrace->Tmangle = mTYman_c;
+    tstrace->Tcount++;
+
 #if TX86
     chartype = (config.flags3 & CFG3ju) ? tsuchar : tschar;
 
@@ -500,11 +470,6 @@ void type_init()
     tsclib =    type_fake(LARGECODE ? TYfpfunc : TYnpfunc);
     tsclib->Tmangle = mTYman_c;
     tsclib->Tcount++;
-
-    // Type of trace function
-    tstrace =   type_fake(I16 ? TYffunc : TYnfunc);
-    tstrace->Tmangle = mTYman_c;
-    tstrace->Tcount++;
 
     tspvoid = type_allocn(pointertype,tsvoid);
     tspvoid->Tmangle = mTYman_c;
@@ -527,7 +492,7 @@ void type_init()
     // Type of logical expression
     tslogical = (config.flags4 & CFG4bool) ? tsbool : tsint;
 
-    for (i = 0; i < TYMAX; i++)
+    for (int i = 0; i < TYMAX; i++)
     {
         if (tstypes[i])
         {   tsptr2types[i] = type_allocn(pointertype,tstypes[i]);
@@ -535,6 +500,8 @@ void type_init()
         }
     }
 #else
+    chartype = tschar;                          /* default is signed chars */
+
     type_list = NULL;
     tsclib = type_fake( TYffunc );
     tsclib->Tmangle = mTYman_c;
@@ -543,7 +510,7 @@ void type_init()
     type_num = 0;
     type_max = 0;
 #endif /* DEBUG */
-#endif /* TARGET_MACHINE */
+#endif /* TX86 */
 }
 
 /**********************************
@@ -572,27 +539,17 @@ void type_term()
     type_free(tspvoid);
     type_free(tspcvoid);
     type_free(tsjlib);
-#if TX86
     type_free(tstrace);
-#endif
 
     while (type_list)
     {   tn = type_list->Tnext;
-#if TX86
         mem_ffree(type_list);
-#else
-        MEM_PH_FREE(type_list);
-#endif
         type_list = tn;
     }
 
     while (param_list)
     {   pn = param_list->Pnext;
-#if TX86
         mem_ffree(param_list);
-#else
-        MEM_PH_FREE(param_list);
-#endif
         param_list = pn;
     }
 
@@ -947,12 +904,7 @@ void type_print(type *t)
   {     case TYstruct:
         case TYmemptr:
             dbg_printf(" Ttag=%p,'%s'",t->Ttag,t->Ttag->Sident);
-#if TARGET_MAC
-            dbg_printf(" Sfldlst=x%08lx Sflags=x%x",
-                            t->Ttag->Sstruct->Sfldlst,t->Ttag->Sstruct->Sflags);
-#else
             //dbg_printf(" Sfldlst=%p",t->Ttag->Sstruct->Sfldlst);
-#endif
             break;
         case TYarray:
             dbg_printf(" Tdim=%ld",t->Tdim);
@@ -1055,14 +1007,6 @@ void type_hydrate(type **pt)
     {
         t = (type *) ph_hydrate(pt);
         type_debug(t);
-#if !TX86
-        if (t->Tflags & TFhydrated)
-            return;
-#if SOURCE_4TYPES
-        t->Tsrcpos.Sfilnum += File_Hydrate_Num; /* file number relative header build */
-#endif
-        t->Tflags |= TFhydrated;
-#endif
         switch (tybasic(t->Tty))
         {
             case TYstruct:
@@ -1181,11 +1125,7 @@ param_t *param_calloc()
     }
     else
     {
-#if TX86
         p = (param_t *) mem_fmalloc(sizeof(param_t));
-#else
-        p = (param_t *) MEM_PH_MALLOC(sizeof(param_t));
-#endif
     }
     *p = pzero;
 #ifdef DEBUG
@@ -1238,11 +1178,7 @@ void param_free(param_t **pparamlst)
     {   param_debug(p);
         pn = p->Pnext;
         type_free(p->Ptype);
-#if TX86
         mem_free(p->Pident);
-#else
-        MEM_PH_FREE(p->Pident);
-#endif
         el_free(p->Pelem);
         type_free(p->Pdeftype);
         if (p->Pptpl)

@@ -33,10 +33,6 @@
 static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
-#if MARS
-#define tstrace NULL
-#endif
-
 extern targ_size_t retsize;
 STATIC void pinholeopt_unittest();
 STATIC void do8bit (enum FL,union evc *);
@@ -204,7 +200,7 @@ static unsigned char inssize2[256] =
         2,2,2,M|3,      M|T|E|4,M|3,2,2,        // A0
         2,2,2,M|3,      M|T|E|4,M|3,M|3,M|3,    // A8
         M|E|3,M|3,M|3,M|3, M|3,M|3,M|3,M|3,     // B0
-        2,2,M|T|E|4,M|3, M|3,M|3,M|3,M|3,       // B8
+        M|3,2,M|T|E|4,M|3, M|3,M|3,M|3,M|3,     // B8
         M|3,M|3,M|T|E|4,M|3, M|T|E|4,M|T|E|4,M|T|E|4,M|3,       // C0
         2,2,2,2,        2,2,2,2,                // C8
         M|3,M|3,M|3,M|3, M|3,M|3,M|3,M|3,       // D0
@@ -225,6 +221,8 @@ int cod3_EA(code *c)
     unsigned op1 = c->Iop & 0xFF;
     if (op1 == ESCAPE)
         ins = 0;
+    else if ((c->Iop & 0xFFFD00) == 0x0F3800)
+        ins = inssize2[(c->Iop >> 8) & 0xFF];
     else if ((c->Iop & 0xFF00) == 0x0F00)
         ins = inssize2[op1];
     else
@@ -345,7 +343,6 @@ void doswitch(block *b)
     targ_llong vmax,vmin,val;
     targ_llong *p;
     list_t bl;
-    int flags;
     elem *e;
 
     tym_t tys;
@@ -395,7 +392,6 @@ void doswitch(block *b)
     }
     p -= ncases;
     //dbg_printf("vmax = x%lx, vmin = x%lx, vmax-vmin = x%lx\n",vmax,vmin,vmax - vmin);
-    flags = (config.flags & CFGromable) ? CFcs : 0; // table is in code seg
 
     if (I64)
     {   // For now, just generate basic if-then sequence to get us running
@@ -521,6 +517,7 @@ void doswitch(block *b)
         {   rm = getaddrmode(retregs) | modregrm(0,4,0);
             ce = genc1(CNIL,0xFF,rm,FLswitch,0);        /* JMP [CS:]disp[idxreg] */
         }
+        int flags = (config.flags & CFGromable) ? CFcs : 0; // table is in code seg
         ce->Iflags |= flags;                    // segment override
         ce->IEV1.Vswitch = b;
         b->Btablesize = (int) (vmax - vmin + 1) * tysize[TYnptr];
@@ -611,6 +608,7 @@ void doswitch(block *b)
             genjmp(ce,JNE,FLcode,(block *) cloop);      /* JNE loop     */
                                                 /* CMP DX,[CS:]disp[DI] */
             ct = genc1(CNIL,0x39,modregrm(mod,DX,5),FLconst,disp);
+            int flags = (config.flags & CFGromable) ? CFcs : 0; // table is in code seg
             ct->Iflags |= flags;                // possible seg override
             ce = cat3(ce,ct,cloop);
             disp += ncases * intsize;           /* skip over msw table  */
@@ -635,6 +633,7 @@ void doswitch(block *b)
 #endif
         {                               // JMP (ncases-1)*2[DI]
             ct = genc1(CNIL,0xFF,modregrm(mod,4,(I32 ? 7 : 5)),FLconst,disp);
+            int flags = (config.flags & CFGromable) ? CFcs : 0; // table is in code seg
             ct->Iflags |= flags;
         }
         ce = cat(ce,ct);
@@ -955,7 +954,7 @@ void cod3_ptrchk(code **pc,code *pcs,regm_t keepmsk)
     }
 
     // registers destroyed by the function call
-    used = (mBP | ALLREGS | mES) & ~fregsaved;
+    //used = (mBP | ALLREGS | mES) & ~fregsaved;
     used = 0;                           // much less code generated this way
 
     cs2 = CNIL;
@@ -2360,7 +2359,7 @@ void cod3_thunk(symbol *sthunk,symbol *sfunc,unsigned p,tym_t thisty,
                 FLconst,d);                     // ADD p[ESP],d
             c->Isib = modregrm(0,4,SP);
         }
-        if (I64)
+        if (I64 && c)
             c->Irex |= REX_W;
     }
     else
@@ -2772,7 +2771,9 @@ void assignaddrc(code *c)
         if (code_next(c) && code_next(code_next(c)) == c)
             assert(0);
 #endif
-        if ((c->Iop & 0xFF00) == 0x0F00)
+        if ((c->Iop & 0xFFFD00) == 0x0F3800)
+            ins = inssize2[(c->Iop >> 8) & 0xFF];
+        else if ((c->Iop & 0xFF00) == 0x0F00)
             ins = inssize2[c->Iop & 0xFF];
         else if ((c->Iop & 0xFF) == ESCAPE)
         {
@@ -3151,7 +3152,9 @@ void pinholeopt(code *c,block *b)
   {
     L1:
         op = c->Iop;
-        if ((op & 0xFF00) == 0x0F00)
+        if ((op & 0xFFFD00) == 0x0F3800)
+            ins = inssize2[(op >> 8) & 0xFF];
+        else if ((op & 0xFF00) == 0x0F00)
             ins = inssize2[op & 0xFF];
         else
             ins = inssize[op & 0xFF];
@@ -3776,17 +3779,27 @@ unsigned calccodsize(code *c)
 #endif
     iflags = c->Iflags;
     op = c->Iop;
-    if ((op & 0xFF00) == 0x0F00)
+    if ((op & 0xFF00) == 0x0F00 || (op & 0xFFFD00) == 0x0F3800)
         op = 0x0F;
     else
         op &= 0xFF;
     switch (op)
     {
         case 0x0F:
-            ins = inssize2[c->Iop & 0xFF];
-            size = ins & 7;
-            if (c->Iop & 0xFF0000 || (c->Iop & 0xFFFFFF) == 0x000F38) // Opcode 0F_38_00 PSHUFB ( ssse3 )
-                size++;
+            if ((c->Iop & 0xFFFD00) == 0x0F3800)
+            {   // 3 byte op ( 0F38-- or 0F3A-- )
+                ins = inssize2[(c->Iop >> 8) & 0xFF];
+                size = ins & 7;
+                if (c->Iop & 0xFF000000)
+                  size++;
+            }
+            else
+            {   // 2 byte op ( 0F-- )
+                ins = inssize2[c->Iop & 0xFF];
+                size = ins & 7;
+                if (c->Iop & 0xFF0000)
+                  size++;
+            }
             break;
 
         case NOP:
@@ -3972,7 +3985,11 @@ int code_match(code *c1,code *c2)
         goto nomatch;
 
     ins = inssize[cs1.Iop & 0xFF];
-    if ((cs1.Iop & 0xFF00) == 0x0F00)
+    if ((cs1.Iop & 0xFFFD00) == 0x0F3800)
+    {
+        ins = inssize2[(cs1.Iop >> 8) & 0xFF];
+    }
+    else if ((cs1.Iop & 0xFF00) == 0x0F00)
     {
         ins = inssize2[cs1.Iop & 0xFF];
     }
@@ -4080,6 +4097,9 @@ unsigned codout(code *c)
         ins = inssize[op & 0xFF];
         switch (op & 0xFF)
         {   case ESCAPE:
+                /* Check for SSE4 opcode pmaxuw xmm1,xmm2/m128 */
+                if(op == 0x660F383E) break;
+
                 switch (op & 0xFFFF00)
                 {   case ESClinnum:
                         /* put out line number stuff    */
@@ -4198,16 +4218,29 @@ unsigned codout(code *c)
 
         if (op > 0xFF)
         {
-            if ((op & 0xFF00) == 0x0F00)
+            if ((op & 0xFFFD00) == 0x0F3800)
+                ins = inssize2[(op >> 8) & 0xFF];
+            else if ((op & 0xFF00) == 0x0F00)
                 ins = inssize2[op & 0xFF];
+
             if (op & 0xFF000000)
             {
-                if (c->Irex)
-                    GEN(c->Irex | REX);
-                GEN(op >> 24);
+                unsigned char op1 = op >> 24;
+                if (op1 == 0xF2 || op1 == 0xF3 || op1 == 0x66)
+                {
+                    GEN(op1);
+                    if (c->Irex)
+                        GEN(c->Irex | REX);
+                }
+                else
+                {
+                    if (c->Irex)
+                        GEN(c->Irex | REX);
+                    GEN(op1);
+                }
+                GEN((op >> 16) & 0xFF);
                 GEN((op >> 8) & 0xFF);
                 GEN(op & 0xFF);
-                GEN((op >> 16) & 0xFF);         // yes, this is out of order. For 0x660F3A41 & 40
             }
             else if (op & 0xFF0000)
             {
@@ -4963,7 +4996,9 @@ void code_hydrate(code **pc)
     while (*pc)
     {
         c = (code *) ph_hydrate(pc);
-        if ((c->Iop & 0xFF00) == 0x0F00)
+        if ((c->Iop & 0xFFFD00) == 0x0F3800)
+            ins = inssize2[(c->Iop >> 8) & 0xFF];
+        else if ((c->Iop & 0xFF00) == 0x0F00)
             ins = inssize2[c->Iop & 0xFF];
         else
             ins = inssize[c->Iop & 0xFF];
@@ -5129,7 +5164,9 @@ void code_dehydrate(code **pc)
     {
         ph_dehydrate(pc);
 
-        if ((c->Iop & 0xFF00) == 0x0F00)
+        if ((c->Iop & 0xFFFD00) == 0x0F3800)
+            ins = inssize2[(c->Iop >> 8) & 0xFF];
+        else if ((c->Iop & 0xFF00) == 0x0F00)
             ins = inssize2[c->Iop & 0xFF];
         else
             ins = inssize[c->Iop & 0xFF];
@@ -5301,7 +5338,9 @@ void code::print()
     }
 
     unsigned op = c->Iop;
-    if ((c->Iop & 0xFF00) == 0x0F00)
+    if ((c->Iop & 0xFFFD00) == 0x0F3800)
+        ins = inssize2[(op >> 8) & 0xFF];
+    else if ((c->Iop & 0xFF00) == 0x0F00)
         ins = inssize2[op & 0xFF];
     else
         ins = inssize[op & 0xFF];

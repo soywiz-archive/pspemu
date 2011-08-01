@@ -36,33 +36,33 @@ struct Duration
         public 
 {
     const pure nothrow int opCmp(in Duration rhs);
-        template opBinary(string op,D) if ((op == "+" || op == "-") && (is(TUnqual!(D) == Duration) || is(TUnqual!(D) == TickDuration)))
+        template opBinary(string op,D) if ((op == "+" || op == "-") && (is(_Unqual!(D) == Duration) || is(_Unqual!(D) == TickDuration)))
 {
 const pure nothrow Duration opBinary(in D rhs)
 {
-static if(is(TUnqual!(D) == Duration))
+static if(is(_Unqual!(D) == Duration))
 {
 return Duration(mixin("_hnsecs " ~ op ~ " rhs._hnsecs"));
 }
 else
 {
-if (is(TUnqual!(D) == TickDuration))
+if (is(_Unqual!(D) == TickDuration))
 return Duration(mixin("_hnsecs " ~ op ~ " rhs.hnsecs"));
 }
 
 }
 }
-        template opOpAssign(string op,D) if ((op == "+" || op == "-") && (is(TUnqual!(D) == Duration) || is(TUnqual!(D) == TickDuration)))
+        template opOpAssign(string op,D) if ((op == "+" || op == "-") && (is(_Unqual!(D) == Duration) || is(_Unqual!(D) == TickDuration)))
 {
 pure nothrow Duration opOpAssign(in D rhs)
 {
-static if(is(TUnqual!(D) == Duration))
+static if(is(_Unqual!(D) == Duration))
 {
 mixin("_hnsecs " ~ op ~ "= rhs._hnsecs;");
 }
 else
 {
-if (is(TUnqual!(D) == TickDuration))
+if (is(_Unqual!(D) == TickDuration))
 mixin("_hnsecs " ~ op ~ "= rhs.hnsecs;");
 }
 
@@ -160,7 +160,7 @@ return get!("seconds")();
 
         @property const pure nothrow FracSec fracSec();
 
-        @property template total(string units) if (units == "weeks" || units == "days" || units == "hours" || units == "minutes" || units == "seconds" || units == "msecs" || units == "usecs" || units == "hnsecs" || units == "nsecs")
+            @property template total(string units) if (units == "weeks" || units == "days" || units == "hours" || units == "minutes" || units == "seconds" || units == "msecs" || units == "usecs" || units == "hnsecs" || units == "nsecs")
 {
 const pure nothrow long total()
 {
@@ -474,6 +474,18 @@ return FracSec(cast(int)convert!(units,"hnsecs")(value));
 }
 }
 
+        template opUnary(string op) if (op == "-")
+{
+const nothrow FracSec opUnary()
+{
+try
+return FracSec(-_hnsecs);
+catch(Exception e)
+{
+assert(0,"FracSec's constructor threw.");
+}
+}
+}
         @property const pure nothrow int msecs()
 {
 return cast(int)convert!("hnsecs","msecs")(_hnsecs);
@@ -536,7 +548,8 @@ return _toStringImpl();
     const pure nothrow string _toStringImpl();
         static pure bool _valid(int hnsecs)
 {
-return hnsecs >= 0 && hnsecs < convert!("seconds","hnsecs")(1);
+enum second = convert!("seconds","hnsecs")(1);
+return hnsecs > -second && hnsecs < second;
 }
 
     static pure void _enforceValid(int hnsecs);
@@ -704,29 +717,29 @@ else
 }
 }
         pure nothrow string numToString(long value);
-    template TUnqual(T)
+    template _Unqual(T)
 {
 version (none)
 {
     static if(is(T U == const(U)))
 {
-    alias TUnqual!(U) TUnqual;
+    alias _Unqual!(U) _Unqual;
 }
 else
 {
     static if(is(T U == immutable(U)))
 {
-    alias TUnqual!(U) TUnqual;
+    alias _Unqual!(U) _Unqual;
 }
 else
 {
     static if(is(T U == shared(U)))
 {
-    alias TUnqual!(U) TUnqual;
+    alias _Unqual!(U) _Unqual;
 }
 else
 {
-    alias T TUnqual;
+    alias T _Unqual;
 }
 }
 }
@@ -735,29 +748,29 @@ else
 {
     static if(is(T U == shared(const(U))))
 {
-    alias U TUnqual;
+    alias U _Unqual;
 }
 else
 {
     static if(is(T U == const(U)))
 {
-    alias U TUnqual;
+    alias U _Unqual;
 }
 else
 {
     static if(is(T U == immutable(U)))
 {
-    alias U TUnqual;
+    alias U _Unqual;
 }
 else
 {
     static if(is(T U == shared(U)))
 {
-    alias U TUnqual;
+    alias U _Unqual;
 }
 else
 {
-    alias T TUnqual;
+    alias T _Unqual;
 }
 }
 }
@@ -766,9 +779,9 @@ else
 }
         version (unittest)
 {
-    template tAssertExThrown(E : Throwable = Exception,T)
+    template _assertThrown(E : Throwable = Exception,T)
 {
-void tAssertExThrown(lazy T funcToCall, string msg = null, string file = __FILE__, size_t line = __LINE__)
+void _assertThrown(lazy T funcToCall, string msg = null, string file = __FILE__, size_t line = __LINE__)
 {
 bool thrown = false;
 try

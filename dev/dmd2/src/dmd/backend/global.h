@@ -109,12 +109,24 @@ symbol *exp2_qualified_lookup(Classsym *sclass, int flags, int *pflags);
 
 /* util.c */
 void util_progress();
+#if __clang__
+void util_exit(int) __attribute__((analyzer_noreturn));
+#else
 void util_exit(int);
+#pragma ZTC noreturn(util_exit)
+#endif
 void util_set386(void);
 void util_set64(void);
 int ispow2(targ_ullong);
 #if TX86
+
+#if __clang__
+void util_assert(char *, int) __attribute__((analyzer_noreturn));
+#else
 void util_assert(char *, int);
+#pragma ZTC noreturn(util_assert)
+#endif
+
 #if __GNUC__
 #define util_malloc(n,size) mem_malloc((n)*(size))
 #define util_calloc(n,size) mem_calloc((n)*(size))
@@ -173,9 +185,21 @@ void dll_printf(const char *format,...);
 void cmderr(unsigned,...);
 int synerr(unsigned,...);
 void preerr(unsigned,...);
+
+#if __clang__
+void err_exit(void) __attribute__((analyzer_noreturn));
+#else
 void err_exit(void);
+#pragma ZTC noreturn(err_exit)
+#endif
+
+#if __clang__
+void err_nomem(void) __attribute__((analyzer_noreturn));
+#else
 void err_nomem(void);
 #pragma noreturn(err_nomem)
+#endif
+
 int cpperr(unsigned,...);
 #if TX86
 int tx86err(unsigned,...);
@@ -184,8 +208,14 @@ extern int errmsgs_tx86idx;
 void warerr(unsigned,...);
 void err_warning_enable(unsigned warnum, int on);
 CEXTERN void lexerr(unsigned,...);
+
+#if __clang__
+CEXTERN void err_fatal(unsigned,...) __attribute__((analyzer_noreturn));
+#else
 CEXTERN void err_fatal(unsigned,...);
 #pragma noreturn(err_fatal)
+#endif
+
 int typerr(int,type *,type *,...);
 void err_noctor(Classsym *stag,list_t arglist);
 void err_nomatch(const char *, list_t);
@@ -320,9 +350,6 @@ void freesymtab(Symbol **stab, SYMIDX n1, SYMIDX n2);
 Symbol * symbol_copy(Symbol *s);
 Symbol * symbol_searchlist(symlist_t sl, const char *vident);
 
-#if TARGET_MAC
-#include "CGproto.h"
-#else
 
 // cg87.c
 void cg87_reset();
@@ -394,9 +421,6 @@ void objfile_term();
 /* cod3.c */
 void cod3_thunk(Symbol *sthunk,Symbol *sfunc,unsigned p,tym_t thisty,
         targ_size_t d,int i,targ_size_t d2);
-
-#endif /* !TARGET_68000 */
-
 
 /* out.c */
 void outfilename(char *name,int linnum);
@@ -485,6 +509,7 @@ int go_flag(char *cp);
 void optfunc(void);
 
 /* filename.c */
+#if !MARS
 extern Srcfiles srcfiles;
 Sfile **filename_indirect(Sfile *sf);
 Sfile *filename_search( const char *name );
@@ -498,14 +523,6 @@ void filename_free( void );
 int filename_cmp(const char *f1,const char *f2);
 void srcpos_hydrate(Srcpos *);
 void srcpos_dehydrate(Srcpos *);
-
-// Mark functions that never return
-#if __SC__ >= 0x324 && TX86
-#pragma ZTC noreturn(util_assert)
-#pragma ZTC noreturn(err_exit)
-#pragma ZTC noreturn(util_exit)
-#pragma ZTC noreturn(err_nomem)
-#pragma ZTC noreturn(err_fatal)
 #endif
 
 // tdb.c
@@ -558,9 +575,5 @@ void  lnx_funcdecl(symbol *,enum SC,enum_SC,int);
 int  lnx_attributes(int hinttype,const void *hint, type **ptyp, tym_t *ptym,int *pattrtype);
 #endif
 
-
-#if TARGET_MAC
-#include "TGglobal.h"
-#endif
-
 #endif /* GLOBAL_H */
+

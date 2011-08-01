@@ -221,13 +221,9 @@ The scheduling <u>priority</u> of this thread.<br><br>
 </dd>
 <dt><big>static void <u>sleep</u>(Duration <i>val</i>);
 </big></dt>
-<dd><font color=red>Scheduled for deprecation in January 2012. Please use the version
-       which takes a  instead.</font>
-<br><br>
-Suspends the calling thread for at least the supplied period.  This may
+<dd>Suspends the calling thread for at least the supplied period.  This may
  result in multiple OS calls if period is greater than the maximum <u>sleep</u>
  duration supported by the operating system.
-
 <br><br>
 <b>Params:</b><br>
 <table><tr><td>Duration <i>val</i></td>
@@ -248,9 +244,13 @@ period must be non-negative.
 </dd>
 <dt><big>static void <u>sleep</u>(long <i>period</i>);
 </big></dt>
-<dd>Suspends the calling thread for at least the supplied <i>period</i>.  This may
+<dd><font color=red>Scheduled for deprecation in January 2012. Please use the version
+       which takes a  instead.</font>
+<br><br>
+Suspends the calling thread for at least the supplied <i>period</i>.  This may
  result in multiple OS calls if <i>period</i> is greater than the maximum <u>sleep</u>
  duration supported by the operating system.
+
 <br><br>
 <b>Params:</b><br>
 <table><tr><td>long <i>period</i></td>

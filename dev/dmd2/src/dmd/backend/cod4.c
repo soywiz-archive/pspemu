@@ -1,5 +1,5 @@
 // Copyright (C) 1985-1998 by Symantec
-// Copyright (C) 2000-2009 by Digital Mars
+// Copyright (C) 2000-2011 by Digital Mars
 // All Rights Reserved
 // http://www.digitalmars.com
 // Written by Walter Bright
@@ -1014,6 +1014,8 @@ code *cdaddass(elem *e,regm_t *pretregs)
                 }
                 c = gen(c,&cs);
         }
+        else
+            assert(0);
         freenode(e->E2);        /* don't need it anymore        */
   }
   else if (isregvar(e1,&varregm,&varreg) &&
@@ -1181,6 +1183,8 @@ code *cdaddass(elem *e,regm_t *pretregs)
                 else
                     ce = cat3(ce,cm,cl);
         }
+        else
+            assert(0);
         c = cat(c,ce);
         if (e1->Ecount)                 /* if we gen a CSE      */
                 cssave(e1,retregs,EOP(e1));
@@ -1196,23 +1200,19 @@ code *cdaddass(elem *e,regm_t *pretregs)
  */
 
 code *cdmulass(elem *e,regm_t *pretregs)
-{ elem *e1,*e2;
-  code *cr,*cl,*cg,*c,cs;
-  tym_t tym,tyml;
-  regm_t retregs;
-  char uns;
-  unsigned op,resreg,reg,opr,lib,byte;
-  unsigned sz;
+{
+    code *cr,*cl,*cg,*c,cs;
+    regm_t retregs;
+    unsigned resreg,reg,opr,lib,byte;
 
-  //printf("cdmulass(e=%p, *pretregs = %s)\n",e,regm_str(*pretregs));
-  e1 = e->E1;
-  e2 = e->E2;
-  op = e->Eoper;                        /* OPxxxx                       */
+    //printf("cdmulass(e=%p, *pretregs = %s)\n",e,regm_str(*pretregs));
+    elem *e1 = e->E1;
+    elem *e2 = e->E2;
+    unsigned op = e->Eoper;                     // OPxxxx
 
-  tyml = tybasic(e1->Ety);              /* type of lvalue               */
-  uns = tyuns(tyml) || tyuns(e2->Ety);
-  tym = tybasic(e->Ety);                /* type of result               */
-  sz = tysize[tyml];
+    tym_t tyml = tybasic(e1->Ety);              // type of lvalue
+    char uns = tyuns(tyml) || tyuns(e2->Ety);
+    unsigned sz = tysize[tyml];
 
     unsigned rex = (I64 && sz == 8) ? REX_W : 0;
     unsigned grex = rex << 16;          // 64 bit operands
@@ -1441,7 +1441,7 @@ code *cdmulass(elem *e,regm_t *pretregs)
 code *cdshass(elem *e,regm_t *pretregs)
 { elem *e1,*e2;
   code *cr,*cl,*cg,*c,cs,*ce;
-  tym_t tym,tyml,uns;
+  tym_t tym,tyml;
   regm_t retregs;
   unsigned shiftcnt,op1,op2,reg,v,oper,byte,conste2;
   unsigned loopcnt;
@@ -1453,7 +1453,6 @@ code *cdshass(elem *e,regm_t *pretregs)
   tyml = tybasic(e1->Ety);              /* type of lvalue               */
   sz = tysize[tyml];
   byte = tybyte(e->Ety) != 0;           /* 1 for byte operations        */
-  uns = tyuns(tyml);
   tym = tybasic(e->Ety);                /* type of result               */
   oper = e->Eoper;
   assert(tysize(e2->Ety) <= REGSIZE);
@@ -1467,7 +1466,7 @@ code *cdshass(elem *e,regm_t *pretregs)
 #if SCPP
   // Do this until the rest of the compiler does OPshr/OPashr correctly
   if (oper == OPshrass)
-        oper = (uns) ? OPshrass : OPashrass;
+        oper = tyuns(tyml) ? OPshrass : OPashrass;
 #endif
 
   // Select opcodes. op2 is used for msw for long shifts.
@@ -1494,6 +1493,7 @@ code *cdshass(elem *e,regm_t *pretregs)
   loopcnt = 1;
   conste2 = FALSE;
   cr = CNIL;
+  shiftcnt = 0;                         // avoid "use before initialized" warnings
   if (cnst(e2))
   {
         conste2 = TRUE;                 /* e2 is a constant             */
@@ -1527,8 +1527,11 @@ code *cdshass(elem *e,regm_t *pretregs)
         {
           NEWREG(cs.Irm,op1);           /* make sure op1 is first       */
           if (sz <= REGSIZE)
-          {   cs.IFL2 = FLconst;
-              cs.IEV2.Vint = shiftcnt;
+          {
+              if (conste2)
+              {   cs.IFL2 = FLconst;
+                  cs.IEV2.Vint = shiftcnt;
+              }
               c = gen(c,&cs);           /* SHIFT EA,[CL|1]              */
               if (*pretregs & mPSW && !loopcnt && conste2)
                 code_orflag(c,CFpsw);
@@ -1677,7 +1680,6 @@ code *cdcmp(elem *e,regm_t *pretregs)
   bool eqorne;
   unsigned reverse;
   unsigned sz;
-  targ_size_t offset2;
   int fl;
   int flag;
 
@@ -1883,14 +1885,13 @@ code *cdcmp(elem *e,regm_t *pretregs)
         }
         cs.IFL2 = fl;
         cs.IEVsym2 = e2->EV.sp.Vsym;
-        offset2 = e2->EV.sp.Voffset;
         if (sz > REGSIZE)
         {   cs.Iflags |= CFseg;
             cs.IEVoffset2 = 0;
         }
         else
         {   cs.Iflags |= CFoff;
-            cs.IEVoffset2 = offset2;
+            cs.IEVoffset2 = e2->EV.sp.Voffset;
         }
         goto L4;
 
@@ -2045,11 +2046,13 @@ code *cdcmp(elem *e,regm_t *pretregs)
                         genjmp(c,JNE,FLcode,(block *) ce); /* JNE nop   */
                         if (e2->Eoper == OPconst)
                             cs.IEV2.Vint = e2->EV.Vllong;
-                        else
+                        else if (e2->Eoper == OPrelconst)
                         {   /* Turn off CFseg, on CFoff */
                             cs.Iflags ^= CFseg | CFoff;
-                            cs.IEVoffset2 = offset2;
+                            cs.IEVoffset2 = e2->EV.sp.Voffset;
                         }
+                        else
+                            assert(0);
                         getlvalue_lsw(&cs);
                     }
                     freenode(e2);
@@ -2128,11 +2131,13 @@ code *cdcmp(elem *e,regm_t *pretregs)
             cs.Irm = modregrm(3,7,reg);
             if (e2->Eoper == OPconst)
                 cs.IEV2.Vint = e2->EV.Vlong;
-            else
+            else if (e2->Eoper == OPrelconst)
             {   /* Turn off CFseg, on CFoff     */
                 cs.Iflags ^= CFseg | CFoff;
-                cs.IEVoffset2 = offset2;
+                cs.IEVoffset2 = e2->EV.sp.Voffset;
             }
+            else
+                assert(0);
         }
         else
                 assert(0);
@@ -2276,7 +2281,7 @@ code *longcmp(elem *e,bool jcond,unsigned fltarg,code *targ)
   static const unsigned char jopmsw[4] = {JL, JG, JL, JG };
   static const unsigned char joplsw[4] = {JBE, JA, JB, JAE };
 
-  cl = cr = CNIL;
+  cr = CNIL;
   e1 = e->E1;
   e2 = e->E2;
   op = e->Eoper;

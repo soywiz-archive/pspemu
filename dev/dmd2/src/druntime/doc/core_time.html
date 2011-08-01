@@ -31,7 +31,7 @@ Jonathan M Davis and Kato Shoichi
     (e.g. 22 days or 700 seconds).
 <br><br>
 It is used when representing a duration of time - such as how long to
-    sleep with Thread.sleep().
+    sleep with .
 <br><br>
 
     In std.datetime, it is also used as the result of various arithmetic
@@ -44,8 +44,8 @@ It is used when representing a duration of time - such as how long to
     You cannot create a duration of months or years because the variable number
     of days in a month or a year makes it so that you cannot convert between
     months or years and smaller units without a specific date. Any type or
-    function which handles months or years has other functions for handling those
-    rather than using durations. For instance,  has
+    function which handles months or years has other functions for handling
+    those rather than using durations. For instance,  has
      and  for adding years and months, rather than
     creating a duration of years or months and adding that to a
     . If you're dealing with weeks or smaller, however,
@@ -55,7 +55,13 @@ It is used when representing a duration of time - such as how long to
 <b>Examples:</b><br>
 <pre class="d_code"><font color=blue>assert</font>(dur!<font color=red>"days"</font>(12) == <u>Duration</u>(10_368_000_000_000L));
 <font color=blue>assert</font>(dur!<font color=red>"hnsecs"</font>(27) == <u>Duration</u>(27));
-<font color=blue>assert</font>(std.datetime.Date(2010, 9, 7) + dur!<font color=red>"days"</font>(5) == std.datetime.Date(2010, 9, 12));
+<font color=blue>assert</font>(std.datetime.Date(2010, 9, 7) + dur!<font color=red>"days"</font>(5) ==
+       std.datetime.Date(2010, 9, 12));
+
+<font color=blue>assert</font>(dur!<font color=red>"days"</font>(-12) == <u>Duration</u>(-10_368_000_000_000L));
+<font color=blue>assert</font>(dur!<font color=red>"hnsecs"</font>(-27) == <u>Duration</u>(-27));
+<font color=blue>assert</font>(std.datetime.Date(2010, 9, 7) - std.datetime.Date(2010, 10, 3) ==
+       dur!<font color=red>"days"</font>(-26));
 </pre>
 <br><br>
 
@@ -88,10 +94,6 @@ The legal types of arithmetic for Duration using this operator are
 <table><tr><td>duration</td>
 <td>The duration to add to or subtract from this duration.</td></tr>
 </table><br>
-<b>Note:</b><br>
-TUnqual is just a local copy of std.traits' Unqual, since core does
-            not have access to std.traits, and naming it Unqual as well would
-            result in a name clash, so it's TUnqual.<br><br>
 
 </dd>
 <dt><big>pure nothrow Duration <u>opOpAssign</u>(string op, D)(in D <i>rhs</i>);
@@ -113,10 +115,6 @@ The legal types of arithmetic for Duration using this operator are
 <table><tr><td>rhs</td>
 <td>The duration to add to or subtract from this DateTime.</td></tr>
 </table><br>
-<b>Note:</b><br>
-TUnqual is just a local copy of std.traits' Unqual, since core does
-            not have access to std.traits, and naming it Unqual as well would
-            result in a name clash, so it's TUnqual.<br><br>
 
 </dd>
 <dt><big>const pure nothrow Duration <u>opBinary</u>(string op)(long <i>value</i>);
@@ -288,6 +286,12 @@ The legal types of arithmetic for Duration using this operator overload are
 <font color=blue>assert</font>(dur!<font color=red>"usecs"</font>(43).<u>fracSec</u> == FracSec.from!<font color=red>"usecs"</font>(43));
 <font color=blue>assert</font>(dur!<font color=red>"hnsecs"</font>(50_007).<u>fracSec</u> == FracSec.from!<font color=red>"hnsecs"</font>(50_007));
 <font color=blue>assert</font>(dur!<font color=red>"nsecs"</font>(62_127).<u>fracSec</u> == FracSec.from!<font color=red>"nsecs"</font>(62_100));
+
+<font color=blue>assert</font>(dur!<font color=red>"msecs"</font>(-1000).<u>fracSec</u> == FracSec.from!<font color=red>"msecs"</font>(-0));
+<font color=blue>assert</font>(dur!<font color=red>"msecs"</font>(-1217).<u>fracSec</u> == FracSec.from!<font color=red>"msecs"</font>(-217));
+<font color=blue>assert</font>(dur!<font color=red>"usecs"</font>(-43).<u>fracSec</u> == FracSec.from!<font color=red>"usecs"</font>(-43));
+<font color=blue>assert</font>(dur!<font color=red>"hnsecs"</font>(-50_007).<u>fracSec</u> == FracSec.from!<font color=red>"hnsecs"</font>(-50_007));
+<font color=blue>assert</font>(dur!<font color=red>"nsecs"</font>(-62_127).<u>fracSec</u> == FracSec.from!<font color=red>"nsecs"</font>(-62_100));
 </pre>
 <br><br>
 
@@ -632,25 +636,28 @@ TimeException if it fails to get the time.<br><br>
 <dd>Represents fractional seconds.
 <br><br>
 This is the portion of the time which is smaller than a second and cannot
-    hold values which would equal or exceed a second.
+    hold values which would greater than or equal to a second (or less than or
+    equal to a negative second).
 <br><br>
 
     It holds hnsecs internally, but you can create it using either milliseconds,
-    microseconds, or hnsecs. What it does is allow for a simple way to set or adjust
-    the fractional seconds portion of a Duration or a std.datetime.SysTime without
-    having to worry about whether you're dealing with milliseconds, microseconds,
-    or hnsecs.
+    microseconds, or hnsecs. What it does is allow for a simple way to set or
+    adjust the fractional seconds portion of a  or a
+     without having to worry about whether you're
+    dealing with milliseconds, microseconds, or hnsecs.
 <br><br>
 
-    <u>FracSec</u>'s functions which take time unit strings do accept "nsecs", but the
-    because the resolution for Duration and std.datetime.SysTime is hnsecs, you
-    don't actually get precision higher than hnsecs. "nsecs" is accepted merely
-    for convenience. Any values given as nsecs will be converted to hnsecs using
-    convert!() (which uses truncation when converting to smaller units).<br><br>
+    's functions which take time unit strings do accept
+    , but the because the resolution for  and
+     is hnsecs, you don't actually get precision higher
+    than hnsecs.  is accepted merely for convenience. Any values
+    given as nsecs will be converted to hnsecs using  (which uses
+    truncation when converting to smaller units).<br><br>
 
 <dl><dt><big>pure FracSec <u>from</u>(string units)(long <i>value</i>);
 </big></dt>
-<dd>Create a FracSec <u>from</u> the given units ("msecs", "usecs", or "hnsecs").
+<dd>Create a  <u>from</u> the given units (, ,
+        or ).
 <br><br>
 <b>Params:</b><br>
 <table><tr><td>units</td>
@@ -659,8 +666,14 @@ This is the portion of the time which is smaller than a second and cannot
 <td>The number of the given units passed the second.</td></tr>
 </table><br>
 <b>Throws:</b><br>
-TimeException if the given value is less than 0 or would result in a
-            FracSec greater than or equal to 1 second.<br><br>
+ if the given value would result in a 
+            greater than or equal to  second or less than or equal to
+             seconds.<br><br>
+
+</dd>
+<dt><big>const nothrow FracSec <u>opUnary</u>(string op)();
+</big></dt>
+<dd>Returns the negation of this FracSec.<br><br>
 
 </dd>
 <dt><big>const pure nothrow @property int <u>msecs</u>();
