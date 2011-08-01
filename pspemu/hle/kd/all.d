@@ -16,6 +16,7 @@ public import
 	pspemu.hle.kd.loadcore.LoadCore,
 	pspemu.hle.kd.loadexec.LoadExec,
 	pspemu.hle.kd.loadexec.sceDmac,
+	pspemu.hle.kd.loadexec.SysclibForKernel,
 	pspemu.hle.kd.lowio.sceSysreg,
 	pspemu.hle.kd.mediaman.sceUmd,
 	pspemu.hle.kd.modulemgr.ModuleMgr,

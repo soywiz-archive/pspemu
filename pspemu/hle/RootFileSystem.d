@@ -16,6 +16,7 @@ import pspemu.hle.vfs.devices.MemoryStickDevice;
 import pspemu.hle.vfs.LocalFileSystem;
 import pspemu.hle.vfs.IsoFileSystem;
 import pspemu.hle.vfs.MountableVirtualFileSystem;
+import pspemu.hle.vfs.EmulatorFileSystem;
 
 import pspemu.formats.iso.IsoFactory;
 
@@ -64,6 +65,9 @@ class RootFileSystem {
 		devices["flash0:"] = new IoDevice         (hleEmulatorState, new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/flash0")));
 		devices["flash1:"] = new IoDevice         (hleEmulatorState, new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/flash1")));
 		devices["umd0:"  ] = new UmdDevice        (hleEmulatorState, umd0root = new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/umd0")));
+
+		// Special Emulator Device.		
+		devices["emulator:"] = new IoDevice         (hleEmulatorState, new MountableVirtualFileSystem(new EmulatorFileSystem(hleEmulatorState)));
 		//.writefln("[3]");
 	
 		// Aliases.

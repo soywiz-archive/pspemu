@@ -41,6 +41,8 @@ class StdioForUser : ModuleNative {
 		mixin(registerd!(0xF78BA90A, sceKernelStderr));
 		mixin(registerd!(0x98220F3E, sceKernelStdoutReopen));
 		mixin(registerd!(0xFB5380C5, sceKernelStderrReopen));
+		mixin(registerd!(0xD97C8CB9, puts));
+		//mixin(registerd!(0xCAB439DF, printf));
 	}
 	
 	void initModule() {
@@ -96,6 +98,12 @@ class StdioForUser : ModuleNative {
 	int sceKernelStderrReopen(string file, int flags, SceMode mode) {
 		unimplemented();
 		return -1;
+	}
+	
+	int puts(string str) {
+		Logger.log(Logger.Level.WARNING, "StdioForKernel.puts", str);
+		//unimplemented();
+		return 0;
 	}
 }
 
