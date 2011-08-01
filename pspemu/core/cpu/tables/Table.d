@@ -408,13 +408,14 @@ const PspInstructions_VFPU_IMP = [
 	ID("vrndf1",      VM("110100:00:001:00:010:two:0000000:one:vd"), "%zp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vrndf2",      VM("110100:00:001:00:011:two:0000000:one:vd"), "%zp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
-////////////////////////////
-/// Not implemented yet!
-////////////////////////////
 	ID("vcmp",        VM("011011:000:vt:two:vs:one:000:imm4"), "%Zn, %yp, %xp" , ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
 	ID("vcmovf",      VM("110100:10:101:01:imm3:two:vs:one:vd"), "%zp, %yp, %v3", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vcmovt",      VM("110100:10:101:00:imm3:two:vs:one:vd"), "%zp, %yp, %v3", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
+////////////////////////////
+/// Not implemented yet!
+////////////////////////////
 
 	ID("bvf",         VM("010010:01:000:imm3:00:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
 	ID("bvfl",        VM("010010:01:000:imm3:10:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
@@ -442,6 +443,8 @@ const PspInstructions_VFPU_IMP = [
 	ID("mtvme",       VM("101100--------------------------"), "%t, %i", ADDR_TYPE_NONE, 0),
 
 	ID("sv.s",        VM("111010:rs:vt5:imm14:vt2"), "%Xs, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
+
+	ID("vfim",        VM("110111:11:1:vd:imm16"), "%xs, %vh",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	
 ];
 
@@ -450,7 +453,6 @@ const PspInstructions_VFPU = [
 	ID("svr.q",       VM("111101:rs:vt5:imm14:1:vt1"), "%Xq, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vbfy1",       VM("110100:00:010:00010:two:vs:one:vd"), "%zp, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vbfy2",       VM("110100:00:010:00011:two:vs:one:vd"), "%zq, %yq", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
-	ID("vfim",        VM("110111:11:1:vd:imm16"), "%xs, %vh",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
 	ID("vf2h",        VM("110100:00:001:10:010:two:vs:one:vd"), "%zs, %yp",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vh2f",        VM("110100:00:001:10:011:two:vs:one:vd"), "%zq, %yp",      ADDR_TYPE_NONE, INSTR_TYPE_PSP),

@@ -144,13 +144,15 @@ class EmulatorHelper {
 	}
 	
 	public void initComponents() {
-		emulator.startDisplay();
 		emulator.startGpu();
+		emulator.waitGpuStarted();
+		emulator.startDisplay();
+		emulator.waitDisplayStarted();
 	}
 	
 	public void waitComponentsInitialized() {
-		emulator.waitDisplayStarted();
-		emulator.waitGpuStarted();
+		//emulator.waitDisplayStarted();
+		//emulator.waitGpuStarted();
 	}
 	
 	public void start() {

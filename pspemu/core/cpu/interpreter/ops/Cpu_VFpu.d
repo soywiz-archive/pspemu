@@ -1597,6 +1597,13 @@ template TemplateCpu_VFPU() {
 		_OP_VCMOV_FT(true);
 	}
 	
+	void OP_VFIM() {
+		VT[0] = instruction.IMM_HF;
+		saveVt(1);
+		
+		registers.pcAdvance(4);
+	}
+	
 	void OP_VCMP() {
 		auto vsize = instruction.ONE_TWO;
 		int cond = instruction.IMM4;
@@ -2057,11 +2064,22 @@ template TemplateCpu_VFPU_Utils() {
 		vfpuVectorGetPointer(vfpu_ptrlist[0..vsize], vx);
 		applyPrefixDst(registers.vfpu_prefix_d, VD[0..vsize], vfpu_ptrlist[0..vsize], true);
 	}
+
+	// !IMPORTANT
+	// @TODO: Check if shoukd use VT prefix?
+	void saveVt(uint vsize, uint vx) {
+		vfpuVectorGetPointer(vfpu_ptrlist[0..vsize], vx);
+		applyPrefixDst(registers.vfpu_prefix_t, VT[0..vsize], vfpu_ptrlist[0..vsize], true);
+	}
 	
 	void loadVs(uint vsize) { loadVs(vsize, instruction.VS); }
 	void loadVt(uint vsize) { loadVt(vsize, instruction.VT); }
 	void loadVd(uint vsize) { loadVd(vsize, instruction.VD); }
 	void saveVd(uint vsize) { saveVd(vsize, instruction.VD); }
+	
+	// !IMPORTANT
+	// @TODO: Check if shoukd use VT prefix?
+	void saveVt(uint vsize) { saveVt(vsize, instruction.VT); }
 	
 	void vfpuVectorGetPointer(float*[] row, uint vx) {
 		uint line   = (vx >> 0) & 3; // 0-3

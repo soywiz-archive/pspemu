@@ -277,4 +277,17 @@ final class Registers {
 		if (count != 0) writefln("");
 		writefln("}");
 	}
+	
+	void vfpu_dump() {
+		for (int matrix = 0; matrix < 8; matrix++) {
+			writefln("MATRIX(%d):", matrix);
+			for (int column = 0; column < 4; column++) { 
+				for (int row = 0; row < 4; row++) {
+					writef("%.8f ", VF_CELLS[matrix][column][row]); 
+				}
+				writefln("");
+			}
+			writefln("");
+		}
+	}
 }

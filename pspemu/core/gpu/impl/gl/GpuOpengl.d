@@ -753,7 +753,6 @@ template OpenglUtils() {
 			glMatrixMode(GL_TEXTURE);
 			
 			if (state.vertexType.transform2D) {
-			//if (state.vertexType.transform2D) {
 				glLoadIdentity();
 				glScalef(1.0f / cast(float)state.texture.mipmaps[0].width, 1.0f / cast(float)state.texture.mipmaps[0].height, 1);
 			} else {
