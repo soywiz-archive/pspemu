@@ -14,6 +14,23 @@ template ThreadManForUser_Callbacks() {
 		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
 		mixin(registerd!(0xEDBA5844, sceKernelDeleteCallback));
 		mixin(registerd!(0x349D6D6C, sceKernelCheckCallback));
+		mixin(registerd!(0xC11BA8C4, sceKernelNotifyCallback));
+	}
+	
+	/**
+	 * Notify a callback
+	 *
+	 * @param cb   - The UID of the specified callback
+	 * @param arg2 - Passed as arg2 into the callback function
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelNotifyCallback(SceUID cb, int arg2) {
+		PspCallback pspCallback = uniqueIdFactory.get!PspCallback(cb);
+		
+		hleEmulatorState.executeGuestCode(currentThreadState, pspCallback.func, [pspCallback.arg, arg2]);
+		
+		return 0;
 	}
 
 	/**

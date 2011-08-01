@@ -26,8 +26,9 @@ template ThreadManForUser_VTimers() {
 	
 	void initNids_VTimers() {
 	    mixin(registerd!(0x20FFF560, sceKernelCreateVTimer));
-	    mixin(registerd!(0x20FFF560, sceKernelSetVTimerHandler));
+	    mixin(registerd!(0xD8B299AE, sceKernelSetVTimerHandler));
 	    mixin(registerd!(0xC68D9437, sceKernelStartVTimer));
+	    mixin(registerd!(0xD0AEEE87, sceKernelStopVTimer));
 	    mixin(registerd!(0x034A921F, sceKernelGetVTimerTime));
 	    mixin(registerd!(0xC0B3FFD2, sceKernelGetVTimerTimeWide));
 	}
@@ -135,9 +136,11 @@ template ThreadManForUser_VTimers() {
 class VTimer {
 	bool running;
 	SysTime startTime;
+	SysTime _endTime;
 	
 	this() {
 		running = false;
+		_endTime = startTime = now();
 	}
 	
 	SysTime now() {
@@ -145,17 +148,21 @@ class VTimer {
 	}
 	
 	void start() {
-		startTime = now();
+		startTime = now() - (lastTime - startTime);
 		running = true;
 	}
 	
 	void stop() {
 		running = false;
+		_endTime = now();
+	}
+	
+	@property SysTime lastTime() {
+		if (running) return now();
+		return _endTime;
 	}
 	
 	long get() {
-		if (!running) return 0;
-		Duration duration = (now() - startTime);
-		return duration.total!"usecs";
+		return (lastTime - startTime).total!"usecs";
 	}
 }

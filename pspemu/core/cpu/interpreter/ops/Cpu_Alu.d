@@ -103,8 +103,8 @@ template TemplateCpu_ALU() {
 	// DIVU -- Divide Unsigned
 	// Divides $s by $t and stores the quotient in $LO and the remainder in $HI
 	// $LO = $s / $t; $HI = $s % $t; advance_pc (4);
-	void OP_DIV () { mixin(CE("$lo = #rs / #rt; $hi = #rs % #rt;")); }
-	void OP_DIVU() { mixin(CE("$lo = $rs / $rt; $hi = $rs % $rt;")); }
+	void OP_DIV () { try { mixin(CE("$lo = #rs / #rt; $hi = #rs % #rt;", Advance.NO)); } catch { }  registers.pcAdvance(4); }
+	void OP_DIVU() { try { mixin(CE("$lo = $rs / $rt; $hi = $rs % $rt;", Advance.NO)); } catch { } registers.pcAdvance(4); }
 
 	// MULT/MADD/MSUB    -- Multiply
 	void OP_MULT () { mixin(CE("$hl  = cast(long)#rs * cast(long)#rt;")); }

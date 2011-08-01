@@ -3,48 +3,25 @@ module pspemu.core.cpu.Instruction;
 import std.stdio, std.string, std.bitmanip;
 import pspemu.utils.bitslice;
 import pspemu.utils.MathUtils;
-//import std.numeric;
+import pspemu.utils.BitUtils;
+import std.numeric;
 
-//alias CustomFloat!(10, 5, CustomFloatFlags.ieee) hfloat;
+/**
+ * 16bit IEEE HalfFloat
+ */
+alias CustomFloat!(10, 5, CustomFloatFlags.ieee) hfloat;
 
-// From jpcsp.
-float halffloatToFloat(int imm16) {
-	int s = (imm16 >> 15) & 0x00000001; // sign
-	int e = (imm16 >> 10) & 0x0000001f; // exponent
-	int f = (imm16 >>  0) & 0x000003ff; // fraction
-	
-	// need to handle 0x7C00 INF and 0xFC00 -INF?
-	if (e == 0) {
-		// need to handle +-0 case f==0 or f=0x8000?
-		if (f == 0) {
-			// Plus or minus zero
-			return reinterpret!float(s << 31);
-		}
-		// Denormalized number -- renormalize it
-		while ((f & 0x00000400) == 0) {
-		    f <<= 1;
-		    e -=  1;
-		}
-		e += 1;
-		f &= ~0x00000400;
-	} else if (e == 31) {
-	    if (f == 0) {
-	        // Inf
-		    return reinterpret!float((s << 31) | 0x7f800000);
-		}
-		// NaN
-		return reinterpret!float((s << 31) | 0x7f800000 | (f << 13));
-	}
-	
-	e = e + (127 - 15);
-	f = f << 13;
-	
-	return reinterpret!float((s << 31) | (e << 23) | f);
+hfloat ushortToHfloat(uint v) {
+	hfloat hv;
+	hv.significand = BitUtils.extract!(uint, 0, 10)(v);
+	hv.exponent    = BitUtils.extract!(uint, 10, 5)(v);
+	hv.sign        = cast(bool)BitUtils.extract!(uint, 15, 1)(v);
+	return hv;
 }
 
 // Extra.
 enum { INSTR_TYPE_NONE = 0, INSTR_TYPE_PSP = 1, INSTR_TYPE_B = 2, INSTR_TYPE_JUMP = 4, INSTR_TYPE_JAL = 8, INSTR_TYPE_BRANCH = INSTR_TYPE_B | INSTR_TYPE_JUMP | INSTR_TYPE_JAL }
-enum { ADDR_TYPE_NONE = 0, ADDR_TYPE_16 = 1, ADDR_TYPE_26 = 2, ADDR_TYPE_REG = 3 }
+enum { ADDR_TYPE_NONE  = 0, ADDR_TYPE_16   = 1, ADDR_TYPE_26 = 2, ADDR_TYPE_REG   = 3 }
 
 struct ValueMask {
 	string format;
@@ -238,13 +215,7 @@ struct Instruction {
 	/**
 	 * 16bit Immediate HalfFloat
 	 */
-	@property float IMM_HF() {
-		float value = halffloatToFloat(IMMU);
-		//writefln("%032b", v);
-		//writefln("%016b", IMMU);
-		//writefln("%f", value);
-		return value;
-	}
+	@property float IMM_HF() { return cast(float)ushortToHfloat(IMMU); }
 
 
 	uint opCast() { return v; }

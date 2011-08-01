@@ -236,6 +236,8 @@ class ModuleLoader {
 		modulePsp.entryPoint = PC();
 
 		logInfo("Module(%08X): %s: EntryPoint:0x%08X", this.elf.sectionHeadersNamed[".rodata.sceModuleInfo"].offset, moduleInfo, modulePsp.entryPoint);
+		
+		Logger.log(Logger.Level.WARNING, "ModuleRelocation", "Module Relocation Address 0x%08X", elf.relocationAddress);
 
 		return modulePsp;
 	}
