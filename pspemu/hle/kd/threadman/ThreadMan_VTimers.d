@@ -7,6 +7,8 @@ import pspemu.utils.sync.WaitMultipleObjects;
 
 import pspemu.hle.HleEmulatorState;
 import pspemu.core.ThreadState;
+import pspemu.core.Memory;
+import core.thread;
 
 import pspemu.hle.kd.threadman.Types;
 
@@ -15,6 +17,9 @@ import pspemu.utils.String;
 
 import std.datetime;
 import std.stdio;
+
+HleEmulatorState hleEmulatorState;
+@property public Memory currentMemory() { return null; }
 
 /**
  * Events related stuff.
@@ -26,6 +31,7 @@ template ThreadManForUser_VTimers() {
 	
 	void initNids_VTimers() {
 	    mixin(registerd!(0x20FFF560, sceKernelCreateVTimer));
+	    mixin(registerd!(0xD2D615EF, sceKernelCancelVTimerHandler));
 	    mixin(registerd!(0xD8B299AE, sceKernelSetVTimerHandler));
 	    mixin(registerd!(0xC68D9437, sceKernelStartVTimer));
 	    mixin(registerd!(0xD0AEEE87, sceKernelStopVTimer));
@@ -42,21 +48,23 @@ template ThreadManForUser_VTimers() {
 	 * @return The VTimer's UID or < 0 on error.
 	 */
 	SceUID sceKernelCreateVTimer(string name, SceKernelVTimerOptParam *opt) {
-		return uniqueIdFactory().add(new VTimer());
+		VTimer vTimer = new VTimer(name);
+		vTimer.info = hleEmulatorState.memoryManager.callocHost!SceKernelVTimerInfo();
+		vTimer.info.size = vTimer.info.sizeof; 
+		setFixedStringz(vTimer.info.name, name);
+		return uniqueIdFactory().add(vTimer);
 	}
-
+	
 	/**
-	 * Set the timer handler
+	 * Cancel the timer handler
 	 *
-	 * @param uid     - UID of the vtimer
-	 * @param time    - Time to call the handler?
-	 * @param handler - The timer handler
-	 * @param common  - Common pointer
+	 * @param uid - The UID of the vtimer
 	 *
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceKernelSetVTimerHandler(SceUID uid, SceKernelSysClock *time, SceKernelVTimerHandler handler, void* common) {
-		unimplemented();
+	int sceKernelCancelVTimerHandler(SceUID uid) {
+		VTimer vTimer = uniqueIdFactory().get!VTimer(uid);
+		hleEmulatorState.memoryManager.free(currentMemory().getPointerReverseOrNull(vTimer.info));
 		return 0;
 	}
 
@@ -118,6 +126,63 @@ template ThreadManForUser_VTimers() {
 	}
 	
 	/**
+	 * Set the timer handler.
+	 * Timer handler will be executed once after
+	 *
+	 * @param uid     - UID of the vtimer
+	 * @param time    - Time to call the handler?
+	 * @param handler - The timer handler
+	 * @param common  - Common pointer
+	 *
+	 * @return 0 on success, < 0 on error
+	 */
+	int sceKernelSetVTimerHandler(SceUID uid, SceKernelSysClock *time, SceKernelVTimerHandler handler, /*void**/uint common) {
+		VTimer vTimer = uniqueIdFactory().get!VTimer(uid);
+		
+		ulong utime = time.v64;
+		vTimer.info.common = cast(void*)common;
+		vTimer.info.handler = handler;
+		vTimer.info.schedule = *time;
+		
+		void addToExecute() {
+			hleEmulatorState.callbacksHandler.addToExecuteQueue(
+				handler,
+				[
+					uid,
+					cast(uint)currentMemory().ptrHostToGuest!SceKernelSysClock(&vTimer.info.schedule),
+					cast(uint)currentMemory().ptrHostToGuest!SceKernelSysClock(&vTimer.info.schedule),
+					cast(uint)vTimer.info.common
+				]
+			);
+			//writefln("################################################");
+		}
+		
+		addToExecute();
+		
+		/*
+		Thread thread = new Thread({
+			// @FAKE!! Implement it properly.
+			Thread.sleep(dur!"usecs"(utime));
+
+			hleEmulatorState.callbacksHandler.addToExecuteQueue(
+				handler,
+				[
+					uid,
+					cast(uint)currentMemory().ptrHostToGuest!SceKernelSysClock(&vTimer.info.schedule),
+					cast(uint)currentMemory().ptrHostToGuest!SceKernelSysClock(&vTimer.info.schedule),
+					cast(uint)vTimer.info.common
+				]
+			);
+			
+		});
+		thread.name = "VTIMER-" ~ vTimer.name;
+		thread.start();
+		*/
+		
+		return 0;
+	}
+	
+	/**
 	 * Set the timer handler (wide mode)
 	 *
 	 * @param uid     - UID of the vtimer
@@ -134,11 +199,14 @@ template ThreadManForUser_VTimers() {
 }
 
 class VTimer {
+	string name;
+	SceKernelVTimerInfo* info;
 	bool running;
 	SysTime startTime;
 	SysTime _endTime;
 	
-	this() {
+	this(string name) {
+		this.name = name;
 		running = false;
 		_endTime = startTime = now();
 	}

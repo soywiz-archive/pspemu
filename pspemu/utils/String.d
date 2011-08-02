@@ -6,6 +6,11 @@ import std.ascii;
 import std.c.stdio;
 import std.stdio;
 
+void setFixedStringz(char[] dest, string value) {
+	dest[0..value.length] = value[0..$];
+	dest[value.length..$] = 0;
+}
+
 void dumpHex(ubyte[] data, uint ptr = 0) {
 	while (data.length) {
 		printf("%08X ", ptr);

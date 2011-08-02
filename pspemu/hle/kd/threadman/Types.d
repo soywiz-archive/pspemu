@@ -117,6 +117,16 @@ enum PspEventFlagWaitTypes
 	PSP_EVENT_WAITCLEAR = 0x20,
 };
 
+struct SceKernelVTimerInfo {
+	SceSize size;
+	char 	name[32];
+	int 	active;
+	SceKernelSysClock 	base;
+	SceKernelSysClock 	current;
+	SceKernelSysClock 	schedule;
+	SceKernelVTimerHandler 	handler;
+	void * 	common;
+}
 
 /*
 alias SceUInt function(SceUID uid, SceKernelSysClock *, SceKernelSysClock *, void *) SceKernelVTimerHandler;

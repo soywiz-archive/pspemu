@@ -145,7 +145,7 @@ class sceCtrl_driver : ModuleNative {
 	 */
 	int sceCtrlReadLatch(SceCtrlLatch* currentLatch) {
 		//currentEmulatorState().display.waitVblank();
-		_waitReadFrame();
+		//_waitReadFrame();
 		logInfo("sceCtrlReadLatch()");
 		return _sceCtrlReadLatch(currentLatch);
 	}

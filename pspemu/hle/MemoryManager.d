@@ -23,6 +23,10 @@ class MemoryManager {
 	public uint malloc(uint size) {
 		return alloc(PspPartition.Kernel0, "malloc", PspSysMemBlockTypes.PSP_SMEM_Low, size);
 	}
+
+	public T* callocHost(T)(int count = 1) {
+		return cast(T*)memory.getPointer(alloc(PspPartition.Kernel0, "malloc", PspSysMemBlockTypes.PSP_SMEM_Low, T.sizeof * count));
+	}
 	
 	public uint alloc(PspPartition partition, string name, PspSysMemBlockTypes type, uint size, uint addr = 0) {
 		SceUID mem = this.sysMemUserForUser.sceKernelAllocPartitionMemory(partition, name, type, size, addr);

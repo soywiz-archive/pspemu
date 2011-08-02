@@ -257,6 +257,9 @@ int main2(string[] args) {
 
 	if (doTestsEx) {
 		EmulatorHelper emulatorHelper = new EmulatorHelper(new Emulator());
+		
+		emulatorHelper.hleEmulatorState().osConfig.enabledDisplay = false;
+		
 		emulatorHelper.initComponents();
 		if (log) {
 			Logger.setLevel(Logger.Level.TRACE);

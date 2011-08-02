@@ -23,4 +23,5 @@ enum PspConfirmButton : int {
 class OsConfig {
 	PspLanguages     language      = PspLanguages.ENGLISH;
 	PspConfirmButton confirmButton = PspConfirmButton.CROSS;
+	bool enabledDisplay = true;
 }

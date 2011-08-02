@@ -70,6 +70,10 @@ struct SceKernelMppInfo {
 struct SceKernelSysClock {
 	SceUInt32   low;
 	SceUInt32   hi;
+	
+	@property ulong v64() {
+		return (cast(ulong)hi << 32) | cast(ulong)hi;
+	}
 }
 
 ulong systime_to_tick(SysTime systime) {
