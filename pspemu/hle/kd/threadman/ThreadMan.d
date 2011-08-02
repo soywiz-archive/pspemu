@@ -31,6 +31,8 @@ import pspemu.hle.Callbacks;
 
 import std.datetime;
 
+import pspemu.hle.kd.SceKernelErrors;
+
 import pspemu.hle.kd.rtc.Types;
 import pspemu.hle.kd.sysmem.SysMem;
 

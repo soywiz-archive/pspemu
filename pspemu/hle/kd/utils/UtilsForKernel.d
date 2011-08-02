@@ -42,6 +42,7 @@ class UtilsForUser : ModuleNative {
 		mixin(registerd!(0xC8186A58, sceKernelUtilsMd5Digest));
 		mixin(registerd!(0x840259F1, sceKernelUtilsSha1Digest));
 		mixin(registerd!(0x920F104A, sceKernelIcacheInvalidateAll));
+		mixin(registerd!(0xC2DF770E, sceKernelIcacheInvalidateRange));
 		
 	    mixin(registerd!(0x6AD345D7, sceKernelSetGPO));
 	    mixin(registerd!(0x37FB5C42, sceKernelGetGPI));
@@ -212,6 +213,16 @@ class UtilsForUser : ModuleNative {
 	void sceKernelIcacheInvalidateAll() {
 		// Here dynarec should check functions.
 		unimplemented();
+	}
+
+	/**
+	 * Invalidate a instruction cache range.
+	
+	 * @param addr - The start address of the range.
+	 * @param size - The size in bytes
+	 */
+	void sceKernelIcacheInvalidateRange(void *addr, uint size) {
+		unimplemented_notice();
 	}
 }
 

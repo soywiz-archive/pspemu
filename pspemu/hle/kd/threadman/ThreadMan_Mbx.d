@@ -1,7 +1,8 @@
 module pspemu.hle.kd.threadman.ThreadMan_Mbx;
 
 import pspemu.hle.kd.threadman.Types;
-
+import pspemu.hle.kd.threadman.ThreadMan_Semaphores;
+import pspemu.hle.kd.SceKernelErrors;
 
 // @TODO @NOTE :: This should be implemented as a priority queue.
 struct SceKernelMsgPacket {
@@ -129,10 +130,10 @@ template ThreadManForUser_Mbx() {
 	 *
 	 * @return < 0 on error (SCE_KERNEL_ERROR_MBOX_NOMSG if the mbx is empty).
 	 */
-	int sceKernelPollMbx(SceUID mbxid, SceKernelMsgPacket** pmessage) {
+	int sceKernelPollMbx(SceUID mbxid, uint* /* SceKernelMsgPacket** */ pmessage) {
 		PspMessageBox messageBox = uniqueIdFactory.get!PspMessageBox(mbxid);
 
-		if (!messageBox.hasMessages) return SceKernelErrors.SCE_KERNEL_ERROR_MBOX_NOMSG;
+		if (!messageBox.hasMessages) return 0x800201b2/*SceKernelErrors.SCE_KERNEL_ERROR_MBOX_NOMSG*/;
 		
 		return sceKernelReceiveMbx(mbxid, pmessage, null);
 	}
@@ -186,10 +187,13 @@ class PspMessageBox {
 	}
 	
 	SceKernelMsgPacket* recv() {
+		/*
 		synchronized (this) {
 			this.message = message;
 			semaphore.incrementCount(1);
 		}
+		*/
+		throw(new Exception("Not implemented yet"));
 	}
 
 	this(string name) {
