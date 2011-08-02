@@ -16,6 +16,8 @@ import pspemu.hle.kd.threadman.ThreadMan_Events;
 import pspemu.hle.kd.threadman.ThreadMan_Callbacks;
 import pspemu.hle.kd.threadman.ThreadMan_VTimers;
 import pspemu.hle.kd.threadman.ThreadMan_MsgPipes;
+import pspemu.hle.kd.threadman.ThreadMan_Mutex;
+import pspemu.hle.kd.threadman.ThreadMan_Mbx;
 import pspemu.hle.kd.threadman.Types;
 import pspemu.hle.MemoryManager;
 
@@ -82,14 +84,18 @@ class ThreadManForUser : ModuleNative {
 	mixin ThreadManForUser_Callbacks;
 	mixin ThreadManForUser_VTimers;
 	mixin ThreadManForUser_MsgPipes;
+	mixin ThreadManForUser_Mutex;
+	mixin ThreadManForUser_Mbx;
 
 	void initModule() {
 		initModule_Threads();
 		initModule_Semaphores();
 		initModule_Events();
+		initModule_Mutex();
 		initModule_Callbacks();
 		initModule_VTimers();
 		initModule_MsgPipes();
+		initModule_Mbx();
 		//moduleManager.getCurrentThreadName = { return threadManager.currentThread.name; };
 	}
 
@@ -97,20 +103,14 @@ class ThreadManForUser : ModuleNative {
 		initNids_Threads();
 		initNids_Semaphores();
 		initNids_Events();
+		initNids_Mutex();
 		initNids_Callbacks();
 		initNids_VTimers();
 		initNids_MsgPipes();
+		initNids_Mbx();
 		
 		mixin(registerd!(0x369ED59D, sceKernelGetSystemTimeLow));
 		mixin(registerd!(0x82BC5777, sceKernelGetSystemTimeWide));
-
-		mixin(registerd!(0x8125221D, sceKernelCreateMbx));
-		mixin(registerd!(0x86255ADA, sceKernelDeleteMbx));
-		mixin(registerd!(0xE9B3061E, sceKernelSendMbx));
-		mixin(registerd!(0x18260574, sceKernelReceiveMbx));
-		mixin(registerd!(0x0D81716A, sceKernelPollMbx));
-		mixin(registerd!(0x87D4DD36, sceKernelCancelReceiveMbx));
-		mixin(registerd!(0xA8E8C846, sceKernelReferMbxStatus));
 
 		mixin(registerd!(0xC8CD158C, sceKernelUSec2SysClockWide));
 
@@ -129,6 +129,12 @@ class ThreadManForUser : ModuleNative {
 		
 	    mixin(registerd!(0x110DEC9A, sceKernelUSec2SysClock));
 	    mixin(registerd!(0xC8CD158C, sceKernelUSec2SysClockWide));
+	    
+	    mixin(registerd!(0x912354A7, sceKernelRotateThreadReadyQueue));
+	}
+	
+	void sceKernelRotateThreadReadyQueue() {
+		unimplemented_notice();
 	}
 	
 	/**
@@ -173,35 +179,35 @@ class ThreadManForUser : ModuleNative {
 	}
 	
 	/**
-	 * Allocate from the pool
+	 * Allocate from the pool. It will wait for a free block to be available the specified time.
 	 *
 	 * @param uid     - The UID of the pool
-	 * @param data    - Receives the address of the allocated data
+	 * @param data**  - Receives the address of the allocated data
 	 * @param timeout - Amount of time to wait for allocation?
 	 *
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceKernelAllocateFpl(SceUID uid, uint** data, uint *timeout) {
-		logWarning("sceKernelAllocateFpl(%d, %08X, %08X) @TODO Not waiting", uid, cast(uint)data, cast(uint)timeout);
-		return sceKernelTryAllocateFpl(uid, data);
+	int sceKernelAllocateFpl(SceUID uid, uint dataPtr, uint *timeout) {
+		logWarning("sceKernelAllocateFpl(%d, %08X, %08X) @TODO Not waiting", uid, dataPtr, cast(uint)timeout);
+		return sceKernelTryAllocateFpl(uid, dataPtr);
 	}
 	
 	/**
-	 * Try to allocate from the pool 
+	 * Try to allocate from the pool immediately.
 	 *
-	 * @param uid  - The UID of the pool
-	 * @param data - Receives the address of the allocated data
+	 * @param uid    - The UID of the pool
+	 * @param data** - Receives the address of the allocated data
 	 *
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceKernelTryAllocateFpl(SceUID uid, uint** data) {
-		logWarning("sceKernelTryAllocateFpl(%d, %08X)", uid, cast(uint)data);
+	int sceKernelTryAllocateFpl(SceUID uid, uint dataPtr) {
+		logWarning("sceKernelTryAllocateFpl(%d, %08X)", uid, dataPtr);
 		FixedPool fixedPool = uniqueIdFactory.get!FixedPool(uid);
 		try {
-			*data = cast(uint *)fixedPool.allocate();
+			currentMemory().twrite(dataPtr, cast(uint)fixedPool.allocate());
 			return 0;
 		} catch (Exception e) {
-			return -1;
+			return SceKernelErrors.ERROR_KERNEL_NO_MEMORY;
 		}
 		//return sceKernelTryAllocateVpl(uid, data);
 	}
@@ -319,137 +325,6 @@ class ThreadManForUser : ModuleNative {
 	 * @return 0 on success, < 0 on error
 	 */
 	int sceKernelReferVplStatus(SceUID uid, SceKernelVplInfo* info) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Creates a new messagebox
-	 *
-	 * @par Example:
-	 * @code
-	 * int mbxid;
-	 * mbxid = sceKernelCreateMbx("MyMessagebox", 0, NULL);
-	 * @endcode
-	 *
-	 * @param name - Specifies the name of the mbx
-	 * @param attr - Mbx attribute flags (normally set to 0)
-	 * @param option - Mbx options (normally set to NULL)
-	 * @return A messagebox id
-	 */
-	SceUID sceKernelCreateMbx(string name, SceUInt attr, SceKernelMbxOptParam* option) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Destroy a messagebox
-	 *
-	 * @param mbxid - The mbxid returned from a previous create call.
-	 * @return Returns the value 0 if its succesful otherwise an error code
-	 */
-	int sceKernelDeleteMbx(SceUID mbxid) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Send a message to a messagebox
-	 *
-	 * @par Example:
-	 * @code
-	 * struct MyMessage {
-	 * 	SceKernelMsgPacket header;
-	 * 	char text[8];
-	 * };
-	 *
-	 * struct MyMessage msg = { {0}, "Hello" };
-	 * // Send the message
-	 * sceKernelSendMbx(mbxid, (void*) &msg);
-	 * @endcode
-	 *
-	 * @param mbxid - The mbx id returned from sceKernelCreateMbx
-	 * @param message - A message to be forwarded to the receiver.
-	 * 					The start of the message should be the 
-	 * 					::SceKernelMsgPacket structure, the rest
-	 *
-	 * @return < 0 On error.
-	 */
-	int sceKernelSendMbx(SceUID mbxid, void *message) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Wait for a message to arrive in a messagebox
-	 *
-	 * @par Example:
-	 * @code
-	 * void *msg;
-	 * sceKernelReceiveMbx(mbxid, &msg, NULL);
-	 * @endcode
-	 *
-	 * @param mbxid - The mbx id returned from sceKernelCreateMbx
-	 * @param pmessage - A pointer to where a pointer to the
-	 *                   received message should be stored
-	 * @param timeout - Timeout in microseconds
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelReceiveMbx(SceUID mbxid, void **pmessage, SceUInt *timeout) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Check if a message has arrived in a messagebox
-	 *
-	 * @par Example:
-	 * @code
-	 * void *msg;
-	 * sceKernelPollMbx(mbxid, &msg);
-	 * @endcode
-	 *
-	 * @param mbxid - The mbx id returned from sceKernelCreateMbx
-	 * @param pmessage - A pointer to where a pointer to the
-	 *                   received message should be stored
-	 *
-	 * @return < 0 on error (SCE_KERNEL_ERROR_MBOX_NOMSG if the mbx is empty).
-	 */
-	int sceKernelPollMbx(SceUID mbxid, void **pmessage) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Abort all wait operations on a messagebox
-	 *
-	 * @par Example:
-	 * @code
-	 * sceKernelCancelReceiveMbx(mbxid, NULL);
-	 * @endcode
-	 *
-	 * @param mbxid - The mbx id returned from sceKernelCreateMbx
-	 * @param pnum  - A pointer to where the number of threads which
-	 *                were waiting on the mbx should be stored (NULL
-	 *                if you don't care)
-	 *
-	 * @return < 0 on error
-	 */
-	int sceKernelCancelReceiveMbx(SceUID mbxid, int *pnum) {
-		unimplemented();
-		return -1;
-	}
-
-	/**
-	 * Retrieve information about a messagebox.
-	 *
-	 * @param mbxid - UID of the messagebox to retrieve info for.
-	 * @param info - Pointer to a ::SceKernelMbxInfo struct to receive the info.
-	 *
-	 * @return < 0 on error.
-	 */
-	int sceKernelReferMbxStatus(SceUID mbxid, SceKernelMbxInfo *info) {
 		unimplemented();
 		return -1;
 	}

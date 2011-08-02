@@ -227,7 +227,7 @@ class PspSemaphore {
 	SceKernelSemaInfo info;
 	WaitEvent waitEvent;
 	
-	this(string name, int attr, int initCount, int maxCount, ) {
+	this(string name, int attr, int initCount, int maxCount) {
 		this.waitEvent = new WaitEvent(name);
 
 		this.name = name;

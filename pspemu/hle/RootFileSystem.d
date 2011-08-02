@@ -74,6 +74,7 @@ class RootFileSystem {
 	
 		// Aliases.
 		devices["disc0:"  ] = devices["umd0:"];
+		devices["umd1:"   ] = devices["umd0:"];
 		devices["ms:"     ] = devices["ms0:"];
 		devices["mscmhc0:"] = devices["ms0:"];
 		devices["fatms0:" ] = devices["ms0:"];

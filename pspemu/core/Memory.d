@@ -66,6 +66,10 @@ class Memory : Stream {
 	/// Psp Pointer.
 	alias uint Pointer;
 	
+	bool ignoreErrors = false;
+	//bool ignoreErrors = true;
+	__gshared uint[0x1000] dummyBuffer;
+
 	static struct Segment {
 		uint address, mask, size;
 		uint low, high;
@@ -90,7 +94,7 @@ class Memory : Stream {
 		// 0x04_20_00_00 = SWIZZLED ZBUFFER
 		// 0x04_40_00_00 = VRAM MIRRORED
 		// 0x04_80_00_00 = UNSWIZZLED ZBUFFER
-		const mainMemory  = Segment(0x08_000000, 0x02000000);
+		const mainMemory  = Segment(0x08_000000, 0x04000000);
 		const hwVectors   = Segment(0x1f_c00000, 0x00100000);
 	}
 
@@ -183,7 +187,7 @@ class Memory : Stream {
 		if (address == 0) return null;
 		return cast(T *)getPointer(address);
 	}
-
+	
 	/**
 	 * Obtains a pointer to a physical memory position.
 	 *
@@ -197,7 +201,14 @@ class Memory : Stream {
 		} else*/ {
 			// Throws a MemoryException for an invalid address.
 			static pure string InvalidAddress() {
-				return "throw(new InvalidAddressException(address));";
+				return q{
+					if (ignoreErrors) {
+						.writefln("InvalidAddressException: 0x%08X", address);
+						return dummyBuffer.ptr;
+					} else {
+						throw(new InvalidAddressException(address));
+					}
+				};
 			}
 
 			// If version(VERSION_CHECK_MEMORY), check that the address is in a specified segment or throws an InvalidAddressException.
@@ -258,7 +269,14 @@ class Memory : Stream {
 	 */
 	public Pointer getPointerReverse(void *_ptr) {
 		Pointer retval = getPointerReverseOrNull(_ptr);
-		if (retval == 0) throw(new Exception(std.string.format("Can't find original pointer of address 0x%08X", cast(uint)_ptr)));
+		if (retval == 0) {
+			if (ignoreErrors) {
+				writefln("Can't find original pointer of address 0x%08X", cast(uint)_ptr);
+			} else {
+				throw(new Exception(std.string.format("Can't find original pointer of address 0x%08X", cast(uint)_ptr)));
+			}
+
+		}
 		return retval;
 	}
 	

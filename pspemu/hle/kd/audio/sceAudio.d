@@ -132,8 +132,13 @@ class sceAudio_driver : ModuleNative {
 	 * @return Number of samples to be played, an error if less than 0.
 	 */
 	int sceAudioGetChannelRestLength(int channel) {
-		unimplemented();
-		return 0;
+		// Invalid channel.
+		if (!validChannelIndex(channel)) {
+			logWarning("sceAudioOutputPannedBlocking.invalidChannel!");
+			return -1;
+		}
+		
+		return audio.channels[channel].samplesLeft();
 	}
 
 	int _sceAudioOutputPannedBlocking(int channel, int leftvol, int rightvol, void *buf, bool blocking) {

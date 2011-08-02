@@ -21,6 +21,9 @@ template Gpu_Special() {
 	 **/
 	// void sceGuDrawBuffer(int psm, void* fbp, int fbw);
 
+	auto OP_NOP() {
+	}
+
 	// Frame Buffer Pointer
 	auto OP_FBP() {
 		gpu.state.drawBuffer.lowAddress = command.param24;

@@ -24,6 +24,14 @@ class MemorySegment {
 	
 	string nameFull() { return parent ? (parent.name ~ "/" ~ name) : name; }
 	
+	void dump(int level = 0) {
+		string prefix = std.array.replicate("  ", level);
+		writefln("%sMemorySegment('%s', %08X-%08X)", prefix, name, block.low, block.high);
+		foreach (child; childs) {
+			child.dump(level + 1);
+		}
+	}
+	
 	string toString() {
 		string ret = "";
 		/*
@@ -105,6 +113,8 @@ class MemorySegment {
 					return addNewMemorySegment(new MemorySegment(block.high - size - decrement, block.high - decrement, name));
 				}
 			}
+			
+			dump();
 			throw(new Exception(std.string.format("Can't allocByHigh size=%d on %s", size, this)));
 		}
 	}
@@ -128,6 +138,8 @@ class MemorySegment {
 			if (maxDesiredAddress != 0) {
 				return allocByLow(size, name, 0, alignment);
 			}
+			
+			dump();
 			throw(new Exception(std.string.format("Can't allocByLow size=%d on %s", size, this)));
 		}
 	}

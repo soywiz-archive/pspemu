@@ -33,6 +33,11 @@ class PspCallback {
 	 * Argument to send to callback function.
 	 */
 	uint arg;
+	
+	/**
+	 * Number of times the callback has been executed;
+	 */
+	uint notifyCount;
 
 	/**
 	 * Constructor.
@@ -43,8 +48,14 @@ class PspCallback {
 		this.arg  = arg;
 	}
 	
+	void execute(HleEmulatorState hleEmulatorState, ThreadState threadState, uint[] arguments) {
+		//writefln("Calling 0x%08X with arguments %s", pspCallback.func, arguments);
+		hleEmulatorState.executeGuestCode(threadState, this.func, arguments);
+		this.notifyCount++;
+	}
+	
 	public string toString() {
-		return std.string.format("PspCallback('%s', %08X, %08X)", name, func, arg);
+		return std.string.format("PspCallback('%s', %08X, %08X, %d)", name, func, arg, notifyCount);
 	}
 }
 
@@ -180,9 +191,7 @@ class CallbacksHandler {
 							}
 							//uint[] baseArguments = [cast(uint)pspCallback.arg];
 							
-							//writefln("Calling 0x%08X with arguments %s", pspCallback.func, arguments);
-							
-							hleEmulatorState.executeGuestCode(threadState, pspCallback.func, arguments);
+							pspCallback.execute(hleEmulatorState, threadState, arguments);
 						}
 					};
 					

@@ -65,11 +65,11 @@ template ThreadManForUser_MsgPipes() {
 	/**
 	 * Send a message to a pipe
 	 *
-	 * @param uid - The UID of the pipe
+	 * @param uid     - The UID of the pipe
 	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
+	 * @param size    - Size of the message
+	 * @param unk1    - Unknown
+	 * @param unk2    - Unknown
 	 * @param timeout - Timeout for send
 	 *
 	 * @return 0 on success, < 0 on error
@@ -82,11 +82,11 @@ template ThreadManForUser_MsgPipes() {
 	/**
 	 * Try to send a message to a pipe
 	 *
-	 * @param uid - The UID of the pipe
+	 * @param uid     - The UID of the pipe
 	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
+	 * @param size    - Size of the message
+	 * @param unk1    - Unknown
+	 * @param unk2    - Unknown
 	 *
 	 * @return 0 on success, < 0 on error
 	 */
@@ -98,11 +98,11 @@ template ThreadManForUser_MsgPipes() {
 	/**
 	 * Receive a message from a pipe
 	 *
-	 * @param uid - The UID of the pipe
+	 * @param uid     - The UID of the pipe
 	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
+	 * @param size    - Size of the message
+	 * @param unk1    - Unknown
+	 * @param unk2    - Unknown
 	 * @param timeout - Timeout for receive
 	 *
 	 * @return 0 on success, < 0 on error
@@ -115,11 +115,11 @@ template ThreadManForUser_MsgPipes() {
 	/**
 	 * Receive a message from a pipe
 	 *
-	 * @param uid - The UID of the pipe
+	 * @param uid     - The UID of the pipe
 	 * @param message - Pointer to the message
-	 * @param size - Size of the message
-	 * @param unk1 - Unknown
-	 * @param unk2 - Unknown
+	 * @param size    - Size of the message
+	 * @param unk1    - Unknown
+	 * @param unk2    - Unknown
 	 *
 	 * @return 0 on success, < 0 on error
 	 */

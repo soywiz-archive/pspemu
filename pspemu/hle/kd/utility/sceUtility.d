@@ -170,13 +170,74 @@ class sceUtility : ModuleNative {
 		unimplemented_notice();
 		params.base.result = 0;
 		
-		MessageBoxW(
+		int result = MessageBoxW(
 			null,
 			toStringz(toUTF16(to!string(params.message.ptr))),
 			toStringz(toUTF16(std.string.format("Info (%08X)", currentThreadState.registers.PC))),
 			MB_OKCANCEL | MB_ICONEXCLAMATION | MB_DEFBUTTON1
 		);
 		//int MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+		
+		switch (result) {
+			case 2: // cancel
+				params.buttonPressed = pspUtilityMsgDialogPressed.PSP_UTILITY_MSGDIALOG_RESULT_BACK;
+			break;
+			case 3, 5, 7: // abort, ignore, no
+				params.buttonPressed = pspUtilityMsgDialogPressed.PSP_UTILITY_MSGDIALOG_RESULT_NO;
+			break;
+			case 11, 1, 4, 10, 6: // continue, ok, retry, try again, yes
+				params.buttonPressed = pspUtilityMsgDialogPressed.PSP_UTILITY_MSGDIALOG_RESULT_YES;
+			break;
+			default:
+				params.buttonPressed = pspUtilityMsgDialogPressed.PSP_UTILITY_MSGDIALOG_RESULT_UNKNOWN1;
+			break;
+		}
+		
+		/*
+		pspUtilityMsgDialogPressed buttonPressed;
+		
+		PSP_UTILITY_MSGDIALOG_RESULT_UNKNOWN1 = 0,
+		PSP_UTILITY_MSGDIALOG_RESULT_YES      = 1,
+		PSP_UTILITY_MSGDIALOG_RESULT_NO       = 2,
+		PSP_UTILITY_MSGDIALOG_RESULT_BACK     = 3,
+		*/
+		
+		/*
+		IDABORT
+		3
+		The Abort button was selected.
+		
+		IDCANCEL
+		2
+		The Cancel button was selected.
+		
+		IDCONTINUE
+		11
+		The Continue button was selected.
+		
+		IDIGNORE
+		5
+		The Ignore button was selected.
+		
+		IDNO
+		7
+		The No button was selected.
+		
+		IDOK
+		1
+		The OK button was selected.
+		
+		IDRETRY
+		4
+		The Retry button was selected.
+		
+		IDTRYAGAIN
+		10
+		The Try Again button was selected.
+		
+		IDYES
+		6
+		*/
 		
 		currentDialogStep = DialogStep.SUCCESS;
 		return 0;
@@ -200,6 +261,21 @@ class sceUtility : ModuleNative {
 	void sceUtilityMsgDialogUpdate(int n) {
 		unimplemented_notice();
 	}
+	
+	DialogStep _sceUtilityMsgDialogGetStatus() {
+		//unimplemented_notice();
+		logInfo("sceUtilitySavedataGetStatus(%s:%d)", to!string(currentDialogStep), currentDialogStep);
+		
+		scope (exit) {
+			// After returning SHUTDOWN, start returning NONE.
+			if (currentDialogStep == DialogStep.SHUTDOWN) {
+				currentDialogStep = DialogStep.NONE;
+			}
+		}
+
+		return currentDialogStep;
+	}
+
 
 	/**
 	 * Get the current status of a message dialog currently active.
@@ -209,8 +285,7 @@ class sceUtility : ModuleNative {
 	 *         4 if the dialog has been successfully shut down.
 	 */
 	DialogStep sceUtilityMsgDialogGetStatus() {
-		//unimplemented_notice();
-		return currentDialogStep;
+		return _sceUtilityMsgDialogGetStatus();
 	}
 
 	/**
@@ -292,17 +367,7 @@ class sceUtility : ModuleNative {
 	 *         4 on complete shutdown.
 	 */
 	DialogStep sceUtilitySavedataGetStatus() {
-		//unimplemented_notice();
-		logInfo("sceUtilitySavedataGetStatus(%s:%d)", to!string(currentDialogStep), currentDialogStep);
-		
-		scope (exit) {
-			// After returning SHUTDOWN, start returning NONE.
-			if (currentDialogStep == DialogStep.SHUTDOWN) {
-				currentDialogStep = DialogStep.NONE;
-			}
-		}
-
-		return currentDialogStep;
+		return _sceUtilityMsgDialogGetStatus();
 	}
 
 	/**

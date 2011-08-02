@@ -14,6 +14,7 @@ template IoFileMgrForKernel_FilesAsync() {
 	
 	void initNids_FilesAsync() {
 		mixin(registerd!(0x89AA9906, sceIoOpenAsync));
+		mixin(registerd!(0x1B385D8F, sceIoLseek32Async));
 		mixin(registerd!(0x71B19E77, sceIoLseekAsync));
 		mixin(registerd!(0xFF5940B6, sceIoCloseAsync));
 		mixin(registerd!(0xA0B5A7C2, sceIoReadAsync));
@@ -54,6 +55,24 @@ template IoFileMgrForKernel_FilesAsync() {
 		}
 		*/
 	}
+	
+	/**
+	 * Reposition read/write file descriptor offset (asynchronous)
+	 *
+	 * @param fd     - Opened file descriptor with which to seek
+	 * @param offset - Relative offset from the start position given by whence (32 bits)
+	 * @param whence - Set to SEEK_SET to seek from the start of the file, SEEK_CUR
+	 *                 seek from the current position and SEEK_END to seek from the end.
+	 *
+	 * @return < 0 on error. Actual value should be passed returned by the ::sceIoWaitAsync call.
+	 */
+	int sceIoLseek32Async(SceUID fd, uint offset, int whence) {
+		SceOff offsetAfterSeek = sceIoLseek(fd, offset, whence);
+		auto fileHandle = uniqueIdFactory.get!FileHandle(fd);
+		fileHandle.lastOperationResult = cast(long)offsetAfterSeek;
+		return 0;
+	}
+
 
 	/**
 	 * Reposition read/write file descriptor offset (asynchronous)

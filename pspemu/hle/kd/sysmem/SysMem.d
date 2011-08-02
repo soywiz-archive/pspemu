@@ -25,13 +25,15 @@ class SysMemUserForUser : ModuleNative {
 	MemorySegment pspMemorySegmentStacks;
 
 	void initModule() {
-		pspMemorySegment       = new MemorySegment(0x08000000, 0x0A000000, "PSP Memory");
-		//pspMemorySegmentStacks = new MemorySegment(0x08000000, 0x0A000000 - 0x100, "PSP Memory Stacks");
-		pspMemorySegmentStacks = new MemorySegment(0x08000000, 0x0A000000, "PSP Memory Stacks");
+		uint ramAddrLow  = 0x08000000;
+		uint ramAddrHigh = ramAddrLow + 64 * 1024 * 1024;
+		
+		pspMemorySegment       = new MemorySegment(ramAddrLow, ramAddrHigh, "PSP Memory");
+		pspMemorySegmentStacks = new MemorySegment(ramAddrLow, ramAddrHigh, "PSP Memory Stacks");
 		
 		pspMemorySegment.allocByAddr(0x08000000,  4 * 1024 * 1024, "Kernel Memory 1");
 		pspMemorySegment.allocByAddr(0x08400000,  4 * 1024 * 1024, "Kernel Memory 2");
-		pspMemorySegment.allocByAddr(0x08800000, 24 * 1024 * 1024, "User Memory");
+		pspMemorySegment.allocByAddr(0x08800000, (64 - 4 - 4) * 1024 * 1024, "User Memory");
 		
 		logTrace("pspMemorySegment.allocByAddr:: %s", pspMemorySegment.toString);
 	}
@@ -47,6 +49,7 @@ class SysMemUserForUser : ModuleNative {
 		mixin(registerd!(0xF77D77CB, sceKernelSetCompilerVersion));
 		mixin(registerd!(0x7591C7DB, sceKernelSetCompiledSdkVersion));
 		mixin(registerd!(0x342061E5, sceKernelSetCompiledSdkVersion370));
+		mixin(registerd!(0x315AD3A0, sceKernelSetCompiledSdkVersion380_390));
 		mixin(registerd!(0xEBD5C3E6, sceKernelSetCompiledSdkVersion395));
 	}
 
@@ -61,6 +64,10 @@ class SysMemUserForUser : ModuleNative {
 	}
 
 	void sceKernelSetCompiledSdkVersion370(uint param) {
+		logInfo("sceKernelSetCompiledSdkVersion370: 0x%08X", param);
+	}
+	
+	void sceKernelSetCompiledSdkVersion380_390(uint param) {
 		logInfo("sceKernelSetCompiledSdkVersion370: 0x%08X", param);
 	}
 	
@@ -136,7 +143,8 @@ class SysMemUserForUser : ModuleNative {
 	}
 	
 	MemorySegment _allocateMemorySegmentLow(SceUID partitionid, string name, uint size) {
-		return pspMemorySegment[partitionid].allocByHigh(size, dupStr(name));
+		//return pspMemorySegment[partitionid].allocByHigh(size, dupStr(name));
+		return pspMemorySegment[partitionid].allocByLow(size, dupStr(name));
 	}
 
 	MemorySegment _allocateMemorySegmentHigh(SceUID partitionid, string name, uint size) {
@@ -150,7 +158,7 @@ class SysMemUserForUser : ModuleNative {
 	 * @param name - Name assigned to the new block.
 	 * @param type - Specifies how the block is allocated within the partition.  One of ::PspSysMemBlockTypes.
 	 * @param size - Size of the memory block, in bytes.
-	 * @param addr - If type is PSP_SMEM_Addr, then addr specifies the lowest address allocate the block from.
+	 * @param addr - If type is PSP_SMEM_Addr, then addr specifies the lowest address allocate the block from. If not, the alignment size.
 	 *
 	 * @return The UID of the new block, or if less than 0 an error.
 	 */
@@ -161,7 +169,7 @@ class SysMemUserForUser : ModuleNative {
 		try {
 			MemorySegment memorySegment;
 			
-			Logger.log(Logger.Level.INFO, "SysMemUserForUser", "sceKernelAllocPartitionMemory(%d:'%s':%s:%d)", partitionid, name, std.conv.to!string(type), size);
+			Logger.log(Logger.Level.INFO, "SysMemUserForUser", "sceKernelAllocPartitionMemory(%d:'%s':%s:%d,0x%08X)", partitionid, name, std.conv.to!string(type), size, addr);
 			//Logger.log(Logger.Level.INFO, "SysMemUserForUser", "sceKernelAllocPartitionMemory(%d:'%s':%d:%d)", partitionid, name, (type), size);
 			
 			int alignment = 1;

@@ -235,7 +235,7 @@ class sceSasCore : ModuleNative {
 	 */
 	uint __sceSasInit(SasCore* sasCore, int grainSamples, int maxVoices, OutputMode outputMode, int sampleRate) {
 		try {
-			if (grainSamples > PSP_SAS_GRAIN_SAMPLES) throw(new Exception("Invalid grainSamples"));
+			//if (grainSamples > PSP_SAS_GRAIN_SAMPLES) throw(new Exception("Invalid grainSamples"));
 			if (maxVoices    > PSP_SAS_VOICES_MAX   ) throw(new Exception("Invalid maxVoices"));
 			
 			//logWarning("Not implemented __sceSasInit(%08X, %d, %d, %d, %d)", currentMemory().getPointerReverse(sasCore), grainSamples, maxVoices, outMode, sampleRate);

@@ -15,6 +15,7 @@ template ThreadManForUser_Callbacks() {
 		mixin(registerd!(0xEDBA5844, sceKernelDeleteCallback));
 		mixin(registerd!(0x349D6D6C, sceKernelCheckCallback));
 		mixin(registerd!(0xC11BA8C4, sceKernelNotifyCallback));
+	    mixin(registerd!(0x2A3D44FF, sceKernelGetCallbackCount));
 	}
 	
 	/**
@@ -84,4 +85,17 @@ template ThreadManForUser_Callbacks() {
 		}
 		return result;
 	}
+	
+	/**
+	 * Get the callback count
+	 *
+	 * @param cb - The UID of the specified callback
+	 *
+	 * @return The callback count, < 0 on error
+	 */
+	int sceKernelGetCallbackCount(SceUID cb) {
+		PspCallback pspCallback = uniqueIdFactory.get!PspCallback(cb);
+		return pspCallback.notifyCount;
+	}
+
 }
