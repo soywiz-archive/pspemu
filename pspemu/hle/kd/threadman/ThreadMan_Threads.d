@@ -66,7 +66,7 @@ template ThreadManForUser_Threads() {
 
 	 * @return UID of the created thread, or an error code.
 	 */
-	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option) {
+	SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, PspThreadAttributes attr, SceKernelThreadOptParam *option) {
 		ThreadState newThreadState = new ThreadState(dupStr(name), currentEmulatorState, new Registers());
 		
 		newThreadState.threadModule = currentThreadState.threadModule;
@@ -78,7 +78,13 @@ template ThreadManForUser_Threads() {
 		
 		//auto segment = hleEmulatorState.moduleManager.get!SysMemUserForUser().allocStack(stackSize, std.string.format("stack for thread '%s'", name), true);
 		//newThreadState.registers.SP = segment.block.high; 
-		newThreadState.registers.SP = hleEmulatorState.memoryManager.allocStack(PspPartition.User, std.string.format("stack for thread '%s'", name), stackSize);
+		
+		newThreadState.registers.SP = hleEmulatorState.memoryManager.allocStack(
+			PspPartition.User,
+			std.string.format("stack for thread '%s'", name),
+			stackSize,
+			!(attr & PspThreadAttributes.PSP_THREAD_ATTR_NO_FILLSTACK)
+		);
 		
 		newThreadState.registers.RA = 0x08000000;
 		newThreadState.thid = uniqueIdFactory.add(newThreadState);

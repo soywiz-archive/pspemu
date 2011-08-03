@@ -28,6 +28,7 @@ import pspemu.hle.RootFileSystem;
 import pspemu.hle.Callbacks;
 import pspemu.hle.KPrint;
 import pspemu.hle.OsConfig;
+import pspemu.hle.ThreadScheduler;
 
 import pspemu.core.exceptions.NotImplementedException;
 
@@ -46,6 +47,7 @@ class HleEmulatorState : ISyscall {
 	public ModulePsp        mainModule;
 	public OsConfig         osConfig;
 	public Object           globalLock;
+	public ThreadManager    threadManager;
 	
 	string mainModuleName() {
 		return mainModule ? mainModule.name : "Not loaded";
@@ -68,6 +70,7 @@ class HleEmulatorState : ISyscall {
 		this.callbacksHandler = new CallbacksHandler(this);
 		this.kPrint           = new KPrint();
 		this.osConfig         = new OsConfig();
+		this.threadManager    = new ThreadManager();
 		this.emulatorState.syscall = this;
 	}
 

@@ -260,7 +260,7 @@ int main2(string[] args) {
 		
 		emulatorHelper.hleEmulatorState().osConfig.enabledDisplay = false;
 		
-		emulatorHelper.initComponents();
+		emulatorHelper.initComponentsSynchronized();
 		if (log) {
 			Logger.setLevel(Logger.Level.TRACE);
 		} else {
@@ -354,8 +354,7 @@ int main2(string[] args) {
 	if (nolog) {
 		emulatorHelper.emulator.hleEmulatorState.kPrint.outputKprint = true;
 	}
-	emulatorHelper.initComponents();
-	emulatorHelper.waitComponentsInitialized();
+	emulatorHelper.initComponentsSynchronized();
 
 	//GuiBase gui = new GuiSdl(emulatorHelper.emulator.hleEmulatorState);
 	GuiBase gui = new GuiDfl(emulatorHelper);

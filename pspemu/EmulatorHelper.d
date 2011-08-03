@@ -143,30 +143,13 @@ class EmulatorHelper {
 		emulator.mainCpuThread.threadState.threadModule = modulePsp; 
 	}
 	
-	public void initComponents() {
+	public void initComponentsSynchronied() {
 		emulator.startGpu();
-		emulator.waitGpuStarted();
 		emulator.startDisplay();
-		emulator.waitDisplayStarted();
-	}
-	
-	public void waitComponentsInitialized() {
-		//emulator.waitDisplayStarted();
-		//emulator.waitGpuStarted();
 	}
 	
 	public void start() {
-		emulator.emulatorState.waitForAllCpuThreadsToTerminate();
-
 		emulator.startMainThread();
-
-		//emulator.emulatorState.dumpThreads();
-		
-		emulator.emulatorState.waitSomeCpuThreadsToStart();
-		//emulator.emulatorState.dumpThreads();
-
-		emulator.emulatorState.waitForAllCpuThreadsToTerminate();
-		//emulator.emulatorState.dumpThreads();
 	}
 	
 	public void loadAndRunTest(string pspTestExpectedPath) {

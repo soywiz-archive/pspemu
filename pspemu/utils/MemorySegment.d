@@ -81,6 +81,8 @@ class MemorySegment {
 			blocks = [block];
 		}
 		
+		sort!((ref Block a, ref Block b){ return a.low < b.low; })(blocks);
+		
 		return blocks;
 	}
 

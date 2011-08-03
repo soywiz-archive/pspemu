@@ -2,6 +2,8 @@ module pspemu.hle.kd.modulemgr.ModuleMgr; // kd/modulemgr.prx (sceModuleManager)
 
 import pspemu.hle.ModuleNative;
 
+import pspemu.hle.kd.threadman.Types;
+
 import std.stream;
 import std.stdio;
 
@@ -226,7 +228,8 @@ class ModuleMgrForUser : ModuleNative {
 		//writefln("[4]");
 		
 		//SceUID sceKernelCreateThread(string name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, SceKernelThreadOptParam *option)
-		SceUID thid = threadManForUser.sceKernelCreateThread("main_thread", modulePsp.sceModule.entry_addr, 0, 0x1000, modulePsp.sceModule.attribute, null);
+		//SceUID thid = threadManForUser.sceKernelCreateThread("main_thread", modulePsp.sceModule.entry_addr, 0, 0x1000, modulePsp.sceModule.attribute, null);
+		SceUID thid = threadManForUser.sceKernelCreateThread("main_thread", modulePsp.sceModule.entry_addr, 0, 0x1000, PspThreadAttributes.PSP_THREAD_ATTR_NONE, null);
 		
 		//writefln("[4a]");
 		

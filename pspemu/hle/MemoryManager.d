@@ -41,11 +41,11 @@ class MemoryManager {
 		return alloc(partition, name, PspSysMemBlockTypes.PSP_SMEM_Low, size);
 	}
 	
-	public uint allocStack(PspPartition partition, string name, uint size) {
+	public uint allocStack(PspPartition partition, string name, uint size, bool fillFF = true) {
 		//auto segment = hleEmulatorState.moduleManager.get!SysMemUserForUser().allocStack(stackSize, std.string.format("stack for thread '%s'", name), true);
 		//newThreadState.registers.SP = segment.block.high; 
 
-		return this.sysMemUserForUser.allocStack(size, name, true).block.high - 0x10;
+		return this.sysMemUserForUser.allocStack(size, name, fillFF).block.high - 0x10;
 		//return alloc(partition, name, PspSysMemBlockTypes.PSP_SMEM_High, size) + size;
 	}
 

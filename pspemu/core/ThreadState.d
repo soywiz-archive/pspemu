@@ -23,16 +23,16 @@ public import pspemu.utils.sync.CriticalSection;
 import pspemu.utils.Event;
 
 class ThreadState {
-	protected __gshared ThreadState[Thread] threadStatePerThread;
-	
+	public string name;
+	public SceUID thid;
+
 	public string waitType;
 	public bool waiting;
 	public EmulatorState emulatorState;
 	public Registers registers;
+	protected Fiber nativeFiber;
 	protected Thread nativeThread;
 	protected HANDLE nativeThreadHandle;
-	public string name;
-	public SceUID thid;
 	public SceKernelThreadInfo sceKernelThreadInfo;
 	public Module threadModule;
 	public Event onDeleteThread;

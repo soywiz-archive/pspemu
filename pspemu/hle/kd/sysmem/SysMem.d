@@ -17,7 +17,9 @@ class SysMemUserForUser : ModuleNative {
 		stackSize += 0x600;
 		auto segment = pspMemorySegmentStacks.allocByHigh(stackSize, std.string.format("Stack for %s", name));
 		//writefln("allocStack!!! %s Size(%d)", segment, stackSize);
-		if (fillFF) currentEmulatorState.memory[segment.block.low..segment.block.high][] = 0xFF;
+		if (fillFF) {
+			currentEmulatorState.memory[segment.block.low..segment.block.high][] = 0xFF;
+		}
 		return segment;
 	}
 
@@ -25,17 +27,21 @@ class SysMemUserForUser : ModuleNative {
 	MemorySegment pspMemorySegmentStacks;
 
 	void initModule() {
+		uint ramSize = 32 * 1024 * 1024;
 		uint ramAddrLow  = 0x08000000;
-		uint ramAddrHigh = ramAddrLow + 64 * 1024 * 1024;
+		//uint ramAddrHigh = ramAddrLow + 64 * 1024 * 1024;
+		uint ramAddrHigh = ramAddrLow + ramSize;
 		
 		pspMemorySegment       = new MemorySegment(ramAddrLow, ramAddrHigh, "PSP Memory");
 		pspMemorySegmentStacks = new MemorySegment(ramAddrLow, ramAddrHigh, "PSP Memory Stacks");
 		
 		pspMemorySegment.allocByAddr(0x08000000,  4 * 1024 * 1024, "Kernel Memory 1");
 		pspMemorySegment.allocByAddr(0x08400000,  4 * 1024 * 1024, "Kernel Memory 2");
-		pspMemorySegment.allocByAddr(0x08800000, (64 - 4 - 4) * 1024 * 1024, "User Memory");
+		pspMemorySegment.allocByAddr(0x08800000, ramSize - (4 + 4) * 1024 * 1024, "User Memory");
 		
 		logTrace("pspMemorySegment.allocByAddr:: %s", pspMemorySegment.toString);
+		
+		_allocateMemorySegmentLow(2, "unknown", 0x4000);
 	}
 
 	void initNids() {
@@ -133,6 +139,7 @@ class SysMemUserForUser : ModuleNative {
 	SceSize sceKernelMaxFreeMemSize() {
 		//writefln("%s", pspMemorySegment[2]);
 		SceSize maxFreeMemSize = pspMemorySegment[2].getMaxAvailableMemoryBlock();
+		//pspMemorySegment[2].dump();
 		Logger.log(Logger.Level.INFO, "sysmem", "maxFreeMemSize(%d, %.2f MB)", maxFreeMemSize, (cast(real)maxFreeMemSize) / 1024 / 1024);
 		// maxFreeMemSize
 		// @TODO Maybe game allocates all the memory, but alloc an stack can overlap the memory. Check this.
@@ -143,7 +150,6 @@ class SysMemUserForUser : ModuleNative {
 	}
 	
 	MemorySegment _allocateMemorySegmentLow(SceUID partitionid, string name, uint size) {
-		//return pspMemorySegment[partitionid].allocByHigh(size, dupStr(name));
 		return pspMemorySegment[partitionid].allocByLow(size, dupStr(name));
 	}
 

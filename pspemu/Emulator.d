@@ -21,6 +21,8 @@ import pspemu.hle.ModuleNative;
 import pspemu.hle.ModuleLoader;
 import pspemu.hle.ModulePsp;
 
+import pspemu.hle.ThreadManager;
+
 class Emulator {
 	public EmulatorState emulatorState;
 	public HleEmulatorState hleEmulatorState;
@@ -36,26 +38,24 @@ class Emulator {
 		emulatorState.reset();
 		hleEmulatorState.reset();
 		mainCpuThread    = new CpuThreadInterpreted(new ThreadState("mainCpuThread", emulatorState));
+		//hleEmulatorState.threadManager.add(mainCpuThread);
 	}
 	
-	public void startDisplay() {
+	public void startDisplaySynchronized() {
 		emulatorState.display.start();
-	}
-	
-	public void startGpu() {
-		emulatorState.gpu.start();
-	}
-	
-	public void waitDisplayStarted() {
 		emulatorState.display.waitStarted();
 	}
 	
-	public void waitGpuStarted() {
+	public void startGpuSynchronized() {
+		emulatorState.gpu.start();
 		emulatorState.gpu.waitStarted();
 	}
 	
 	public void startMainThread() {
-		mainCpuThread.start();
+		hleEmulatorState.threadManager.reset();
+		hleEmulatorState.threadManager.add(mainCpuThread);
+		hleEmulatorState.executionLoop();
+		//mainCpuThread.start();
 	}
 	
 	public void dumpRegisteredModules() {
