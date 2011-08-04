@@ -1,4 +1,4 @@
-module pspemu.hle.ModuleNative;
+module pspemu.hle.HleModuleNative;
 
 public import std.stdio;
 public import std.conv;
@@ -41,7 +41,7 @@ enum FunctionOptions {
 	SynchronizedGlobal = 3,
 }
 
-abstract class ModuleNative : Module {
+abstract class HleModuleNative : Module {
 	public Object moduleLock;
 	
 	override public bool isNative() {

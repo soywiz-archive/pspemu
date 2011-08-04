@@ -41,10 +41,6 @@ import pspemu.utils.Diff;
 class EmulatorHelper {
 	Emulator emulator;
 	
-	@property HleEmulatorState hleEmulatorState() {
-		return emulator.hleEmulatorState;
-	}
-	
 	this(Emulator emulator) {
 		this.emulator = emulator;
 		this.init();
@@ -143,9 +139,8 @@ class EmulatorHelper {
 		emulator.mainCpuThread.threadState.threadModule = modulePsp; 
 	}
 	
-	public void initComponentsSynchronied() {
-		emulator.startGpu();
-		emulator.startDisplay();
+	public void startComponentsSynchronized() {
+		emulator.startComponentsSynchronized();
 	}
 	
 	public void start() {

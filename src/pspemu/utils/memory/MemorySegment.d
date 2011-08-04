@@ -1,4 +1,4 @@
-module pspemu.utils.MemorySegment;
+module pspemu.utils.memory.MemorySegment;
 
 import std.string, std.stdio;
 import std.algorithm;

@@ -68,4 +68,39 @@ final class HleThreadManager {
 		
 		// No threads left.
 	}
+	
+	/+
+	void dumpThreads() {
+		try {
+			writefln("Threads(%d):", Thread.getAll.length);
+			foreach (thread; Thread.getAll) {
+				writefln("  - Thread: '%s', running:%d, priority:%d", thread.name, thread.isRunning, thread.priority);
+			}
+			auto cpuThreadList = this.getCpuThreadsDup;
+			writefln("CpuThreads(%d):", cpuThreadList.length);
+			foreach (CpuThreadBase cpuThread; cpuThreadList) {
+				writef("  - CpuThread:");
+				try {
+					writef("%s", cpuThread);
+				} catch {
+					
+				}
+				writefln("");
+				//int callStackPosEnd   = min(cast(int)cpuThread.threadState.registers.CallStackPos, cast(int)cpuThread.threadState.registers.CallStack.length);
+				//int callStackPosStart = max(0, callStackPosEnd - 10);
+
+				try {								
+					//foreach (k, pc; cpuThread.threadState.registers.CallStack[callStackPosStart..callStackPosEnd])
+					foreach (k, pc; cpuThread.threadState.registers.CallStack[0..cpuThread.threadState.registers.CallStackPos]) {
+						writefln("    - %d - 0x%08X", k, pc);
+					}
+				} catch (Throwable o) {
+					
+				}
+			}
+		} catch (Throwable o) {
+			
+		}
+	}
+	+/
 }

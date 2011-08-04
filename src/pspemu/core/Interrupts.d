@@ -18,10 +18,21 @@ class Interrupts {
 	/**
 	 * Global InterruptFlag
 	 */
-	public bool I_F;
+	public bool _I_F;
+	
+	public bool I_F() { return _I_F; }
 	
 	protected InterruptHandler[][Type.max] interruptHandlersPerType;
 	protected InterruptTask[] interruptsTasks;
+	
+	public this() {
+		
+	}
+	
+	void reset() {
+		interruptHandlersPerType = null;
+		interruptsTasks.length = 0;
+	}
 	
 	public void addInterruptHandler(Type type, InterruptHandler interruptHandler) {
 		interruptHandlersPerType[type] ~= interruptHandler;
@@ -32,7 +43,7 @@ class Interrupts {
 			InterruptTask interruptTask;
 			interruptTask.type = type;
 			interruptsTasks ~= interruptTask;
-			I_F = true;
+			_I_F = true;
 		}
 	}
 	
@@ -47,7 +58,7 @@ class Interrupts {
 					}
 				}
 			});
-			I_F = false;
+			_I_F = false;
 		}
 	}
 }

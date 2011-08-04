@@ -17,5 +17,5 @@ SET LIBS=%LIBS% ole32.lib
 SET LIBS=%LIBS% uuid.lib
 SET LIBS=%LIBS% ws2_32.lib
 
-xfbuild.exe %* pspemu\main.d +xstd +xcore %FLAGS% +o=pspemu.exe %LIBS% import\psp.res
+xfbuild.exe %* -Isrc src\pspemu\main.d +xstd +xcore %FLAGS% +o=pspemu.exe %LIBS% import\psp.res
 del *.rsp 2> NUL

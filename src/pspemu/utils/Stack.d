@@ -13,10 +13,12 @@ class Stack(T) {
 	}
 	
 	void push(T value) {
+		assert(cursor < _values.length);
 		_values[cursor++] = value;
 	}
 	
 	T pop() {
+		assert(cursor > 0);
 		return _values[--cursor];		
 	}
 }

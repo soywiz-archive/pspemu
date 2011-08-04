@@ -58,7 +58,7 @@ import pspemu.utils.imaging.SimplePng;
 import pspemu.utils.imaging.SimpleTga;
 
 
-class GpuOpengl : GpuImplAbstract {
+class GpuImplOpengl : GpuImplAbstract {
 	mixin OpenglBase;
 	mixin OpenglUtils;
 

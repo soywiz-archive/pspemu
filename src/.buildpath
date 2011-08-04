@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
-	<buildpathentry kind="src" path="derelict/opengl"/>
-	<buildpathentry kind="src" path="derelict/sdl"/>
-	<buildpathentry kind="src" path="derelict/util"/>
+	<buildpathentry kind="src" path="pspemu"/>
+	<buildpathentry kind="src" path="derelict"/>
+	<buildpathentry kind="src" path="sandbox"/>
+	<buildpathentry kind="src" path="pspemu_tests"/>
 	<buildpathentry kind="src" path="dfl"/>
 	<buildpathentry kind="src" path="opencl"/>
-	<buildpathentry kind="src" path="pspemu"/>
-	<buildpathentry kind="src" path="pspemu_tests/utils"/>
-	<buildpathentry kind="src" path="sandbox"/>
 	<buildpathentry kind="con" path="org.eclipse.dltk.launching.INTERPRETER_CONTAINER"/>
 </buildpath>

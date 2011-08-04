@@ -1,4 +1,4 @@
-module pspemu.hle.ModuleLoader;
+module pspemu.hle.HleModuleLoader;
 
 //version = ALLOW_UNIMPLEMENTED_NIDS;
 //version = LOAD_DWARF_INFORMATION;
@@ -65,7 +65,7 @@ class InstructionCounter : InstructionHandler {
 	}
 }
 
-class ModuleLoader {
+class HleModuleLoader {
 	enum ModuleFlags : ushort {
 		User   = 0x0000,
 		Kernel = 0x1000,

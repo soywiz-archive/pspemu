@@ -1,4 +1,4 @@
-module pspemu.utils.MemoryPartition;
+module pspemu.utils.memory.MemoryPartition;
 
 import std.stdio;
 import std.string;
@@ -186,6 +186,26 @@ class MemoryPartition {
 					ret ~= ", ";
 				}
 				ret ~= child.toString();
+			}
+			ret ~= "]";
+		}
+		return ret;		
+	}
+
+	public string toString2() {
+		string ret = "";
+		ret ~= std.string.format("MemoryPartition(%d, %d, %s)", low(), high(), used);
+		if (childsByLow.length) {
+			ret ~= "[";
+			bool first = true;
+			foreach (childLow; childsByLow.keys.sort) {
+				auto child = childsByLow[childLow];
+				if (first) {
+					first = false;
+				} else {
+					ret ~= ", ";
+				}
+				ret ~= child.toString2();
 			}
 			ret ~= "]";
 		}

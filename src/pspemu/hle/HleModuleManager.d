@@ -1,4 +1,4 @@
-module pspemu.hle.ModuleManager;
+module pspemu.hle.HleModuleManager;
 
 import std.stdio;
 import std.stream;
@@ -14,7 +14,7 @@ import pspemu.hle.vfs.MountableVirtualFileSystem;
 import pspemu.hle.kd.sysmem.Types;
 
 //public import pspemu.All;
-class ModuleManager {
+class HleModuleManager {
 	const uint CODE_PTR_EXIT_THREAD  = 0x08000000;
 	const uint CODE_PTR_END_CALLBACK = 0x08000004;
 	const uint CODE_PTR_ARGUMENTS    = 0x08000100;

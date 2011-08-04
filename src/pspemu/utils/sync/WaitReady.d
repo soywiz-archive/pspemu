@@ -1,4 +1,4 @@
-module pspemu.utils.WaitReady;
+module pspemu.utils.sync.WaitReady;
 
 import core.sync.mutex;
 import core.sync.condition;

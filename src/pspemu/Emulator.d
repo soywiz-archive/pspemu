@@ -49,7 +49,6 @@ class Emulator {
 		hleEmulatorState.threadManager.reset();
 		hleEmulatorState.threadManager.add(mainCpuThread);
 		hleEmulatorState.executionLoop();
-		//mainCpuThread.start();
 	}
 	
 	public void dumpRegisteredModules() {

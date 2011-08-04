@@ -1,10 +1,12 @@
 module pspemu.core.cpu.Registers;
 
+import pspemu.interfaces.IResetable;
+
 import std.stdio, std.string, std.bitmanip;
 
 version = VERSION_R0_CHECK;
 
-final class Registers {
+final class Registers : IResetable {
 //struct Registers {
 	protected __gshared int[string] aliases;
 	protected __gshared const auto aliasesInv = [
@@ -206,7 +208,7 @@ final class Registers {
 
 	void reset() {
 		EXECUTED_INSTRUCTION_COUNT_THIS_THREAD = 0;
-		EXECUTED_SYSCALL_COUNT_THIS_THREAD = 0;
+		//EXECUTED_SYSCALL_COUNT_THIS_THREAD = 0;
 		PAUSED = false;
 		PC = 0; nPC = 4;
 		IC = 0;
@@ -259,14 +261,12 @@ final class Registers {
 	
 	void dump2() {
 		synchronized (this) {
-	    	//.,writefln();
 	    	.writefln("REGISTERS:");
-	    	foreach (k, value; registers.R) {
-	    		//.writef("   r%2d: %08X", k, value);
-	    		.writef("   %s: %08X", Registers.aliasesInv[k], value);
+	    	foreach (k, value; this.R) {
+	    		.writef("   %s: %08X", aliasesInv[k], value);
 	    		if ((k % 4) == 3) .writefln("");
 	    	}
-	    	.writefln("   pc: %08X", registers.PC);
+	    	.writefln("   pc: %08X", PC);
 	    }
 	}
 
