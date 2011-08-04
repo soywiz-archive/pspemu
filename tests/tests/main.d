@@ -11,8 +11,10 @@ import pspemu.core.crypto.KirkTest;
 import pspemu.core.display.DisplayTest;
 import pspemu.core.InterruptsTest;
 import pspemu.core.audio.AudioTest;
+import pspemu.core.cpu.interpreter.CpuInterpreterTest;
 
 int main(string[] args) {
+	TestsRunner.run(new CpuInterpreterTest);
 	TestsRunner.run(new CpuAssemblerTest);
 	TestsRunner.run(new MemoryPartitionTest);
 	TestsRunner.run(new RegistersTest);

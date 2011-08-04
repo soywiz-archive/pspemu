@@ -8,7 +8,8 @@ import std.stdio;
 template TemplateCpu_SPECIAL() {
 	void OP_UNK() {
 		registers.pcAdvance(4);
-		Logger.log(Logger.Level.CRITICAL, "CpuThreadInterpreted", "Thread(%d): PC(%08X): OP_UNK 0x%08X", threadState.thid, registers.PC, instruction.v);
+		//Logger.log(Logger.Level.CRITICAL, "CpuThreadInterpreted", "Thread(%d): PC(%08X): OP_UNK 0x%08X", threadState.thid, registers.PC, instruction.v);
+		Logger.log(Logger.Level.CRITICAL, "CpuThreadInterpreted", "PC(%08X): OP_UNK 0x%08X", registers.PC, instruction.v);
 	}
 
 	// sceKernelSuspendInterrupts
@@ -47,10 +48,11 @@ template TemplateCpu_SPECIAL() {
 		
 		// Remove
 		//registers.EXECUTED_SYSCALL_COUNT_THIS_THREAD++;
-		if (threadState.emulatorState.syscall is null) {
+		//if (threadState.emulatorState.syscall is null) {
+		if (syscall is null) {
 			std.stdio.writefln("Syscall handler not set");
 		} else {
-			threadState.emulatorState.syscall.syscall(cpuThread, instruction.CODE);
+			syscall.syscall(registers, instruction.CODE);
 		}
 	}
 

@@ -1,4 +1,4 @@
-module pspemu.IResetable;
+module pspemu.interfaces.IResetable;
 
 interface IResetable {
 	void reset();

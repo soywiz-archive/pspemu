@@ -1,7 +1,7 @@
-module pspemu.core.cpu.ISyscall;
+module pspemu.interfaces.ISyscall;
 
 import pspemu.core.cpu.Registers;
 
 interface ISyscall {
-	public void syscall(Registers registers, int syscallNum);
+	void syscall(Registers registers, int syscallNum);
 }

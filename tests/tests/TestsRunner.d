@@ -1,9 +1,11 @@
 module tests.TestsRunner;
 
+import tests.Test;
+
 import std.stdio;
 
 class TestsRunner {
-	static public void run(T)(T object) {
+	static public void run(T : Test)(T object) {
 		writefln("%s:", T.stringof);
 	    foreach (i, member; __traits(allMembers, T)) {
 	    	static if (member.length > 4 && member[0..4] == "test") {
@@ -15,7 +17,11 @@ class TestsRunner {
 	    			} finally {
 	    				object.tearDown();
 	    			}
-		    		writefln("OK");
+	    			if (object._assertsTotal == 0) {
+	    				writefln("NO ASSERTS");
+	    			} else {
+		    			writefln("OK");
+		    		}
 	    		} catch (Throwable o) {
 	    			writefln("%s", o);
 	    			writefln("FAIL");

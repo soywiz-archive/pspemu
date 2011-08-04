@@ -200,6 +200,7 @@ struct Instruction {
 		uint JUMP2(uint v) { JUMP = v >> 2; return v; }
 		
 		int OFFSET2() { return IMM * 4; }
+		int OFFSET2(int v) { IMM = v / 4; return OFFSET2; }
 		
 		uint SIZE_E() { return MSB + 1; }
 		uint SIZE_E(uint size) { MSB = size - 1; return size; }

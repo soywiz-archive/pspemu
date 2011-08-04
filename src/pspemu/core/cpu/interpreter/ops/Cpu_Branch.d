@@ -7,10 +7,13 @@ enum Link   { NO, YES }
 
 static pure nothrow string BRANCH(Likely likely, Link link, string condition) {
 	string r;
+	//r ~= "writefln(\"BRANCH(%d)\", instruction.OFFSET2);";
 	r ~= "if (" ~ condition ~ ") {";
+		//r ~= "writefln(\"YES\");";
 		if (link) r ~= "	registers[31] = registers.nPC + 4;";
 	r ~= "	registers.pcAdvance(instruction.OFFSET2);";
 	r ~= "} else {";
+		//r ~= "writefln(\"NO\");";
 		if (likely) {
 			r ~= "	registers.PC  = registers.nPC + 4;";
 			r ~= "  registers.nPC = registers.PC  + 4;";

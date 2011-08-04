@@ -5,12 +5,15 @@ import tests.Test;
 import pspemu.core.cpu.assembler.CpuAssembler;
 
 import pspemu.core.cpu.tables.Table;
+import pspemu.core.Memory;
 
 class CpuAssemblerTest : Test {
+	Memory memory;
 	CpuAssembler cpuAssembler;
 	
 	this() {
-		this.cpuAssembler = new CpuAssembler(PspInstructions_ALU); 
+		this.memory = new Memory(); 
+		this.cpuAssembler = new CpuAssembler(PspInstructions);
 	}
 	
 	void testUnknownOpcode() {
@@ -44,6 +47,30 @@ class CpuAssemblerTest : Test {
 		assertEquals(
 			[instruction],
 			this.cpuAssembler.assembleInstruction(0x00000000, "addi", "r1, r2, 1000")
+		);
+	}
+	
+	void testAssembleString() {
+		PspMemoryStream stream = new PspMemoryStream(memory);
+		stream.position = 0x_08900000;
+		this.cpuAssembler.assemble(stream, r"
+			loop:
+				add  r1, r2, r3
+				addi r2, r2, 1000
+				beq  r0, r2, loop
+				beq  r0, r0, skip
+				addi r3, r0, 2000
+			skip:
+				syscall 0x1002
+		");
+		stream.position = 0x_08900000;
+		
+		Instruction[6] instructions;
+		foreach (ref instruction; instructions) stream.read(instruction.v);
+
+		assertEquals(
+			"[OP(00430820),OP(204203E8),OP(1002FFFD),OP(10000001),OP(200307D0),OP(0004008C)]",
+			std.string.format("%s", instructions)
 		);
 	}
 }

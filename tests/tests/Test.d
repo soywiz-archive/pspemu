@@ -3,6 +3,9 @@ module tests.Test;
 public import std.stdio;
 
 class Test {
+	uint _assertsTotal;
+	uint _assertsFailed;
+	
 	void setUp() {
 		
 	}
@@ -12,8 +15,10 @@ class Test {
 	}
 	
 	void _assert(bool result, string message = "<assert>", string FILE = __FILE__, int LINE = __LINE__) {
+		_assertsTotal++;
 		if (!result) {
 			writefln("ON %s:%d :: %s", FILE, LINE, message);
+			_assertsFailed++;
 			throw(new Exception(message));
 		}
 	}

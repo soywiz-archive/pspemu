@@ -61,6 +61,30 @@ const ID[] PspInstructions_VFPU_IMP = [];
 const ID[] PspInstructions_SPECIAL = [];
 */
 
+auto PspInstructions() {
+	mixin("return " ~ PspInstructionsAllString ~ ";");
+}
+
+string PspInstructionsBranchString() {
+	return q{(
+		PspInstructions_BCU ~
+		PspInstructions_VFPU_BRANCH
+	)};
+}
+
+string PspInstructionsAllString() {
+	return q{(
+		PspInstructions_ALU ~
+		PspInstructions_BCU ~
+		PspInstructions_LSU ~
+		PspInstructions_FPU ~
+		PspInstructions_SPECIAL ~
+		PspInstructions_COP0 ~
+		PspInstructions_VFPU ~
+		PspInstructions_VFPU_BRANCH
+	)};
+}
+
 // @TODO: ADDR_TYPE could be induced from INSTR_TYPE plus format and could be removed when all the instructions use the Allegrex.isa format.
 // (if an instruction is a B, JUMP or J type, we can check at compile time wether the format has an imm16, imm26 or if it only uses registers)
 const PspInstructions_ALU = [

@@ -427,7 +427,7 @@ template TemplateCpu_VFPU() {
 	// LVQ(110110:rs:vt5:imm14:0:vt1)
 	void OP_LV_Q() {
 		uint address = registers.R[instruction.RS] + instruction.IMM14 * 4;
-		foreach (n, ref value; VD[0..4]) value = threadState.emulatorState.memory.tread!(float)(address + n * 4);
+		foreach (n, ref value; VD[0..4]) value = memory.tread!(float)(address + n * 4);
 		saveVd(4, instruction.VT5_1);
 		
 		debug (DEBUG_VFPU_I) writefln("OP_LV_Q(%s)", VD[0..4]);
@@ -436,7 +436,7 @@ template TemplateCpu_VFPU() {
 	}
 
 	void OP_LV_S() {
-		VD[0] = threadState.emulatorState.memory.tread!(float)(registers.R[instruction.RS] + instruction.IMM14 * 4);
+		VD[0] = memory.tread!(float)(registers.R[instruction.RS] + instruction.IMM14 * 4);
 		saveVd(1, instruction.VT5_2);
 		
 		debug (DEBUG_VFPU_I) writefln("OP_LV_S(%s)", VD[0..1]);
@@ -447,7 +447,7 @@ template TemplateCpu_VFPU() {
 	void OP_SV_S() {
 		uint address = registers.R[instruction.RS] + instruction.IMM14 * 4;
 		
-		threadState.emulatorState.memory.twrite!(float)(address, VT[0]);
+		memory.twrite!(float)(address, VT[0]);
 		
 		debug (DEBUG_VFPU_I) writefln("OP_SV_S(%s)", VT[0]);
 		
@@ -486,14 +486,14 @@ template TemplateCpu_VFPU() {
 		
         if ((vt & 32) != 0) {
             for (int j = 0; j < k; ++j) {
-				auto value = threadState.emulatorState.memory.tread!(float)(address);
+				auto value = memory.tread!(float)(address);
 				debug (DEBUG_VFPU_I) rows_d[j] = value;
                 registers.VF_CELLS[m][j][i] = value;
 				address += 4;
             }
         } else {
             for (int j = 0; j < k; ++j) {
-				auto value = threadState.emulatorState.memory.tread!(float)(address);
+				auto value = memory.tread!(float)(address);
                 debug (DEBUG_VFPU_I) rows_d[j] = value;
 				registers.VF_CELLS[m][i][j] = value;
 				address += 4;
@@ -519,14 +519,14 @@ template TemplateCpu_VFPU() {
 
         if ((vt & 32) != 0) {
             for (int j = 4 - k; j < 4; ++j) {
-				auto value = threadState.emulatorState.memory.tread!(float)(address);
+				auto value = memory.tread!(float)(address);
 				debug (DEBUG_VFPU_I) rows_d[j] = value;
                 registers.VF_CELLS[m][j][i] = value;
 				address += 4;
             }
         } else {
             for (int j = 4 - k; j < 4; ++j) {
-				auto value = threadState.emulatorState.memory.tread!(float)(address);
+				auto value = memory.tread!(float)(address);
 				debug (DEBUG_VFPU_I) rows_d[j] = value;
 				registers.VF_CELLS[m][i][j] = value;
 				address += 4;
@@ -564,7 +564,7 @@ template TemplateCpu_VFPU() {
 		loadVt(4, instruction.VT5_1);
 		uint address = registers.R[instruction.RS] + instruction.IMM14 * 4;
 
-		foreach (n, value; VT[0..4]) threadState.emulatorState.memory.twrite!(float)(address + n * 4, value);
+		foreach (n, value; VT[0..4]) memory.twrite!(float)(address + n * 4, value);
 
 		debug (DEBUG_VFPU_I) writefln("OP_SV_Q(%d,%d)(%s)", instruction.VT5, instruction.VT1, VT[0..4]);
 
@@ -1621,7 +1621,7 @@ template TemplateCpu_VFPU() {
             loadVt(vsize);
 
             for (int n = 0; n < vsize; n++) {
-                switch (cond & 3) {
+                final switch (cond & 3) {
                     case 0: cc = not; break;
                     case 1: cc = not ? (VS[n] != VT[n]) : (VS[n] == VT[n]); break;
                     case 2: cc = not ? (VS[n] >= VT[n]) : (VS[n] <  VT[n]); break;

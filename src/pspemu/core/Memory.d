@@ -10,12 +10,13 @@ module pspemu.core.Memory;
 // pcsp:      http://pcsp.googlecode.com/svn/trunk/pcsp-dbg/src/memory.h
 
 import std.stdio;
-import std.stream;
 import std.string;
 import std.ascii;
 import std.metastrings;
 import std.conv;
 import core.memory;
+
+public import std.stream;
 
 import std.c.windows.windows;
 
@@ -408,7 +409,7 @@ class Memory {
 	mixin ArrayTemplate;
 }
 
-class MemoryReader : Stream {
+class PspMemoryStream : Stream {
 	Memory memory;
 	
 	public this(Memory memory) {
