@@ -5,7 +5,7 @@ public import pspemu.hle.kd.sysmem.Types;
 import pspemu.hle.kd.sysmem.SysMem;
 import pspemu.core.Memory;
 
-class MemoryManager {
+class HleMemoryManager {
 	Memory memory;
 	ModuleManager moduleManager;
 	SysMemUserForUser sysMemUserForUser;

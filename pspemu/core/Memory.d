@@ -60,7 +60,7 @@ class InvalidAlignmentException : public MemoryException {
  * Class to handle the memory of the psp.
  * It can be used as a stream too.
  */
-class Memory : Stream {
+class Memory {
 	/// Several physical memory segments.
 
 	/// Psp Pointer.
@@ -141,8 +141,6 @@ class Memory : Stream {
 		mixin(alloc("hwVectors"));
 
 		// reset(); // D already sets all the new ubyte arrays to 0.
-
-		this.streamInit();
 	}
 	
 	~this() {
@@ -406,88 +404,89 @@ class Memory : Stream {
 		ubyte opIndexAssign(ubyte value, uint address) { twrite(address, value); return tread!(ubyte)(address); }
 	}
 
+	mixin ReadWriteTemplate;
+	mixin ArrayTemplate;
+}
+
+class MemoryReader : Stream {
+	Memory memory;
+	
+	public this(Memory memory) {
+		this.memory = memory;
+		streamInit();
+	}
+	
+	/// Position of the stream.
+	ulong streamPosition = 0;
+
 	/**
-	 * Implementation of the Stream abstract methids.
+	 * Initializes the stream.
 	 */
-	template StreamTemplate() {
-		/// Position of the stream.
-		ulong streamPosition = 0;
-
-		/**
-		 * Initializes the stream.
-		 */
-		void streamInit() {
-			this.seekable  = true;
-			this.readable  = true;
-			this.writeable = true;
-		}
-
-		override {
-			/**
-			 * Reads a block of memory from this stream.
-			 *
-			 * @param  _data  Pointer of an array that will store the contents of the stream.
-			 * @param  _len   Number of bytes that will be readed.
-			 *
-			 * @return Number of bytes readed. Will always be the number of requested bytes to read.
-			 */
-			size_t readBlock(void *_data, size_t len) {
-				ubyte *data = cast(ubyte*)_data; int rlen = len;
-				try {
-					while (len-- > 0) *data++ = tread!(ubyte)(cast(uint)streamPosition++);
-				} catch (Exception e) {
-					return 0;
-				}
-				return rlen;
-			}
-
-			/**
-			 * Writes a block of memory in this tream.
-			 *
-			 * @param  _data  Pointer of an array that contains the data to write.
-			 * @param  _len   Number of bytes that will be written.
-			 *
-			 * @return Number of bytes written. Will always be the number of requested bytes to write.
-			 */
-			size_t writeBlock(const void *_data, size_t len) {
-				ubyte *data = cast(ubyte*)_data; int rlen = len;
-				try {
-					while (len-- > 0) twrite!(ubyte)(cast(uint)streamPosition++, *data++);
-				} catch (Exception e) {
-					return 0;
-				}
-				return rlen;
-			}
-
-			/**
-			 * Seeks the stream.
-			 *
-			 * @param  offset  Offset data.
-			 * @param  whence  Type of seeking.
-			 *
-			 * @return Current position in the stream.
-			 */
-			ulong seek(long offset, SeekPos whence) {
-				final switch (whence) {
-					case SeekPos.Current: streamPosition += offset; break;
-					case SeekPos.Set: streamPosition = offset; break;
-					case SeekPos.End: streamPosition = 0x10000000 + offset; break;
-				}
-				return streamPosition;
-			}
-
-			/**
-			 * Determines wheter the stream reached the end or not.
-			 *
-			 * @return Always false, because never will get to the end of the stream.
-			 */
-			bool eof() { return false; }
-		}
+	void streamInit() {
+		this.seekable  = true;
+		this.readable  = true;
+		this.writeable = true;
 	}
 
-	mixin ReadWriteTemplate;
-	mixin StreamTemplate;
-	mixin ArrayTemplate;
+	/**
+	 * Reads a block of memory from this stream.
+	 *
+	 * @param  _data  Pointer of an array that will store the contents of the stream.
+	 * @param  _len   Number of bytes that will be readed.
+	 *
+	 * @return Number of bytes readed. Will always be the number of requested bytes to read.
+	 */
+	override size_t readBlock(void *_data, size_t len) {
+		ubyte *data = cast(ubyte*)_data; int rlen = len;
+		try {
+			while (len-- > 0) *data++ = memory.tread!(ubyte)(cast(uint)streamPosition++);
+		} catch (Exception e) {
+			return 0;
+		}
+		return rlen;
+	}
+
+	/**
+	 * Writes a block of memory in this tream.
+	 *
+	 * @param  _data  Pointer of an array that contains the data to write.
+	 * @param  _len   Number of bytes that will be written.
+	 *
+	 * @return Number of bytes written. Will always be the number of requested bytes to write.
+	 */
+	override size_t writeBlock(const void *_data, size_t len) {
+		ubyte *data = cast(ubyte*)_data; int rlen = len;
+		try {
+			while (len-- > 0) memory.twrite!(ubyte)(cast(uint)streamPosition++, *data++);
+		} catch (Exception e) {
+			return 0;
+		}
+		return rlen;
+	}
+
+	/**
+	 * Seeks the stream.
+	 *
+	 * @param  offset  Offset data.
+	 * @param  whence  Type of seeking.
+	 *
+	 * @return Current position in the stream.
+	 */
+	override ulong seek(long offset, SeekPos whence) {
+		final switch (whence) {
+			case SeekPos.Current: streamPosition += offset; break;
+			case SeekPos.Set: streamPosition = offset; break;
+			case SeekPos.End: streamPosition = 0x10000000 + offset; break;
+		}
+		return streamPosition;
+	}
+
+	/**
+	 * Determines wheter the stream reached the end or not.
+	 *
+	 * @return Always false, because never will get to the end of the stream.
+	 */
+	override bool eof() { return false; }
 }
 
 /+

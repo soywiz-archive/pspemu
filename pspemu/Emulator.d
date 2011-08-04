@@ -26,27 +26,21 @@ import pspemu.hle.ThreadManager;
 class Emulator {
 	public EmulatorState emulatorState;
 	public HleEmulatorState hleEmulatorState;
-	public CpuThreadInterpreted mainCpuThread;
 	
 	public this() {
 		emulatorState    = new EmulatorState();
 		hleEmulatorState = new HleEmulatorState(emulatorState);
-		mainCpuThread    = new CpuThreadInterpreted(new ThreadState("mainCpuThread", emulatorState));
 	}
 	
 	public void reset() {
 		emulatorState.reset();
 		hleEmulatorState.reset();
-		mainCpuThread    = new CpuThreadInterpreted(new ThreadState("mainCpuThread", emulatorState));
-		//hleEmulatorState.threadManager.add(mainCpuThread);
 	}
 	
-	public void startDisplaySynchronized() {
+	void startComponentsSynchronized() {
 		emulatorState.display.start();
 		emulatorState.display.waitStarted();
-	}
-	
-	public void startGpuSynchronized() {
+		
 		emulatorState.gpu.start();
 		emulatorState.gpu.waitStarted();
 	}

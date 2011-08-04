@@ -22,18 +22,17 @@ public import pspemu.utils.sync.CriticalSection;
 
 import pspemu.utils.Event;
 
-class ThreadState {
+class HleThreadState {
 	public string name;
 	public SceUID thid;
 
+	protected Fiber nativeFiber;
+	public    EmulatorState emulatorState;
+
 	public string waitType;
 	public bool waiting;
-	public EmulatorState emulatorState;
 	public Registers registers;
-	protected Fiber nativeFiber;
-	protected Thread nativeThread;
-	protected HANDLE nativeThreadHandle;
-	public SceKernelThreadInfo sceKernelThreadInfo;
+	public SceKernelThreadInfo* sceKernelThreadInfo;
 	public Module threadModule;
 	public Event onDeleteThread;
 	int sleepingAwakenCount;

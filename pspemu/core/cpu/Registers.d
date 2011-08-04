@@ -44,7 +44,7 @@ final class Registers {
 	}
 
 	uint EXECUTED_INSTRUCTION_COUNT_THIS_THREAD;
-	uint EXECUTED_SYSCALL_COUNT_THIS_THREAD;
+	//uint EXECUTED_SYSCALL_COUNT_THIS_THREAD;
 	bool PAUSED;
 	uint PC, nPC;    // Program Counter
 	uint IC;         // Interrupt controller
@@ -237,45 +237,66 @@ final class Registers {
 		assert(aliasName in aliases, format("Unknown register alias '%s'", aliasName));
 		return aliases[aliasName];
 	}
-	
+
+	/**
+	 * Executes a block of code restoring registers.
+	 *
+	 * @params  callback  - Delegate to execute.
+	 */
 	void restoreBlock(void delegate() callback) {
-		scope Registers thisBackup = new Registers();
-		thisBackup.copyFrom(this);
-		{
+		synchronized (this) {
+			scope Registers thisBackup = new Registers();
+			thisBackup.copyFrom(this);
+			scope (exit) this.copyFrom(thisBackup);
+
 			callback();
 		}
-		this.copyFrom(thisBackup);
 	}
 
 
 	void pcAdvance(int offset = 4) { PC = nPC; nPC += offset; }
 	void pcSet(uint address) { PC  = address; nPC = PC + 4; }
+	
+	void dump2() {
+		synchronized (this) {
+	    	//.,writefln();
+	    	.writefln("REGISTERS:");
+	    	foreach (k, value; registers.R) {
+	    		//.writef("   r%2d: %08X", k, value);
+	    		.writef("   %s: %08X", Registers.aliasesInv[k], value);
+	    		if ((k % 4) == 3) .writefln("");
+	    	}
+	    	.writefln("   pc: %08X", registers.PC);
+	    }
+	}
 
 	void dump(bool reduced = true) {
-		writefln("Registers {");
-		writef("  PC = 0x%08X | nPC = 0x%08X", PC, nPC);
-		writef("  LO = 0x%08X | HI  = 0x%08X", LO, HI );
-		writef("  IC = 0x%08X", IC);
-		writefln("");
-		int count, columns = 4;
-		
-		count = 0;
-		foreach (k, v; R) {
-			if (reduced && (v == 0)) continue;
-			writef("  r%-2d = 0x%08X (%s)", k, v, aliasesInv[k]);
-			if ((count++ % columns) == (columns - 1)) writefln("");
+		synchronized (this) {
+			writefln("Registers {");
+			writef("  PC = 0x%08X | nPC = 0x%08X", PC, nPC);
+			writef("  LO = 0x%08X | HI  = 0x%08X", LO, HI );
+			writef("  IC = 0x%08X", IC);
+			writefln("");
+			int count, columns = 4;
+			
+			count = 0;
+			foreach (k, v; R) {
+				if (reduced && (v == 0)) continue;
+				writef("  r%-2d = 0x%08X (%s)", k, v, aliasesInv[k]);
+				if ((count++ % columns) == (columns - 1)) writefln("");
+			}
+			if (count != 0) writefln("");
+			writefln("}");
+			writefln("Float registers {");
+			count = 0;
+			foreach (k, v; F) {
+				if (reduced && (v == 0.0)) continue;
+				writefln("  f%-2d = %f | 0x%08X", k, v, RF[k]);
+				if ((count++ % columns) == (columns - 1)) writefln("");
+			}
+			if (count != 0) writefln("");
+			writefln("}");
 		}
-		if (count != 0) writefln("");
-		writefln("}");
-		writefln("Float registers {");
-		count = 0;
-		foreach (k, v; F) {
-			if (reduced && (v == 0.0)) continue;
-			writefln("  f%-2d = %f | 0x%08X", k, v, RF[k]);
-			if ((count++ % columns) == (columns - 1)) writefln("");
-		}
-		if (count != 0) writefln("");
-		writefln("}");
 	}
 	
 	void vfpu_dump() {

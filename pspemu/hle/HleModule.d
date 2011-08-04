@@ -1,4 +1,4 @@
-module pspemu.hle.Module;
+module pspemu.hle.HleModule;
 
 //public import pspemu.All;
 debug = DEBUG_SYSCALL;
@@ -29,7 +29,7 @@ static string classInfoBaseName(ClassInfo ci) {
 	//return std.string.split(ci.name, ".")[$ - 1];
 }
 
-abstract class Module {
+abstract class HleModule {
 	static struct Function {
 		Module pspModule;
 		uint nid;

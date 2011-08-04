@@ -1,4 +1,4 @@
-module pspemu.hle.OsConfig;
+module pspemu.hle.HleOsConfig;
 
 enum PspLanguages : int {
     JAPANESE   = 0,
@@ -20,7 +20,7 @@ enum PspConfirmButton : int {
     CROSS  = 1,
 }
 
-class OsConfig {
+class HleOsConfig {
 	PspLanguages     language      = PspLanguages.ENGLISH;
 	PspConfirmButton confirmButton = PspConfirmButton.CROSS;
 	bool enabledDisplay = true;

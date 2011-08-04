@@ -1,4 +1,4 @@
-module pspemu.hle.PspLibDoc;
+module pspemu.hle.HlePspLibDoc;
 
 import std.stdio;
 import std.xml;
@@ -24,7 +24,7 @@ template LazySingleton() {
 	}
 }
 
-class DPspLibdoc {
+class HlePspLibdoc {
 	mixin LazySingleton;
 
 	protected this() {

@@ -1,4 +1,4 @@
-module pspemu.core.cpu.interpreter.CpuThreadInterpreted;
+module pspemu.core.cpu.interpreter.CpuInterpreted;
 
 import std.stdio;
 import std.math;
@@ -26,6 +26,7 @@ import pspemu.core.cpu.interpreter.Utils;
 import pspemu.core.cpu.Instruction;
 import pspemu.core.ThreadState;
 import pspemu.core.Memory;
+import pspemu.core.Interrupts;
 
 import pspemu.utils.Logger;
 import core.thread;
@@ -37,34 +38,19 @@ import pspemu.extra.Cheats;
 
 //import pspemu.utils.Utils;
 
-class CpuThreadInterpreted : CpuThreadBase {
-	public this(ThreadState threadState) {
-		super(threadState);
+final class CpuInterpreted : Cpu {
+	public this(Memory memory, ISyscall syscall, Interrupts interrupts) {
+		super(memory, syscall, interrupts);
 	}
 	
-	public CpuThreadBase createCpuThread(ThreadState threadState) {
-		auto cpuThreadBase = new CpuThreadInterpreted(threadState);
-		cpuThreadBase.trace = this.trace;
-		return cpuThreadBase;
-	}
-	
-	void execute(bool trace = false) {
-		TerminateCallbackException terminateCallbackExceptionCopy;
-		HaltException haltExceptionCopy;
-		HaltAllException haltAllExceptionCopy;
-		Throwable throwableExceptionCopy;
-		
-		CpuThreadBase cpuThread = this.cpuThread;
+	private void execute_loop(Registers registers, bool trace = false) {
+		// Set up variables as locals in order to improve speed. Check if it really improves the speed?
+		Cpu cpu = this;
 		Instruction instruction;
-		ThreadState threadState = this.threadState;
-		Registers registers = this.registers;
 		Memory memory = this.memory;
-		
-		void OP_UNK() {
-			registers.pcAdvance(4);
-			Logger.log(Logger.Level.CRITICAL, "CpuThreadInterpreted", "Thread(%d): PC(%08X): OP_UNK 0x%08X", threadState.thid, registers.PC, instruction.v);
-		}
+		Interrupts interrupts = this.interrupts;
 
+		// Embed code of the instructions on this context.
 		mixin TemplateCpu_ALU;
 		mixin TemplateCpu_MEMORY;
 		mixin TemplateCpu_BRANCH;
@@ -73,8 +59,43 @@ class CpuThreadInterpreted : CpuThreadBase {
 		mixin TemplateCpu_FPU;
 		mixin TemplateCpu_VFPU;
 		
-		threadState.setInCurrentThread();
+    	while (running) {
+	    	// If have pending interrupts.
+	    	if (interrupts.I_F) {
+	    		interrupts.executeInterrupts(registers);
+	    	}
+
+			// Read the instruction.
+	    	instruction.v = memory.tread!(uint)(registers.PC);
+	    	
+	    	// If we are tracing.
+	    	if (trace) {
+	    		writefln("%s :: nPC:%08X: INSTRUCTION:%08X : RA:%08X", threadState, registers.nPC, instruction.v, registers.RA);
+	    	}
+	    	
+	    	// Execute the instruction.
+	    	mixin(genSwitchAll());
+	    	
+	    	// Increment counters.
+	    	//executedInstructionsCount++;
+	    	registers.EXECUTED_INSTRUCTION_COUNT_THIS_THREAD++;
+	    }
+	}
+	
+	void execute(Registers registers, bool trace = false) {
+		TerminateCallbackException terminateCallbackExceptionCopy;
+		HaltException haltExceptionCopy;
+		HaltAllException haltAllExceptionCopy;
+		Throwable throwableExceptionCopy;
 		
+		try {
+			execute_loop(registers, trace);
+		} catch (TerminateCallbackException _terminateCallbackException) {
+		} catch (HaltException _haltException) {
+		} catch (HaltAllException _haltAllException) {
+		}
+		
+		/+
 		void dumpCallstack() {
 			synchronized {
 		    	.writefln("CALLSTACK:");
@@ -105,19 +126,6 @@ class CpuThreadInterpreted : CpuThreadBase {
 			}
 		}
 		
-		void dumpRegisters() {
-			synchronized {
-		    	//.,writefln();
-		    	.writefln("REGISTERS:");
-		    	foreach (k, value; registers.R) {
-		    		//.writef("   r%2d: %08X", k, value);
-		    		.writef("   %s: %08X", Registers.aliasesInv[k], value);
-		    		if ((k % 4) == 3) .writefln("");
-		    	}
-		    	.writefln("   pc: %08X", registers.PC);
-		    }
-		}
-		
 		void dumpHeader() {
 	    	.writefln("at 0x%08X : %s", registers.PC, threadState);
 	    	.writefln("THREADSTATE: %s", threadState);
@@ -127,7 +135,7 @@ class CpuThreadInterpreted : CpuThreadBase {
 		void dumpThreads(Throwable exception) {
 	    	dumpHeader();
 	    	dumpCallstack();
-	    	dumpRegisters();
+	    	registers.dump();
 	    	
 	    	.writefln("%s", exception);
 	    	.writefln("%s", this);
@@ -230,5 +238,6 @@ class CpuThreadInterpreted : CpuThreadBase {
 	    } finally {
 			Logger.log(Logger.Level.TRACE, "CpuThreadBase", "NATIVE_THREAD: END (%s)", Thread.getThis().name);
 	    }
+		+/
     }
 }

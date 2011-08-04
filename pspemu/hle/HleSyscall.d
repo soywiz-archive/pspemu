@@ -1,4 +1,4 @@
-module pspemu.hle.Syscall;
+module pspemu.hle.HleSyscall;
 
 import std.stdio;
 import std.conv;
@@ -30,7 +30,7 @@ import pspemu.core.cpu.CpuThreadBase;
 
 import pspemu.hle.HleEmulatorState;
 
-class Syscall : ISyscall {
+class HleSyscall : ISyscall {
 	HleEmulatorState hleEmulatorState;
 
 	static public class Function {

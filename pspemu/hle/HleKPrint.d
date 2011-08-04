@@ -5,7 +5,7 @@ import std.string;
 
 import pspemu.utils.Logger;
 
-class KPrint {
+class HleKPrint {
 	string outputBuffer = "";
 	
 	bool outputKprint = false;

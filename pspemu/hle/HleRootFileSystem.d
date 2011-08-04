@@ -1,4 +1,4 @@
-module pspemu.hle.RootFileSystem;
+module pspemu.hle.HleRootFileSystem;
 
 import std.stdio;
 import std.regex;
@@ -22,7 +22,7 @@ import pspemu.hle.vfs.EmulatorFileSystem;
 
 import pspemu.formats.iso.IsoFactory;
 
-class RootFileSystem {
+class HleRootFileSystem {
 	HleEmulatorState hleEmulatorState;
 	MountableVirtualFileSystem fsroot, ms0root, umd0root;
 	VirtualFileSystem gameroot;

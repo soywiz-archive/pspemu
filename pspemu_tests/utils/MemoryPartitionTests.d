@@ -1,4 +1,4 @@
-module pspemu.tests.MemoryPartitionTests;
+module pspemu_tests.utils.MemoryPartitionTests;
 
 import pspemu.utils.MemoryPartition;
 

@@ -1,4 +1,4 @@
-module pspemu.hle.Callbacks;
+module pspemu.hle.HleCallbacks;
 
 import std.stdio;
 import std.conv;

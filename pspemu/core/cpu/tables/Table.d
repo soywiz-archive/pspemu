@@ -298,7 +298,7 @@ const PspInstructions_COP0 = [
 	ID("mtc0",        VM("010000:00100:----------:00000:000000"), "%t, %0", ADDR_TYPE_NONE, 0),              // MTC0(010000:00100:rt:c0dr:00000:000000)
 ];
 
-const PspInstructions_VFPU_IMP = [
+const PspInstructions_VFPU = [
 	// Move From/to Vfpu (C?).
 	ID("mfv",         VM("010010:00:011:rt:0:0000000:0:vd"), "%t, %zs", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("mfvc",        VM("010010:00:011:rt:0:0000000:1:vd"), "%t, %2d", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
@@ -417,11 +417,6 @@ const PspInstructions_VFPU_IMP = [
 /// Not implemented yet!
 ////////////////////////////
 
-	ID("bvf",         VM("010010:01:000:imm3:00:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
-	ID("bvfl",        VM("010010:01:000:imm3:10:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
-	ID("bvt",         VM("010010:01:000:imm3:01:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
-	ID("bvtl",        VM("010010:01:000:imm3:11:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
-
 	ID("vavg",        VM("110100:00:010:00111:two:vs:one:vd"), "%zp, %yp", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vf2id",       VM("110100:10:011:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 	ID("vf2in",       VM("110100:10:000:imm5:two:vs:one:vd"), "%zp, %yp, %v5", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
@@ -474,17 +469,10 @@ const PspInstructions_VFPU_IMP = [
 	//ID("vwb.q",       VM("111110------------------------1-"), "%Xq, %Y", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 ];
 
-/*
-ID[] PspInstructions() {
-	return (
-		PspInstructions_ALU ~
-		PspInstructions_BCU ~
-		PspInstructions_LSU ~
-		PspInstructions_FPU ~
-		PspInstructions_COP0 ~
-		PspInstructions_VFPU_IMP ~
-		//PspInstructions_VFPU ~
-		PspInstructions_SPECIAL
-	);
-}
-*/
+const PspInstructions_VFPU_BRANCH = [
+	ID("bvf",         VM("010010:01:000:imm3:00:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
+	ID("bvfl",        VM("010010:01:000:imm3:10:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
+	ID("bvt",         VM("010010:01:000:imm3:01:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
+	ID("bvtl",        VM("010010:01:000:imm3:11:imm16"), "%Zc, %O", ADDR_TYPE_16, INSTR_TYPE_PSP | INSTR_TYPE_B),
+];
+

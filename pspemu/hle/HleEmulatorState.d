@@ -35,19 +35,19 @@ import pspemu.core.exceptions.NotImplementedException;
 import pspemu.core.cpu.interpreter.CpuThreadInterpreted;
 
 class HleEmulatorState : ISyscall {
-	public UniqueIdFactory  uniqueIdFactory;
-	public EmulatorState    emulatorState;
-	public ModuleManager    moduleManager;
-	public ModuleLoader     moduleLoader;
-	public Syscall          syscallObject;
-	public MemoryManager    memoryManager;
-	public RootFileSystem   rootFileSystem;
-	public CallbacksHandler callbacksHandler;
-	public KPrint           kPrint;
-	public ModulePsp        mainModule;
-	public OsConfig         osConfig;
-	public Object           globalLock;
-	public ThreadManager    threadManager;
+	public UniqueIdFactory    uniqueIdFactory;
+	public EmulatorState      emulatorState;
+	public ModuleManager      moduleManager;
+	public ModuleLoader       moduleLoader;
+	public Syscall            syscallObject;
+	public MemoryManager      memoryManager;
+	public RootFileSystem     rootFileSystem;
+	public CallbacksHandler   callbacksHandler;
+	public KPrint             kPrint;
+	public ModulePsp          mainModule;
+	public OsConfig           osConfig;
+	public Object             globalLock;
+	public HleThreadManager   hleThreadManager;
 	
 	string mainModuleName() {
 		return mainModule ? mainModule.name : "Not loaded";

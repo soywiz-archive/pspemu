@@ -6,6 +6,11 @@ import std.stdio;
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/SPECIAL
 // http://pspemu.googlecode.com/svn/branches/old/util/gen/impl/MISC
 template TemplateCpu_SPECIAL() {
+	void OP_UNK() {
+		registers.pcAdvance(4);
+		Logger.log(Logger.Level.CRITICAL, "CpuThreadInterpreted", "Thread(%d): PC(%08X): OP_UNK 0x%08X", threadState.thid, registers.PC, instruction.v);
+	}
+
 	// sceKernelSuspendInterrupts
 	void OP_MFIC() {
 		registers[instruction.RT] = registers.IC;
@@ -39,7 +44,9 @@ template TemplateCpu_SPECIAL() {
 
 	void OP_SYSCALL() {
 		registers.pcAdvance(4);
-		registers.EXECUTED_SYSCALL_COUNT_THIS_THREAD++;
+		
+		// Remove
+		//registers.EXECUTED_SYSCALL_COUNT_THIS_THREAD++;
 		if (threadState.emulatorState.syscall is null) {
 			std.stdio.writefln("Syscall handler not set");
 		} else {
