@@ -139,6 +139,9 @@ struct Instruction {
 		ubyte[4] vv;
 
 		mixin(""
+			~ bitslice!("v", uint, "OP1", 26, 6)
+			~ bitslice!("v", uint, "OP2", 0, 6)
+
 			// Type Register.
 			~ bitslice!("v", uint, "RD", 11 + 5 * 0, 5)
 			~ bitslice!("v", uint, "RT", 11 + 5 * 1, 5)

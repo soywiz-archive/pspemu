@@ -414,8 +414,12 @@ int sceUtilsSetFuseID(ubyte* fuse) {
 	return 0;
 }
 
+int sceUtilsBufferCopyWithRange(ubyte[] outbuff, ubyte[] inbuff, int cmd) {
+	return sceUtilsBufferCopyWithRange(outbuff.ptr, outbuff.length, inbuff.ptr, inbuff.length, cmd);
+}
+
 int sceUtilsBufferCopyWithRange(ubyte* outbuff, int outsize, ubyte* inbuff, int insize, int cmd) {
-	switch(cmd) {
+	switch (cmd) {
 		case KIRK_CMD_DECRYPT_PRIVATE: 
 			if (insize % 16) return SUBCWR_NOT_16_ALGINED;
 			int ret = kirk_CMD1(outbuff, inbuff, insize, 1); 

@@ -1,6 +1,6 @@
 module pspemu.core.audio.Audio;
 
-import std.c.windows.windows;
+public import std.c.windows.windows;
 import std.stdio;
 import core.thread;
 import std.stream;
@@ -45,13 +45,26 @@ align(1) struct WaveFile {
 }
 
 struct WAVEFORMATEX {
-	WORD wFormatTag; 
-	WORD nChannels; 
+	WORD  wFormatTag; 
+	WORD  nChannels; 
 	DWORD nSamplesPerSec; 
 	DWORD nAvgBytesPerSec; 
-	WORD nBlockAlign; 
-	WORD wBitsPerSample; 
-	WORD cbSize;
+	WORD  nBlockAlign; 
+	WORD  wBitsPerSample; 
+	WORD  cbSize;
+	
+	string toString() {
+		return std.string.format(
+			"WAVEFORMATEX(%d, %d, %d, %d, %d, %d, %d)",
+			cast(int)wFormatTag,
+			cast(int)nChannels, 
+			cast(int)nSamplesPerSec, 
+			cast(int)nAvgBytesPerSec, 
+			cast(int)nBlockAlign,
+			cast(int)wBitsPerSample, 
+			cast(int)cbSize
+		);
+	}
 }
 
 struct WAVEHDR {
@@ -63,6 +76,20 @@ struct WAVEHDR {
 	DWORD dwLoops;
 	WAVEHDR* lpNext;
 	DWORD reserved;
+	
+	string toString() {
+		return std.string.format(
+			"WAVEHDR(0x%08X, %d, %d, %d, %d, %d, %d, %d)",
+			cast(int)lpData,
+			cast(int)dwBufferLength, 
+			cast(int)dwBytesRecorded, 
+			cast(int)dwUser, 
+			cast(int)dwFlags,
+			cast(int)dwLoops, 
+			cast(int)lpNext,
+			cast(int)reserved
+		);
+	}
 }
 
 struct MMTIME {
@@ -339,6 +366,9 @@ class Audio {
 	this() {
 		foreach (n, ref channel; channels) channel = new Channel(n);
 		foreach (ref buffer; buffers) buffer = new Buffer();
+	}
+	
+	void start() {
 		thread = new Thread(&playThread);
 		thread.name = "AudioThread";
 		thread.start();
@@ -374,6 +404,8 @@ class Audio {
 				bool didsomething = false;
 
 				foreach (buffer; buffers) {
+					if (!_running) break;
+					
 					if (buffer.ready && anyChannelAvailable) {
 						fillBuffer(buffer.data);
 						buffer.play();
@@ -386,9 +418,9 @@ class Audio {
 		} catch (Throwable o) {
 			writefln("Audio.playThread: %s", o);
 		} finally {
-			writefln("Audio.stop()[1]");
-			//enforcemm(waveOutClose(waveOutHandle));
-			writefln("Audio.stop()[2]");
+			//writefln("Audio.stop()[1]");
+			enforcemm(waveOutClose(waveOutHandle));
+			//writefln("Audio.stop()[2]");
 		}
 	}
 	
@@ -400,6 +432,22 @@ class Audio {
 		cchannel.wait();
 
 		debug (DEBUG_DUMP_AUDIO_CHANNELS) writeWaitWAV(channel, numchannels, samples, volumeleft, volumeright);
+	}
+	
+	MMRESULT waveOutOpen(HWAVEOUT* phwo, UINT uDeviceID, WAVEFORMATEX* pwfx, DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen) {
+		return .waveOutOpen(phwo, uDeviceID, pwfx, dwCallback, dwInstance, fdwOpen);
+	}
+	MMRESULT waveOutPrepareHeader(HWAVEOUT hwo, WAVEHDR* pwh, UINT cbwh) {
+		return .waveOutPrepareHeader(hwo, pwh, cbwh);
+	}
+	MMRESULT waveOutWrite(HWAVEOUT hwo, WAVEHDR* pwh, UINT cbwh) {
+		return .waveOutWrite(hwo, pwh, cbwh);
+	}
+	MMRESULT waveOutGetPosition(HWAVEOUT hwo, MMTIME* pmmt, UINT cbmmt) {
+		return .waveOutGetPosition(hwo, pmmt, cbmmt);
+	}
+	MMRESULT waveOutClose(HWAVEOUT hwo) {
+		return .waveOutClose(hwo);
 	}
 
 	debug (DEBUG_DUMP_AUDIO_CHANNELS) {

@@ -10,7 +10,11 @@ class TestsRunner {
 	    		writef("  %s...", member);
 	    		try {
 	    			object.setUp();
-	    			__traits(getMember, object, member)();
+	    			try {
+	    				__traits(getMember, object, member)();
+	    			} finally {
+	    				object.tearDown();
+	    			}
 		    		writefln("OK");
 	    		} catch (Throwable o) {
 	    			writefln("%s", o);

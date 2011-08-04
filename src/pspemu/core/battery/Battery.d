@@ -1,8 +1,6 @@
 module pspemu.core.battery.Battery;
 
 class Battery {
-	
-	
 	@property float chargedPercentage() {
 		return 1.0;
 	}

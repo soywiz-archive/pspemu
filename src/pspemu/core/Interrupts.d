@@ -1,5 +1,7 @@
 module pspemu.core.Interrupts;
 
+public import pspemu.core.cpu.Registers;
+
 class Interrupts {
 	enum Type : uint {
 		Gpio = 4, Ata = 5, Umd = 6, Mscm0 = 7, Wlan = 8, Audio = 10, I2C = 12, Sircs = 14,
@@ -8,22 +10,22 @@ class Interrupts {
 		Mecodec = 31, Hpremote = 36, Mscm1 = 60, Mscm2 = 61, Thread1 = 65, Interrupt = 66,
 	};
 
-	alias void delegate(InterruptTask interruptTask) InterruptHandler;
-	
-	struct InterruptTask {
+	struct Task {
 		Type      type;
 		Registers registers;
 	}
 
+	alias void delegate(Interrupts.Task interruptTask) InterruptHandler;
+	
 	/**
 	 * Global InterruptFlag
 	 */
 	public bool _I_F;
 	
-	public bool I_F() { return _I_F; }
+	@property public bool I_F() { return _I_F; }
 	
 	protected InterruptHandler[][Type.max] interruptHandlersPerType;
-	protected InterruptTask[] interruptsTasks;
+	protected Interrupts.Task[] interruptsTasks;
 	
 	public this() {
 		
@@ -40,7 +42,7 @@ class Interrupts {
 	
 	public void interrupt(Type type) {
 		synchronized (this) {
-			InterruptTask interruptTask;
+			Interrupts.Task interruptTask;
 			interruptTask.type = type;
 			interruptsTasks ~= interruptTask;
 			_I_F = true;
@@ -49,7 +51,7 @@ class Interrupts {
 	
 	public void executeInterrupts(Registers registers) {
 		synchronized (this) {
-			registers.restoreBlock({
+			auto code = {
 				foreach (interruptTask; interruptsTasks) {
 					interruptTask.registers = registers;
 					
@@ -57,7 +59,13 @@ class Interrupts {
 						interruptHandler(interruptTask);
 					}
 				}
-			});
+			};
+			
+			if (registers !is null) {
+				registers.restoreBlock(code);
+			} else {
+				code();
+			}
 			_I_F = false;
 		}
 	}

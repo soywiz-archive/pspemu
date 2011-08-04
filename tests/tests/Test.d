@@ -7,11 +7,19 @@ class Test {
 		
 	}
 	
+	void tearDown() {
+		
+	}
+	
 	void _assert(bool result, string message = "<assert>", string FILE = __FILE__, int LINE = __LINE__) {
 		if (!result) {
 			writefln("ON %s:%d :: %s", FILE, LINE, message);
 			throw(new Exception(message));
 		}
+	}
+	
+	void assertTrue(bool a, string FILE = __FILE__, int LINE = __LINE__) {
+		_assert(a, std.string.format("assertTrue(%s)", a), FILE, LINE);
 	}
 	
 	void assertEquals(T1, T2)(T1 a, T2 b, string FILE = __FILE__, int LINE = __LINE__) {
