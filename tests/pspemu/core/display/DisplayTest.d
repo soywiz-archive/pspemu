@@ -1,5 +1,7 @@
 module pspemu.core.crypto.DisplayTest;
 
+import pspemu.interfaces.IDisplay;
+
 import pspemu.core.display.Display;
 import pspemu.core.Interrupts;
 
@@ -8,7 +10,7 @@ import core.thread;
 
 class DisplayTest : Test {
 	Interrupts interrupts;
-	Display display;
+	IDisplay display;
 	
 	void setUp() {
 		interrupts = new Interrupts();
@@ -20,13 +22,13 @@ class DisplayTest : Test {
 	}
 	
 	void testDisplayVblankUpdates() {
-		assertTrue(display.info.VBLANK_COUNT == 0);
+		assertTrue(display.currentVblankCount == 0);
 
 		display.start();
 		
 		Thread.sleep(dur!"msecs"(16 * 2 + 4));
 		
-		assertTrue(display.info.VBLANK_COUNT >= 2);
+		assertTrue(display.currentVblankCount >= 2);
 	}
 
 	void testInterrupts() {

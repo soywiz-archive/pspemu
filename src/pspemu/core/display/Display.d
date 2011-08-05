@@ -2,6 +2,7 @@ module pspemu.core.display.Display;
 
 import pspemu.interfaces.IResetable;
 import pspemu.interfaces.IInterruptable;
+import pspemu.interfaces.IDisplay;
 
 import core.thread;
 import std.stdio;
@@ -16,7 +17,6 @@ import pspemu.utils.Logger;
 import pspemu.utils.Event;
 
 import pspemu.core.Interrupts;
-public import pspemu.hle.kd.display.Types;
 
 import pspemu.extra.Cheats;
 
@@ -38,7 +38,7 @@ HSYNC freq == (appox) 17.142KHz
 or precisely (pixel_clk_freq * cycles_per_pixel)/(row_pixels)
 so (9MHz * 1)/(525) == 17142.85714........ etc. etc.
 */
-class Display : IResetable, IInterruptable {
+class Display : IDisplay {
 	struct Info {
 		/**
 		 * Mode of the screen.
@@ -75,6 +75,10 @@ class Display : IResetable, IInterruptable {
 		}
 	}
 	
+	@property public uint currentVblankCount() {
+		return info.VBLANK_COUNT;
+	}
+	
 	public Interrupts interrupts;
 	public Info info;
 	
@@ -82,6 +86,7 @@ class Display : IResetable, IInterruptable {
 
 	WaitEvent drawRow0ConditionEvent;
 	WaitEvent vblankStartConditionEvent;
+	WaitEvent interruptedEvent;
 	WaitEvent initializedEvent;
 	Event vblankEvent;
 	
@@ -106,6 +111,7 @@ class Display : IResetable, IInterruptable {
 
 		this.drawRow0ConditionEvent    = new WaitEvent("drawRow0ConditionEvent");
 		this.vblankStartConditionEvent = new WaitEvent("vblankStartConditionEvent");
+		this.interruptedEvent          = new WaitEvent("interruptedEvent");
 		
 		this.initializedEvent = new WaitEvent("Display.initializedEvent");
 		
@@ -119,6 +125,7 @@ class Display : IResetable, IInterruptable {
 	
 	void interrupt() {
 		this.running = false;
+		interruptedEvent.wait();
 	}
 
 	public void sceDisplaySetMode(int mode = 0, int width = 480, int height = 272) {
@@ -210,6 +217,8 @@ class Display : IResetable, IInterruptable {
 				drawAdd -= 10;
 			}
 		}
+		
+		interruptedEvent.signal();
 		
 		Logger.log(Logger.Level.TRACE, "Display", "Display.run::ended");
 	}

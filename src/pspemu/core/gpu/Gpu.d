@@ -14,6 +14,13 @@ import std.datetime;
 import std.stdio;
 import std.conv;
 
+import pspemu.Exceptions;
+
+import pspemu.utils.Logger;
+import pspemu.utils.Event;
+
+import pspemu.interfaces.IResetable;
+
 import pspemu.utils.TaskQueue;
 import pspemu.utils.CircularList;
 import pspemu.utils.Stack;
@@ -24,8 +31,6 @@ import pspemu.utils.String;
 import pspemu.utils.sync.WaitEvent;
 import pspemu.utils.sync.WaitMultipleObjects;
 //import pspemu.utils.Logger;
-
-import pspemu.core.EmulatorState;
 
 import pspemu.core.Memory;
 import pspemu.core.gpu.Commands;
@@ -49,33 +54,29 @@ import pspemu.core.gpu.ops.Gpu_Dither;
 import pspemu.core.gpu.ops.Gpu_Depth;
 import pspemu.core.gpu.ops.Gpu_Spline;
 
-import pspemu.core.exceptions.HaltException;
-
-import pspemu.utils.Logger;
-import pspemu.utils.Event;
-
 import pspemu.hle.kd.ge.Types;
 
 import std.datetime;
 
-class Gpu {
+class Gpu : IResetable {
 	//bool componentInitialized;
 	bool running = true;
 	
-	EmulatorState emulatorState;
-	Memory   memory;
+	Memory           memory;
 	GpuImplAbstract  impl;
-	GpuState state;
+	GpuState         state;
 
-	DisplayList* currentDisplayList;
-	DisplayLists displayLists;
+	DisplayList*     currentDisplayList;
+	DisplayLists     displayLists;
 
-	TaskQueue externalActions;
+	TaskQueue        externalActions;
 
 	bool implInitialized;
 	Thread thread;
 
 	WaitEvent endedExecutingListsEvent;
+	WaitEvent interruptedEvent;
+	
 	Event signalEvent;
 	Event finishEvent;
 	PspGeCallbackData pspGeCallbackData;
@@ -109,38 +110,41 @@ class Gpu {
 	
 	RecordFrameStep recordFrameStep = RecordFrameStep.doNone;
 
-	this(EmulatorState emulatorState, GpuImplAbstract impl) {
+	public this(Memory memory, GpuImplAbstract impl) {
 		this.endedExecutingListsEvent = new WaitEvent();
 		this.initializedEvent = new WaitEvent();
+		this.interruptedEvent = new WaitEvent();
 
-		this.emulatorState = emulatorState;
+		this.memory = memory;
 		this.impl   = impl;
-		this.memory = emulatorState.memory;
-		this.reset();
-		
-		emulatorState.runningState.onStop += delegate(...) {
-			running = false;
-		};
 
+		this.reset();
 	}
 
-	void reset() {
+	public void reset() {
 		this.externalActions = new TaskQueue;
 		this.state = GpuState.init;
 		this.state.reset();
 		this.displayLists = new DisplayLists(1024);
 		this.state.memory = memory;
+		this.interruptedEvent.reset();
 		this.signalEvent.reset();
 		this.finishEvent.reset();
+		this.running = true;
 		
 		this.externalActionAdd({
 			this.impl.reset();
 			this.impl.setState(&state);
 		});
 	}
+	
+	public void interrupt() {
+		this.interruptedEvent.signal();
+		this.running = false;
+	}
 
 	// Utility.
-	static pure string ArrayOperation(string vtype, int from, int to, string code, int step = 1) {
+	static private pure string ArrayOperation(string vtype, int from, int to, string code, int step = 1) {
 		string r;
 		assert(vtype[$ - 2..$] == "_n");
 		assert(vtype[0..3] == "OP_");
@@ -365,6 +369,7 @@ class Gpu {
 			}
 			
 			performBufferOp2(BufferOperation.STORE);
+			
 			if (recordFrameStep == RecordFrameStep.doStart) {
 				recordFrameStep = RecordFrameStep.doEnd;
 				impl.recordFrameStart();
@@ -376,7 +381,7 @@ class Gpu {
 	
 	void newWaitAndCheck(WaitEvent[] waitEvents, string file = __FILE__, int line = __LINE__) {
 		scope WaitMultipleObjects waitMultipleObjects = new WaitMultipleObjects();
-		waitMultipleObjects.add(emulatorState.runningState.stopEvent);
+		waitMultipleObjects.add(interruptedEvent);
 		if (inDrawingThread) waitMultipleObjects.add(externalActions.newAvailableTasksEvent);
 		foreach (waitEvent; waitEvents) waitMultipleObjects.add(waitEvent);
 		//writefln("[1 %s:%d]", file, line);
@@ -479,9 +484,5 @@ class Gpu {
 
 	mixin ExternalInterface;
 	
-	void logLevel(T...)(Logger.Level level, T args) {
-		Logger.log(level, "Gpu", "%s", std.string.format(args));
-	}
-
-	mixin Logger.LogPerComponent;
+	mixin Logger.DebugLogPerComponent!"Gpu";
 }

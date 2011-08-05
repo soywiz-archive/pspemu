@@ -1,6 +1,8 @@
 module pspemu.core.battery.Battery;
 
-class Battery {
+import pspemu.interfaces.IBattery;
+
+class Battery : IBattery {
 	@property float chargedPercentage() {
 		return 1.0;
 	}

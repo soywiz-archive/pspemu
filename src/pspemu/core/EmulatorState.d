@@ -3,18 +3,18 @@ module pspemu.core.EmulatorState;
 import std.datetime;
 
 import pspemu.interfaces.IResetable;
+import pspemu.interfaces.IInterruptable;
 import pspemu.interfaces.ISyscall;
+import pspemu.interfaces.IDisplay;
+import pspemu.interfaces.IBattery;
 
 import pspemu.core.Interrupts;
 import pspemu.core.Memory;
-import pspemu.core.battery.Battery;
-import pspemu.core.display.Display;
 import pspemu.core.controller.Controller;
-import pspemu.core.RunningState;
 import pspemu.core.gpu.Gpu;
 import pspemu.core.cpu.Cpu;
 
-class EmulatorState : IResetable {
+class EmulatorState : IResetable, IInterruptable {
 	// Information
 	public SysTime       startTime; 
 	public bool          unittesting = false;
@@ -22,15 +22,14 @@ class EmulatorState : IResetable {
 	// Components
 	public Interrupts    interrupts;
 	public Memory        memory;
-	public Battery       battery;
-	public Display       display;
+	public IBattery      battery;
+	public IDisplay      display;
 	public Controller    controller;
 	public Gpu           gpu;
 	public Cpu           cpu;
 	public ISyscall      syscall;
-	public RunningState  runningState;
 
-	this(Interrupts interrupts, Memory memory, Battery battery, Display display, Controller controller, RunningState runningState, Gpu gpu, Cpu cpu) {
+	this(Interrupts interrupts, Memory memory, IBattery battery, IDisplay display, Controller controller, Gpu gpu, Cpu cpu) {
 		this.interrupts    = interrupts; 
 		this.memory        = memory;
 		this.battery       = battery;
@@ -54,6 +53,10 @@ class EmulatorState : IResetable {
 		this.controller.reset();
 		this.gpu.reset();
 		this.runningState.reset();
+	}
+	
+	void interrupt() {
+		this.cpu.interrupt();
 	}
 	
 	public void reset() {

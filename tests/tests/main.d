@@ -12,6 +12,9 @@ import pspemu.core.display.DisplayTest;
 import pspemu.core.InterruptsTest;
 import pspemu.core.audio.AudioTest;
 import pspemu.core.cpu.interpreter.CpuInterpreterTest;
+//import pspemu.core.gpu.GpuTest;
+import pspemu.core.battery.BatteryTest;
+import pspemu.core.controller.ControllerTest;
 
 int main(string[] args) {
 	TestsRunner.run(new CpuInterpreterTest);
@@ -23,6 +26,9 @@ int main(string[] args) {
 	TestsRunner.run(new DisplayTest);
 	TestsRunner.run(new InterruptsTest);
 	TestsRunner.run(new AudioTest);
+	TestsRunner.run(new BatteryTest);
+	TestsRunner.run(new ControllerTest);
+	//TestsRunner.run(new GpuTest);
 
 	return 0;
 }

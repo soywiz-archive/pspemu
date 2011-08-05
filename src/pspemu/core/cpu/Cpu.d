@@ -22,7 +22,7 @@ import pspemu.utils.Logger;
 
 import pspemu.hle.kd.threadman.Types;
 
-abstract class Cpu : IInterruptable{
+abstract class Cpu : IInterruptable {
 	ISyscall   syscall;
 	Interrupts interrupts;
 	Memory     memory;
