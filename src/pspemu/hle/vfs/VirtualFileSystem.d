@@ -1,11 +1,15 @@
 module pspemu.hle.vfs.VirtualFileSystem;
 
 //import std.stdio;
-import std.stream;
-import std.conv;
-import std.datetime;
+public import std.stream;
+public import std.conv;
+public import std.datetime;
 
-import pspemu.core.exceptions.NotImplementedException;
+public import pspemu.Exceptions;
+
+class FileNotExistsException : Exception {
+	this(string msg) { super(msg); }
+}
 
 enum FileAccessMode : uint {
 	All          = octal!777,
@@ -110,6 +114,39 @@ class FileHandle : Stream {
 	}
 }
 
+class StreamFileHandle : FileHandle {
+	Stream stream;
+	
+	public this(VirtualFileSystem virtualFileSystem, Stream stream) {
+		super(virtualFileSystem);
+		this.stream = stream;
+	}
+}
+
+template VirtualFileSystem_Stream() {
+	Stream getStreamFromHandle(FileHandle handle) {
+		return handle.get!StreamFileHandle(this).stream;
+	}
+	
+	override void close(FileHandle handle) {
+		Stream stream = getStreamFromHandle(handle);
+		stream.flush(); 
+		stream.close();
+	}
+	
+	override int read(FileHandle handle, ubyte[] data) {
+		return getStreamFromHandle(handle).read(data);
+	}
+	
+	override int write(FileHandle handle, ubyte[] data) {
+		return getStreamFromHandle(handle).write(data);
+	}
+	
+	override long seek(FileHandle handle, long offset, Whence whence) {
+		return getStreamFromHandle(handle).seek(offset, cast(SeekPos)whence);
+	}
+}
+
 class DirHandle {
 	VirtualFileSystem virtualFileSystem;
 
@@ -135,9 +172,11 @@ class VirtualFileSystem {
 	void exit() {
 	}
 	
+	/*
 	string getInternalPath(string path) {
 		return path;
 	}
+	*/
 	
 	FileHandle open(string file, FileOpenMode flags, FileAccessMode mode) {
 		throw(new NotImplementedException("VirtualFileSystem.open"));

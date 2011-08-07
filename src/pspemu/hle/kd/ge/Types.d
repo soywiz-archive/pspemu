@@ -14,15 +14,15 @@ struct PspGeCallbackData {
 	/** GE callback for the signal interrupt */
 	PspGeCallback signal_func;
 	/** GE callback argument for signal interrupt */
-	void *signal_arg;
+	void* signal_arg;
 	/** GE callback for the finish interrupt */
 	PspGeCallback finish_func;
 	/** GE callback argument for finish interrupt */
-	void *finish_arg;
+	void* finish_arg;
 }
 
 struct PspGeListArgs {
-	uint	size;
-	PspGeContext*	context;
+	uint            size;
+	PspGeContext*   context;
 }
 

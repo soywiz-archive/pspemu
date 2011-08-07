@@ -134,18 +134,3 @@ class VAG {
 		decodedSamples = decodeBlocks(blocks);
 	}
 }
-
-// dmd pspemu\utils\MathUtils.d pspemu\utils\audio\wav.d -run pspemu\formats\audio\Vag.d
-/*
-int main(string[] args) {
-	VAG vag = new VAG();
-	vag.load(cast(ubyte[])std.file.read("TEMP_AUDIO_DAT.BIN"));
-	writefln("%d", vag.decodedSamples.length);
-	std.file.write(
-		"TEMP_AUDIO_DAT.WAV",
-		WaveProcessor.getBytes(vag.decodedSamples, WaveProcessor.WaveFormat.getByInfo(1, 44100 / 2))
-	);
-	
-	return 0;
-}
-*/

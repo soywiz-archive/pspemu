@@ -8,7 +8,7 @@ import pspemu.utils.BitUtils;
 import pspemu.utils.MathUtils;
 public import std.datetime;
 
-interface GpuImpl {
+interface IGpuImpl {
 	void setState(GpuState *state);
 	void init();
 	void reset();
@@ -31,7 +31,7 @@ interface GpuImpl {
 	void readVertices(ref VertexState[] vertexListBuffer, ubyte* vertexPointer, int maxVertexCount, VertexType vertexType, float[] morphWeights, Matrix[8] boneMatrix);
 }
 
-abstract class GpuImplAbstract : GpuImpl {
+abstract class GpuImplAbstract : IGpuImpl {
 	GpuState *state;
 	StopWatch setStateStopWatch;
 	StopWatch drawStopWatch;

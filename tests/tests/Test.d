@@ -31,7 +31,7 @@ class Test {
 		_assert(a == b, std.string.format("assertEquals('%s', '%s')", a, b), FILE, LINE);
 	}
 	
-	void expectException(T)(void delegate() code, string FILE = __FILE__, int LINE = __LINE__) {
+	void expectException(T : Throwable)(void delegate() code, string FILE = __FILE__, int LINE = __LINE__) {
 		try {
 			code();
 			_assert(false, "exception not throwed", FILE, LINE);

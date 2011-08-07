@@ -17,6 +17,7 @@ import pspemu.hle.vfs.devices.EmulatorDevice;
 
 import pspemu.hle.vfs.LocalFileSystem;
 import pspemu.hle.vfs.IsoFileSystem;
+import pspemu.hle.vfs.ZipFileSystem;
 import pspemu.hle.vfs.MountableVirtualFileSystem;
 import pspemu.hle.vfs.EmulatorFileSystem;
 
@@ -64,7 +65,7 @@ class HleRootFileSystem {
 
 		// Devices.
 		devices["ms0:"   ]   = new MemoryStickDevice(hleEmulatorState, ms0root = new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/ms0")));
-		devices["flash0:"]   = new IoDevice         (hleEmulatorState, new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/flash0")));
+		devices["flash0:"]   = new IoDevice         (hleEmulatorState, new MountableVirtualFileSystem(new ZipFileSystem(new ZipArchive(import("flash0.zip")))));
 		devices["flash1:"]   = new IoDevice         (hleEmulatorState, new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/flash1")));
 		devices["umd0:"  ]   = new UmdDevice        (hleEmulatorState, umd0root = new MountableVirtualFileSystem(new LocalFileSystem(ApplicationPaths.exe ~ "/pspfs/umd0")));
 

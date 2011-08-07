@@ -36,14 +36,8 @@ FileEntry isoNodeToFileEntry(IsoFileSystem isoFileSystem, Iso.IsoNode isoNode) {
 	return fileEntry;
 }
 
-class IsoFileHandle : FileHandle {
+class IsoFileHandle : StreamFileHandle {
 	Iso.IsoNode isoNode;
-	Stream stream;
-	
-	public this(VirtualFileSystem virtualFileSystem, Stream stream) {
-		super(virtualFileSystem);
-		this.stream = stream;
-	}
 	
 	public this(VirtualFileSystem virtualFileSystem, Iso.IsoNode isoNode) {
 		super(virtualFileSystem);
@@ -85,10 +79,6 @@ class IsoFileSystem : VirtualFileSystem {
 		this.ioDevice = ioDevice;
 	}
 	
-	Stream getStreamFromHandle(FileHandle handle) {
-		return handle.get!IsoFileHandle(this).stream;
-	}
-	
 	override FileHandle open(string file, FileOpenMode flags, FileAccessMode mode) {
 		//writefln("ISO_OPEN: %s", file);
 		
@@ -113,17 +103,7 @@ class IsoFileSystem : VirtualFileSystem {
 		return new IsoFileHandle(this, iso.locate(file));
 	}
 	
-	override void close(FileHandle handle) {
-		//getStreamFromHandle(handle).close();
-	}
-	
-	override int read(FileHandle handle, ubyte[] data) {
-		return getStreamFromHandle(handle).read(data);
-	}
-	
-	override long seek(FileHandle handle, long offset, Whence whence) {
-		return getStreamFromHandle(handle).seek(offset, cast(SeekPos)whence);
-	}
+	mixin VirtualFileSystem_Stream;
 	
 	override DirHandle dopen(string file) {
 		return new IsoDirHandle(this, iso.locate(file));

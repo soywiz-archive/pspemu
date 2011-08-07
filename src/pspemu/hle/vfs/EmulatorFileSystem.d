@@ -15,15 +15,6 @@ import std.file;
 import pspemu.utils.String;
 import std.algorithm;
 
-class EmulatorFileHandle : FileHandle {
-	Stream stream;
-	
-	public this(VirtualFileSystem virtualFileSystem, Stream stream) {
-		super(virtualFileSystem);
-		this.stream = stream;
-	}
-}
-
 class KprintfStream : Stream {
 	HleEmulatorState hleEmulatorState;
 
@@ -54,34 +45,12 @@ class EmulatorFileSystem : VirtualFileSystem {
 	
 	override FileHandle open(string file, FileOpenMode flags, FileAccessMode mode) {
 		switch (file) {
-			case "Kprintf":
-				break;
+			case "Kprintf": return new StreamFileHandle(this, new KprintfStream(hleEmulatorState));
 			default: throw(new Exception(std.string.format("Unknown EmulatorFileSystem::'%s'", file)));
 		}
-		return new EmulatorFileHandle(this, new KprintfStream(hleEmulatorState));
 	}
 	
-	Stream getStreamFromHandle(FileHandle handle) {
-		return handle.get!EmulatorFileHandle(this).stream;
-	}
-
-	override void close(FileHandle handle) {
-		Stream stream = getStreamFromHandle(handle);
-		stream.flush(); 
-		stream.close();
-	}
-	
-	override int read(FileHandle handle, ubyte[] data) {
-		return getStreamFromHandle(handle).read(data);
-	}
-	
-	override int write(FileHandle handle, ubyte[] data) {
-		return getStreamFromHandle(handle).write(data);
-	}
-
-	override long seek(FileHandle handle, long offset, Whence whence) {
-		return getStreamFromHandle(handle).seek(offset, cast(SeekPos)whence);
-	}
+	mixin VirtualFileSystem_Stream;
 	
 	string toString() {
 		return std.string.format("EmulatorFileSystem()");
