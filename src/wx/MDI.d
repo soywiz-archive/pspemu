@@ -196,7 +196,7 @@ public import wx.Frame;
 		
 		//-----------------------------------------------------------------------------
 
-		public bool Create(MDIParentFrame parent, int id, string title, ref Point pos, ref Size size, int style, string name)
+		public bool Create(Window parent, int id, string title, ref Point pos, ref Size size, int style, string name)
 		{
 			bool ret = wxMDIChildFrame_Create(wxobj, wxObject.SafePtr(parent), id, title, pos, size, style, name);
 			version(__WXMAC__){

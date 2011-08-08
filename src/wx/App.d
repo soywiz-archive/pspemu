@@ -96,8 +96,8 @@ private import std.utf;
     {
         
         private static App app;
-	private Object m_caughtException=null;
-	public void catchException(Object e) {m_caughtException=e;}
+	private Throwable m_caughtException=null;
+	public void catchException(Throwable e) {m_caughtException=e;}
 
         //---------------------------------------------------------------------
 
@@ -122,7 +122,7 @@ private import std.utf;
  	{
  		Clipboard.initialize();
 		try return o.OnInit();
-		catch(Object e) o.catchException(e);
+		catch(Throwable e) o.catchException(e);
 		return false;
  	}
 
@@ -188,7 +188,7 @@ private import std.utf;
 			
 			if(m_caughtException)
 			{
-				Object e=m_caughtException;
+				Throwable e=m_caughtException;
 				//Maybe the user catches this exception and runs
 				//the app again, so we have to clean up
 				m_caughtException=null;
