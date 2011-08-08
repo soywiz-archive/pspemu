@@ -62,9 +62,9 @@ class Gpu : IResetable {
 	//bool componentInitialized;
 	bool running = true;
 	
-	Memory           memory;
-	GpuImplAbstract  impl;
-	GpuState         state;
+	Memory    memory;
+	IGpuImpl  impl;
+	GpuState  state;
 
 	DisplayList*     currentDisplayList;
 	DisplayLists     displayLists;
@@ -110,7 +110,8 @@ class Gpu : IResetable {
 	
 	RecordFrameStep recordFrameStep = RecordFrameStep.doNone;
 
-	public this(Memory memory, GpuImplAbstract impl) {
+	//public this(Memory memory, GpuImplAbstract impl) {
+	public this(Memory memory, IGpuImpl impl) {
 		this.endedExecutingListsEvent = new WaitEvent();
 		this.initializedEvent = new WaitEvent();
 		this.interruptedEvent = new WaitEvent();
@@ -328,9 +329,11 @@ class Gpu : IResetable {
 			if (lastFrameTimeTemp != 0) {
 				lastFrameTime = lastFrameTimeTemp;
 			}
-			
+
+			/*			
 			lastSetStateTime = cast(uint)impl.setStateStopWatch.peek().msecs;
 			lastDrawTime = cast(uint)impl.drawStopWatch.peek().msecs;
+			*/
 			lastVertexExtractionTime = cast(uint)vertexExtractionStopWatch.peek().msecs;
 			lastBufferTransferTime = cast(uint)bufferTransferStopWatch.peek().msecs;
 			
@@ -346,8 +349,10 @@ class Gpu : IResetable {
 			gpuTimePerFrameStopWatch.reset();
 			vertexExtractionStopWatch.reset();
 			bufferTransferStopWatch.reset();
+			/*
 			impl.setStateStopWatch.reset();
 			impl.drawStopWatch.reset();
+			*/
 			
 			if (justDrawOnVblank) {
 				performBufferOp(BufferOperation.STORE);

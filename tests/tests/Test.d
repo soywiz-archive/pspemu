@@ -23,6 +23,14 @@ class Test {
 		}
 	}
 	
+	void assertSuccess(string FILE = __FILE__, int LINE = __LINE__) {
+		_assert(true, std.string.format("assertSuccess"), FILE, LINE);
+	}
+
+	void assertFail(string FILE = __FILE__, int LINE = __LINE__) {
+		_assert(false, std.string.format("assertFail"), FILE, LINE);
+	}
+	
 	void assertTrue(bool a, string FILE = __FILE__, int LINE = __LINE__) {
 		_assert(a, std.string.format("assertTrue(%s)", a), FILE, LINE);
 	}

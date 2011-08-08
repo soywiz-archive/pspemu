@@ -1,4 +1,4 @@
-module pspemu.core.crypto.DisplayTest;
+module pspemu.core.display.DisplayTest;
 
 import pspemu.interfaces.IDisplay;
 

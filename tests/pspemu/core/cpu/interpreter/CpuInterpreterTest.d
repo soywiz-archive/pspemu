@@ -1,4 +1,4 @@
-module pspemu.core.cpu.interpreter.CpuInterpretedTest;
+module pspemu.core.cpu.interpreter.CpuInterpreterTest;
 
 import pspemu.core.cpu.interpreter.CpuInterpreter;
 import pspemu.core.cpu.assembler.CpuAssembler;

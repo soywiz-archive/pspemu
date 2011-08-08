@@ -5,7 +5,6 @@ import std.conv;
 import pspemu.core.gpu.Types;
 
 import pspemu.core.Memory;
-import pspemu.core.gpu.Types;
 import pspemu.utils.MathUtils;
 import pspemu.utils.StructUtils;
 import pspemu.utils.String;

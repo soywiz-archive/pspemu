@@ -1,4 +1,4 @@
-module pspemu.core.cpu.interpreter.CpuInterpreted;
+module pspemu.core.cpu.interpreter.CpuInterpreter;
 
 import std.stdio;
 import std.math;

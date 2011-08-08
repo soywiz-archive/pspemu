@@ -1,12 +1,11 @@
 module pspemu.core.gpu.GpuImpl;
 
-import pspemu.core.gpu.Types;
-import pspemu.core.gpu.GpuState;
-
-import std.stdio;
-import pspemu.utils.BitUtils;
-import pspemu.utils.MathUtils;
+public import pspemu.core.gpu.Types;
+public import pspemu.core.gpu.GpuState;
+public import pspemu.utils.BitUtils;
+public import pspemu.utils.MathUtils;
 public import std.datetime;
+public import std.stdio;
 
 interface IGpuImpl {
 	void setState(GpuState *state);
@@ -33,8 +32,12 @@ interface IGpuImpl {
 
 abstract class GpuImplAbstract : IGpuImpl {
 	GpuState *state;
+	
+	/*
 	StopWatch setStateStopWatch;
 	StopWatch drawStopWatch;
+	*/
+	
 	void setState(GpuState *state) { this.state = state; }
 	
 	abstract int getTextureCacheCount();

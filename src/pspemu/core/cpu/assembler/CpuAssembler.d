@@ -2,14 +2,14 @@ module pspemu.core.cpu.assembler.CpuAssembler;
 
 import std.stdio;
 import std.string;
-import std.uni;
 import std.conv;
-import std.ascii;
 import std.stream;
 
 import pspemu.utils.Expression;
 public import pspemu.core.cpu.Instruction;
 public import pspemu.interfaces.IResetable;
+
+import pspemu.core.cpu.assembler.CpuAssemblerUtils;
 
 class CpuAssembler : IResetable {
 	InstructionDefinition[string] instructionDefinitions;
@@ -38,51 +38,6 @@ class CpuAssembler : IResetable {
 		patches.length = 0;
 	}
 
-	static string[] tokenizeLine(string str) {
-		string[] ret;
-		
-		bool isIdentStart(char c) {
-			return isAlphaNum(c) || (c == '%');
-		}
-		
-		auto code = { 
-			for (int n = 0; n < str.length; n++) {
-				char c = str[n];
-				switch (c) {
-					case ' ': case '\t': break;
-					case '\n': case '\r': return;
-					case '\'': case '"': {
-						char start_c = c;
-						int m = n;
-						for (n++; n < str.length; n++) {
-							if (str[n] == start_c) break;
-						}
-						ret ~= str[m..n];
-						n--;
-					} break;
-					case ';':
-						return;
-					break;
-					default:
-						if (isIdentStart(c)) {
-							int m = n;
-							for (n++; n < str.length; n++) {
-								if (!isAlphaNum(str[n])) break;							
-							}
-							ret ~= str[m..n];
-							n--;
-						} else {
-							ret ~= [c];
-						}
-					break;
-				}
-			}
-		};
-		code();
-
-		return ret;
-	}
-	
 	int getLabel(string name) {
 		if (!(name in labels)) throw(new Exception("Can't find label '" ~ name ~ "'"));
 		return labels[name];
@@ -90,7 +45,7 @@ class CpuAssembler : IResetable {
 	
 	void assemble(Stream stream, string lines) {
 		foreach (line; std.string.split(lines, "\n")) {
-			auto lineTokens = tokenizeLine(line);
+			auto lineTokens = CpuAssemblerUtils.tokenizeLine(line);
 			uint PC = cast(uint)stream.position;
 			//writefln("%s", line);
 			
@@ -151,7 +106,7 @@ class CpuAssembler : IResetable {
 		
 		Instruction instruction;
 
-		string[] tokensFormat = tokenizeLine(format);
+		string[] tokensFormat = CpuAssemblerUtils.tokenizeLine(format);
 		int tokenParamIndex;
 		
 		int getRegisterValue(string registerName) {
@@ -191,6 +146,11 @@ class CpuAssembler : IResetable {
 	}
 	
 	Instruction[] assembleInstruction(uint PC, string opcodeName, string params) {
-		return assembleInstruction(PC, opcodeName, tokenizeLine(params));
+		return assembleInstruction(PC, opcodeName, CpuAssemblerUtils.tokenizeLine(params));
+	}
+	
+	Instruction[] assembleInstruction(uint PC, string line) {
+		auto tokens = CpuAssemblerUtils.tokenizeLine(line);
+		return assembleInstruction(PC, tokens[0], tokens[1..$]);
 	}
 }
