@@ -771,6 +771,9 @@ STATIC elem * eladd(elem *e)
   int sz;
 
   //printf("eladd(%p)\n",e);
+  targ_size_t ptrmask = ~(targ_size_t)0;
+  if (NPTRSIZE <= 4)
+        ptrmask = 0xFFFFFFFF;
 L1:
   e1 = e->E1;
   e2 = e->E2;
@@ -784,7 +787,8 @@ L1:
             || e1->Eoper == OPstring
            )
         {
-                e1->EV.sp.Voffset += e2->EV.Vuns;
+                e1->EV.sp.Voffset += e2->EV.Vpointer;
+                e1->EV.sp.Voffset &= ptrmask;
                 e = el_selecte1(e);
                 goto ret;
         }
@@ -799,7 +803,8 @@ L1:
             || e2->Eoper == OPstring
            )
         {
-                e2->EV.sp.Voffset += e1->EV.Vuns;
+                e2->EV.sp.Voffset += e1->EV.Vpointer;
+                e2->EV.sp.Voffset &= ptrmask;
                 e = el_selecte2(e);
                 goto ret;
         }
@@ -812,7 +817,8 @@ L1:
   if (e2->Eoper == OPconst && e1->Eoper == OPadd &&
         (e1->E2->Eoper == OPrelconst || e1->E2->Eoper == OPstring))
   {
-        e1->E2->EV.sp.Voffset += e2->EV.Vuns;
+        e1->E2->EV.sp.Voffset += e2->EV.Vpointer;
+        e1->E2->EV.sp.Voffset &= ptrmask;
         e = el_selecte1(e);
         goto L1;
   }
@@ -820,7 +826,8 @@ L1:
   else if ((e2->Eoper == OPrelconst || e2->Eoper == OPstring) &&
            e1->Eoper == OPadd && cnst(e1->E2))
   {
-        e2->EV.sp.Voffset += e1->E2->EV.Vuns;
+        e2->EV.sp.Voffset += e1->E2->EV.Vpointer;
+        e2->EV.sp.Voffset &= ptrmask;
         e->E1 = el_selecte1(e1);
         goto L1;                        /* try and find some more       */
   }
@@ -1391,6 +1398,36 @@ STATIC elem *elor(elem *e)
     return elbitwise(e);
 }
 
+/*************************************
+ */
+
+STATIC elem *elxor(elem *e)
+{
+    if (OPTIMIZER)
+    {
+        elem *e1 = e->E1;
+        elem *e2 = e->E2;
+
+        /* Recognize:
+         *    (a & c) ^ (b & c)  =>  (a ^ b) & c
+         */
+        if (e1->Eoper == OPand && e2->Eoper == OPand &&
+            el_match5(e1->E2, e2->E2) &&
+            (e2->E2->Eoper == OPconst || (!el_sideeffect(e2->E1) && !el_sideeffect(e2->E2))))
+        {
+            el_free(e1->E2);
+            e1->E2 = e2->E1;
+            e1->Eoper = OPxor;
+            e->Eoper = OPand;
+            e->E2 = e2->E2;
+            e2->E1 = NULL;
+            e2->E2 = NULL;
+            el_free(e2);
+            return optelem(e, TRUE);
+        }
+    }
+    return elbitwise(e);
+}
 
 /**************************
  * Optimize nots.
@@ -1638,8 +1675,7 @@ STATIC elem * elcond(elem *e)
 
             // Try to detect absolute value expression
             // (a < 0) -a : a
-            // (a >= 0) a : -a
-            if (e1->Eoper == OPlt &&
+            if ((e1->Eoper == OPlt || e1->Eoper == OPle) &&
                 e1->E2->Eoper == OPconst &&
                 !boolres(e1->E2) &&
                 !tyuns(e1->E1->Ety) &&
@@ -1654,13 +1690,30 @@ STATIC elem * elcond(elem *e)
                 el_free(e);
                 e = el_una(OPabs,ty,ec2);
             }
+            // (a >= 0) a : -a
+            else if ((e1->Eoper == OPge || e1->Eoper == OPgt) &&
+                e1->E2->Eoper == OPconst &&
+                !boolres(e1->E2) &&
+                !tyuns(e1->E1->Ety) &&
+                !tyuns(e1->E2->Ety) &&
+                ec2->Eoper == OPneg &&
+                !el_sideeffect(ec1) &&
+                el_match(e->E1->E1,ec1) &&
+                el_match(ec2->E1,ec1) &&
+                tysize(ty) >= intsize
+               )
+            {   e->E2->E1 = NULL;
+                el_free(e);
+                e = el_una(OPabs,ty,ec1);
+            }
             break;
             }
         }
     }
     return e;
 }
-
+
+
 /****************************
  * Comma operator.
  *        ,      e
@@ -1887,7 +1940,7 @@ STATIC elem * eldiv(elem *e)
         {   int sz = tysize(tym);
 
             // See if we can replace with OPremquo
-            if (sz == REGSIZE && !I64)  // need cent and ucent working for I64 to work
+            if (sz == REGSIZE /*&& !I64*/)  // need cent and ucent working for I64 to work
             {
                 // Don't do it if there are special code sequences in the
                 // code generator (see cdmul())
@@ -1900,15 +1953,15 @@ STATIC elem * eldiv(elem *e)
                     ;
                 else
                 {
-                    assert(sz == 2 || sz == 4);
+                    assert(sz == 2 || sz == 4 || sz == 8);
                     int op = OPmsw;
                     if (e->Eoper == OPdiv)
                     {
-                        op = (sz == 2) ? OP32_16 : OP64_32;
+                        op = (sz == 2) ? OP32_16 : (sz == 4) ? OP64_32 : OP128_64;
                     }
                     e->Eoper = OPremquo;
                     e = el_una(op, tym, e);
-                    e->E1->Ety = (sz == 2) ? TYlong : TYllong;
+                    e->E1->Ety = (sz == 2) ? TYlong : (sz == 4) ? TYllong : TYcent;
                 }
             }
         }
@@ -2035,10 +2088,8 @@ L1:
 }
 
 STATIC elem * elandand(elem *e)
-{   elem *e1,*e2;
-    tym_t t;
-
-    e1 = e->E1;
+{
+    elem *e1 = e->E1;
     if (OTboolnop(e1->Eoper))
     {
         e->E1 = e1->E1;
@@ -2046,7 +2097,7 @@ STATIC elem * elandand(elem *e)
         el_free(e1);
         return elandand(e);
     }
-    e2 = e->E2;
+    elem *e2 = e->E2;
     if (OTboolnop(e2->Eoper))
     {
         e->E2 = e2->E1;
@@ -2056,19 +2107,46 @@ STATIC elem * elandand(elem *e)
     }
     if (OPTIMIZER)
     {
+        /* Recognize: (a >= c1 && a < c2)
+         */
+        if ((e1->Eoper == OPge || e1->Eoper == OPgt) &&
+            (e2->Eoper == OPlt || e2->Eoper == OPle) &&
+            e1->E2->Eoper == OPconst && e2->E2->Eoper == OPconst &&
+            !el_sideeffect(e1->E1) && el_match(e1->E1, e2->E1) &&
+            tyintegral(e1->E1->Ety) &&
+            tybasic(e1->E2->Ety) == tybasic(e2->E2->Ety) &&
+            tysize(e1->E1->Ety) == NPTRSIZE)
+        {
+            /* Replace with: ((a - c1) < (c2 - c1))
+             */
+            targ_llong c1 = el_tolong(e1->E2);
+            if (e1->Eoper == OPgt)
+                ++c1;
+            targ_llong c2 = el_tolong(e2->E2);
+            if (0 <= c1 && c1 <= c2)
+            {
+                e1->Eoper = OPmin;
+                e1->Ety = e1->E1->Ety;
+                e1->E2->EV.Vllong = c1;
+                e->E2 = el_long(touns(e2->E2->Ety), c2 - c1);
+                e->Eoper = e2->Eoper;
+                el_free(e2);
+                return optelem(e, TRUE);
+            }
+        }
+
         // Look for (!(e >>> c) && ...)
         if (e1->Eoper == OPnot && e1->E1->Eoper == OPshr &&
             e1->E1->E2->Eoper == OPconst)
         {
             // Replace (e >>> c) with (e & x)
-            unsigned shift;
             elem *e11 = e1->E1;
 
-            shift = el_tolong(e11->E2);
+            targ_ullong shift = el_tolong(e11->E2);
             if (shift < intsize * 8)
             {   targ_ullong m;
 
-                m = ~0LL << shift;
+                m = ~0LL << (int)shift;
                 e11->Eoper = OPand;
                 e11->E2->EV.Vullong = m;
                 e11->E2->Ety = e11->Ety;
@@ -2077,7 +2155,7 @@ STATIC elem * elandand(elem *e)
         }
 
         if (e1->Eoper == OPbool)
-        {   t = e1->E1->Ety;
+        {   tym_t t = e1->E1->Ety;
             e1 = e->E1 = el_selecte1(e1);
             e1->Ety = t;
         }
@@ -2096,9 +2174,8 @@ STATIC elem * elandand(elem *e)
         }
     }
 
-  t = e->Ety;
-  if (e2->Eoper == OPconst || e2->Eoper == OPrelconst || e2->Eoper == OPstring)
-  {     if (boolres(e2))        /* e1 && (x,1)  =>  e1 ? ((x,1),1) : 0  */
+    if (e2->Eoper == OPconst || e2->Eoper == OPrelconst || e2->Eoper == OPstring)
+    {   if (boolres(e2))        /* e1 && (x,1)  =>  e1 ? ((x,1),1) : 0  */
         {
             if (e2 == e->E2)    /* if no x, replace e with (bool e1)    */
             {   el_free(e2);
@@ -2113,19 +2190,19 @@ STATIC elem * elandand(elem *e)
                 goto L3;
             }
         }
-  }
+    }
 
   if (e1->Eoper == OPconst || e1->Eoper == OPrelconst || e1->Eoper == OPstring)
   {
         e->Eoper = OPcomma;
         if (boolres(e1))                /* (x,1) && e2  =>  (x,1),bool e2 */
         {
-            e->E2 = el_una(OPbool,t,e->E2);
+            e->E2 = el_una(OPbool,e->Ety,e->E2);
         }
         else                            /* (x,0) && e2  =>  (x,0),0     */
         {
             el_free(e->E2);
-            e->E2 = el_int(t,0);
+            e->E2 = el_int(e->Ety,0);
         }
     }
     else

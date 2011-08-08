@@ -83,6 +83,11 @@ CEXTERN block *block_last;
 CEXTERN int errcnt;
 CEXTERN regm_t fregsaved;
 
+#if SCPP
+CEXTERN targ_size_t dsout;              /* # of bytes actually output to data */
+#endif
+CEXTERN tym_t pointertype;              /* default data pointer type */
+
 // cg.c
 extern symbol *localgot;
 extern symbol *tls_get_addr_sym;
@@ -106,27 +111,28 @@ void eecontext_parse();
         /* doesn't belong here, but func to OPxxx is in exp2 */
 void exp2_setstrthis(elem *e,Symbol *s,targ_size_t offset,type *t);
 symbol *exp2_qualified_lookup(Classsym *sclass, int flags, int *pflags);
+elem *exp2_copytotemp(elem *e);
 
 /* util.c */
-void util_progress();
 #if __clang__
 void util_exit(int) __attribute__((analyzer_noreturn));
-#else
-void util_exit(int);
-#pragma ZTC noreturn(util_exit)
-#endif
-void util_set386(void);
-void util_set64(void);
-int ispow2(targ_ullong);
-#if TX86
-
-#if __clang__
 void util_assert(char *, int) __attribute__((analyzer_noreturn));
 #else
+void util_exit(int);
 void util_assert(char *, int);
+#if __DMC__
+#pragma ZTC noreturn(util_exit)
 #pragma ZTC noreturn(util_assert)
 #endif
+#endif
 
+void util_progress();
+void util_set16(void);
+void util_set32(void);
+void util_set64(void);
+int ispow2(targ_ullong);
+
+#if TX86
 #if __GNUC__
 #define util_malloc(n,size) mem_malloc((n)*(size))
 #define util_calloc(n,size) mem_calloc((n)*(size))
@@ -149,6 +155,7 @@ char *parc_strdup(const char *s);
 void parc_free(void *p);
 #endif
 #endif
+
 void swap(int *,int *);
 void crlf(FILE *);
 char *unsstr(unsigned);
@@ -188,16 +195,17 @@ void preerr(unsigned,...);
 
 #if __clang__
 void err_exit(void) __attribute__((analyzer_noreturn));
+void err_nomem(void) __attribute__((analyzer_noreturn));
+void err_fatal(unsigned,...) __attribute__((analyzer_noreturn));
 #else
 void err_exit(void);
-#pragma ZTC noreturn(err_exit)
-#endif
-
-#if __clang__
-void err_nomem(void) __attribute__((analyzer_noreturn));
-#else
 void err_nomem(void);
-#pragma noreturn(err_nomem)
+void err_fatal(unsigned,...);
+#if __DMC__
+#pragma ZTC noreturn(err_exit)
+#pragma ZTC noreturn(err_nomem)
+#pragma ZTC noreturn(err_fatal)
+#endif
 #endif
 
 int cpperr(unsigned,...);
@@ -208,13 +216,6 @@ extern int errmsgs_tx86idx;
 void warerr(unsigned,...);
 void err_warning_enable(unsigned warnum, int on);
 CEXTERN void lexerr(unsigned,...);
-
-#if __clang__
-CEXTERN void err_fatal(unsigned,...) __attribute__((analyzer_noreturn));
-#else
-CEXTERN void err_fatal(unsigned,...);
-#pragma noreturn(err_fatal)
-#endif
 
 int typerr(int,type *,type *,...);
 void err_noctor(Classsym *stag,list_t arglist);
@@ -325,6 +326,7 @@ void symbol_keep(Symbol *s);
 #endif
 void symbol_print(Symbol *s);
 void symbol_term(void);
+char *symbol_ident(symbol *s);
 Symbol *symbol_calloc(const char *id);
 Symbol *symbol_name(const char *name, int sclass, type *t);
 Symbol *symbol_generate(int sclass, type *t);

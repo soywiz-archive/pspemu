@@ -929,11 +929,11 @@ code *getlvalue(code *pcs,elem *e,regm_t keepmsk)
          *      MOV     idxreg,e
          *      EA =    [ES:] &v+idxreg
          */
-
+        f = FLconst;
         if (e1isadd &&
-            e12->Eoper == OPrelconst &&
+            ((e12->Eoper == OPrelconst && (f = el_fl(e12)) != FLfardata) ||
+             (e12->Eoper == OPconst && !I16 && !e1->Ecount && (!I64 || el_signx32(e12)))) &&
             !(I64 && config.flags3 & CFG3pic) &&
-            (f = el_fl(e12)) != FLfardata &&
             e1->Ecount == e1->Ecomsub &&
             (!e1->Ecount || (~keepmsk & ALLREGS & mMSW) || (e1ty != TYfptr && e1ty != TYhptr)) &&
             tysize(e11->Ety) == REGSIZE
@@ -1111,7 +1111,8 @@ code *getlvalue(code *pcs,elem *e,regm_t keepmsk)
             else
                 assert(f != FLreg);
             pcs->IFL1 = f;
-            pcs->IEVsym1 = e12->EV.sp.Vsym;
+            if (f != FLconst)
+                pcs->IEVsym1 = e12->EV.sp.Vsym;
             pcs->IEVoffset1 = e12->EV.sp.Voffset; /* += ??? */
 
             /* If e1 is a CSE, we must generate an addressing mode      */
@@ -2968,7 +2969,7 @@ STATIC code * funccall(elem *e,unsigned numpara,unsigned numalign,regm_t *pretre
             ce = scodelem(e11,&retregs,keepmsk,TRUE);
             cgstate.stackclean--;
             /* Kill registers destroyed by an arbitrary function call */
-            ce = cat(ce,getregs((mBP | ALLREGS | mES) & ~fregsaved));
+            ce = cat(ce,getregs((mBP | ALLREGS | mES | XMMREGS) & ~fregsaved));
             if (e11ty == TYfptr)
             {   unsigned lsreg;
              LF1:
@@ -3001,7 +3002,7 @@ STATIC code * funccall(elem *e,unsigned numpara,unsigned numalign,regm_t *pretre
                                                 // CALL [function]
             cs.Iflags = 0;
             cgstate.stackclean++;
-            ce = loadea(e11,&cs,0xFF,farfunc ? 3 : 2,0,keepmsk,(ALLREGS|mES|mBP) & ~fregsaved);
+            ce = loadea(e11,&cs,0xFF,farfunc ? 3 : 2,0,keepmsk,(mBP|ALLREGS|mES|XMMREGS) & ~fregsaved);
             cgstate.stackclean--;
             freenode(e11);
         }

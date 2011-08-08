@@ -52,6 +52,7 @@ AggregateDeclaration::AggregateDeclaration(Loc loc, Identifier *id)
     ctor = NULL;
     defaultCtor = NULL;
     aliasthis = NULL;
+    noDefaultCtor = FALSE;
 #endif
     dtor = NULL;
 }
@@ -215,7 +216,7 @@ void AggregateDeclaration::addField(Scope *sc, VarDeclaration *v)
     if (!isUnionDeclaration())
         sc->offset = ofs;
 #endif
-    if (global.params.isX86_64 && sc->structalign == 8 && memalignsize == 16)
+    if (global.params.is64bit && sc->structalign == 8 && memalignsize == 16)
         /* Not sure how to handle this */
         ;
     else if (sc->structalign < memalignsize)

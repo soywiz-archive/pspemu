@@ -965,7 +965,7 @@ void FuncDeclaration::semantic3(Scope *sc)
 #else
             Type *t;
 
-            if (global.params.isX86_64)
+            if (global.params.is64bit)
             {   // Declare save area for varargs registers
                 Type *t = new TypeIdentifier(loc, Id::va_argsave_t);
                 t = t->semantic(loc, sc);
@@ -1436,7 +1436,7 @@ void FuncDeclaration::semantic3(Scope *sc)
                 v_argptr->init = new VoidInitializer(loc);
 #else
                 Type *t = argptr->type;
-                if (global.params.isX86_64)
+                if (global.params.is64bit)
                 {   // Initialize _argptr to point to v_argsave
                     Expression *e1 = new VarExp(0, argptr);
                     Expression *e = new SymOffExp(0, v_argsave, 6*8 + 8*16);
@@ -3089,8 +3089,17 @@ void CtorDeclaration::semantic(Scope *sc)
 
     // See if it's the default constructor
     if (ad && tf->varargs == 0 && Parameter::dim(tf->parameters) == 0)
-    {   if (ad->isStructDeclaration())
-            error("default constructor not allowed for structs");
+    {
+        StructDeclaration *sd = ad->isStructDeclaration();
+        if (sd)
+        {
+            if (fbody || !(storage_class & STCdisable))
+            {   error("default constructor for structs only allowed with @disable and no body");
+                storage_class |= STCdisable;
+                fbody = NULL;
+            }
+            sd->noDefaultCtor = TRUE;
+        }
         else
             ad->defaultCtor = this;
     }

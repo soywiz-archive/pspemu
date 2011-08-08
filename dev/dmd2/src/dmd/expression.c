@@ -1346,33 +1346,6 @@ void Expression::checkPurity(Scope *sc, VarDeclaration *v, Expression *ethis)
         }
         else
         {
-            if (ethis)
-            {
-                Type *t1 = ethis->type->toBasetype();
-
-                if (t1->isImmutable() ||
-                    (t1->ty == Tpointer && t1->nextOf()->isImmutable()))
-                {
-                    goto L1;
-                }
-                if (ethis->op == TOKvar)
-                {   VarExp *ve = (VarExp *)ethis;
-
-                    v = ve->var->isVarDeclaration();
-                    if (v)
-                        checkPurity(sc, v, NULL);
-                    return;
-                }
-                if (ethis->op == TOKdotvar)
-                {   DotVarExp *ve = (DotVarExp *)ethis;
-
-                    v = ve->var->isVarDeclaration();
-                    if (v)
-                        checkPurity(sc, v, ve->e1);
-                    return;
-                }
-            }
-
             /* Given:
              * void f()
              * { int fx;
@@ -1387,31 +1360,21 @@ void Expression::checkPurity(Scope *sc, VarDeclaration *v, Expression *ethis)
              * i() can modify hx and gx but not fx
              */
 
-            /* Back up until we find the parent function of v,
-             * requiring each function in between to be impure.
-             */
             Dsymbol *vparent = v->toParent2();
-            Dsymbol *s = sc->func, *snext = s->toParent2();
-            // Make sure we're really finding parent *functions*, not parent
-            // class.
-            if (vparent->isFuncDeclaration() || snext != vparent)
+            for (Dsymbol *s = sc->func; s; s = s->toParent2())
             {
-                for (; s; s = s->toParent2())
-                {
-                    if (s == vparent)
-                        break;
-                    FuncDeclaration *ff = s->isFuncDeclaration();
-                    if (!ff)
-                        break;
-                    if (ff->setImpure())
-                    {   error("pure nested function '%s' cannot access mutable data '%s'",
-                            ff->toChars(), v->toChars());
-                        break;
-                    }
+                if (s == vparent)
+	                break;
+                FuncDeclaration *ff = s->isFuncDeclaration();
+                if (!ff)
+                    break;
+                if (ff->setImpure())
+                {   error("pure nested function '%s' cannot access mutable data '%s'",
+                        ff->toChars(), v->toChars());
+                    break;
                 }
             }
         }
-
 
         /* Do not allow safe functions to access __gshared data
          */
@@ -4036,8 +3999,7 @@ Lagain:
     }
 
     if (tb->ty == Tclass)
-    {   TypeFunction *tf;
-
+    {
         TypeClass *tc = (TypeClass *)(tb);
         ClassDeclaration *cd = tc->sym->isClassDeclaration();
         if (cd->isInterfaceDeclaration())
@@ -4053,6 +4015,10 @@ Lagain:
             }
             goto Lerr;
         }
+
+        if (cd->noDefaultCtor && (!arguments || !arguments->dim))
+            error("default construction is disabled for type %s", cd->toChars());
+
         checkDeprecated(sc, cd);
         if (cd->isNested())
         {   /* We need a 'this' pointer for the nested class.
@@ -4164,7 +4130,7 @@ Lagain:
 
             cd->accessCheck(loc, sc, member);
 
-            tf = (TypeFunction *)f->type;
+            TypeFunction *tf = (TypeFunction *)f->type;
 
             if (!arguments)
                 arguments = new Expressions();
@@ -4192,7 +4158,7 @@ Lagain:
             allocator = f->isNewDeclaration();
             assert(allocator);
 
-            tf = (TypeFunction *)f->type;
+            TypeFunction *tf = (TypeFunction *)f->type;
             functionParameters(loc, sc, tf, newargs, f);
         }
         else
@@ -4208,6 +4174,9 @@ Lagain:
         TypeStruct *ts = (TypeStruct *)tb;
         StructDeclaration *sd = ts->sym;
         TypeFunction *tf;
+
+        if (sd->noDefaultCtor && (!arguments || !arguments->dim))
+            error("default construction is disabled for type %s", sd->toChars());
 
         FuncDeclaration *f = NULL;
         if (sd->ctor)
@@ -6515,8 +6484,6 @@ Expression *DotVarExp::semantic(Scope *sc)
                 accessCheck(loc, sc, e1, var);
 
             VarDeclaration *v = var->isVarDeclaration();
-            if (v)
-                checkPurity(sc, v, e1);
             Expression *e = expandVar(WANTvalue, v);
             if (e)
                 return e;
@@ -9601,6 +9568,14 @@ Expression *AssignExp::semantic(Scope *sc)
         }
         else
         {
+            Type *t2 = e2->type->toBasetype();
+            // Convert e2 to e2[], unless e2-> e1[0]
+            if (t2->ty == Tsarray && !t2->implicitConvTo(t1->nextOf()))
+            {
+                e2 = new SliceExp(e2->loc, e2, NULL, NULL);
+                e2 = e2->semantic(sc);
+            }
+
             // Convert e1 to e1[]
             Expression *e = new SliceExp(e1->loc, e1, NULL, NULL);
             e1 = e->semantic(sc);
@@ -10803,7 +10778,7 @@ Expression *PowExp::semantic(Scope *sc)
         if ((e2->op == TOKint64 && e2->toInteger() == 0) ||
                 (e2->op == TOKfloat64 && e2->toReal() == 0.0))
         {
-            if (e1->op == TOKint64)
+            if (e1->type->isintegral())
                 e = new IntegerExp(loc, 1, e1->type);
             else
                 e = new RealExp(loc, 1.0, e1->type);

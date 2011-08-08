@@ -35,11 +35,13 @@
 #include        "cc.h"
 #include        "oper.h"                /* OPxxxx definitions           */
 #include        "global.h"
-#include        "parser.h"
 #include        "el.h"
 #include        "type.h"
-#include        "cpp.h"
 
+#if SCPP
+#include        "parser.h"
+#include        "cpp.h"
+#endif
 
 static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
@@ -1476,6 +1478,10 @@ elem * evalu8(elem *e)
                 break;
             case 4:
                 e->EV.Vllong = (rem << 32) | (quo & 0xFFFFFFFF);
+                break;
+            case 8:
+                e->EV.Vcent.lsw = quo;
+                e->EV.Vcent.msw = rem;
                 break;
             default:
                 assert(0);
