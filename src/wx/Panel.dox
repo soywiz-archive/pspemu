@@ -1,0 +1,22 @@
+/* http://wxd.sourceforge.net/wxWidgets-2.6/docs/html/wx/wx_wxpanel.html */
+
+/*! \fn public wx::Panel::Panel::this(Window parent, int id, Point pos = wxDefaultPosition, Size size = wxDefaultSize, int style = wxTAB_TRAVERSAL|wxNO_BORDER, string name = wxPanelNameStr)
+
+Constructor.
+
+\param parent
+            The parent window.
+\param id
+            An identifier for the panel. A value of -1 is taken to mean a default.
+\param pos
+            The panel position. A value of (-1, -1) indicates a default position, chosen by either the windowing system or wxWidgets, depending on platform.
+\param size
+            The panel size. A value of (-1, -1) indicates a default size, chosen by either the windowing system or wxWidgets, depending on platform.
+\param style
+            The window style. See wxPanel.
+\param name
+            Used to associate a name with the window, allowing the application user to set Motif resource values for individual dialog boxes.
+
+\sa Create
+*/
+

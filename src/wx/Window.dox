@@ -1,0 +1,25 @@
+/* http://wxd.sourceforge.net/wxWidgets-2.6/docs/html/wx/wx_wxwindow.html */
+
+/*! \fn public wx::Window::Window::this(Window parent, int id, Point pos=wxDefaultPosition, Size size=wxDefaultSize, int style=0, string name=wxPanelNameStr)
+
+Constructs a window, which can be a child of a frame, dialog or any other non-control window.
+
+\param parent
+            Pointer to a parent window.
+\param id
+            Window identifier. If -1, will automatically create an identifier.
+\param pos
+            Window position. wxDefaultPosition is (-1, -1) which indicates that wxWidgets should generate a default position for the window. If using the wxWindow class directly, supply an actual position.
+\param size
+            Window size. wxDefaultSize is (-1, -1) which indicates that wxWidgets should generate a default size for the window. If no suitable size can be found, the window will be sized to 20x20 pixels so that the window is visible but obviously not correctly sized. 
+\param style
+            Window style. For generic window styles, please see wxWindow.
+\param name
+            Window name.
+*/
+
+/*? \fn public wx::Window::Window::~this()
+
+Destructor. Deletes all subwindows, then deletes itself. Instead of using the delete operator explicitly, you should normally use wxWindow::Destroy so that wxWidgets can delete a window only when it is safe to do so, in idle time.
+*/
+
