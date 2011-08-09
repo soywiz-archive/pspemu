@@ -1,4 +1,7 @@
-101 ICON FIXED PRELOAD "resources/psp.ico"
+#define MANIFEST 24
+
+101 ICON FIXED PRELOAD "psp.ico"
+2 MANIFEST "pspemu.manifest"
 
 /*
 VS_VERSION_INFO VERSIONINFO

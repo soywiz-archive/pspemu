@@ -1,4 +1,6 @@
 @echo off
+CALL "%~dp0\dev\prepare.bat"
+
 del pspemu.exe 2> NUL
 SET PATH="%~dp0\dev\dmd2\windows\bin";%PATH%
 SET FLAGS=

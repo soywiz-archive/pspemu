@@ -183,7 +183,7 @@ include $(MAKESTUB)
 all:  $(LIBTARGET)
 
 DMD=dmd
-DFLAGS=-O -g
+DFLAGS=-O
 
 $(LIBTARGET): $(OBJECTS)
 	lib -p512 -c -n $@ $(OBJECTS)
