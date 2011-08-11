@@ -1,2 +1,2 @@
 @echo off
-CALL run_tests.bat +full -version=ALL_TESTS
+CALL run_tests.bat -version=ALL_TESTS +D=.deps.all +O=.objs.all

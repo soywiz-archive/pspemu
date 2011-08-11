@@ -8,40 +8,14 @@ import std.stdio;
 public import pspemu.utils.MemorySegment;
 public import pspemu.hle.kd.sysmem.Types;
 
+public import pspemu.hle.HleMemoryManager;
 
 import pspemu.utils.Logger;
 
 class SysMemUserForUser : ModuleNative {
-	MemorySegment allocStack(uint stackSize, string name, bool fillFF = true) {
-		stackSize &= ~0xF;
-		stackSize += 0x600;
-		auto segment = pspMemorySegmentStacks.allocByHigh(stackSize, std.string.format("Stack for %s", name));
-		//writefln("allocStack!!! %s Size(%d)", segment, stackSize);
-		if (fillFF) {
-			currentEmulatorState.memory[segment.block.low..segment.block.high][] = 0xFF;
-		}
-		return segment;
-	}
-
-	MemorySegment pspMemorySegment;
-	MemorySegment pspMemorySegmentStacks;
+	HleMemoryManager hleMemoryManager;
 
 	void initModule() {
-		uint ramSize = 32 * 1024 * 1024;
-		uint ramAddrLow  = 0x08000000;
-		//uint ramAddrHigh = ramAddrLow + 64 * 1024 * 1024;
-		uint ramAddrHigh = ramAddrLow + ramSize;
-		
-		pspMemorySegment       = new MemorySegment(ramAddrLow, ramAddrHigh, "PSP Memory");
-		pspMemorySegmentStacks = new MemorySegment(ramAddrLow, ramAddrHigh, "PSP Memory Stacks");
-		
-		pspMemorySegment.allocByAddr(0x08000000,  4 * 1024 * 1024, "Kernel Memory 1");
-		pspMemorySegment.allocByAddr(0x08400000,  4 * 1024 * 1024, "Kernel Memory 2");
-		pspMemorySegment.allocByAddr(0x08800000, ramSize - (4 + 4) * 1024 * 1024, "User Memory");
-		
-		logTrace("pspMemorySegment.allocByAddr:: %s", pspMemorySegment.toString);
-		
-		_allocateMemorySegmentLow(2, "unknown", 0x4000);
 	}
 
 	void initNids() {
@@ -104,7 +78,7 @@ class SysMemUserForUser : ModuleNative {
 	 */
 	int sceKernelDevkitVersion() {
 		Logger.log(Logger.Level.TRACE, "SysMemUserForUser", "sceKernelDevkitVersion");
-		return 0x_02_07_01_10;
+		return hleOsConfig.firmwareVersion;
 	}
 
 	/**
@@ -149,14 +123,6 @@ class SysMemUserForUser : ModuleNative {
 		//return 5 * 1024 * 1024;
 	}
 	
-	MemorySegment _allocateMemorySegmentLow(SceUID partitionid, string name, uint size) {
-		return pspMemorySegment[partitionid].allocByLow(size, dupStr(name));
-	}
-
-	MemorySegment _allocateMemorySegmentHigh(SceUID partitionid, string name, uint size) {
-		return pspMemorySegment[partitionid].allocByHigh(size, dupStr(name));
-	}
-
 	/**
 	 * Allocate a memory block from a memory partition.
 	 *

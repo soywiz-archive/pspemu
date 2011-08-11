@@ -1,6 +1,6 @@
-module pspemu.formats.elf.ElfDwarf;
+module pspemu.hle.elf.ElfDwarf;
 
-import pspemu.formats.elf.Elf;
+import pspemu.hle.elf.Elf;
 
 import std.stream, std.string, std.stdio;
 import std.algorithm;
