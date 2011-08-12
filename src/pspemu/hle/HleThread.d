@@ -1,25 +1,28 @@
 module pspemu.hle.HleThread;
 
+import pspemu.hle.HleThreadBase;
+
 import pspemu.hle.kd.threadman.Types;
-import pspemu.core.cpu.Cpu;
+import pspemu.interfaces.ICpu;
 import pspemu.core.cpu.Registers;
+import pspemu.core.cpu.Cpu;
 import core.thread;
 
 import std.stdio;
 
-class HleThread {
+class HleThread : HleThreadBase {
 	static HleThread current;
 	
-	public SceKernelThreadInfo threadInfo;
+	public SceKernelThreadInfo sceKernelThreadInfo;
 	public Registers registers;
-	protected Cpu cpu;
+	protected ICpu cpu;
 	protected Fiber fiber;
 	
-	this(Cpu cpu) {
+	this(ICpu cpu) {
 		this(cpu, new Registers);
 	}
 	
-	this(Cpu cpu, Registers registers) {
+	this(ICpu cpu, Registers registers) {
 		this.cpu = cpu;
 		this.registers = registers;
 		this.fiber = new Fiber(&run); 
@@ -43,6 +46,10 @@ class HleThread {
 		if (current is null) throw(new Exception("Tried to call threadYield outside the execution of a HleThread"));
 		current = null;
 		Fiber.yield();
+	}
+	
+	public @property int currentPriority() {
+		return sceKernelThreadInfo.currentPriority;
 	}
 	
 	public @property bool threadFinished() {

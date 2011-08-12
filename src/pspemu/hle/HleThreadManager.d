@@ -1,69 +1,100 @@
 module pspemu.hle.HleThreadManager;
 
 import pspemu.utils.MathUtils;
-import pspemu.hle.HleThread;
+import pspemu.utils.ArrayUtils;
+import pspemu.hle.HleThreadBase;
+
+import std.stdio;
 
 /**
  * Class that will handle cpu thread switching.
  */
 final class HleThreadManager {
-	protected HleThread[] hleThreads;
-
-	protected int threadMinWait;
+	protected HleThreadBase[] hleThreads;
+	protected HleThreadBase currentExecutingThread;
 	
 	public this() {
 	}
 
 
-	public void add(HleThread hleThread) {
-		this.hleThreads ~= hleThread;
+	public void add(HleThreadBase hleThread) {
+		//hleThread.waitCount = calculateMinWaitCount() - 1;
+		hleThreads ~= hleThread;
 	}
 
-	/+
 	/**
 	 * Execute this thread until no threads left.
 	 */
 	public void executionLoop() {
-		while (hleThreads.length) {
+		while (hleThreads.length > 0) {
 			switchToNext();
 		}
 	}
 	
 	public void reset() {
-		threads.length = 0;
+		hleThreads.length = 0;
 	}
 	
 	private void executeCurrent() {
-		this.currentExecutingThread.continueFiber();
+		this.currentExecutingThread.threadResume();
 	}
 	
-	private void switchTo(CpuThreadBase thread) {
-		this.currentExecutingThread = thread; 
-		executeCurrent();
-		thread.threadState.waitCount += thread.sceKernelThreadInfo.currentPriority;
+	private void switchTo(HleThreadBase hleThread) {
+		this.currentExecutingThread = hleThread; 
+		{
+			executeCurrent();
+		}
+		hleThread.waitCount += hleThread.currentPriority;
+	}
+	
+	private int calculateMinWaitCount() {
+		int hleThreadMinWait = int.max;
 		
-		this.threadMinWait = min(thread.waitCount, threadMinWait);
+		// Calculate the minimum waitCount, and also remove finished threads.
+		foreach (ref hleThread; this.hleThreads) {
+			hleThreadMinWait = min(hleThread.waitCount, hleThreadMinWait);
+		}
+
+		return hleThreadMinWait;
+	}
+	
+	private void removeFinishedThreads() {
+		bool rebuildThreadList = false;
+		
+		foreach (ref hleThread; this.hleThreads) {
+			if (hleThread.threadFinished) {
+				hleThread = null;
+				rebuildThreadList = true;				
+			}
+		}
+
+		if (rebuildThreadList) {
+			removeNullsInplace(this.hleThreads);
+		}
 	}
 	
 	private void switchToNext() {
-		foreach (thread; this.threads) {
-			thread.threadState.waitCount -= this.threadMinWait;
+		removeFinishedThreads();
+		int hleThreadMinWait = calculateMinWaitCount();
+		
+		foreach (ref hleThread; this.hleThreads) {
+			hleThread.waitCount -= hleThreadMinWait;
 		}
 		
-		foreach (thread; this.threads) {
-			if (thread.threadState.waitCount == 0) {
-				switchTo(thread);
+		// First the last added. (reverse)
+		foreach_reverse (hleThread; this.hleThreads) {
+			if (hleThread.waitCount == 0) {
+				switchTo(hleThread);
 				return;
 			}
 		}
 		
-		if (threads.length > 0) {
-			throw(new Exception("Unexpected error not synchronized threadMinWait"));
+		if (hleThreads.length > 0) {
+			throw(new Exception("Unexpected error not synchronized hleThreadMinWait"));
 		}
 		
 		// No threads left.
 	}
-	+/
 	
 	/+
 	void dumpThreads() {

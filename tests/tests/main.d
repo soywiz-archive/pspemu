@@ -12,7 +12,6 @@ version(ALL_TESTS) {
 	import pspemu.hle.elf.HleElfLoaderTest;
 	import pspemu.core.cpu.assembler.CpuAssemblerTest;
 	import pspemu.core.cpu.assembler.CpuDisassemblerTest;
-	import pspemu.utils.memory.MemoryPartitionTest;
 	import pspemu.core.cpu.RegistersTest;
 	import pspemu.core.cpu.tables.SwitchGenTest;
 	import pspemu.core.crypto.KirkTest;

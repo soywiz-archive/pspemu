@@ -36,7 +36,7 @@ final class CpuInterpreter : Cpu {
 		super(memory, syscall, interrupts);
 	}
 
-	public void execute_loop(Registers registers, uint maxInstructions) {
+	public void execute_loop_limit(Registers registers, uint maxInstructions) {
 		// Set up variables as locals in order to improve speed. Check if it really improves the speed?
 		Cpu cpu = this;
 		Instruction instruction;

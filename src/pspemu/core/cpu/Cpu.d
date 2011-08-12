@@ -12,22 +12,22 @@ import pspemu.core.cpu.tables.Table;
 import pspemu.core.cpu.tables.SwitchGen;
 import pspemu.core.cpu.tables.DummyGen;
 import pspemu.core.cpu.Instruction;
-import pspemu.core.cpu.Registers;
+//import pspemu.core.cpu.Registers;
 
 public import pspemu.core.Memory;
 public import pspemu.interfaces.ISyscall;
-public import pspemu.interfaces.IInterruptable;
+public import pspemu.interfaces.ICpu;
 
 import pspemu.utils.Logger;
 
 import pspemu.hle.kd.threadman.Types;
 
-abstract class Cpu : IInterruptable {
-	ISyscall   syscall;
-	Interrupts interrupts;
-	Memory     memory;
-	bool       running;
-	bool       trace;
+abstract class Cpu : ICpu {
+	protected ISyscall   syscall;
+	protected Interrupts interrupts;
+	protected Memory     memory;
+	protected bool       running;
+	protected bool       trace;
 	
 	public this(Memory memory, ISyscall syscall, Interrupts interrupts) {
 		this.memory     = memory;
@@ -40,15 +40,15 @@ abstract class Cpu : IInterruptable {
 		this.running = false;
 	}
 
-    public void execute_loop(Registers registers, uint maxInstructions);
-    
+	abstract public void execute_loop_limit(Registers registers, uint maxInstructions);
+	
 	public void execute_loop(Registers registers) {
 		while (running) {
-			execute_loop(registers, 0xFFFFFFFF);
+			execute_loop_limit(registers, 0xFFFFFFFF);
 		}
 	}
 	
-	void execute(Registers registers/*, bool trace = false*/) {
+	public void execute(Registers registers/*, bool trace = false*/) {
 		TerminateCallbackException terminateCallbackExceptionCopy;
 		HaltException haltExceptionCopy;
 		HaltAllException haltAllExceptionCopy;
@@ -117,7 +117,7 @@ abstract class Cpu : IInterruptable {
 			}
 		}
 		
-    	try {
+		try {
 			//Logger.log(Logger.Level.TRACE, "CpuThreadBase", "NATIVE_THREAD: START (%s)", Thread.getThis().name);
 			//Logger.log(Logger.Level.INFO, "CpuThreadBase", "NATIVE_THREAD: START (%s)", Thread.getThis().name);
 			
@@ -132,7 +132,7 @@ abstract class Cpu : IInterruptable {
 			//if (threadState.name == "BGM thread") trace = true;
 			
 			//trace = true;
-    		
+			
 	    	while (running) {
 		    	instruction.v = memory.tread!(uint)(registers.PC);
 		    	

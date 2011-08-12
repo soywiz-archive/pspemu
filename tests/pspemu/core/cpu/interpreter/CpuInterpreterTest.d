@@ -71,7 +71,7 @@ class CpuInterpreterTest : Test {
 		registers.pcSet = CODE_START;
 		//cpu.trace = true;
 		expectException!HaltException({
-			cpu.execute_loop(registers, maxInstructions);
+			cpu.execute_loop_limit(registers, maxInstructions);
 		});
 	}
 	
