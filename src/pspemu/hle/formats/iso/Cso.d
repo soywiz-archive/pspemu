@@ -1,4 +1,4 @@
-module pspemu.formats.iso.Cso;
+module pspemu.hle.formats.iso.Cso;
 
 //import std.stdio;
 

@@ -1,4 +1,4 @@
-module pspemu.formats.Lzr;
+module pspemu.hle.formats.Lzr;
 
 import std.stdio, std.stream, std.string, std.file;
 

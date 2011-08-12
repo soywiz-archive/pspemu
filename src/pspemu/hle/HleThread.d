@@ -1,5 +1,56 @@
-module pspemu.core.ThreadState;
+module pspemu.hle.HleThread;
 
+import pspemu.hle.kd.threadman.Types;
+import pspemu.core.cpu.Cpu;
+import pspemu.core.cpu.Registers;
+import core.thread;
+
+import std.stdio;
+
+class HleThread {
+	static HleThread current;
+	
+	public SceKernelThreadInfo threadInfo;
+	public Registers registers;
+	protected Cpu cpu;
+	protected Fiber fiber;
+	
+	this(Cpu cpu) {
+		this(cpu, new Registers);
+	}
+	
+	this(Cpu cpu, Registers registers) {
+		this.cpu = cpu;
+		this.registers = registers;
+		this.fiber = new Fiber(&run); 
+	}
+	
+	protected void run() {
+		try {
+			cpu.execute(registers);
+		} catch (Throwable exception) {
+			.writefln("Exception on fiber: %s", exception);
+		}
+	}
+	
+	public void threadResume() {
+		if (current !is null) throw(new Exception("Tried to call threadResume inside the execution of another HleThread"));
+		current = this;
+		fiber.call();
+	}
+	
+	static public void threadYield() {
+		if (current is null) throw(new Exception("Tried to call threadYield outside the execution of a HleThread"));
+		current = null;
+		Fiber.yield();
+	}
+	
+	public @property bool threadFinished() {
+		return fiber.state == Fiber.State.TERM;
+	}
+}
+
+/+
 import core.thread;
 
 import std.stdio;
@@ -216,3 +267,4 @@ class HleThreadState {
 		return std.string.format("ThreadState(thid=%d:'%s', PC:%08X, waiting:%s'%s')", thid, name, registers.PC, waiting, waitType);
 	}
 }
++/

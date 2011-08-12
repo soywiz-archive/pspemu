@@ -1,8 +1,8 @@
-module pspemu.formats.DetectFormat;
+module pspemu.hle.HleDetectFormat;
 
 import std.stream;
 
-class DetectFormat {
+class HleDetectFormat {
 	protected static int safe_read(Stream stream, int position, ubyte[] data) {
 		try {
 			stream.position = position;

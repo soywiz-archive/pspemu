@@ -1,4 +1,4 @@
-module pspemu.formats.iso.Dax;
+module pspemu.hle.formats.iso.Dax;
 
 import std.stream;
 

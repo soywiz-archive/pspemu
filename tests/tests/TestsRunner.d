@@ -40,11 +40,13 @@ class TestsRunner {
 	    	static if (member.length > 4 && member[0..4] == "test") {
 	    		writef("  %s...", member);
 	    		try {
+	    			object.__setUp();
 	    			object.setUp();
 	    			try {
 	    				__traits(getMember, object, member)();
 	    			} finally {
 	    				object.tearDown();
+	    				object.__tearDown();
 	    			}
 	    			
 	    			totalCount += object._assertsTotal; 

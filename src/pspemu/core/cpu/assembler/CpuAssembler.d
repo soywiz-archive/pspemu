@@ -11,6 +11,9 @@ public import pspemu.interfaces.IResetable;
 
 import pspemu.core.cpu.assembler.CpuAssemblerUtils;
 
+import pspemu.core.cpu.tables.Table;
+
+
 class CpuAssembler : IResetable {
 	InstructionDefinition[string] instructionDefinitions;
 	uint[string] labels;
@@ -25,6 +28,10 @@ class CpuAssembler : IResetable {
 		Type type;
 		uint PC;
 		string label;
+	}
+	
+	this() {
+		this(PspInstructions);
 	}
 	
 	this(const InstructionDefinition[] instructionDefinitions) {
@@ -92,10 +99,43 @@ class CpuAssembler : IResetable {
 		patches.length = 0;
 	}
 	
+	int getRegisterValue(string registerName) {
+		if (registerName[0] == 'r') {
+			return std.conv.to!int(registerName[1..$]);
+		}
+		throw(new Exception("Invalid registername '" ~ registerName ~ "'"));
+	}
+
+	int getImmediateValue(string value) {
+		return cast(int)pspemu.utils.Expression.parseString(value);
+	}
+	
 	Instruction[] assembleInstruction(uint PC, string opcodeName, string[] tokensParams) {
+		TokenReader tokenReader = new TokenReader(tokensParams);
+		
 		final switch (opcodeName) {
 			case "nop":
-				return assembleInstruction(PC, "sll", ["r0", ",", "r0", ",", "r0"]);
+				return assembleInstruction(PC, "sll r0, r0, r0");
+			break;
+			case "li":
+				string registerName = tokenReader.getCurrentTokenAndMoveNext();
+				int register = getRegisterValue(registerName);
+				tokenReader.expect(",");
+				int value = getImmediateValue(tokenReader.getCurrentTokenAndMoveNext());
+				
+				tokenReader.expectEnd();
+				
+				if (cast(int)value == cast(short)value) {
+					return ([]
+						~ assembleInstruction(PC, std.string.format("addi %s, r0, %d", registerName, value))
+					);
+				} else {
+					return ([]
+						~ assembleInstruction(PC + 0, std.string.format("lui %s, %d"    , registerName, (value >> 16) & 0xFFFF))
+						~ assembleInstruction(PC + 4, std.string.format("ori %s, r0, %d", registerName, (value >> 0) & 0xFFFF))
+					);
+					throw(new Exception("Number to big to load with a single instruction"));
+				}
 			break;
 		}
 		
@@ -109,17 +149,6 @@ class CpuAssembler : IResetable {
 		string[] tokensFormat = CpuAssemblerUtils.tokenizeLine(format);
 		int tokenParamIndex;
 		
-		int getRegisterValue(string registerName) {
-			if (registerName[0] == 'r') {
-				return std.conv.to!int(registerName[1..$]);
-			}
-			throw(new Exception("Invalid registername '" ~ registerName ~ "'"));
-		}
-
-		int getImmediateValue(string value) {
-			return cast(int)pspemu.utils.Expression.parseString(value);
-		}
-		
 		foreach (formatToken; tokensFormat) {
 			string paramToken = tokensParams[tokenParamIndex++];
 			if (formatToken[0] == '%') {
@@ -127,6 +156,7 @@ class CpuAssembler : IResetable {
 					case "%d": instruction.RD   = getRegisterValue(paramToken); break;   // RD
 					case "%s": instruction.RS   = getRegisterValue(paramToken); break;   // RS
 					case "%t": instruction.RT   = getRegisterValue(paramToken); break;   // RT
+					case "%I": instruction.IMMU = getImmediateValue(paramToken); break;  // IMMU
 					case "%i": instruction.IMM  = getImmediateValue(paramToken); break;  // IMM
 					case "%C": instruction.CODE = getImmediateValue(paramToken); break;  // CODE
 					case "%a": instruction.POS  = getImmediateValue(paramToken); break;  // POSITION (SLL)

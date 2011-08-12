@@ -62,6 +62,36 @@ class HleMemoryManager {
 		if (fillFF) this.memory[segment.block.low..segment.block.high][] = 0xFF;
 		return segment;
 	}
+
+	public MemorySegment alloc(PspPartition partition, string name, PspSysMemBlockTypes type, uint size, uint addr = 0) {
+		int alignment = 1;
+		if ((type == PspSysMemBlockTypes.PSP_SMEM_Low_Aligned) || (type == PspSysMemBlockTypes.PSP_SMEM_High_Aligned)) {
+			alignment = addr;
+		}
+		
+		switch (type) {
+			default: throw(new Exception(std.string.format("Can't alloc for type '%s'", type)));
+
+			// Low
+			case PspSysMemBlockTypes.PSP_SMEM_Low_Aligned:
+			case PspSysMemBlockTypes.PSP_SMEM_Low : return rootMemorySegment[partition].allocByLow(size, name, 0, alignment);
+			
+			// High
+			case PspSysMemBlockTypes.PSP_SMEM_High_Aligned:
+			case PspSysMemBlockTypes.PSP_SMEM_High: return rootMemorySegment[partition].allocByHigh(size, name, alignment); break;
+			
+			// Addr
+			case PspSysMemBlockTypes.PSP_SMEM_Addr: return rootMemorySegment[partition].allocByAddr(addr, size, name);
+		}
+	}
+	
+	public MemorySegment allocAt(PspPartition partition, string name, uint size, uint addr) {
+		return alloc(partition, name, PspSysMemBlockTypes.PSP_SMEM_Addr, size, addr);
+	}
+	
+	public MemorySegment allocHeap(PspPartition partition, string name, uint size) {
+		return alloc(partition, name, PspSysMemBlockTypes.PSP_SMEM_Low, size);
+	}
 	
 	/+
 	public void free(uint ptr) {
@@ -75,20 +105,6 @@ class HleMemoryManager {
 
 	public T* callocHost(T)(int count = 1) {
 		return cast(T*)memory.getPointer(alloc(PspPartition.Kernel0, "malloc", PspSysMemBlockTypes.PSP_SMEM_Low, T.sizeof * count));
-	}
-	
-	public uint alloc(PspPartition partition, string name, PspSysMemBlockTypes type, uint size, uint addr = 0) {
-		return this.sysMemUserForUser.sceKernelGetBlockHeadAddr(
-			this.sysMemUserForUser.sceKernelAllocPartitionMemory(partition, name, type, size, addr)
-		);
-	}
-	
-	public uint allocAt(PspPartition partition, string name, uint size, uint addr) {
-		return alloc(partition, name, PspSysMemBlockTypes.PSP_SMEM_Addr, size, addr);
-	}
-	
-	public uint allocHeap(PspPartition partition, string name, uint size) {
-		return alloc(partition, name, PspSysMemBlockTypes.PSP_SMEM_Low, size);
 	}
 	
 	/*

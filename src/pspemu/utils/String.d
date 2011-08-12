@@ -1,10 +1,17 @@
 module pspemu.utils.String;
 
-import std.conv;
+public import std.conv;
 import std.traits;
 import std.ascii;
 import std.c.stdio;
 import std.stdio;
+
+string DString(string cArray, string dString) {
+	string str;
+	str ~= "@property void " ~ dString ~ "(string value) { " ~ cArray ~ "[0..value.length] = value[0..$]; " ~ cArray ~ "[value.length..$] = 0; }";
+	str ~= "@property string " ~ dString ~ "() { return std.conv.to!string(" ~ cArray ~ ".ptr); }";
+	return str;
+}
 
 void setFixedStringz(char[] dest, string value) {
 	dest[0..value.length] = value[0..$];

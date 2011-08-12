@@ -1,4 +1,4 @@
-module pspemu.formats.Psf;
+module pspemu.hle.formats.Psf;
 
 import std.stdio, std.stream, std.string, std.file;
 

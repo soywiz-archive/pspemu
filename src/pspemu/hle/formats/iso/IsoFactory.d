@@ -1,4 +1,4 @@
-module pspemu.formats.iso.IsoFactory;
+module pspemu.hle.formats.iso.IsoFactory;
 
 import std.stdio;
 import std.stream;

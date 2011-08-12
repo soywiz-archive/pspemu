@@ -2,6 +2,8 @@ module pspemu.hle.kd.threadman.Types;
 
 public import pspemu.hle.kd.Types;
 
+import pspemu.utils.String;
+
 enum PspThreadStatus : uint {
 	PSP_THREAD_RUNNING = 1,
 	PSP_THREAD_READY   = 2,
@@ -34,6 +36,8 @@ struct SceKernelThreadInfo {
 	SceUInt                intrPreemptCount;   /// Interrupt preemption count
 	SceUInt                threadPreemptCount; /// Thread preemption count
 	SceUInt                releaseCount;       /// Release count
+	
+	mixin(DString("name", "dname"));
 }
 
 /** Additional options used when creating threads. */

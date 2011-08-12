@@ -1,4 +1,4 @@
-module pspemu.formats.audio.Vag;
+module pspemu.hle.formats.audio.Vag;
 
 import std.string;
 import std.stdio;

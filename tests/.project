@@ -3,6 +3,7 @@
 	<name>pspemu_tests</name>
 	<comment></comment>
 	<projects>
+		<project>pspemu</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

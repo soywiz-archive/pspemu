@@ -1,35 +1,30 @@
 module pspemu.hle.HleThreadManager;
 
 import pspemu.utils.MathUtils;
-import pspemu.core.ThreadState;
+import pspemu.hle.HleThread;
 
 /**
  * Class that will handle cpu thread switching.
  */
 final class HleThreadManager {
-	/**
-	 * Cpu that will handle execution of the threads. 
-	 */
-	public Cpu cpu;
-
-	protected HleThreadState[] hleThreadStates;
+	protected HleThread[] hleThreads;
 
 	protected int threadMinWait;
 	
-	public this(Cpu cpu) {
-		this.cpu = cpu;		
+	public this() {
 	}
 
 
-	public void add(HleThreadState hleThreadState) {
-		this.hleThreadStates ~= hleThreadState;
+	public void add(HleThread hleThread) {
+		this.hleThreads ~= hleThread;
 	}
 
+	/+
 	/**
 	 * Execute this thread until no threads left.
 	 */
 	public void executionLoop() {
-		while (threads.length) {
+		while (hleThreads.length) {
 			switchToNext();
 		}
 	}
@@ -68,6 +63,7 @@ final class HleThreadManager {
 		
 		// No threads left.
 	}
+	+/
 	
 	/+
 	void dumpThreads() {

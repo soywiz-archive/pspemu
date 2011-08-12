@@ -1,4 +1,4 @@
-module pspemu.formats.iso.Iso;
+module pspemu.hle.formats.iso.Iso;
 
 import std.utf;
 import std.encoding;

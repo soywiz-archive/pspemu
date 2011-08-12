@@ -86,6 +86,13 @@ class Logger {
 		void logLevel(T...)(Logger.Level level, T args) {
 			Logger.log(level, componentName, args);
 		}
+		void logLevelOnce(T...)(Logger.Level level, string onceKey, T args) {
+			static bool[string] alreadyLogged;
+			if (!(onceKey in alreadyLogged)) {
+				alreadyLogged[onceKey] = true;
+				Logger.log(level, componentName, args);
+			}
+		}
 		mixin Logger.LogPerComponent;	
 	}
 	
@@ -96,5 +103,12 @@ class Logger {
 		void logWarning (T...)(T args) { logLevel(Logger.Level.WARNING , args); }
 		void logError   (T...)(T args) { logLevel(Logger.Level.ERROR   , args); }
 		void logCritical(T...)(T args) { logLevel(Logger.Level.CRITICAL, args); }
+		
+		void logTraceOnce   (T...)(string onceKey, T args) { logLevelOnce(Logger.Level.TRACE   , onceKey, args); }
+		void logDebugOnce   (T...)(string onceKey, T args) { logLevelOnce(Logger.Level.DEBUG   , onceKey, args); }
+		void logInfoOnce    (T...)(string onceKey, T args) { logLevelOnce(Logger.Level.INFO    , onceKey, args); }
+		void logWarningOnce (T...)(string onceKey, T args) { logLevelOnce(Logger.Level.WARNING , onceKey, args); }
+		void logErrorOnce   (T...)(string onceKey, T args) { logLevelOnce(Logger.Level.ERROR   , onceKey, args); }
+		void logCriticalOnce(T...)(string onceKey, T args) { logLevelOnce(Logger.Level.CRITICAL, onceKey, args); }
 	}
 }

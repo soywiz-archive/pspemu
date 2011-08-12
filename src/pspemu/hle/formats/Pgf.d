@@ -1,4 +1,4 @@
-module pspemu.formats.Pgf;
+module pspemu.hle.formats.Pgf;
 
 import std.stream;
 import std.string;

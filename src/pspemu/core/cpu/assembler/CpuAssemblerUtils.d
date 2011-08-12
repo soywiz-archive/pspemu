@@ -3,6 +3,50 @@ module pspemu.core.cpu.assembler.CpuAssemblerUtils;
 import std.uni;
 import std.ascii;
 
+class TokenReader {
+	string[] tokens;
+	int cursor;
+	
+	this(string[] tokens) {
+		this.tokens = tokens;
+	}
+	
+	@property string currentToken() {
+		return tokens[cursor];
+	}
+	
+	string getCurrentTokenAndMoveNext() {
+		string token = currentToken;
+		next();
+		return token;
+	}
+	
+	void next() {
+		cursor++;
+	}
+	
+	string expect(string value) {
+		return expectOne([value]);
+	}
+	
+	string expectOne(string[] values) {
+		foreach (value; values) {
+			if (currentToken == value) {
+				return getCurrentTokenAndMoveNext();
+			}
+		}
+		throw(new Exception(std.string.format("Expecting on token of [%s] but found '%s'", values, currentToken)));
+	}
+	
+	void expectEnd() {
+		if (hasMore) throw(new Exception(std.string.format("Expecting end of instruction but found '%s'", currentToken)));
+	}
+	
+	@property bool hasMore() {
+		return (cursor < tokens.length);
+	}
+}
+
 class CpuAssemblerUtils {
 	static bool isIdentStart(char c) {
 		return isAlphaNum(c) || (c == '%');

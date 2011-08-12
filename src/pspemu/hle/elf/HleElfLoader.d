@@ -1,19 +1,107 @@
 module pspemu.hle.elf.HleElfLoader;
 
 import pspemu.hle.elf.Elf;
+import pspemu.hle.elf.ElfReloc;
 import pspemu.hle.HleMemoryManager;
+import pspemu.utils.StreamUtils;
+import pspemu.utils.MathUtils;
+import pspemu.core.cpu.Instruction;
+
+import std.stdio;
+
+import pspemu.utils.Logger;
 
 class HleElfLoader {
-	Elf elf;
-	HleMemoryManager hleMemoryManager;
+	protected Elf elf;
+	protected HleMemoryManager hleMemoryManager;
+	public uint relocationAddress;
 	
 	this(Elf elf, HleMemoryManager hleMemoryManager) {
 		this.elf = elf;
 		this.hleMemoryManager = hleMemoryManager;
 	}
 	
+	public void writeToMemory(Stream memoryStream) {
+		foreach (k, sectionHeader; elf.sectionHeaders) {			
+			uint sectionHeaderOffset = cast(uint)(relocationAddress + sectionHeader.address);
+			
+			string typeString = "None";
+			
+			// Section to allocate
+			if (sectionHeader.flags & ElfSectionHeader.Flags.Allocate) {
+				//Logger.log(Logger.Level.DEBUG, "Loader", "Starting to write to: %08X. ElfSectionHeader: %s", sectionHeaderOffset, sectionHeader);
 
-	void relocateFromStream(Stream stream, Stream memoryStream) {
+				bool reserved = true;
+				
+				memoryStream.position = sectionHeaderOffset;
+				switch (sectionHeader.type) {
+					default: reserved = false; typeString = "UNKNOWN"; break;
+					case ElfSectionHeader.Type.PROGBITS: typeString = "PROGBITS"; memoryStream.copyFrom(elf.SectionStream(sectionHeader)); break;
+					case ElfSectionHeader.Type.NOBITS  : typeString = "NOBITS"  ; writeZero(memoryStream, sectionHeader.size); break;
+				}
+				
+				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
+			}
+			// Section not to allocate
+			else {
+				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
+			}
+		}
+		if (elf.needsRelocation) {
+			//throw(new Exception("Relocation not implemented yet!"));
+			try {
+				relocateFromHeaders(memoryStream);
+			} catch (Throwable o) {
+				writefln("Error relocating: %s", o.toString);
+				throw(o);
+			}
+		}
+	}
+	
+	protected void relocateFromHeaders(Stream memoryStream) {
+		if ((relocationAddress & 0xFFFF) != 0) {
+			//throw(new Exception("Relocation base address not aligned to 64K"));
+			logWarning("Relocation base address not aligned to 64K");
+		}
+		
+        foreach (programHeader; elf.programHeaders) {
+        	// @TODO
+        	// ProgramStream();
+        	//ProgramStream
+        	/*
+            if (phdr.getP_type() == 0x700000A0L) {
+                int RelCount = (int)phdr.getP_filesz() / Elf32Relocate.sizeof();
+                Memory.log.debug("PH#" + i + ": relocating " + RelCount + " entries");
+
+                f.position((int)(elfOffset + phdr.getP_offset()));
+                relocateFromBuffer(f, module, baseAddress, elf, RelCount);
+                return;
+            } else if (phdr.getP_type() == 0x700000A1L) {
+                Memory.log.warn("Unimplemented:PH#" + i + ": relocate type 0x700000A1");
+            }
+            i++;
+            */
+        }
+
+		foreach (sectionHeader; elf.sectionHeaders) {
+			switch (sectionHeader.type) {
+				case ElfSectionHeader.Type.PRXRELOC:
+					relocateFromStream(elf.SectionStream(sectionHeader), memoryStream);
+				break;
+				case ElfSectionHeader.Type.REL:
+					logWarning("Not relocating ElfSectionHeader.Type.REL");
+				break;
+				case ElfSectionHeader.Type.PRXRELOC_FW5:
+					// http://forums.ps2dev.org/viewtopic.php?p=80416#80416
+					throw(new Exception("Not implemented ElfSectionHeader.Type.PRXRELOC2"));
+				break;
+				default:
+				break;
+			}
+		}	
+	}
+
+	protected void relocateFromStream(Stream stream, Stream memoryStream) {
 		uint memory_read32(uint position) {
 			try {
 				memoryStream.position = position;
@@ -38,25 +126,20 @@ class HleElfLoader {
 		}
 
 		uint[][32] regs;
-		
 		uint RelocCount = cast(uint)stream.size / ElfReloc.sizeof;
-		
 		uint AHL = 0; // (AHI << 16) | (ALO & 0xFFFF)
-		
 		scope uint[] deferredHi16;
-		
-		bool onceGp = false;
-		
+
 		for (int n = 0; n < RelocCount; n++) {
 			auto elfReloc = read!(ElfReloc)(stream);
 			// Filtra las relocalizaciones nulas
 			if (elfReloc.type == ElfReloc.Type.None) continue;
 			
 			// Program header offset of the reference we want to relocate. 
-			int phOffset     = programHeaders[elfReloc.offsetBase].virtualAddress;
+			int phOffset     = elf.programHeaders[elfReloc.offsetBase].virtualAddress;
 			
 			// Program header offset of the program header referenced by this relocation.
-        	int phBaseOffset = programHeaders[elfReloc.addressBase].virtualAddress;
+        	int phBaseOffset = elf.programHeaders[elfReloc.addressBase].virtualAddress;
 
 			// Obtiene el offset real a relocalizar 
 			uint data_addr = relocationAddress + elfReloc.offset + phOffset;
@@ -74,8 +157,6 @@ class HleElfLoader {
 			//writefln("Patching offset: %08X, type:%d", offset, elfReloc.type);
 
 			uint prev_data = instruction.v;
-			
-			Elf elf = this;
 			
 			void logAsJpcsp(T...)(T args) {
 				//writefln("TRACE   memory - GUI - %s", std.string.format(args));
@@ -163,10 +244,7 @@ class HleElfLoader {
                     instruction.IMMU = cast(uint)result;
                     */
                     
-                    if (!onceGp) {
-                    	logWarning("ElfReloc.Type.MipsGpRel16");
-                    	onceGp = true;
-                    }
+                   	logWarningOnce("elfgp16", "ElfReloc.Type.MipsGpRel16");
 					
 					logAsJpcsp(std.string.format("R_MIPS_GPREL16 addr=%08X before=%08X after=%08X", data_addr, prev_data, instruction.v));
 				} break;
@@ -181,67 +259,6 @@ class HleElfLoader {
 		} // while
 	}
 
-	void relocateFromHeaders(Stream memoryStream) {
-		if ((relocationAddress & 0xFFFF) != 0) {
-			//throw(new Exception("Relocation base address not aligned to 64K"));
-			logWarning("Relocation base address not aligned to 64K");
-		}
-		
-        foreach (programHeader; programHeaders) {
-        	// @TODO
-        	// ProgramStream();
-        	//ProgramStream
-        	/*
-            if (phdr.getP_type() == 0x700000A0L) {
-                int RelCount = (int)phdr.getP_filesz() / Elf32Relocate.sizeof();
-                Memory.log.debug("PH#" + i + ": relocating " + RelCount + " entries");
-
-                f.position((int)(elfOffset + phdr.getP_offset()));
-                relocateFromBuffer(f, module, baseAddress, elf, RelCount);
-                return;
-            } else if (phdr.getP_type() == 0x700000A1L) {
-                Memory.log.warn("Unimplemented:PH#" + i + ": relocate type 0x700000A1");
-            }
-            i++;
-            */
-        }
-
-		foreach (sectionHeader; sectionHeaders) {
-			switch (sectionHeader.type) {
-				case SectionHeader.Type.PRXRELOC:
-					relocateFromStream(SectionStream(sectionHeader), memoryStream);
-				break;
-				case SectionHeader.Type.REL:
-					logWarning("Not relocating SectionHeader.Type.REL");
-				break;
-				case SectionHeader.Type.PRXRELOC_FW5:
-					// http://forums.ps2dev.org/viewtopic.php?p=80416#80416
-					throw(new Exception("Not implemented SectionHeader.Type.PRXRELOC2"));
-				break;
-				default:
-				break;
-			}
-		}
-		
-		
-	}
-
-	void allocateBlockBound(ref uint low, ref uint high) {
-		low  = 0xFFFFFFFF;
-		high = 0x00000000;
-		foreach (sectionHeader; sectionHeaders) {
-			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
-				switch (sectionHeader.type) {
-					case SectionHeader.Type.PROGBITS, SectionHeader.Type.NOBITS:
-						low  = min(low , sectionHeader.address);
-						high = max(high, sectionHeader.address + sectionHeader.size);
-					break;
-					default: break;
-				}
-			}
-		}
-	}
-
 	uint requiredBlockSize() {
 		uint low, high;
 		allocateBlockBound(low, high);
@@ -253,59 +270,38 @@ class HleElfLoader {
 		allocateBlockBound(low, high);
 		return high;
 	}
-	
-	uint relocationAddress;
-	
-	void allocateMemory(MemoryManager memoryManager) {
-		if (needsRelocation) {
-			relocationAddress = memoryManager.allocHeap(PspPartition.User, "ModuleMemory", sectionHeaderTotalSize);
+
+	void allocateBlockBound(ref uint low, ref uint high) {
+		low  = 0xFFFFFFFF;
+		high = 0x00000000;
+		foreach (sectionHeader; elf.sectionHeaders) {
+			if (sectionHeader.flags & ElfSectionHeader.Flags.Allocate) {
+				switch (sectionHeader.type) {
+					case ElfSectionHeader.Type.PROGBITS, ElfSectionHeader.Type.NOBITS:
+						low  = min(low , sectionHeader.address);
+						high = max(high, sectionHeader.address + sectionHeader.size);
+					break;
+					default: break;
+				}
+			}
+		}
+	}
+
+	protected void allocateMemory() {
+		if (elf.needsRelocation) {
+			relocationAddress = hleMemoryManager.allocHeap(PspPartition.User, "ModuleMemory", elf.sectionHeaderTotalSize).block.low;
 		} else {
 			relocationAddress = 0;
-			foreach (k, sectionHeader; sectionHeaders) {			
+			foreach (k, sectionHeader; elf.sectionHeaders) {
 				uint sectionHeaderOffset = cast(uint)(relocationAddress + sectionHeader.address);
 
 				// Section to allocate
-				if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
-					memoryManager.allocAt(PspPartition.User, "ModuleMemory", sectionHeader.size, sectionHeaderOffset);
+				if (sectionHeader.flags & ElfSectionHeader.Flags.Allocate) {
+					hleMemoryManager.allocAt(PspPartition.User, "ModuleMemory", sectionHeader.size, sectionHeaderOffset);
 				}
 			}
 		}
 	}
 
-	void writeToMemory(Stream memoryStream) {
-		foreach (k, sectionHeader; sectionHeaders) {			
-			uint sectionHeaderOffset = cast(uint)(relocationAddress + sectionHeader.address);
-			
-			string typeString = "None";
-			
-			// Section to allocate
-			if (sectionHeader.flags & SectionHeader.Flags.Allocate) {
-				//Logger.log(Logger.Level.DEBUG, "Loader", "Starting to write to: %08X. SectionHeader: %s", sectionHeaderOffset, sectionHeader);
-
-				bool reserved = true;
-				
-				memoryStream.position = sectionHeaderOffset;
-				switch (sectionHeader.type) {
-					default: reserved = false; typeString = "UNKNOWN"; break;
-					case SectionHeader.Type.PROGBITS: typeString = "PROGBITS"; memoryStream.copyFrom(SectionStream(sectionHeader)); break;
-					case SectionHeader.Type.NOBITS  : typeString = "NOBITS"  ; writeZero(memoryStream, sectionHeader.size); break;
-				}
-				
-				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
-			}
-			// Section not to allocate
-			else {
-				debug (MODULE_LOADER) writefln("%-16s: %08X[%08X] (%s)", typeString, sectionHeaderOffset, sectionHeader.size, sectionHeaderNames[k]);
-			}
-		}
-		if (needsRelocation) {
-			//throw(new Exception("Relocation not implemented yet!"));
-			try {
-				relocateFromHeaders(memoryStream);
-			} catch (Throwable o) {
-				writefln("Error relocating: %s", o.toString);
-				throw(o);
-			}
-		}
-	}
+	mixin Logger.DebugLogPerComponent!("HleElfLoader");
 }

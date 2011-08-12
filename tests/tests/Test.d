@@ -6,6 +6,15 @@ class Test {
 	uint _assertsTotal;
 	uint _assertsFailed;
 	
+	final void __setUp() {
+		_assertsTotal = 0;
+		_assertsFailed = 0;
+	}
+	
+	final void __tearDown() {
+		
+	}
+	
 	void setUp() {
 		
 	}

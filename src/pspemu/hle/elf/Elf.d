@@ -69,59 +69,6 @@ class Elf {
 	string[] sectionHeaderNames;
 	uint sectionHeaderTotalSize;
 	char[] stringTable;
-
-	void dumpSections() {
-		writefln("ElfProgramHeader(%d):", programHeaders.length);
-		foreach (n, elfProgramHeader; programHeaders) {
-			writefln("  %s", elfProgramHeader);
-		}
-
-		writefln("ElfSectionHeader(%d):", sectionHeaders.length);
-		foreach (n, sectionHeader; sectionHeaders) {
-			writefln(
-				"  ElfSectionHeader(type=%08X, flags=%08X, mem=0x%08X, file=0x%06X, size=0x%05X) : '%s'",
-				sectionHeader.type,
-				sectionHeader.flags,
-				sectionHeader.address,
-				sectionHeader.offset,
-				sectionHeader.size,
-				sectionHeaderNames[n]
-			);
-		}
-	}
-	
-	Stream ProgramStream(ElfProgramHeader elfProgramHeader) {
-		return new SliceStream(stream, elfProgramHeader.offsetOnFile, elfProgramHeader.offsetOnFile + elfProgramHeader.sizeOnFile);
-	}
-
-	bool needsRelocation() {
-		return (elfHeader.entryPoint < 0x08000000) || (elfHeader.type == ElfHeader.Type.Prx);
-	}
-
-	Stream SectionStream(ElfSectionHeader sectionHeader) {
-		logTrace("SectionStream(Address=%08X, Offset=%08X, Size=%08X, Type=%08X)", sectionHeader.address, sectionHeader.offset, sectionHeader.size, sectionHeader.type);
-		
-		return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
-
-		/*
-		switch (sectionHeader.type) {
-			case ElfSectionHeader.Type.PROGBITS:
-			case ElfSectionHeader.Type.STRTAB:
-				//writefln("sectionHeader.offset:%08X", sectionHeader.offset);
-				return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
-			break;
-			default:
-				//return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
-				return new SliceStream(stream, sectionHeader.address, sectionHeader.address + sectionHeader.size);
-			break;
-		}
-		*/
-	}
-
-	Stream SectionStream(string name) {
-		if (name !in sectionHeadersNamed) throw(new Exception(std.string.format("ElfSectionHeader('%s') not found.", name)));
-		return SectionStream(sectionHeadersNamed[name]);
-	}
 	
 	public this() {
 		
@@ -150,6 +97,58 @@ class Elf {
 		extractSectionHeaderNames();
 	} 
 	
+	void dumpSections() {
+		writefln("ElfProgramHeader(%d):", programHeaders.length);
+		foreach (n, elfProgramHeader; programHeaders) {
+			writefln("  %s", elfProgramHeader);
+		}
+
+		writefln("ElfSectionHeader(%d):", sectionHeaders.length);
+		foreach (n, sectionHeader; sectionHeaders) {
+			writefln(
+				"  ElfSectionHeader(type=%08X, flags=%08X, mem=0x%08X, file=0x%06X, size=0x%05X) : '%s'",
+				sectionHeader.type,
+				sectionHeader.flags,
+				sectionHeader.address,
+				sectionHeader.offset,
+				sectionHeader.size,
+				sectionHeaderNames[n]
+			);
+		}
+	}
+	
+	Stream ProgramStream(ElfProgramHeader elfProgramHeader) {
+		return new SliceStream(stream, elfProgramHeader.offsetOnFile, elfProgramHeader.offsetOnFile + elfProgramHeader.sizeOnFile);
+	}
+
+	@property bool needsRelocation() {
+		return (elfHeader.entryPoint < 0x08000000) || (elfHeader.type == ElfHeader.Type.Prx);
+	}
+
+	Stream SectionStream(ElfSectionHeader sectionHeader) {
+		logTrace("SectionStream(Address=%08X, Offset=%08X, Size=%08X, Type=%08X)", sectionHeader.address, sectionHeader.offset, sectionHeader.size, sectionHeader.type);
+		
+		return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
+
+		/*
+		switch (sectionHeader.type) {
+			case ElfSectionHeader.Type.PROGBITS:
+			case ElfSectionHeader.Type.STRTAB:
+				//writefln("sectionHeader.offset:%08X", sectionHeader.offset);
+				return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
+			break;
+			default:
+				//return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
+				return new SliceStream(stream, sectionHeader.address, sectionHeader.address + sectionHeader.size);
+			break;
+		}
+		*/
+	}
+
+	Stream SectionStream(string name) {
+		if (name !in sectionHeadersNamed) throw(new Exception(std.string.format("ElfSectionHeader('%s') not found.", name)));
+		return SectionStream(sectionHeadersNamed[name]);
+	}
 	
 	void extractSectionHeaders() {
 		logTrace("Extracting SectionHeaders...");
@@ -245,5 +244,5 @@ class Elf {
 		return list;
 	}
 	
-	mixin Logger.DebugLogPerComponent!("ElfLoader");
+	mixin Logger.DebugLogPerComponent!("Elf");
 }

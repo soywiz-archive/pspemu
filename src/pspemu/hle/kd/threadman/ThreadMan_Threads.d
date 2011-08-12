@@ -27,7 +27,7 @@ template ThreadManForUser_Threads() {
 		mixin(registerd!(0xF475845D, sceKernelStartThread ));
 		mixin(registerd!(0xAA73C935, sceKernelExitThread  ));
 		mixin(registerd!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
-		mixin(registerd!(0x293B45B8, sceKernelGetThreadId           ));
+		mixin(registerd!(0x293B45B8, sceKernelGetThreadId));
 		mixin(registerd!(0x17C1684E, sceKernelReferThreadStatus));
 		mixin(registerd!(0x71BC9871, sceKernelChangeThreadPriority));
 		mixin(registerd!(0x809CE29B, sceKernelExitDeleteThread));

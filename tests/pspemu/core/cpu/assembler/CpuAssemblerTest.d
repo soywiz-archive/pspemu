@@ -50,6 +50,17 @@ class CpuAssemblerTest : Test {
 		);
 	}
 	
+	void testAssembleMacro() {
+		assertEquals(
+			"[OP(200103E8)]",
+			std.string.format("%s", this.cpuAssembler.assembleInstruction(0x00000000, "li r1, 1000"))
+		);
+		assertEquals(
+			"[OP(3C010001),OP(34012110)]",
+			std.string.format("%s", this.cpuAssembler.assembleInstruction(0x00000000, "li r1, 74000"))
+		);
+	}
+	
 	void testAssembleString() {
 		PspMemoryStream stream = new PspMemoryStream(memory);
 		stream.position = 0x_08900000;
