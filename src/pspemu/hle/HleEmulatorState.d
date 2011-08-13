@@ -1,5 +1,6 @@
 module pspemu.hle.HleEmulatorState;
 
+/+
 import std.stdio;
 import std.conv;
 import std.random;
@@ -117,4 +118,4 @@ class HleEmulatorState : ISyscall {
 		this.syscallObject.syscall(cpuThread, syscallNum);
 	}
 }
-
++/

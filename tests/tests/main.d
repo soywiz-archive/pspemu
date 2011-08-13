@@ -3,10 +3,11 @@ module tests.main;
 import std.stdio;
 import tests.TestsRunner;
 
-import pspemu.hle.HleThreadTest;
-import pspemu.hle.HleThreadManagerTest;
+import pspemu.hle.HleModuleMethodBridgeGeneratorTest;
 
 version(ALL_TESTS) {
+	import pspemu.hle.HleThreadTest;
+	import pspemu.hle.HleThreadManagerTest;
 	import pspemu.hle.elf.ElfTest;
 	import pspemu.hle.HleMemoryManagerTest;
 	import pspemu.hle.elf.HleElfLoaderTest;
@@ -27,12 +28,13 @@ version(ALL_TESTS) {
 }
 
 string testSuiteCurrent() { return q{
-	TestsRunner.run(new HleThreadTest);
-	TestsRunner.run(new HleThreadManagerTest);
+	TestsRunner.run(new HleModuleMethodBridgeGeneratorTest);
 }; }
 
 version(ALL_TESTS) {
 	string testSuiteAll() { return q{
+		TestsRunner.run(new HleThreadTest);
+		TestsRunner.run(new HleThreadManagerTest);
 		TestsRunner.run(new ElfTest);
 		TestsRunner.run(new HleMemoryManagerTest);
 		TestsRunner.run(new HleElfLoaderTest());

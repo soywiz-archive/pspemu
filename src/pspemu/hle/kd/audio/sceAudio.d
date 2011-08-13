@@ -16,21 +16,21 @@ import pspemu.utils.Logger;
 
 class sceAudio_driver : ModuleNative {
 	struct Channel {
-		int index;
-		bool reserved = false;
-		int  samplecount;
+		int             index;
+		bool            reserved = false;
+		int             samplecount;
 		PspAudioFormats format = PspAudioFormats.PSP_AUDIO_FORMAT_STEREO;
-		int  freq = 44100;
-		int leftvol = PSP_AUDIO_VOLUME_MAX, rightvol = PSP_AUDIO_VOLUME_MAX;
+		int             freq = 44100;
+		int             leftvol = PSP_AUDIO_VOLUME_MAX, rightvol = PSP_AUDIO_VOLUME_MAX;
 
 		int numchannels() { return (format == PspAudioFormats.PSP_AUDIO_FORMAT_MONO) ? 1 : 2; }
-		int dataCount() { return samplecount * numchannels; }
+		int dataCount  () { return samplecount * numchannels; }
 	}
 	
 	Channel channels[8]; // PSP_AUDIO_CHANNEL_MAX
 	Channel srcChannel;
-	int numberOfChannels;
-	Audio audio;
+	int     numberOfChannels;
+	Audio   audio;
 
 	void initNids() {
 		mixin(registerd!(0x13F592BC, sceAudioOutputPannedBlocking));

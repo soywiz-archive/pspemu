@@ -13,6 +13,11 @@ string DString(string cArray, string dString) {
 	return str;
 }
 
+void putStringz(T)(T ptr, string s) {
+	ptr[0..s.length] = s;
+	ptr[s.length] = 0;
+}
+
 void setFixedStringz(char[] dest, string value) {
 	dest[0..value.length] = value[0..$];
 	dest[value.length..$] = 0;

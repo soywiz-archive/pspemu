@@ -5,6 +5,32 @@ import pspemu.hle.HleThreadBase;
 
 import tests.Test;
 
+class HleThreadManagerTest : Test {
+	HleThreadManager hleThreadManager;
+	HleThreadMock thread1, thread2;
+	
+	void setUp() {
+		hleThreadManager = new HleThreadManager();
+	}
+	
+	void testTest() {
+		int[] values;
+		
+		void emit(HleThreadMock hleThreadMock) {
+			values ~= hleThreadMock.value;
+		}
+		
+		hleThreadManager.add(thread1 = new HleThreadMock(&emit, 1, 10));
+		hleThreadManager.add(thread2 = new HleThreadMock(&emit, 2,  5));
+		hleThreadManager.executionLoop();
+		
+		assertEquals(
+			"[2,1,2,2,1,2,1,1]",
+			std.string.format("%s", values),
+		);
+	}
+}
+
 class HleThreadMock : HleThreadBase {
 	int resumedCount;
 	int value;
@@ -31,32 +57,5 @@ class HleThreadMock : HleThreadBase {
 	
 	public @property bool threadFinished() {
 		return (resumedCount > 3);
-	}
-}
-
-class HleThreadManagerTest : Test {
-	HleThreadManager hleThreadManager;
-	HleThreadMock thread1;
-	HleThreadMock thread2;
-	
-	void setUp() {
-		hleThreadManager = new HleThreadManager();
-	}
-	
-	void testScheduling() {
-		int[] values;
-		
-		void emit(HleThreadMock hleThreadMock) {
-			values ~= hleThreadMock.value;
-		}
-		
-		hleThreadManager.add(thread1 = new HleThreadMock(&emit, 1, 10));
-		hleThreadManager.add(thread2 = new HleThreadMock(&emit, 2,  5));
-		hleThreadManager.executionLoop();
-		
-		assertEquals(
-			"[2,1,2,2,1,2,1,1]",
-			std.string.format("%s", values),
-		);
 	}
 }
