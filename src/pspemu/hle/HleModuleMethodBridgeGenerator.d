@@ -1,6 +1,6 @@
 module pspemu.hle.HleModuleMethodBridgeGenerator;
 
-import pspemu.utils.ReflectionUtils;
+import pspemu.utils.TraitsUtils;
 
 import std.conv;
 
@@ -51,7 +51,7 @@ class HleModuleMethodBridgeGenerator {
 			}
 			if (doesReturnValue) {
 				if (isPointerType!(ReturnType!(nativeFunction))) {
-					r ~= "currentRegisters.V0 = currentEmulatorState.memory.getPointerReverseOrNull(cast(void *)retval);";
+					r ~= "currentRegisters.V0 = currentMemory.getPointerReverseOrNull(cast(void *)retval);";
 				} else {
 					r ~= "currentRegisters.V0 = (cast(uint *)&retval)[0];";
 					if (ReturnType!(nativeFunction).sizeof == 8) {
@@ -74,12 +74,8 @@ class HleModuleMethodBridgeGenerator {
 			if (isString!(param)) {
 				r ~= "paramsz(" ~ to!string(paramIndex) ~ ")";
 			}
-			// A Pointer
-			else if (isPointerType!(param)) {
-				r ~= "cast(" ~ param.stringof ~ ")param_p(" ~ to!string(paramIndex) ~ ")";
-			}
-			// A Class
-			else if (isClassType!(param)) {
+			// A Pointer or a Class
+			else if (isPointerType!(param) || isClassType!(param)) {
 				r ~= "cast(" ~ param.stringof ~ ")param_p(" ~ to!string(paramIndex) ~ ")";
 				//pragma(msg, "class!");
 			}
@@ -99,17 +95,4 @@ class HleModuleMethodBridgeGenerator {
 		}
 		return r;
 	}
-}
-
-void sceDisplaySetFrameBuf(HleThread hleThread, Registers registers, Memory memory) {
-    uint topaddr = registers.R[4];
-    uint bufferwidth= registers.R[5];
-    PspDisplayPixelFormats pixelformat = cast(PspDisplayPixelFormats)registers.R[6];
-    PspDisplaySetBufSync sync= cast(PspDisplaySetBufSync)registers.R[7];
-    uint returnValue;
-    {
-         returnValue = sceDisplaySetFrameBuf_Impl(topaddr, bufferwidth, pixelformat, sync) {
-    }
-    // Ejecución de método
-    registers.R[1] = returnValue;
 }

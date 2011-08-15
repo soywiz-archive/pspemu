@@ -1,11 +1,11 @@
 module pspemu.hle.HleModulePsp;
 
 import std.conv;
-import pspemu.hle.Module;
+import pspemu.hle.HleModule;
 
 import pspemu.hle.kd.loadcore.Types;
 
-class HleModulePsp : Module {
+class HleModulePsp : HleModule {
 	void initNids() {
 		
 	}

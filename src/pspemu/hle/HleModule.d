@@ -1,5 +1,37 @@
 module pspemu.hle.HleModule;
 
+struct SceModule {
+	SceModule* next;
+	ushort  attribute;
+	ubyte   _version[2];
+	char    modname[27];
+	char    terminal;
+	uint    unknown1;
+	uint    unknown2;
+	/*SceUID*/uint  modid;
+	uint    unknown3[4];
+	void*   ent_top;
+	uint    ent_size;
+	void*   stub_top;
+	uint    stub_size;
+	uint    unknown4[4];
+	uint    entry_addr;
+	uint    gp_value;
+	uint    text_addr;
+	uint    text_size;
+	uint    data_size;
+	uint    bss_size;
+	uint    nsegment;
+	uint    segmentaddr[4];
+	uint    segmentsize[4];
+}
+
+
+abstract class HleModule {
+	abstract SceModule* getSceModulePointer();
+}
+
+/+
 //public import pspemu.All;
 debug = DEBUG_SYSCALL;
 //debug = DEBUG_ALL_SYSCALLS;
@@ -22,16 +54,9 @@ import pspemu.hle.HleEmulatorState;
 
 import pspemu.hle.kd.loadcore.Types;
 
-static string classInfoBaseName(ClassInfo ci) {
-	auto index = ci.name.lastIndexOf('.');
-	if (index == -1) index = 0; else index++;
-	return ci.name[index..$];
-	//return std.string.split(ci.name, ".")[$ - 1];
-}
-
 abstract class HleModule {
 	static struct Function {
-		Module pspModule;
+		HleModule pspModule;
 		uint nid;
 		string name;
 		void delegate(CpuThreadBase cpuThread) func;
@@ -200,3 +225,4 @@ abstract class HleModule {
 	
 	string name() { return baseName; }
 }
++/

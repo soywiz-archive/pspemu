@@ -1,4 +1,4 @@
-module pspemu.hle.KPrint;
+module pspemu.hle.HleKPrint;
 
 import std.stdio;
 import std.string;

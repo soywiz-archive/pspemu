@@ -24,6 +24,13 @@ version = VERSION_CHECK_MEMORY;    /// Check more memory positions.
 version = VERSION_CHECK_ALIGNMENT; /// Check that read and writes are aligned.
 //version = VERSION_VIRTUAL_ALLOC;
 
+struct PspPointer(T) {
+	T* value;
+	T* opCast(T)() {
+		return value;
+	}
+}
+
 /**--------------------------------+
 | Adress                           |
 | 31.............................0 |

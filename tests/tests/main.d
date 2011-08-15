@@ -3,9 +3,12 @@ module tests.main;
 import std.stdio;
 import tests.TestsRunner;
 
-import pspemu.hle.HleModuleMethodBridgeGeneratorTest;
+
 
 version(ALL_TESTS) {
+	import pspemu.hle.HleModuleMethodBridgeGeneratorTest;
+	import pspemu.hle.HleFunctionAttributeTest;
+	import pspemu.hle.HleModuleMethodParamParsingTest;
 	import pspemu.hle.HleThreadTest;
 	import pspemu.hle.HleThreadManagerTest;
 	import pspemu.hle.elf.ElfTest;
@@ -28,11 +31,14 @@ version(ALL_TESTS) {
 }
 
 string testSuiteCurrent() { return q{
-	TestsRunner.run(new HleModuleMethodBridgeGeneratorTest);
+	
 }; }
 
 version(ALL_TESTS) {
 	string testSuiteAll() { return q{
+		TestsRunner.run(new HleModuleMethodBridgeGeneratorTest);
+		TestsRunner.run(new HleFunctionAttributeTest);
+		TestsRunner.run(new HleModuleMethodParamParsingTest);
 		TestsRunner.run(new HleThreadTest);
 		TestsRunner.run(new HleThreadManagerTest);
 		TestsRunner.run(new ElfTest);

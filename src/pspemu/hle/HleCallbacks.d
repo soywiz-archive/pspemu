@@ -59,6 +59,7 @@ class PspCallback {
 	}
 }
 
+/+
 class CallbacksHandler {
 	enum Type {
 		MemoryStickInsertEject,
@@ -251,3 +252,4 @@ class CallbacksHandler {
 		registered[type].remove(pspCallback);
 	}
 }
++/

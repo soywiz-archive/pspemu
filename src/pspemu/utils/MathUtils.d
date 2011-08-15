@@ -35,6 +35,10 @@ T nextAlignedValueTpl(T, uint aligned)(T value) {
 }
 */
 
+void moveNextAlignedValue(T)(ref T value, T alignment) {
+	value = nextAlignedValue(value, alignment);
+}
+
 T nextAlignedValue(T)(T value, T alignment) {
 	return value + nextAlignedIncrement(value, alignment);
 }

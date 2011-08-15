@@ -21,29 +21,21 @@ import pspemu.hle.ModuleNative;
 
 import pspemu.hle.kd.display.Types;
 
+import pspemu.hle.HleFunction;
+
 class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	void initNids() {
-		mixin(registerd!(0x0E20F177, sceDisplaySetMode));
-		mixin(registerd!(0x289D82FE, sceDisplaySetFrameBuf));
-		mixin(registerd!(0xEEDA2E54, sceDisplayGetFrameBuf));
-		mixin(registerd!(0x9C6EAAD7, sceDisplayGetVcount));
-		mixin(registerd!(0x984C27E7, sceDisplayWaitVblankStart));
-		mixin(registerd!(0x8EB9EC49, sceDisplayWaitVblankCB));
-		mixin(registerd!(0x36CDFADE, sceDisplayWaitVblank));
-		mixin(registerd!(0x46F186C3, sceDisplayWaitVblankStartCB));
-		mixin(registerd!(0x773DD3A3, sceDisplayGetCurrentHcount));
-		mixin(registerd!(0xDEA197D4, sceDisplayGetMode));
-		mixin(registerd!(0xDBA6C4C4, sceDisplayGetFramePerSec));
-		mixin(registerd!(0x210EAB3A, sceDisplayGetAccumulatedHcount));
-		mixin(registerd!(0x7ED59BC4, sceDisplaySetHoldMode));
+		mixin(HleFunction.registerNids);
 	}
 	
+	/* @ */ mixin(HleFunction(NID(0x7ED59BC4), MIN_FW(150)));
 	int sceDisplaySetHoldMode() {
 		unimplemented_notice();
 		return 0;
 	}
 
 	// http://forums.ps2dev.org/viewtopic.php?t=9168
+	/* @ */ mixin(HleFunction(NID(0xDBA6C4C4), MIN_FW(150)));
 	float sceDisplayGetFramePerSec() {
 		// (pixel_clk_freq * cycles_per_pixel)/(row_pixels * column_pixel)
 		return 9_000_000f * 1 / (525 * 286);
@@ -52,6 +44,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Get accumlated HSYNC count
 	 */
+	/* @ */ mixin(HleFunction(NID(0x210EAB3A), MIN_FW(150)));
 	int sceDisplayGetAccumulatedHcount() {
 		unimplemented();
 		return 0;
@@ -64,6 +57,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Get current HSYNC count
 	 */
+	/* @ */ mixin(HleFunction(NID(0x773DD3A3), MIN_FW(150)));
 	int sceDisplayGetCurrentHcount() {
 		return hleEmulatorState.emulatorState.display.CURRENT_HCOUNT;
 	}
@@ -71,6 +65,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Number of vertical blank pulses up to now
 	 */
+	/* @ */ mixin(HleFunction(NID(0x9C6EAAD7), MIN_FW(150)));
 	uint sceDisplayGetVcount() {
 		return currentEmulatorState.display.VBLANK_COUNT;
 	}
@@ -105,6 +100,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Wait for vertical blank start
 	 */
+	/* @ */ mixin(HleFunction(NID(0x984C27E7), MIN_FW(150)));
 	int sceDisplayWaitVblankStart() {
 		return _sceDisplayWaitVblankStart(false);
 	}
@@ -112,6 +108,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Wait for vertical blank start with callback
 	 */
+	/* @ */ mixin(HleFunction(NID(0x46F186C3), MIN_FW(150)));
 	int sceDisplayWaitVblankStartCB() {
 		return _sceDisplayWaitVblankStart(true);
 	}
@@ -119,6 +116,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Wait for vertical blank with callback
 	 */
+	/* @ */ mixin(HleFunction(NID(0x8EB9EC49), MIN_FW(150)));
 	int sceDisplayWaitVblankCB() {
 		// @TODO: Fixme!
 		//unimplemented_notice();
@@ -128,6 +126,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	/**
 	 * Wait for vertical blank
 	 */
+	/* @ */ mixin(HleFunction(NID(0x36CDFADE), MIN_FW(150)));
 	int sceDisplayWaitVblank() {
 		// @TODO: Fixme!
 		//unimplemented_notice();
@@ -156,6 +155,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	 *
 	 * @return 0 on success
 	 */
+	/* @ */ mixin(HleFunction(NID(0x289D82FE), MIN_FW(150)));
 	int sceDisplaySetFrameBuf(uint topaddr, int bufferwidth, PspDisplayPixelFormats pixelformat, PspDisplaySetBufSync sync) {
 		Logger.log(Logger.Level.TRACE, "sceDisplay_driver", "sceDisplaySetFrameBuf");
 		currentEmulatorState.display.sceDisplaySetFrameBuf(topaddr, bufferwidth, pixelformat, sync);
@@ -172,6 +172,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	 *
 	 * @return 0 on success
 	 */
+	/* @ */ mixin(HleFunction(NID(0xEEDA2E54), MIN_FW(150)));
 	int sceDisplayGetFrameBuf(uint* topaddr, int* bufferwidth, PspDisplayPixelFormats* pixelformat, PspDisplaySetBufSync sync) {
 		Logger.log(Logger.Level.TRACE, "sceDisplay_driver", "sceDisplayGetFrameBuf");
 		*topaddr     = currentEmulatorState.display.topaddr;
@@ -193,6 +194,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	 *
 	 * @return ???
 	 */
+	/* @ */ mixin(HleFunction(NID(0x0E20F177), MIN_FW(150)));
 	int sceDisplaySetMode(int mode, int width, int height) {
 		Logger.log(Logger.Level.TRACE, "sceDisplay_driver", "sceDisplaySetMode");
 		currentEmulatorState.display.mode   = mode;
@@ -210,6 +212,7 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 	 * 
 	 * @return 0 on success
 	 */
+	/* @ */ mixin(HleFunction(NID(0xDEA197D4), MIN_FW(150)));
 	int sceDisplayGetMode(int* pmode, int* pwidth, int* pheight) {
 		Logger.log(Logger.Level.TRACE, "sceDisplay_driver", "sceDisplayGetMode");
 		*pmode   = currentEmulatorState.display.mode;
