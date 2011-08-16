@@ -3,6 +3,7 @@ module tests.main;
 import std.stdio;
 import tests.TestsRunner;
 
+import gdb.GdbServerTest;
 import jit.EmmiterTest;
 import jit.EmmiterX86Test;
 
@@ -32,6 +33,7 @@ version(ALL_TESTS) {
 }
 
 string testSuiteCurrent() { return q{
+	TestsRunner.run(new GdbServerTest);
 	TestsRunner.run(new EmmiterTest);
 	TestsRunner.run(new EmmiterX86Test);
 }; }

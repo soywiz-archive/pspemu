@@ -95,6 +95,10 @@ abstract class Emmiter {
 		write4(0);
 	}
 	
+	public void writeLabelRelativeAfter4(ref Label label) {
+		writeLabelRelative4(label, +4);
+	}
+	
 	//////////////////////
 	/// Write Bytes    ///
 	//////////////////////

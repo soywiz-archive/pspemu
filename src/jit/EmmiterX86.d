@@ -1,11 +1,11 @@
 module jit.EmmiterX86;
 
-import jit.Emmiter;
+public import jit.Emmiter;
 
-enum Gpr8  : ubyte { AL, CL, DL, BL, AH, CH, DH, BH }
-enum Gpr16 : ubyte { AX, CX, DX, BX, SP, BP, SI, DI }
-enum Gpr32 : ubyte { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI }
-enum Mmx   : ubyte { MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7 }
+enum Gpr8  : ubyte { AL  = 0, CL  = 1, DL  = 2, BL  = 3, AH  = 4, CH  = 5, DH  = 6, BH  = 7 }
+enum Gpr16 : ubyte { AX  = 0, CX  = 1, DX  = 2, BX  = 3, SP  = 4, BP  = 5, SI  = 6, DI  = 7 }
+enum Gpr32 : ubyte { EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7 }
+enum Mmx   : ubyte { MM0 = 0, MM1 = 1, MM2 = 2, MM3 = 3, MM4 = 4, MM5 = 5, MM6 = 6, MM7 = 7 }
 
 struct Mem32 {
 	Gpr32 register;
@@ -84,7 +84,18 @@ class EmmiterX86 : EmmiterLittleEndian {
     // CMP EAX, ECX; CMP [EAX+8], 0x77777777; CMP EAX, 1000
     void CMP(Gpr32 l  , Gpr32 r    ) { writePrefix32(); write1(0x39); write1(cast(ubyte)(0xC0 | (l << 0) | (r << 3))); }
     void CMP(Mem32 mem, uint  value) { writePrefix32(); write1(0x81); writeRefMem32(mem, 0x08); write4(value); }
-    void CMP(Gpr32 l  , uint  v    ) { writePrefix32(); write1(0x3D); write4(v); }
+    void CMP(Gpr32 l  , uint  value) {
+    	if (l == Gpr32.EAX) {
+	    	writePrefix32();
+	    	write1(0x3D);
+	    	write4(value);
+	    } else {
+	    	writePrefix32();
+	    	write1(0x81);
+	    	write1(0xF8 | l);
+	    	write4(value);
+	    }
+    }
 
 	// ?
     void SETL_EAX() { writePrefix32(); MOV(Gpr32.EAX, 0); write1(0x0F); write1(0x9C); write1(0xC2); }
@@ -92,12 +103,12 @@ class EmmiterX86 : EmmiterLittleEndian {
     // CALL label; JMP label;
     //void CALL(int relative_addr) { write1(0xE8); write4(relative_addr); }
 
-    void CALL(ref Label label) { write1(0xE8); writeLabelRelative4(label); write4(0); }
-    void JMP (ref Label label) { write1(0xE9); writeLabelRelative4(label); write4(0); } // Jump
-    void JE  (ref Label label) { write1(0x0F); write1(0x84); writeLabelRelative4(label); write4(0); } // Jump if Equal
-    void JNE (ref Label label) { write1(0x0F); write1(0x85); writeLabelRelative4(label); write4(0); } // Jump if Not Equal
-    void JNGE(ref Label label) { write1(0x0F); write1(0x8C); writeLabelRelative4(label); write4(0); } // Jump if Not Greater or Equal (signed)
-    void JGE (ref Label label) { write1(0x0F); write1(0x8D); writeLabelRelative4(label); write4(0); } // Jump if Greater or Equal (signed)
+    void CALL(ref Label label) { write1(0xE8); writeLabelRelativeAfter4(label); }
+    void JMP (ref Label label) { write1(0xE9); writeLabelRelativeAfter4(label); } // Jump
+    void JE  (ref Label label) { write1(0x0F); write1(0x84); writeLabelRelativeAfter4(label); } // Jump if Equal
+    void JNE (ref Label label) { write1(0x0F); write1(0x85); writeLabelRelativeAfter4(label); } // Jump if Not Equal
+    void JNGE(ref Label label) { write1(0x0F); write1(0x8C); writeLabelRelativeAfter4(label); } // Jump if Not Greater or Equal (signed)
+    void JGE (ref Label label) { write1(0x0F); write1(0x8D); writeLabelRelativeAfter4(label); } // Jump if Greater or Equal (signed)
     void JE  (uint  value) { write1(0x0F); write1(0x84); write4(value); }
     
     void CALL(Gpr32 reg) { writePrefix32(); write1(0xFF); write1(0xD0 | (reg << 0)); }
