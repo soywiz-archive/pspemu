@@ -3,7 +3,8 @@ module tests.main;
 import std.stdio;
 import tests.TestsRunner;
 
-
+import jit.EmmiterTest;
+import jit.EmmiterX86Test;
 
 version(ALL_TESTS) {
 	import pspemu.hle.HleModuleMethodBridgeGeneratorTest;
@@ -31,7 +32,8 @@ version(ALL_TESTS) {
 }
 
 string testSuiteCurrent() { return q{
-	
+	TestsRunner.run(new EmmiterTest);
+	TestsRunner.run(new EmmiterX86Test);
 }; }
 
 version(ALL_TESTS) {
@@ -68,7 +70,9 @@ int main(string[] args) {
 			mixin(testSuiteAll);
 		});
 	} else {
-		mixin(testSuiteCurrent);
+		TestsRunner.suite({
+			mixin(testSuiteCurrent);
+		});
 	}
 
 	return 0;

@@ -3,7 +3,7 @@ module pspemu.hle.HleModuleHost;
 import std.string;
 
 static struct HleFunction {
-	HleModuleNative pspModule;
+	HleModuleHost pspModule;
 	uint nid;
 	string name;
 	void delegate() func;
@@ -13,25 +13,31 @@ static struct HleFunction {
 
 abstract class HleModuleHost : HleModule {
 	string name;
+	alias uint Nid;
+	
+	HleFunction[Nid   ] hleFunctionsByNid;
+	HleFunction[string] hleFunctionsByName;
 	
 	__gshared ClassInfo[] registeredModules;
 
 	static string registerFunction(uint id, alias func, uint requiredFirmwareVersion)() {
-		/*
-		debug (DEBUG_MODULE_DELEGATE) {
-			pragma(msg, "{{{{");
-			pragma(msg, "");
-			pragma(msg, getModuleMethodDelegate!(func)());
-			pragma(msg, "");
-			pragma(msg, "}}}}");
-		}
-		*/
-
-		return "names[\"" ~ FunctionName!(func) ~ "\"] = nids[" ~ to!string(id) ~ "] = Function(this, " ~ to!string(id) ~ ", \"" ~ FunctionName!(func) ~ "\", " ~ HleModuleMethodBridgeGenerator.getDelegate!(func, id) ~ ");";
+		return (""
+			~ "hleFunctionsByName[\"" ~ FunctionName!(func) ~ "\"] = "
+			~ "hleFunctionsByNid[" ~ to!string(id) ~ "] = "
+			~ "HleFunction("
+				~ "this, "
+				~ to!string(id) ~ ", "
+				~ "\"" ~ FunctionName!(func) ~ "\", "
+				~ HleModuleMethodBridgeGenerator.getDelegate!(func, id)
+			~ ");"
+		);
 	}
 
+	/**
+	 * Statically register a module in order to be able to use.
+	 */
 	static string registerModule(string moduleName) {
-		return "ModuleNative.registeredModules ~= " ~ moduleName ~ ".classinfo;";
+		return "HleModuleHost.registeredModules ~= " ~ moduleName ~ ".classinfo;";
 	}
 
 	static string registerModule(TypeInfo_Class moduleClass) {

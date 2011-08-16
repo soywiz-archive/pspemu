@@ -10,5 +10,5 @@ IF EXIST %TESTS_EXE% (
 	DEL *.rsp 2> NUL
 	REM "%~dp0\..\ddbg.exe" -cmd "r;us;q" %TESTS_EXE%
 	%TESTS_EXE%
-	DEL %TESTS_EXE%
+	REM DEL %TESTS_EXE%
 )
