@@ -21,9 +21,28 @@ namespace ttf2pgf
 			PGF PGF = new PGF();
 			//PGF.load("../../ltn0.pgf");
 			PGF.load("../../jpn0.pgf");
-			
+
+			for (int m = 0; m < PGF.charMap.Length; m++)
+			{
+				//Console.WriteLine("{0} -> {1} :: {2}", m, PGF.charMap[m], (int)'あ');
+			}
+
+
 			//PGF.write("../../ltn0.pgf.bak");
 			PGF.GetGlyph('あ').GetBitmap().Save("a.png");
+			PGF.GetGlyph('な').GetBitmap().Save("na.png");
+			PGF.GetGlyph('た').GetBitmap().Save("ta.png");
+			/*
+			int n = 0;
+			foreach (var Glyph in PGF.Glyphs)
+			{
+				Glyph.GetBitmap().Save(String.Format("dump/{0}.png", n));
+				n++;
+				//break;
+			}
+			 * */
+
+			//PGF.GetGlyph('a').GetBitmap().Save("a.png");
 
 			//test();
 			Console.ReadKey();

@@ -182,7 +182,7 @@ namespace ttf2pgf
 
 				uint PixelIndex = 0;
 				uint NumberOfPixels = Width * Height;
-				bool BitmapHorizontalRows = Flags.HasFlag(GlyphFlags.FONT_PGF_BMP_OVERLAY);
+				bool BitmapHorizontalRows = (Flags & GlyphFlags.FONT_PGF_BMP_OVERLAY) == GlyphFlags.FONT_PGF_BMP_H_ROWS;
 				this.Data = new byte[NumberOfPixels];
 
 				//Console.WriteLine(br.BitsLeft);
@@ -238,31 +238,33 @@ namespace ttf2pgf
 					Console.WriteLine("");
 				}
 
-				Console.WriteLine(this);
 				*/
+				//Console.WriteLine(this);
 
 				return this;
 			}
 
 			public Bitmap GetBitmap()
 			{
+				if (Width == 0 || Height == 0) return new Bitmap(1, 1);
 				Bitmap Bitmap = new Bitmap((int)Width, (int)Height);
 				for (int y = 0, n = 0; y < Height; y++)
 				{
 					for (int x = 0; x < Width; x++, n++)
 					{
-						Bitmap.SetPixel(x, y, Color.FromArgb(Data[n], 0xFF, 0xFF, 0xFF));
+						//Bitmap.SetPixel(x, y, Color.FromArgb(Data[n], 0xFF, 0xFF, 0xFF));
+						Bitmap.SetPixel(x, y, Color.FromArgb(0xFF, Data[n], Data[n], Data[n]));
 					}
 				}
 				return Bitmap;
 			}
 		}
 
-		protected Glyph[] Glyphs;
+		public Glyph[] Glyphs;
 
 		public Glyph GetGlyph(char character, char alternativeCharacter = '?')
 		{
-			if (charMap.Contains(character))
+			if (character >= 0 && character < charMap.Length)
 			{
 				return Glyphs[charMap[character]];
 			}
@@ -284,7 +286,7 @@ namespace ttf2pgf
 		byte[] packedCharMap;
 		byte[] packedCharPointerTable;
 
-		int[] charMap;
+		public int[] charMap;
 		int[] charPointer;
 
 		Dictionary<int, int> reverseCharMap;
