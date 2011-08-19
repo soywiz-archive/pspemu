@@ -13,15 +13,25 @@ namespace ttf2pgf
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
 		public struct Point32
 		{
-			public int x;
-			public int y;
+			public int X;
+			public int Y;
+
+			public override string ToString()
+			{
+				return String.Format("Point32({0}; {1})", X, Y);
+			}
 		}
 
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
 		public struct PointFixed26_6
 		{
-			public Fixed26_6 x;
-			public Fixed26_6 y;
+			public Fixed26_6 X;
+			public Fixed26_6 Y;
+
+			public override string ToString()
+			{
+				return String.Format("Point32({0}; {1})", X, Y);
+			}
 		}
 
 		public struct Fixed26_6
@@ -38,6 +48,11 @@ namespace ttf2pgf
 				{
 					this.EncodedValue = (int)(Value * (float)Math.Pow(2, 6));
 				}
+			}
+
+			public override string ToString()
+			{
+				return String.Format("{0}", Value);
 			}
 		}
 
@@ -57,51 +72,69 @@ namespace ttf2pgf
 		public struct Header
 		{
 			public ushort headerOffset; // = 0
-			public ushort headerSize;
+			public ushort headerSize; // 392 =
 			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
 			public byte[] magic; // = "PGF0" 
 			public uint revision; // = 2;
 			public uint version; // = 6;
-			public uint charMapLength;
-			public uint charPointerLength;
+			public int TableCharMapLength;
+			public int TableCharPointerLength;
 
 			/**
-			 * Number of bits per charMap.
+			 * Number of bits per packedCharMap entry.
 			 */
-			public int charMapBpe;
-			public int charPointerBpe;
+			public int TableCharMapBpe;
+
+			/**
+			 * Number of bits per packedCharPointerTable entry.
+			 */
+			public int TableCharPointerBpe;
+
 			public uint __unk1;
-			public uint hSize;                 // Size of all characters?
-			public uint vSize;
-			public uint hResolution;           // Resolution of a single character?
-			public uint vResolution;
+
+			//public PointFixed26_6 Size;
+			public Point32 Size;
+	
+			// Resolution of a single character?
+			public Point32 Resolution;
+
 			public byte __unk2;
+
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
 			public string fontName;
+
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
 			public string fontType;
+
 			public byte __unk3;
 			public ushort firstGlyph;
 			public ushort lastGlyph;
+
 			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 34)]
 			public byte[] __unk4;
-			public uint maxLeftXAdjust;
-			public uint maxBaseYAdjust;
-			public uint minCenterXAdjust;
-			public uint maxTopYAdjust;
+
+			public Fixed26_6 maxLeftXAdjust;
+			public Fixed26_6 maxBaseYAdjust;
+			public Fixed26_6 minCenterXAdjust;
+			public Fixed26_6 maxTopYAdjust;
 			public PointFixed26_6 maxAdvance;
 			public PointFixed26_6 maxSize;
 			public ushort maxGlyphWidth;
 			public ushort maxGlyphHeight;
+
 			public ushort __unk5;
-			public byte dimTableLength;
-			public byte xAdjustTableLength;
-			public byte yAdjustTableLength;
-			public byte advanceTableLength;
+
+			public byte TableDimLength;
+
+			public byte TableXAdjustLength;
+			public byte TableYAdjustLength;
+			public byte TableAdvanceLength;
+
 			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 102)]
 			public byte[] __unk6;
-			public uint shadowMapLength;
-			public uint shadowMapBpe;
+
+			public int TableShadowMapLength;
+			public int TableShadowMapBpe;
 			public uint __unk7;
 			public Point32 shadowScale;
 			public ulong      __unk8;
@@ -111,16 +144,57 @@ namespace ttf2pgf
 
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
 		struct HeaderRevision3 {
-			public uint   compCharMapBpe1;
-			public ushort compCharMapLength1;
+			public uint   TableCompCharMapBpe1;
+			public ushort TableCompCharMapLength1;
 			public ushort __unk1;
-			public uint   compCharMapBpe2;
-			public ushort compCharMapLength2;
+			public uint   TableCompCharMapBpe2;
+			public ushort TableCompCharMapLength2;
 			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
 			public byte[] __unk2;
 		}
 
 		public class Glyph
+		{
+			protected PGF PGF;
+			protected int GlyphIndex;
+			protected GlyphSymbol _Face;
+			protected GlyphSymbol _Shadow;
+
+			public Glyph(PGF PGF, int GlyphIndex)
+			{
+				this.PGF = PGF;
+				this.GlyphIndex = GlyphIndex;
+			}
+
+			public GlyphSymbol Face {
+				get
+				{
+					if (_Face == null)
+					{
+						_Face = new GlyphSymbol(GlyphSymbol.GlyphFlags.FONT_PGF_CHARGLYPH);
+						_Face.Read(PGF, GlyphIndex);
+					}
+					return _Face;
+				}
+			}
+
+			public GlyphSymbol Shadow
+			{
+				get
+				{
+					if (_Shadow == null)
+					{
+						_Shadow = new GlyphSymbol(GlyphSymbol.GlyphFlags.FONT_PGF_SHADOWGLYPH);
+						_Shadow.Read(PGF, GlyphIndex);
+					}
+					return _Shadow;
+				}
+
+			}
+
+		}
+
+		public class GlyphSymbol
 		{
 			public enum GlyphFlags : int
 			{
@@ -144,6 +218,12 @@ namespace ttf2pgf
 			public uint AdvanceIndex;
 			public GlyphFlags Flags;
 			public byte[] Data;
+			GlyphFlags GlyphType;
+
+			public GlyphSymbol(GlyphFlags GlyphType = GlyphFlags.FONT_PGF_CHARGLYPH)
+			{
+				this.GlyphType = GlyphType;
+			}
 
 			public override string ToString()
 			{
@@ -153,7 +233,7 @@ namespace ttf2pgf
 				);
 			}
 
-			public Glyph Read(PGF PGF, int GlyphIndex)
+			public GlyphSymbol Read(PGF PGF, int GlyphIndex)
 			{
 				var br = new BitReader(PGF.charData);
 				br.Position = PGF.charPointer[GlyphIndex] * 4 * 8;
@@ -161,12 +241,22 @@ namespace ttf2pgf
 				this.GlyphIndex = GlyphIndex;
 				this.UnicodeChar = (char)PGF.reverseCharMap[GlyphIndex];
 
-				var OffsetShadowMap = br.ReadBits(14);
+				//int NextOffset = br.Position;
+
+				//br.Position = NextOffset;
+				int ShadowOffset = (int)br.Position + (int)br.ReadBits(14) * 8;
+				if (GlyphType == GlyphFlags.FONT_PGF_SHADOWGLYPH)
+				{
+					br.Position = ShadowOffset;
+					br.SkipBits(14);
+				}
+
 				this.Width = br.ReadBits(7);
 				this.Height = br.ReadBits(7);
 				this.Left = br.ReadBitsSigned(7);
 				this.Top = br.ReadBitsSigned(7);
 				this.Flags = (GlyphFlags)br.ReadBits(6);
+
 				if (Flags.HasFlag(GlyphFlags.FONT_PGF_CHARGLYPH))
 				{
 					br.SkipBits(7);
@@ -184,13 +274,14 @@ namespace ttf2pgf
 				uint NumberOfPixels = Width * Height;
 				bool BitmapHorizontalRows = (Flags & GlyphFlags.FONT_PGF_BMP_OVERLAY) == GlyphFlags.FONT_PGF_BMP_H_ROWS;
 				this.Data = new byte[NumberOfPixels];
+				int Count;
+				uint Value = 0;
+				uint x, y;
 
 				//Console.WriteLine(br.BitsLeft);
 
 				while (PixelIndex < NumberOfPixels)
 				{
-					int Count;
-					uint Value = 0;
 					uint Code = br.ReadBits(4);
 
 					if (Code < 8)
@@ -210,7 +301,6 @@ namespace ttf2pgf
 							Value = br.ReadBits(4);
 						}
 
-						uint x, y;
 						if (BitmapHorizontalRows)
 						{
 							x = PixelIndex % Width;
@@ -252,23 +342,32 @@ namespace ttf2pgf
 				{
 					for (int x = 0; x < Width; x++, n++)
 					{
+						byte c = Data[n];
 						//Bitmap.SetPixel(x, y, Color.FromArgb(Data[n], 0xFF, 0xFF, 0xFF));
-						Bitmap.SetPixel(x, y, Color.FromArgb(0xFF, Data[n], Data[n], Data[n]));
+						Bitmap.SetPixel(x, y, Color.FromArgb(0xFF, c, c, c));
 					}
 				}
 				return Bitmap;
 			}
 		}
 
-		public Glyph[] Glyphs;
+		protected Glyph[] Glyphs;
+
+		protected Glyph _GetGlyph(int Index)
+		{
+			if (Glyphs[Index] == null) {
+				Glyphs[Index] = new Glyph(this, Index);
+			}
+			return Glyphs[Index];
+		}
 
 		public Glyph GetGlyph(char character, char alternativeCharacter = '?')
 		{
 			if (character >= 0 && character < charMap.Length)
 			{
-				return Glyphs[charMap[character]];
+				return _GetGlyph(charMap[character]);
 			}
-			return Glyphs[charMap[alternativeCharacter]];
+			return _GetGlyph(charMap[alternativeCharacter]);
 		}
 
 		Header header;
@@ -278,7 +377,7 @@ namespace ttf2pgf
 		MapUint[] advanceTable;
 		MapUint[] xAdjustTable;
 		MapUint[] yAdjustTable;
-		byte[] shadowCharMap;
+		byte[] packedShadowCharMap;
 
 		MapUshort[] charmapCompressionTable1;
 		MapUshort[] charmapCompressionTable2;
@@ -303,7 +402,13 @@ namespace ttf2pgf
 			if (c > header.lastGlyph) return -1;
 			int glyphPos = (c - header.firstGlyph);
 			//Console.WriteLine("Offset: {0}, Size: {1}", glyphPos * header.charMapBpe, header.charMapBpe);
-			return (int)BitReader.ReadBitsAt(packedCharMap, glyphPos * header.charMapBpe, header.charMapBpe);
+			return (int)BitReader.ReadBitsAt(packedCharMap, glyphPos * header.TableCharMapBpe, header.TableCharMapBpe);
+		}
+
+		static protected int BitsToBytesHighAligned(int Bits)
+		{
+			//return MathUtils.NextHigherAligned(Bits, 8) / 8;
+			return ((Bits + 31) & ~31) / 8;
 		}
 
 		public void load(string FileName)
@@ -316,58 +421,59 @@ namespace ttf2pgf
 				this.headerExtraRevision3 = FileStream.ReadStruct<HeaderRevision3>();
 			}
 
-			FileStream.ReadStructVector(ref dimensionTable, header.dimTableLength);
-			FileStream.ReadStructVector(ref xAdjustTable, header.xAdjustTableLength);
-			FileStream.ReadStructVector(ref yAdjustTable, header.yAdjustTableLength);
-			FileStream.ReadStructVector(ref advanceTable, header.advanceTableLength);
-			FileStream.ReadStructVector(ref shadowCharMap, (int)((header.shadowMapLength * header.shadowMapBpe + 31) & ~31) / 8);
+			FileStream.ReadStructVector(ref dimensionTable, header.TableDimLength);
+			FileStream.ReadStructVector(ref xAdjustTable, header.TableXAdjustLength);
+			FileStream.ReadStructVector(ref yAdjustTable, header.TableYAdjustLength);
+			FileStream.ReadStructVector(ref advanceTable, header.TableAdvanceLength);
+
+			packedShadowCharMap = FileStream.ReadBytes(BitsToBytesHighAligned(header.TableShadowMapLength * header.TableShadowMapBpe));
+
 			if (header.revision == 3)
 			{
-				FileStream.ReadStructVector(ref charmapCompressionTable1, headerExtraRevision3.compCharMapLength1);
-				FileStream.ReadStructVector(ref charmapCompressionTable2, headerExtraRevision3.compCharMapLength2);
+				FileStream.ReadStructVector(ref charmapCompressionTable1, headerExtraRevision3.TableCompCharMapLength1);
+				FileStream.ReadStructVector(ref charmapCompressionTable2, headerExtraRevision3.TableCompCharMapLength2);
 			}
 
-			FileStream.ReadStructVector(ref packedCharMap, (int)(((header.charMapLength * header.charMapBpe + 31) & ~31) / 8));
-			FileStream.ReadStructVector(ref packedCharPointerTable, (int)(((header.charPointerLength * header.charPointerBpe + 31) & ~31) / 8));
+
+			packedCharMap = FileStream.ReadBytes(BitsToBytesHighAligned(header.TableCharMapLength * header.TableCharMapBpe));
+			packedCharPointerTable = FileStream.ReadBytes(BitsToBytesHighAligned(header.TableCharPointerLength * header.TableCharPointerBpe));
 
 			/*
 			int BytesLeft = (int)(FileStream.Length - FileStream.Position);
 			charData = new byte[BytesLeft];
 			FileStream.Read(charData, 0, BytesLeft);
 			*/
+
 			charData = FileStream.ReadBytes((int)(FileStream.Length - FileStream.Position));
 
-			var NumberOfCharacters = header.charPointerLength;
+			var NumberOfCharacters = header.TableCharPointerLength;
 
 			charMap = new int[header.lastGlyph + 1];
 			charPointer = new int[NumberOfCharacters];
 			Glyphs = new Glyph[NumberOfCharacters];
 			reverseCharMap = new Dictionary<int, int>();
 
+			foreach (var Pair in BitReader.FixedBitReader(packedCharMap, header.TableCharMapBpe))
 			{
-				BitReader br = new BitReader(packedCharMap);
-				int BitsToRead = header.charMapBpe;
-				for (int UnicodeIndex = header.firstGlyph; UnicodeIndex <= header.lastGlyph; UnicodeIndex++)
-				{
-					int GlyphIndex = (int)br.ReadBits(BitsToRead);
-					charMap[UnicodeIndex] = GlyphIndex;
-					reverseCharMap[GlyphIndex] = UnicodeIndex;
-				}
+				var UnicodeIndex = (int)Pair.Key + header.firstGlyph;
+				var GlyphIndex = (int)Pair.Value;
+				charMap[UnicodeIndex] = GlyphIndex;
+				reverseCharMap[GlyphIndex] = UnicodeIndex;
 			}
 
+			foreach (var Pair in BitReader.FixedBitReader(packedCharPointerTable, header.TableCharPointerBpe))
 			{
-				BitReader br = new BitReader(packedCharPointerTable);
-				int BitsToRead = header.charPointerBpe;
-				for (int n = 0; n < header.charPointerLength; n++)
-				{
-					charPointer[n] = (int)br.ReadBits(BitsToRead);
-				}
+				charPointer[Pair.Key] = (int)Pair.Value;
 			}
 
+			/*
 			for (int n = 0; n < NumberOfCharacters; n++)
 			{
 				Glyphs[n] = new Glyph().Read(this, n);
 			}
+			*/
+
+			Console.WriteLine(this.header.fontName);
 
 			/*
 			Console.WriteLine(this.header.fontName);
@@ -392,7 +498,7 @@ namespace ttf2pgf
 			FileStream.WriteStructVector(xAdjustTable);
 			FileStream.WriteStructVector(yAdjustTable);
 			FileStream.WriteStructVector(advanceTable);
-			FileStream.WriteStructVector(shadowCharMap);
+			FileStream.WriteStructVector(packedShadowCharMap);
 
 			if (header.revision == 3)
 			{

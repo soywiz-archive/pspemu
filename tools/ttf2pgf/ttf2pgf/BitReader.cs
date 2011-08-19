@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ttf2pgf
 {
-	public class BitReader
+	public class BitReader : IDisposable
 	{
 		private byte[] Data;
 		private int BitOffset;
@@ -90,6 +90,25 @@ namespace ttf2pgf
 			var BitReader = new BitReader(Data);
 			BitReader.Position = Offset;
 			return BitReader.ReadBits(Count);
+		}
+
+		static public IEnumerable<KeyValuePair<uint, uint>> FixedBitReader(byte[] Data, int BitCount = 0, int Offset = 0)
+		{
+			using (var BitReader = new BitReader(Data))
+			{
+				BitReader.Position = Offset;
+
+				uint Index = 0;
+				while (BitReader.BitsLeft >= BitCount)
+				{
+					yield return new KeyValuePair<uint, uint>(Index++, BitReader.ReadBits(BitCount));
+				}
+			}
+		}
+
+		public void Dispose()
+		{
+			Data = null;
 		}
 	}
 }

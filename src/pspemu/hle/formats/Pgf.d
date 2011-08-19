@@ -37,19 +37,19 @@ class Pgf {
 	}
 	
 	align(1) struct Header {
-		ushort     headerOffset;
-		ushort     headerSize;
+		ushort     headerOffset = 0;
+		ushort     headerSize = this.sizeof;
 		char[4]    magic = "PGF0";
-		uint       revision;
-		uint       _version;
+		uint       revision = 2;
+		uint       _version = 6;
 		uint       charMapLength;
 		uint       charPointerLength;
 		uint       charMapBpe;
 		uint       charPointerBpe;
 		uint       __unk1;
-		uint       hSize;
+		uint       hSize;                 // Size of all characters?
 		uint       vSize;
-		uint       hResolution;
+		uint       hResolution;           // Resolution of a single character?
 		uint       vResolution;
 		ubyte      __unk2;
 		char[64]   fontName;

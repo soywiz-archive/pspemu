@@ -5,6 +5,45 @@ import gdb.GdbServerConnectionBase;
 
 import tests.Test;
 
+class GdbProcessor : IGdbProcessor {
+	void registerOnSigval(void delegate(Sigval sigval) callback) {
+		
+	}
+
+	uint getRegister(uint index) {
+		
+	}
+	void setRegister(uint index, uint value) {
+		
+	}
+
+	int  getMemoryRange(ubyte[] buffer) {
+		
+	}
+	int  setMemoryRange(ubyte[] buffer) {
+		
+	}
+
+	void run() {
+		
+	}	
+	void stepInto() {
+		
+	}
+	void stepOver() {
+		
+	}
+	void pause() {
+		
+	}
+	void stop() {
+		
+	}
+	@property bool isRunning() {
+		return false;
+	}
+}
+
 class GdbServerTest : Test {
 	class GdbServerConnectionBaseMock : GdbServerConnectionBase {
 		void sendPacket(string packet) {
@@ -31,6 +70,6 @@ class GdbServerTest : Test {
 	}
 	
 	void testListen() {
-		//(new GdbServer()).listen();
+		(new GdbServer()).listen();
 	}
 }

@@ -10,6 +10,7 @@ namespace ttf2pgf
 	{
 		static void Main(string[] args)
 		{
+			/*
 			var bitmap = new Bitmap(200, 200);
 			var g = Graphics.FromImage(bitmap);
 			var Font = new Font("MS Gothic", 16, FontStyle.Regular);
@@ -17,6 +18,7 @@ namespace ttf2pgf
 			g.DrawString("a", Font, new SolidBrush(Color.Black), new PointF(0, 0));
 			bitmap.Save("temp.png");
 			Console.WriteLine(size);
+			*/
 
 			PGF PGF = new PGF();
 			//PGF.load("../../ltn0.pgf");
@@ -27,11 +29,15 @@ namespace ttf2pgf
 				//Console.WriteLine("{0} -> {1} :: {2}", m, PGF.charMap[m], (int)'あ');
 			}
 
-
 			//PGF.write("../../ltn0.pgf.bak");
-			PGF.GetGlyph('あ').GetBitmap().Save("a.png");
-			PGF.GetGlyph('な').GetBitmap().Save("na.png");
-			PGF.GetGlyph('た').GetBitmap().Save("ta.png");
+			PGF.GetGlyph('あ').Shadow.GetBitmap().Save("_a.png");
+			PGF.GetGlyph('な').Shadow.GetBitmap().Save("_na.png");
+			PGF.GetGlyph('た').Shadow.GetBitmap().Save("_ta.png");
+			PGF.GetGlyph('私').Shadow.GetBitmap().Save("_watashi.png");
+			PGF.GetGlyph('あ').Face.GetBitmap().Save("a.png");
+			PGF.GetGlyph('な').Face.GetBitmap().Save("na.png");
+			PGF.GetGlyph('た').Face.GetBitmap().Save("ta.png");
+			PGF.GetGlyph('私').Face.GetBitmap().Save("watashi.png");
 			/*
 			int n = 0;
 			foreach (var Glyph in PGF.Glyphs)
