@@ -3,11 +3,14 @@ module tests.main;
 import std.stdio;
 import tests.TestsRunner;
 
-import gdb.GdbServerTest;
-import jit.EmmiterTest;
-import jit.EmmiterX86Test;
+import pspemu.hle.HleFunctionAttributeTest;
 
-version(ALL_TESTS) {
+version (ALL_TESTS) {
+	import pspemu.hle.kd.wlan.sceWlanTest;
+
+	import gdb.GdbServerTest;
+	import jit.EmmiterTest;
+	import jit.EmmiterX86Test;
 	import pspemu.hle.HleModuleMethodBridgeGeneratorTest;
 	import pspemu.hle.HleFunctionAttributeTest;
 	import pspemu.hle.HleModuleMethodParamParsingTest;
@@ -32,50 +35,8 @@ version(ALL_TESTS) {
 	import pspemu.hle.vfs.ZipFileSystemTest;
 }
 
-string testSuiteCurrent() { return q{
-	TestsRunner.run(new GdbServerTest);
-	TestsRunner.run(new EmmiterTest);
-	TestsRunner.run(new EmmiterX86Test);
-}; }
-
-version(ALL_TESTS) {
-	string testSuiteAll() { return q{
-		TestsRunner.run(new HleModuleMethodBridgeGeneratorTest);
-		TestsRunner.run(new HleFunctionAttributeTest);
-		TestsRunner.run(new HleModuleMethodParamParsingTest);
-		TestsRunner.run(new HleThreadTest);
-		TestsRunner.run(new HleThreadManagerTest);
-		TestsRunner.run(new ElfTest);
-		TestsRunner.run(new HleMemoryManagerTest);
-		TestsRunner.run(new HleElfLoaderTest());
-		TestsRunner.run(new CpuAssemblerTest);
-		TestsRunner.run(new CpuDisassemblerTest);
-		TestsRunner.run(new CpuInterpreterTest);
-		TestsRunner.run(new RegistersTest);
-		TestsRunner.run(new SwitchGenTest);
-		TestsRunner.run(new KirkTest);
-		TestsRunner.run(new DisplayTest);
-		TestsRunner.run(new InterruptsTest);
-		TestsRunner.run(new AudioTest);
-		TestsRunner.run(new BatteryTest);
-		TestsRunner.run(new ControllerTest);
-		TestsRunner.run(new GpuTest);
-		TestsRunner.run(new VirtualFileSystemTest);
-		TestsRunner.run(new ZipFileSystemTest);
-	}; }
-}
-
 int main(string[] args) {
-	version (ALL_TESTS) {
-		TestsRunner.suite({
-			mixin(testSuiteCurrent);
-			mixin(testSuiteAll);
-		});
-	} else {
-		TestsRunner.suite({
-			mixin(testSuiteCurrent);
-		});
-	}
+	TestsRunner.runRegisteredTests();
 
 	return 0;
 }

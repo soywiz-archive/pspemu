@@ -3,23 +3,25 @@ module pspemu.hle.kd.pspnet.sceNetInet;
 import pspemu.hle.ModuleNative;
 import pspemu.hle.kd.pspnet.Types;
 
-class sceNetInet : ModuleNative {
+class sceNetInet : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xDB094E1B, sceNetInetAccept));
-		mixin(registerd!(0x1A33F9AE, sceNetInetBind));
-		mixin(registerd!(0x8D7284EA, sceNetInetClose));
-		mixin(registerd!(0x410B34AA, sceNetInetConnect));
-		mixin(registerd!(0x4A114C7C, sceNetInetGetsockopt));
-		mixin(registerd!(0xD10A1A7A, sceNetInetListen));
-		mixin(registerd!(0xCDA85C99, sceNetInetRecv));
-		mixin(registerd!(0xC91142E4, sceNetInetRecvfrom));
-		mixin(registerd!(0x5BE8D595, sceNetInetSelect));
-		mixin(registerd!(0x7AA671BC, sceNetInetSend));
-		mixin(registerd!(0x05038FC7, sceNetInetSendto));
-		mixin(registerd!(0x2FE71FE7, sceNetInetSetsockopt));
-		mixin(registerd!(0x8B7B220F, sceNetInetSocket));
-		mixin(registerd!(0xFBABE411, sceNetInetGetErrno));
-		mixin(registerd!(0x1BDF5D13, sceNetInetInetAton));
+		mixin(registerFunction!(0xDB094E1B, sceNetInetAccept));
+		mixin(registerFunction!(0x1A33F9AE, sceNetInetBind));
+		mixin(registerFunction!(0x8D7284EA, sceNetInetClose));
+		mixin(registerFunction!(0x410B34AA, sceNetInetConnect));
+		mixin(registerFunction!(0x4A114C7C, sceNetInetGetsockopt));
+		mixin(registerFunction!(0xD10A1A7A, sceNetInetListen));
+		mixin(registerFunction!(0xCDA85C99, sceNetInetRecv));
+		mixin(registerFunction!(0xC91142E4, sceNetInetRecvfrom));
+		mixin(registerFunction!(0x5BE8D595, sceNetInetSelect));
+		mixin(registerFunction!(0x7AA671BC, sceNetInetSend));
+		mixin(registerFunction!(0x05038FC7, sceNetInetSendto));
+		mixin(registerFunction!(0x2FE71FE7, sceNetInetSetsockopt));
+		mixin(registerFunction!(0x8B7B220F, sceNetInetSocket));
+		mixin(registerFunction!(0xFBABE411, sceNetInetGetErrno));
+		mixin(registerFunction!(0x1BDF5D13, sceNetInetInetAton));
 	}
 	
 	int	sceNetInetAccept(int s, sockaddr *addr, socklen_t *addrlen) {
@@ -96,8 +98,4 @@ class sceNetInet : ModuleNative {
 		unimplemented();
 		return -1;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceNetInet"));
 }

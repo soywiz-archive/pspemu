@@ -14,25 +14,27 @@ import pspemu.hle.ModuleNative;
 
 import pspemu.hle.kd.ge.Types;
 
-class sceGe_driver : ModuleNative {
+class sceGe_driver : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xE47E40E4, sceGeEdramGetAddr));
-		mixin(registerd!(0xAB49E76A, sceGeListEnQueue));
-		mixin(registerd!(0x1C0D95A6, sceGeListEnQueueHead));
-		mixin(registerd!(0xE0D68148, sceGeListUpdateStallAddr));
-		mixin(registerd!(0x03444EB4, sceGeListSync));
-		mixin(registerd!(0xB287BD61, sceGeDrawSync));
-		mixin(registerd!(0xA4FC06A4, sceGeSetCallback));
-		mixin(registerd!(0x05DB22CE, sceGeUnsetCallback));
-		mixin(registerd!(0x1F6752AD, sceGeEdramGetSize));
-		mixin(registerd!(0xDC93CFEF, sceGeGetCmd));
-		mixin(registerd!(0x57C8945B, sceGeGetMtx));
-		mixin(registerd!(0x5FB86AB0, sceGeListDeQueue));
-		mixin(registerd!(0xB448EC0D, sceGeBreak));
-		mixin(registerd!(0x4C06E472, sceGeContinue));
-		mixin(registerd!(0x438A385A, sceGeSaveContext));
-		mixin(registerd!(0x0BF608FB, sceGeRestoreContext));
-		mixin(registerd!(0xB77905EA, sceGeEdramSetAddrTranslation));
+		mixin(registerFunction!(0xE47E40E4, sceGeEdramGetAddr));
+		mixin(registerFunction!(0xAB49E76A, sceGeListEnQueue));
+		mixin(registerFunction!(0x1C0D95A6, sceGeListEnQueueHead));
+		mixin(registerFunction!(0xE0D68148, sceGeListUpdateStallAddr));
+		mixin(registerFunction!(0x03444EB4, sceGeListSync));
+		mixin(registerFunction!(0xB287BD61, sceGeDrawSync));
+		mixin(registerFunction!(0xA4FC06A4, sceGeSetCallback));
+		mixin(registerFunction!(0x05DB22CE, sceGeUnsetCallback));
+		mixin(registerFunction!(0x1F6752AD, sceGeEdramGetSize));
+		mixin(registerFunction!(0xDC93CFEF, sceGeGetCmd));
+		mixin(registerFunction!(0x57C8945B, sceGeGetMtx));
+		mixin(registerFunction!(0x5FB86AB0, sceGeListDeQueue));
+		mixin(registerFunction!(0xB448EC0D, sceGeBreak));
+		mixin(registerFunction!(0x4C06E472, sceGeContinue));
+		mixin(registerFunction!(0x438A385A, sceGeSaveContext));
+		mixin(registerFunction!(0x0BF608FB, sceGeRestoreContext));
+		mixin(registerFunction!(0xB77905EA, sceGeEdramSetAddrTranslation));
 	}
 
 	PspGeCallbackData[] callbackDataList;
@@ -272,9 +274,5 @@ class sceGe_driver : ModuleNative {
 }
 
 class sceGe_user : sceGe_driver {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceGe_user"));
-	mixin(ModuleNative.registerModule("sceGe_driver"));
+	mixin TRegisterModule;
 }

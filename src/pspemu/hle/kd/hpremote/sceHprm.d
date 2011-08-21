@@ -2,12 +2,14 @@ module pspemu.hle.kd.hpremote.sceHprm; // kd/hpremote.prx (sceHP_Remote_Driver)
 
 import pspemu.hle.ModuleNative;
 
-class sceHprm : ModuleNative {
+class sceHprm : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x1910B327, sceHprmPeekCurrentKey));
-		mixin(registerd!(0x208DB1BD, sceHprmIsRemoteExist));
-		mixin(registerd!(0x7E69EDA4, sceHprmIsHeadphoneExist));
-		mixin(registerd!(0x219C58F1, sceHprmIsMicrophoneExist));
+		mixin(registerFunction!(0x1910B327, sceHprmPeekCurrentKey));
+		mixin(registerFunction!(0x208DB1BD, sceHprmIsRemoteExist));
+		mixin(registerFunction!(0x7E69EDA4, sceHprmIsHeadphoneExist));
+		mixin(registerFunction!(0x219C58F1, sceHprmIsMicrophoneExist));
 	}
 
 	/**
@@ -54,8 +56,4 @@ class sceHprm : ModuleNative {
 	int sceHprmIsRemoteExist() {
 		return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceHprm"));
 }

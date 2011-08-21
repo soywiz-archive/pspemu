@@ -13,16 +13,16 @@ template IoFileMgrForKernel_FilesAsync() {
 	}
 	
 	void initNids_FilesAsync() {
-		mixin(registerd!(0x89AA9906, sceIoOpenAsync));
-		mixin(registerd!(0x1B385D8F, sceIoLseek32Async));
-		mixin(registerd!(0x71B19E77, sceIoLseekAsync));
-		mixin(registerd!(0xFF5940B6, sceIoCloseAsync));
-		mixin(registerd!(0xA0B5A7C2, sceIoReadAsync));
-		mixin(registerd!(0xB293727F, sceIoChangeAsyncPriority));
-		mixin(registerd!(0xE23EEC33, sceIoWaitAsync));
-		mixin(registerd!(0x35DBD746, sceIoWaitAsyncCB));
-		mixin(registerd!(0x3251EA56, sceIoPollAsync));
-		mixin(registerd!(0x0FACAB19, sceIoWriteAsync));
+		mixin(registerFunction!(0x89AA9906, sceIoOpenAsync));
+		mixin(registerFunction!(0x1B385D8F, sceIoLseek32Async));
+		mixin(registerFunction!(0x71B19E77, sceIoLseekAsync));
+		mixin(registerFunction!(0xFF5940B6, sceIoCloseAsync));
+		mixin(registerFunction!(0xA0B5A7C2, sceIoReadAsync));
+		mixin(registerFunction!(0xB293727F, sceIoChangeAsyncPriority));
+		mixin(registerFunction!(0xE23EEC33, sceIoWaitAsync));
+		mixin(registerFunction!(0x35DBD746, sceIoWaitAsyncCB));
+		mixin(registerFunction!(0x3251EA56, sceIoPollAsync));
+		mixin(registerFunction!(0x0FACAB19, sceIoWriteAsync));
 	}
 	
 	/**

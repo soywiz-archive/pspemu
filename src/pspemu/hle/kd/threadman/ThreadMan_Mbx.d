@@ -22,13 +22,13 @@ template ThreadManForUser_Mbx() {
 	}
 	
 	void initNids_Mbx() {
-		mixin(registerd!(0x8125221D, sceKernelCreateMbx));
-		mixin(registerd!(0x86255ADA, sceKernelDeleteMbx));
-		mixin(registerd!(0xE9B3061E, sceKernelSendMbx));
-		mixin(registerd!(0x18260574, sceKernelReceiveMbx));
-		mixin(registerd!(0x0D81716A, sceKernelPollMbx));
-		mixin(registerd!(0x87D4DD36, sceKernelCancelReceiveMbx));
-		mixin(registerd!(0xA8E8C846, sceKernelReferMbxStatus));
+		mixin(registerFunction!(0x8125221D, sceKernelCreateMbx));
+		mixin(registerFunction!(0x86255ADA, sceKernelDeleteMbx));
+		mixin(registerFunction!(0xE9B3061E, sceKernelSendMbx));
+		mixin(registerFunction!(0x18260574, sceKernelReceiveMbx));
+		mixin(registerFunction!(0x0D81716A, sceKernelPollMbx));
+		mixin(registerFunction!(0x87D4DD36, sceKernelCancelReceiveMbx));
+		mixin(registerFunction!(0xA8E8C846, sceKernelReferMbxStatus));
 	}
 	
 

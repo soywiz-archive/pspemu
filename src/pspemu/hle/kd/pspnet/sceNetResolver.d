@@ -3,11 +3,13 @@ module pspemu.hle.kd.pspnet.sceNetResolver;
 import pspemu.hle.ModuleNative;
 import pspemu.hle.kd.pspnet.Types;
 
-class sceNetResolver : ModuleNative {
+class sceNetResolver : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x244172AF, sceNetResolverCreate));
-		mixin(registerd!(0x94523E09, sceNetResolverDelete));
-		mixin(registerd!(0x224C5F44, sceNetResolverStartNtoA));
+		mixin(registerFunction!(0x244172AF, sceNetResolverCreate));
+		mixin(registerFunction!(0x94523E09, sceNetResolverDelete));
+		mixin(registerFunction!(0x224C5F44, sceNetResolverStartNtoA));
 	}
 	
 	/**
@@ -52,8 +54,4 @@ class sceNetResolver : ModuleNative {
 		return -1;
 	}
 
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceNetResolver"));
 }

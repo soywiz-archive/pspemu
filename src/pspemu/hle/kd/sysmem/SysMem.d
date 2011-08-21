@@ -12,25 +12,27 @@ public import pspemu.hle.HleMemoryManager;
 
 import pspemu.utils.Logger;
 
-class SysMemUserForUser : ModuleNative {
+class SysMemUserForUser : HleModuleHost {
+	mixin TRegisterModule;
+	
 	HleMemoryManager hleMemoryManager;
 
 	void initModule() {
 	}
 
 	void initNids() {
-		mixin(registerd!(0xA291F107, sceKernelMaxFreeMemSize));
-		mixin(registerd!(0x237DBD4F, sceKernelAllocPartitionMemory));
-		mixin(registerd!(0x9D9A5BA1, sceKernelGetBlockHeadAddr));
-		mixin(registerd!(0xF919F628, sceKernelTotalFreeMemSize));
-		mixin(registerd!(0xB6D61D02, sceKernelFreePartitionMemory));
-		mixin(registerd!(0x3FC9AE6A, sceKernelDevkitVersion));
-		mixin(registerd!(0x13A5ABEF, sceKernelPrintf));
-		mixin(registerd!(0xF77D77CB, sceKernelSetCompilerVersion));
-		mixin(registerd!(0x7591C7DB, sceKernelSetCompiledSdkVersion));
-		mixin(registerd!(0x342061E5, sceKernelSetCompiledSdkVersion370));
-		mixin(registerd!(0x315AD3A0, sceKernelSetCompiledSdkVersion380_390));
-		mixin(registerd!(0xEBD5C3E6, sceKernelSetCompiledSdkVersion395));
+		mixin(registerFunction!(0xA291F107, sceKernelMaxFreeMemSize));
+		mixin(registerFunction!(0x237DBD4F, sceKernelAllocPartitionMemory));
+		mixin(registerFunction!(0x9D9A5BA1, sceKernelGetBlockHeadAddr));
+		mixin(registerFunction!(0xF919F628, sceKernelTotalFreeMemSize));
+		mixin(registerFunction!(0xB6D61D02, sceKernelFreePartitionMemory));
+		mixin(registerFunction!(0x3FC9AE6A, sceKernelDevkitVersion));
+		mixin(registerFunction!(0x13A5ABEF, sceKernelPrintf));
+		mixin(registerFunction!(0xF77D77CB, sceKernelSetCompilerVersion));
+		mixin(registerFunction!(0x7591C7DB, sceKernelSetCompiledSdkVersion));
+		mixin(registerFunction!(0x342061E5, sceKernelSetCompiledSdkVersion370));
+		mixin(registerFunction!(0x315AD3A0, sceKernelSetCompiledSdkVersion380_390));
+		mixin(registerFunction!(0xEBD5C3E6, sceKernelSetCompiledSdkVersion395));
 	}
 
 	// @TODO: Unknown.
@@ -185,10 +187,6 @@ class SysMemUserForUser : ModuleNative {
 	}
 }
 
-class SysMemForKernel : ModuleNative {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("SysMemForKernel"));
-	mixin(ModuleNative.registerModule("SysMemUserForUser"));
+class SysMemForKernel : HleModuleHost {
+	mixin TRegisterModule;
 }

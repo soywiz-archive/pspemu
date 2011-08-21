@@ -3,40 +3,42 @@ module pspemu.hle.kd.libfont.sceLibFont;
 import pspemu.hle.ModuleNative;
 import pspemu.hle.kd.libfont.Types;
 
-class sceLibFont : ModuleNative {
+class sceLibFont : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-        mixin(registerd!(0x67F17ED7, sceFontNewLib));
-        mixin(registerd!(0x574B6FBC, sceFontDoneLib));
+        mixin(registerFunction!(0x67F17ED7, sceFontNewLib));
+        mixin(registerFunction!(0x574B6FBC, sceFontDoneLib));
 
-        mixin(registerd!(0xA834319D, sceFontOpen));
-        mixin(registerd!(0xBB8E7FE6, sceFontOpenUserMemory));
-        mixin(registerd!(0x57FCB733, sceFontOpenUserFile));
-        mixin(registerd!(0x3AEA8CB6, sceFontClose));
+        mixin(registerFunction!(0xA834319D, sceFontOpen));
+        mixin(registerFunction!(0xBB8E7FE6, sceFontOpenUserMemory));
+        mixin(registerFunction!(0x57FCB733, sceFontOpenUserFile));
+        mixin(registerFunction!(0x3AEA8CB6, sceFontClose));
 
-        mixin(registerd!(0x27F6E642, sceFontGetNumFontList));
-		mixin(registerd!(0x099EF33C, sceFontFindOptimumFont));
-        mixin(registerd!(0x681E61A7, sceFontFindFont));
+        mixin(registerFunction!(0x27F6E642, sceFontGetNumFontList));
+		mixin(registerFunction!(0x099EF33C, sceFontFindOptimumFont));
+        mixin(registerFunction!(0x681E61A7, sceFontFindFont));
 
-		mixin(registerd!(0x0DA7535E, sceFontGetFontInfo));
-        mixin(registerd!(0x5333322D, sceFontGetFontInfoByIndexNumber));
+		mixin(registerFunction!(0x0DA7535E, sceFontGetFontInfo));
+        mixin(registerFunction!(0x5333322D, sceFontGetFontInfoByIndexNumber));
 
-        mixin(registerd!(0xDCC80C2F, sceFontGetCharInfo));
-		mixin(registerd!(0x980F4895, sceFontGetCharGlyphImage));
-        mixin(registerd!(0xCA1E6945, sceFontGetCharGlyphImage_Clip));
-        mixin(registerd!(0xBC75D85B, sceFontGetFontList));
-        mixin(registerd!(0xEE232411, sceFontSetAltCharacterCode));
-        mixin(registerd!(0x5C3E4A9E, sceFontGetCharImageRect));
-        mixin(registerd!(0x472694CD, sceFontPointToPixelH));
-        mixin(registerd!(0x48293280, sceFontSetResolution));
-        mixin(registerd!(0x3C4B7E82, sceFontPointToPixelV));
-        mixin(registerd!(0x74B21701, sceFontPixelToPointH));
-        mixin(registerd!(0xF8F0752E, sceFontPixelToPointV));
-        mixin(registerd!(0x2F67356A, sceFontCalcMemorySize));
-        mixin(registerd!(0x48B06520, sceFontGetShadowImageRect));
-        mixin(registerd!(0x568BE516, sceFontGetShadowGlyphImage));
-        mixin(registerd!(0x5DCF6858, sceFontGetShadowGlyphImage_Clip));
-        mixin(registerd!(0xAA3DE7B5, sceFontGetShadowInfo));
-        mixin(registerd!(0x02D7F94B, sceFontFlush));
+        mixin(registerFunction!(0xDCC80C2F, sceFontGetCharInfo));
+		mixin(registerFunction!(0x980F4895, sceFontGetCharGlyphImage));
+        mixin(registerFunction!(0xCA1E6945, sceFontGetCharGlyphImage_Clip));
+        mixin(registerFunction!(0xBC75D85B, sceFontGetFontList));
+        mixin(registerFunction!(0xEE232411, sceFontSetAltCharacterCode));
+        mixin(registerFunction!(0x5C3E4A9E, sceFontGetCharImageRect));
+        mixin(registerFunction!(0x472694CD, sceFontPointToPixelH));
+        mixin(registerFunction!(0x48293280, sceFontSetResolution));
+        mixin(registerFunction!(0x3C4B7E82, sceFontPointToPixelV));
+        mixin(registerFunction!(0x74B21701, sceFontPixelToPointH));
+        mixin(registerFunction!(0xF8F0752E, sceFontPixelToPointV));
+        mixin(registerFunction!(0x2F67356A, sceFontCalcMemorySize));
+        mixin(registerFunction!(0x48B06520, sceFontGetShadowImageRect));
+        mixin(registerFunction!(0x568BE516, sceFontGetShadowGlyphImage));
+        mixin(registerFunction!(0x5DCF6858, sceFontGetShadowGlyphImage_Clip));
+        mixin(registerFunction!(0xAA3DE7B5, sceFontGetShadowInfo));
+        mixin(registerFunction!(0x02D7F94B, sceFontFlush));
 	}
 	
 	class FontLibrary {
@@ -321,8 +323,4 @@ class sceLibFont : ModuleNative {
     void sceFontGetShadowInfo() { unimplemented(); }
     void sceFontFlush() { unimplemented(); }
 
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceLibFont"));
 }

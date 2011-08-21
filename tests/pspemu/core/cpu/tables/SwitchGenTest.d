@@ -9,6 +9,30 @@ import pspemu.core.cpu.Instruction;
 alias InstructionDefinition ID;
 alias ValueMask VM;
 
+class SwitchGenTest : Test {
+	mixin TRegisterTest;
+
+	string find(Instruction instruction) {
+		string callFunction2(string opname) {
+			return "CALL(\"" ~ opname ~ "\");";
+		}
+		string ret;
+		void CALL(string name) {
+			ret = name;
+		}
+		mixin(genSwitch(PspInstructionsTest, "callFunction2"));
+		return ret;
+	}
+	
+	void testSwitchGen() {
+		foreach (instructionDefinition; PspInstructionsTest) {
+			assertEquals(instructionDefinition.name, find(Instruction(instructionDefinition.opcode.value))); // add
+		}
+		
+		assertEquals("unk", find(Instruction(0b_00100000000000000000000000000000))); // unk
+	}
+}
+
 const PspInstructionsTest = [
 	// Arithmetic operations.
 	ID("add",         VM("000000:rs:rt:rd:00000:100000"), "%d, %s, %t", ADDR_TYPE_NONE, 0),
@@ -32,25 +56,3 @@ const PspInstructionsTest = [
 	ID("vpfxs",       VM("110111:00:----:negw:negz:negy:negx:cstw:cstz:csty:cstx:absw:absz:absy:absx:swzw:swzz:swzy:swzx"), "[%vp0, %vp1, %vp2, %vp3]", ADDR_TYPE_NONE, INSTR_TYPE_PSP),
 
 ];
-
-class SwitchGenTest : Test {
-	string find(Instruction instruction) {
-		string callFunction2(string opname) {
-			return "CALL(\"" ~ opname ~ "\");";
-		}
-		string ret;
-		void CALL(string name) {
-			ret = name;
-		}
-		mixin(genSwitch(PspInstructionsTest, "callFunction2"));
-		return ret;
-	}
-	
-	void testSwitchGen() {
-		foreach (instructionDefinition; PspInstructionsTest) {
-			assertEquals(instructionDefinition.name, find(Instruction(instructionDefinition.opcode.value))); // add
-		}
-		
-		assertEquals("unk", find(Instruction(0b_00100000000000000000000000000000))); // unk
-	}
-}

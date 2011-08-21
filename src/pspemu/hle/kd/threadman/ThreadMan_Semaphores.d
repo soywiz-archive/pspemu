@@ -39,14 +39,14 @@ template ThreadManForUser_Semaphores() {
 	}
 
 	void initNids_Semaphores() {
-		mixin(registerd!(0xD6DA4BA1, sceKernelCreateSema));
-		mixin(registerd!(0x3F53E640, sceKernelSignalSema));
-		mixin(registerd!(0x28B6489C, sceKernelDeleteSema));
-		mixin(registerd!(0x4E3A1105, sceKernelWaitSema));
-		mixin(registerd!(0x58B1F937, sceKernelPollSema));
-		mixin(registerd!(0x6D212BAC, sceKernelWaitSemaCB));
-		mixin(registerd!(0xBC6FEBC5, sceKernelReferSemaStatus));
-		mixin(registerd!(0x8FFDF9A2, sceKernelCancelSema));
+		mixin(registerFunction!(0xD6DA4BA1, sceKernelCreateSema));
+		mixin(registerFunction!(0x3F53E640, sceKernelSignalSema));
+		mixin(registerFunction!(0x28B6489C, sceKernelDeleteSema));
+		mixin(registerFunction!(0x4E3A1105, sceKernelWaitSema));
+		mixin(registerFunction!(0x58B1F937, sceKernelPollSema));
+		mixin(registerFunction!(0x6D212BAC, sceKernelWaitSemaCB));
+		mixin(registerFunction!(0xBC6FEBC5, sceKernelReferSemaStatus));
+		mixin(registerFunction!(0x8FFDF9A2, sceKernelCancelSema));
 	}
 	
 	enum SemaphoreAttribute : uint {

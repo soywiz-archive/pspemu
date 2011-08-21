@@ -5,15 +5,17 @@ import pspemu.hle.HleEmulatorState;
 
 public import pspemu.hle.OsConfig;
 
-class sceImpose : ModuleNative {
+class sceImpose : HleModuleHost {
+	mixin TRegisterModule;
+	
 	uint umdPopupStatus;
 	
 	void initNids() {
-		mixin(registerd!(0x8C943191, sceImposeGetBatteryIconStatus));
-		mixin(registerd!(0x36AA6E91, sceImposeSetLanguageMode));
-		mixin(registerd!(0x24FD7BCF, sceImposeGetLanguageMode));
-        mixin(registerd!(0x72189C48, sceImposeSetUMDPopupFunction));
-        mixin(registerd!(0xE0887BC8, sceImposeGetUMDPopupFunction));
+		mixin(registerFunction!(0x8C943191, sceImposeGetBatteryIconStatus));
+		mixin(registerFunction!(0x36AA6E91, sceImposeSetLanguageMode));
+		mixin(registerFunction!(0x24FD7BCF, sceImposeGetLanguageMode));
+        mixin(registerFunction!(0x72189C48, sceImposeSetUMDPopupFunction));
+        mixin(registerFunction!(0xE0887BC8, sceImposeGetUMDPopupFunction));
 	}
 	
 	uint sceImposeSetUMDPopupFunction(uint umdPopupStatus) {
@@ -66,8 +68,4 @@ class sceImpose : ModuleNative {
 
         return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceImpose"));
 }

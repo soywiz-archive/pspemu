@@ -55,11 +55,13 @@ class SysTimer {
 
 alias int SceSysTimerId;
 
-class SysTimerForKernel : ModuleNative {
+class SysTimerForKernel : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0xC99073E3, sceSTimerAlloc));
-		mixin(registerd!(0x975D8E84, sceSTimerSetHandler));
-		mixin(registerd!(0xA95143E2, sceSTimerStartCount));
+		mixin(registerFunction!(0xC99073E3, sceSTimerAlloc));
+		mixin(registerFunction!(0x975D8E84, sceSTimerSetHandler));
+		mixin(registerFunction!(0xA95143E2, sceSTimerStartCount));
 	}
 
 	/**
@@ -96,8 +98,4 @@ class SysTimerForKernel : ModuleNative {
 		logInfo("sceSTimerStartCount(%d)", timer);
 		uniqueIdFactory.get!SysTimer(timer).start();
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("SysTimerForKernel"));
 }

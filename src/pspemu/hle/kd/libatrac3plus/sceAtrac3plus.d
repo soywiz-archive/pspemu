@@ -249,31 +249,33 @@ struct PspBufferInfo {
 	u32 uiReadPositionSecondBuf;
 }
 
-class sceAtrac3plus : ModuleNative {
+class sceAtrac3plus : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0x7A20E7AF, sceAtracSetDataAndGetID));
-		mixin(registerd!(0x868120B5, sceAtracSetLoopNum));
-		mixin(registerd!(0x9AE849A7, sceAtracGetRemainFrame));
-		mixin(registerd!(0x6A8C3CD5, sceAtracDecodeData));
-		mixin(registerd!(0x61EB33F5, sceAtracReleaseAtracID));
-		mixin(registerd!(0x780F88D1, sceAtracGetAtracID));
-		mixin(registerd!(0x36FAABFB, sceAtracGetNextSample));
-		mixin(registerd!(0xE88F759B, sceAtracGetInternalErrorInfo));
-	    mixin(registerd!(0x5D268707, sceAtracGetStreamDataInfo));
-	    mixin(registerd!(0x7DB31251, sceAtracAddStreamData));
-	    mixin(registerd!(0x83E85EA0, sceAtracGetSecondBufferInfo));
-	    mixin(registerd!(0x83BF7AFD, sceAtracSetSecondBuffer));
-	    mixin(registerd!(0xE23E3A35, sceAtracGetNextDecodePosition));
-	    mixin(registerd!(0xA2BBA8BE, sceAtracGetSoundSample));
-	    mixin(registerd!(0xCA3CA3D2, sceAtracGetBufferInfoForReseting));
-	    mixin(registerd!(0x644E5607, sceAtracResetPlayPosition));
+		mixin(registerFunction!(0x7A20E7AF, sceAtracSetDataAndGetID));
+		mixin(registerFunction!(0x868120B5, sceAtracSetLoopNum));
+		mixin(registerFunction!(0x9AE849A7, sceAtracGetRemainFrame));
+		mixin(registerFunction!(0x6A8C3CD5, sceAtracDecodeData));
+		mixin(registerFunction!(0x61EB33F5, sceAtracReleaseAtracID));
+		mixin(registerFunction!(0x780F88D1, sceAtracGetAtracID));
+		mixin(registerFunction!(0x36FAABFB, sceAtracGetNextSample));
+		mixin(registerFunction!(0xE88F759B, sceAtracGetInternalErrorInfo));
+	    mixin(registerFunction!(0x5D268707, sceAtracGetStreamDataInfo));
+	    mixin(registerFunction!(0x7DB31251, sceAtracAddStreamData));
+	    mixin(registerFunction!(0x83E85EA0, sceAtracGetSecondBufferInfo));
+	    mixin(registerFunction!(0x83BF7AFD, sceAtracSetSecondBuffer));
+	    mixin(registerFunction!(0xE23E3A35, sceAtracGetNextDecodePosition));
+	    mixin(registerFunction!(0xA2BBA8BE, sceAtracGetSoundSample));
+	    mixin(registerFunction!(0xCA3CA3D2, sceAtracGetBufferInfoForReseting));
+	    mixin(registerFunction!(0x644E5607, sceAtracResetPlayPosition));
 
-		mixin(registerd!(0x0E2A73AB, sceAtracSetData));
-		mixin(registerd!(0xD6A5F2F7, sceAtracGetMaxSample));
-		mixin(registerd!(0xFAA4F89B, sceAtracGetLoopStatus));
+		mixin(registerFunction!(0x0E2A73AB, sceAtracSetData));
+		mixin(registerFunction!(0xD6A5F2F7, sceAtracGetMaxSample));
+		mixin(registerFunction!(0xFAA4F89B, sceAtracGetLoopStatus));
 		
-	    mixin(registerd!(0xA554A158, sceAtracGetBitrate));
-	    mixin(registerd!(0xB3B5D042, sceAtracGetOutputChannel));
+	    mixin(registerFunction!(0xA554A158, sceAtracGetBitrate));
+	    mixin(registerFunction!(0xB3B5D042, sceAtracGetOutputChannel));
 	}
 	
 	int sceAtracGetOutputChannel() {
@@ -608,8 +610,4 @@ class sceAtrac3plus : ModuleNative {
 		unimplemented();
 		return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceAtrac3plus"));
 }

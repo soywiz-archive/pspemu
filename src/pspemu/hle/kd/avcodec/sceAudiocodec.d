@@ -9,13 +9,15 @@ enum PspAudioCodec {
 	PSP_CODEC_AAC		= (0x00001003),
 }
 
-class sceAudiocodec : ModuleNative {
+class sceAudiocodec : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x9D3F790C, sceAudiocodecCheckNeedMem));
-		mixin(registerd!(0x5B37EB1D, sceAudiocodecInit));
-		mixin(registerd!(0x70A703F8, sceAudiocodecDecode));
-		mixin(registerd!(0x3A20A200, sceAudiocodecGetEDRAM));
-		mixin(registerd!(0x29681260, sceAudiocodecReleaseEDRAM));
+		mixin(registerFunction!(0x9D3F790C, sceAudiocodecCheckNeedMem));
+		mixin(registerFunction!(0x5B37EB1D, sceAudiocodecInit));
+		mixin(registerFunction!(0x70A703F8, sceAudiocodecDecode));
+		mixin(registerFunction!(0x3A20A200, sceAudiocodecGetEDRAM));
+		mixin(registerFunction!(0x29681260, sceAudiocodecReleaseEDRAM));
 	}
 	
 	int sceAudiocodecCheckNeedMem(uint *Buffer, PspAudioCodec Type) {
@@ -48,8 +50,4 @@ class sceAudiocodec : ModuleNative {
 		//unimplemented_notice();
 		return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceAudiocodec"));
 }

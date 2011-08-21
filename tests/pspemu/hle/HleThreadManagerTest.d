@@ -6,6 +6,8 @@ import pspemu.hle.HleThreadBase;
 import tests.Test;
 
 class HleThreadManagerTest : Test {
+	mixin TRegisterTest;
+	
 	HleThreadManager hleThreadManager;
 	HleThreadMock thread1, thread2;
 	

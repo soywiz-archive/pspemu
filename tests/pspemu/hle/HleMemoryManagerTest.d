@@ -6,6 +6,8 @@ import pspemu.hle.HleMemoryManager;
 import tests.Test;
 
 class HleMemoryManagerTest : Test {
+	mixin TRegisterTest;
+	
 	Memory memory;
 	HleMemoryManager hleMemoryManager;
 	

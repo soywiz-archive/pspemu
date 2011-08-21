@@ -8,19 +8,21 @@ import pspemu.hle.kd.threadman.Types;
 import pspemu.hle.Callbacks;
 import pspemu.hle.kd.threadman.ThreadMan;
 
-class sceUmdUser : ModuleNative {
+class sceUmdUser : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x20628E6F, sceUmdGetErrorStat));
-		mixin(registerd!(0xAEE7404D, sceUmdRegisterUMDCallBack));
-		mixin(registerd!(0xBD2BDE07, sceUmdUnRegisterUMDCallBack));
-		mixin(registerd!(0x56202973, sceUmdWaitDriveStatWithTimer));
-		mixin(registerd!(0x46EBB729, sceUmdCheckMedium));
-		mixin(registerd!(0xC6183D47, sceUmdActivate));
-		mixin(registerd!(0xE83742BA, sceUmdDeactivate));
-		mixin(registerd!(0x6B4A146C, sceUmdGetDriveStat));
-		mixin(registerd!(0x8EF08FCE, sceUmdWaitDriveStat));
-		mixin(registerd!(0x4A9E5E29, sceUmdWaitDriveStatCB));
-		mixin(registerd!(0x6AF9B50A, sceUmdCancelWaitDriveStat));
+		mixin(registerFunction!(0x20628E6F, sceUmdGetErrorStat));
+		mixin(registerFunction!(0xAEE7404D, sceUmdRegisterUMDCallBack));
+		mixin(registerFunction!(0xBD2BDE07, sceUmdUnRegisterUMDCallBack));
+		mixin(registerFunction!(0x56202973, sceUmdWaitDriveStatWithTimer));
+		mixin(registerFunction!(0x46EBB729, sceUmdCheckMedium));
+		mixin(registerFunction!(0xC6183D47, sceUmdActivate));
+		mixin(registerFunction!(0xE83742BA, sceUmdDeactivate));
+		mixin(registerFunction!(0x6B4A146C, sceUmdGetDriveStat));
+		mixin(registerFunction!(0x8EF08FCE, sceUmdWaitDriveStat));
+		mixin(registerFunction!(0x4A9E5E29, sceUmdWaitDriveStatCB));
+		mixin(registerFunction!(0x6AF9B50A, sceUmdCancelWaitDriveStat));
 	}
 	
 	/** 
@@ -193,8 +195,4 @@ class sceUmdUser : ModuleNative {
 		unimplemented_notice();
 		return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceUmdUser"));
 }

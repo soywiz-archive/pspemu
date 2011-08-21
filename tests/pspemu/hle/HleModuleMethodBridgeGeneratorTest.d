@@ -21,6 +21,8 @@ void func005(int v1, int v2, long v3) {
 }
 
 class HleModuleMethodBridgeGeneratorTest : Test {
+	mixin TRegisterTest;
+	
 	void testGenerate() {
 		assertEquals(
 			"{this.func001(cast(int)param(0));}",

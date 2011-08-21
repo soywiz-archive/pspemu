@@ -8,6 +8,8 @@ import pspemu.core.cpu.Registers;
 import tests.Test;
 
 class HleModuleMethodParamParsingTest : Test {
+	mixin TRegisterTest;
+	
 	Memory memory;
 	PspMemoryStream memoryStream;
 	Registers registers;

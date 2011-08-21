@@ -26,26 +26,28 @@ import core.time;
 
 public import pspemu.hle.kd.utils.Types;
 
-class UtilsForUser : ModuleNative {
+class UtilsForUser : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x27CC57F0, sceKernelUtilsMt19937Init));
-		mixin(registerd!(0xE860E75E, sceKernelUtilsMt19937Init));
-		mixin(registerd!(0x06FB8A63, sceKernelUtilsMt19937UInt));
-		mixin(registerd!(0x27CC57F0, sceKernelLibcTime));
-		mixin(registerd!(0x71EC4271, sceKernelLibcGettimeofday));
-		mixin(registerd!(0x79D1C3FA, sceKernelDcacheWritebackAll));
-		mixin(registerd!(0xBFA98062, sceKernelDcacheInvalidateRange));
-		mixin(registerd!(0x34B9FA9E, sceKernelDcacheWritebackInvalidateRange));
-		mixin(registerd!(0xB435DEC5, sceKernelDcacheWritebackInvalidateAll));
-		mixin(registerd!(0x3EE30821, sceKernelDcacheWritebackRange));
-		mixin(registerd!(0x91E4F6A7, sceKernelLibcClock));
-		mixin(registerd!(0xC8186A58, sceKernelUtilsMd5Digest));
-		mixin(registerd!(0x840259F1, sceKernelUtilsSha1Digest));
-		mixin(registerd!(0x920F104A, sceKernelIcacheInvalidateAll));
-		mixin(registerd!(0xC2DF770E, sceKernelIcacheInvalidateRange));
+		mixin(registerFunction!(0x27CC57F0, sceKernelUtilsMt19937Init));
+		mixin(registerFunction!(0xE860E75E, sceKernelUtilsMt19937Init));
+		mixin(registerFunction!(0x06FB8A63, sceKernelUtilsMt19937UInt));
+		mixin(registerFunction!(0x27CC57F0, sceKernelLibcTime));
+		mixin(registerFunction!(0x71EC4271, sceKernelLibcGettimeofday));
+		mixin(registerFunction!(0x79D1C3FA, sceKernelDcacheWritebackAll));
+		mixin(registerFunction!(0xBFA98062, sceKernelDcacheInvalidateRange));
+		mixin(registerFunction!(0x34B9FA9E, sceKernelDcacheWritebackInvalidateRange));
+		mixin(registerFunction!(0xB435DEC5, sceKernelDcacheWritebackInvalidateAll));
+		mixin(registerFunction!(0x3EE30821, sceKernelDcacheWritebackRange));
+		mixin(registerFunction!(0x91E4F6A7, sceKernelLibcClock));
+		mixin(registerFunction!(0xC8186A58, sceKernelUtilsMd5Digest));
+		mixin(registerFunction!(0x840259F1, sceKernelUtilsSha1Digest));
+		mixin(registerFunction!(0x920F104A, sceKernelIcacheInvalidateAll));
+		mixin(registerFunction!(0xC2DF770E, sceKernelIcacheInvalidateRange));
 		
-	    mixin(registerd!(0x6AD345D7, sceKernelSetGPO));
-	    mixin(registerd!(0x37FB5C42, sceKernelGetGPI));
+	    mixin(registerFunction!(0x6AD345D7, sceKernelSetGPO));
+	    mixin(registerFunction!(0x37FB5C42, sceKernelGetGPI));
 	}
 	
 	int sceKernelSetGPO(int value) {
@@ -227,10 +229,5 @@ class UtilsForUser : ModuleNative {
 }
 
 class UtilsForKernel : UtilsForUser {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("UtilsForKernel"));
-	//pragma(msg, ModuleNative.registerModule("UtilsForUser"));
-	mixin(ModuleNative.registerModule("UtilsForUser"));
+	mixin TRegisterModule;
 }

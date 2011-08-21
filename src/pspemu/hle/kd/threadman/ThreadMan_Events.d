@@ -25,14 +25,14 @@ template ThreadManForUser_Events() {
 	}
 	
 	void initNids_Events() {
-		mixin(registerd!(0x55C20A00, sceKernelCreateEventFlag));
-		mixin(registerd!(0xEF9E4C70, sceKernelDeleteEventFlag));
-		mixin(registerd!(0x1FB15A32, sceKernelSetEventFlag));
-		mixin(registerd!(0x812346E4, sceKernelClearEventFlag));
-		mixin(registerd!(0x402FCF22, sceKernelWaitEventFlag));
-		mixin(registerd!(0x328C546A, sceKernelWaitEventFlagCB));
-		mixin(registerd!(0x30FD48F0, sceKernelPollEventFlag));
-		mixin(registerd!(0xA66B0120, sceKernelReferEventFlagStatus));
+		mixin(registerFunction!(0x55C20A00, sceKernelCreateEventFlag));
+		mixin(registerFunction!(0xEF9E4C70, sceKernelDeleteEventFlag));
+		mixin(registerFunction!(0x1FB15A32, sceKernelSetEventFlag));
+		mixin(registerFunction!(0x812346E4, sceKernelClearEventFlag));
+		mixin(registerFunction!(0x402FCF22, sceKernelWaitEventFlag));
+		mixin(registerFunction!(0x328C546A, sceKernelWaitEventFlagCB));
+		mixin(registerFunction!(0x30FD48F0, sceKernelPollEventFlag));
+		mixin(registerFunction!(0xA66B0120, sceKernelReferEventFlagStatus));
 	}
 
 	/** 

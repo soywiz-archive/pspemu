@@ -7,6 +7,42 @@ import tests.Test;
 
 import core.thread;
 
+class AudioTest : Test {
+	mixin TRegisterTest;
+
+	AudioMock audio;
+	
+	void setUp() {
+		audio = new AudioMock();
+	}
+	
+	void tearDown() {
+		audio.stop();
+	}
+	
+	void testAudio() {
+		short[] buffer0 = new short[6000];
+		short[] buffer1 = new short[6000];
+		short[] buffer0_1 = new short[6000];
+		foreach (n, ref c; buffer0) c = cast(short)n; 
+		foreach (n, ref c; buffer1) c = cast(short)(-n + 2);
+		foreach (n, ref c; buffer0_1) c = (buffer0[n] + buffer1[n]) / 2;
+		//writefln("%s", buffer);
+		audio.channels[0].write(buffer0, 1);
+		audio.channels[1].write(buffer1, 1);
+		
+		audio.start();
+		audio.stopEvent.wait();
+
+		assertEquals(1, audio.outOpen_Count);
+		assertEquals(4, audio.outPrepare_Count);
+		assertEquals(14, audio.outWrite_Count);
+		assertEquals(0, audio.outGetPosition_Count);
+		assertEquals(1, audio.outClose_Count);
+		assertEquals(audio.output[0..buffer0_1.length], buffer0_1);
+	}
+}
+
 class AudioMock : Audio {
 	WaitEvent stopEvent;
 	int outOpen_Count = 0;
@@ -61,39 +97,5 @@ class AudioMock : Audio {
 		//writefln("waveOutClose(%d)", cast(int)hwo);
 		stopEvent.signal();
 		return 0;
-	}
-}
-
-class AudioTest : Test {
-	AudioMock audio;
-	
-	void setUp() {
-		audio = new AudioMock();
-	}
-	
-	void tearDown() {
-		audio.stop();
-	}
-	
-	void testAudio() {
-		short[] buffer0 = new short[6000];
-		short[] buffer1 = new short[6000];
-		short[] buffer0_1 = new short[6000];
-		foreach (n, ref c; buffer0) c = cast(short)n; 
-		foreach (n, ref c; buffer1) c = cast(short)(-n + 2);
-		foreach (n, ref c; buffer0_1) c = (buffer0[n] + buffer1[n]) / 2;
-		//writefln("%s", buffer);
-		audio.channels[0].write(buffer0, 1);
-		audio.channels[1].write(buffer1, 1);
-		
-		audio.start();
-		audio.stopEvent.wait();
-
-		assertEquals(1, audio.outOpen_Count);
-		assertEquals(4, audio.outPrepare_Count);
-		assertEquals(14, audio.outWrite_Count);
-		assertEquals(0, audio.outGetPosition_Count);
-		assertEquals(1, audio.outClose_Count);
-		assertEquals(audio.output[0..buffer0_1.length], buffer0_1);
 	}
 }

@@ -7,6 +7,8 @@ import pspemu.utils.CircularList;
 import tests.Test;
 
 class ControllerTest : Test {
+	mixin TRegisterTest;
+	
 	Controller controller;
 	
 	this() {

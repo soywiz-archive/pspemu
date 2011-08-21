@@ -5,6 +5,8 @@ import tests.Test;
 import pspemu.core.cpu.Registers;
 
 class RegistersTest : Test {
+	mixin TRegisterTest;
+	
 	Registers registers;
 
 	void setUp() {

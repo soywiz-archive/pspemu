@@ -31,14 +31,16 @@ struct SceMpegYCrCbBuffer
 	SceInt32	iUnknown3[11];
 }
 
-class sceMpegbase : ModuleNative {
+class sceMpegbase : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xBEA18F91, sceMpegbase_BEA18F91));
-		mixin(registerd!(0x492B5E4B, sceMpegBaseCscInit));
-		mixin(registerd!(0x0530BE4E, sceMpegbase_0530BE4E));
-		mixin(registerd!(0x91929A21, sceMpegBaseCscAvc));
-		mixin(registerd!(0x304882E1, sceMpegBaseCscAvcRange));
-		mixin(registerd!(0x7AC0321A, sceMpegBaseYCrCbCopy));
+		mixin(registerFunction!(0xBEA18F91, sceMpegbase_BEA18F91));
+		mixin(registerFunction!(0x492B5E4B, sceMpegBaseCscInit));
+		mixin(registerFunction!(0x0530BE4E, sceMpegbase_0530BE4E));
+		mixin(registerFunction!(0x91929A21, sceMpegBaseCscAvc));
+		mixin(registerFunction!(0x304882E1, sceMpegBaseCscAvcRange));
+		mixin(registerFunction!(0x7AC0321A, sceMpegBaseYCrCbCopy));
 	}
 	
 	SceInt32 sceMpegBaseYCrCbCopyVme(void* YUVBuffer, SceInt32 *Buffer, SceInt32 Type) { unimplemented(); return 0; }
@@ -61,8 +63,4 @@ class sceMpegbase : ModuleNative {
 	void sceMpegbase_0530BE4E() {
 		unimplemented();
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceMpegbase"));
 }

@@ -9,12 +9,12 @@ template IoFileMgrForKernel_Directories() {
 	}
 	
 	void initNids_Directories() {
-		mixin(registerd!(0x55F4717D, sceIoChdir));
-		mixin(registerd!(0xB29DDF9C, sceIoDopen));
-		mixin(registerd!(0xEB092469, sceIoDclose));
-		mixin(registerd!(0xE3EB004C, sceIoDread));
-		mixin(registerd!(0x06A70004, sceIoMkdir));
-		mixin(registerd!(0x1117C65F, sceIoRmdir));
+		mixin(registerFunction!(0x55F4717D, sceIoChdir));
+		mixin(registerFunction!(0xB29DDF9C, sceIoDopen));
+		mixin(registerFunction!(0xEB092469, sceIoDclose));
+		mixin(registerFunction!(0xE3EB004C, sceIoDread));
+		mixin(registerFunction!(0x06A70004, sceIoMkdir));
+		mixin(registerFunction!(0x1117C65F, sceIoRmdir));
 	}
 	
 	//DirectoryIterator[SceUID] openedDirectories;

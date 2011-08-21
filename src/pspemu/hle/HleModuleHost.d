@@ -1,8 +1,18 @@
 module pspemu.hle.HleModuleHost;
 
 import std.string;
+import std.conv;
+import pspemu.hle.HleModule;
+import pspemu.utils.TraitsUtils;
 
-static struct HleFunction {
+import pspemu.hle.HleModuleMethodBridgeGenerator;
+
+public import pspemu.hle.HleFunctionAttribute;
+
+public import pspemu.hle.kd.Types;
+public import pspemu.hle.kd.SceKernelErrors;
+
+static class HleFunction {
 	HleModuleHost pspModule;
 	uint nid;
 	string name;
@@ -15,21 +25,29 @@ abstract class HleModuleHost : HleModule {
 	string name;
 	alias uint Nid;
 	
+	protected alias HleFunctionAttribute HLE_FA;
+	
 	HleFunction[Nid   ] hleFunctionsByNid;
 	HleFunction[string] hleFunctionsByName;
 	
 	__gshared ClassInfo[] registeredModules;
+	
+	protected void __addHleFunction(HleFunction hleFunction) {
+		hleFunctionsByNid[hleFunction.nid] = hleFunction;
+		hleFunctionsByName[hleFunction.name] = hleFunction;
+	}
 
 	static string registerFunction(uint id, alias func, uint requiredFirmwareVersion)() {
 		return (""
-			~ "hleFunctionsByName[\"" ~ FunctionName!(func) ~ "\"] = "
-			~ "hleFunctionsByNid[" ~ to!string(id) ~ "] = "
-			~ "HleFunction("
+			//~ "writefln(1);"
+			/*
+			~ "__addHleFunction(HleFunction("
 				~ "this, "
 				~ to!string(id) ~ ", "
 				~ "\"" ~ FunctionName!(func) ~ "\", "
 				~ HleModuleMethodBridgeGenerator.getDelegate!(func, id)
-			~ ");"
+			~ "));"
+			*/
 		);
 	}
 
@@ -39,17 +57,24 @@ abstract class HleModuleHost : HleModule {
 	static string registerModule(string moduleName) {
 		return "HleModuleHost.registeredModules ~= " ~ moduleName ~ ".classinfo;";
 	}
+	
+	public SceModule* getSceModulePointer() {
+		return null;
+	}
 
+	/*
 	static string registerModule(TypeInfo_Class moduleClass) {
 		//writefln("%s", moduleClass);
 		assert(0);
 		return "";
 	}
-
-	/// deprecated
-	static alias registerFunction register;
-	/// deprecated
-	static alias registerFunction registerd;
+	*/
+	
+	template TRegisterModule() {
+		static this() {
+			registerModule(typeof(this).stringof);
+		}
+	}
 }
 
 /+

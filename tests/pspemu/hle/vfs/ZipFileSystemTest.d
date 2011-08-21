@@ -5,6 +5,8 @@ import pspemu.hle.vfs.ZipFileSystem;
 import tests.Test;
 
 class ZipFileSystemTest : Test {
+	mixin TRegisterTest;
+	
 	ZipArchive    zipArchive;
 	ZipFileSystem zipFileSystem;
 	

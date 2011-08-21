@@ -2,10 +2,12 @@ module pspemu.hle.kd.loadexec.sceDmac;
 
 import pspemu.hle.ModuleNative;
 
-class sceDmac : ModuleNative {
+class sceDmac : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0x617F3FE6, sceDmacMemcpy));
-		mixin(registerd!(0xD97F94D8, sceDmacTryMemcpy));
+		mixin(registerFunction!(0x617F3FE6, sceDmacMemcpy));
+		mixin(registerFunction!(0xD97F94D8, sceDmacTryMemcpy));
 	}
 	
 	/**
@@ -22,8 +24,4 @@ class sceDmac : ModuleNative {
 	}
 	
 	alias sceDmacMemcpy sceDmacTryMemcpy;
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceDmac"));
 }

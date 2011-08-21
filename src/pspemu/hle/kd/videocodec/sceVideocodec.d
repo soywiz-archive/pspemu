@@ -3,16 +3,18 @@ module pspemu.hle.kd.videocodec.sceVideocodec;
 import pspemu.hle.ModuleNative;
 
 
-class sceVideocodec : ModuleNative {
+class sceVideocodec : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x2D31F5B1, sceVideocodecGetEDRAM));
-		mixin(registerd!(0x4F160BF4, sceVideocodecReleaseEDRAM));
-		mixin(registerd!(0xC01EC829, sceVideocodecOpen));
-		mixin(registerd!(0x17099F0A, sceVideocodecInit));
-		mixin(registerd!(0xDBA273FA, sceVideocodecDecode));
-		mixin(registerd!(0xA2F0564E, sceVideocodecStop));
-		mixin(registerd!(0x307E6E1C, sceVideocodecDelete));
-		mixin(registerd!(0x745A7B7A, sceVideocodecSetMemory));
+		mixin(registerFunction!(0x2D31F5B1, sceVideocodecGetEDRAM));
+		mixin(registerFunction!(0x4F160BF4, sceVideocodecReleaseEDRAM));
+		mixin(registerFunction!(0xC01EC829, sceVideocodecOpen));
+		mixin(registerFunction!(0x17099F0A, sceVideocodecInit));
+		mixin(registerFunction!(0xDBA273FA, sceVideocodecDecode));
+		mixin(registerFunction!(0xA2F0564E, sceVideocodecStop));
+		mixin(registerFunction!(0x307E6E1C, sceVideocodecDelete));
+		mixin(registerFunction!(0x745A7B7A, sceVideocodecSetMemory));
 	}
 
 	int sceVideocodecOpen(uint *Buffer, int Type) {
@@ -42,8 +44,4 @@ class sceVideocodec : ModuleNative {
 	void sceVideocodecSetMemory() { unimplemented(); }
 	void sceVideocodecStop() { unimplemented(); }
 
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceVideocodec"));
 }

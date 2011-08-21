@@ -11,11 +11,11 @@ template ThreadManForUser_Callbacks() {
 	}
 	
 	void initNids_Callbacks() {
-		mixin(registerd!(0xE81CAF8F, sceKernelCreateCallback));
-		mixin(registerd!(0xEDBA5844, sceKernelDeleteCallback));
-		mixin(registerd!(0x349D6D6C, sceKernelCheckCallback));
-		mixin(registerd!(0xC11BA8C4, sceKernelNotifyCallback));
-	    mixin(registerd!(0x2A3D44FF, sceKernelGetCallbackCount));
+		mixin(registerFunction!(0xE81CAF8F, sceKernelCreateCallback));
+		mixin(registerFunction!(0xEDBA5844, sceKernelDeleteCallback));
+		mixin(registerFunction!(0x349D6D6C, sceKernelCheckCallback));
+		mixin(registerFunction!(0xC11BA8C4, sceKernelNotifyCallback));
+	    mixin(registerFunction!(0x2A3D44FF, sceKernelGetCallbackCount));
 	}
 	
 	/**

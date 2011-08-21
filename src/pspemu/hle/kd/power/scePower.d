@@ -4,59 +4,61 @@ import pspemu.hle.ModuleNative;
 
 import pspemu.hle.Callbacks;
 
-class scePower : ModuleNative {
+class scePower : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xEFD3C963, scePowerTick));
+		mixin(registerFunction!(0xEFD3C963, scePowerTick));
 
-		mixin(registerd!(0x04B7766E, scePowerRegisterCallback));
-		mixin(registerd!(0xDFA8BAF8, scePowerUnregisterCallback));
+		mixin(registerFunction!(0x04B7766E, scePowerRegisterCallback));
+		mixin(registerFunction!(0xDFA8BAF8, scePowerUnregisterCallback));
 
-		mixin(registerd!(0x87440F5E, scePowerIsPowerOnline));
-		mixin(registerd!(0x0AFD0D8B, scePowerIsBatteryExist));
-		mixin(registerd!(0x1E490401, scePowerIsBatteryCharging));
-		mixin(registerd!(0xB4432BC8, scePowerGetBatteryChargingStatus));
-		mixin(registerd!(0xD3075926, scePowerIsLowBattery));
-		mixin(registerd!(0x2085D15D, scePowerGetBatteryLifePercent));
-		mixin(registerd!(0x8EFB3FA2, scePowerGetBatteryLifeTime));
-		mixin(registerd!(0x28E12023, scePowerGetBatteryTemp));
-		mixin(registerd!(0x483CE86B, scePowerGetBatteryVolt));
-		mixin(registerd!(0xD6D016EF, scePowerLock));
-		mixin(registerd!(0xCA3D34C1, scePowerUnlock));
-		mixin(registerd!(0xFEE03A2F, scePowerGetCpuClockFrequency));
-		mixin(registerd!(0x478FE6F5, scePowerGetBusClockFrequency));
-		mixin(registerd!(0x737486F2, scePowerSetClockFrequency));
-		mixin(registerd!(0x843FBF43, scePowerSetCpuClockFrequency));
-		mixin(registerd!(0xB8D7B3FB, scePowerSetBusClockFrequency));
-		mixin(registerd!(0xFDB5BFE9, scePowerGetCpuClockFrequencyInt));
+		mixin(registerFunction!(0x87440F5E, scePowerIsPowerOnline));
+		mixin(registerFunction!(0x0AFD0D8B, scePowerIsBatteryExist));
+		mixin(registerFunction!(0x1E490401, scePowerIsBatteryCharging));
+		mixin(registerFunction!(0xB4432BC8, scePowerGetBatteryChargingStatus));
+		mixin(registerFunction!(0xD3075926, scePowerIsLowBattery));
+		mixin(registerFunction!(0x2085D15D, scePowerGetBatteryLifePercent));
+		mixin(registerFunction!(0x8EFB3FA2, scePowerGetBatteryLifeTime));
+		mixin(registerFunction!(0x28E12023, scePowerGetBatteryTemp));
+		mixin(registerFunction!(0x483CE86B, scePowerGetBatteryVolt));
+		mixin(registerFunction!(0xD6D016EF, scePowerLock));
+		mixin(registerFunction!(0xCA3D34C1, scePowerUnlock));
+		mixin(registerFunction!(0xFEE03A2F, scePowerGetCpuClockFrequency));
+		mixin(registerFunction!(0x478FE6F5, scePowerGetBusClockFrequency));
+		mixin(registerFunction!(0x737486F2, scePowerSetClockFrequency));
+		mixin(registerFunction!(0x843FBF43, scePowerSetCpuClockFrequency));
+		mixin(registerFunction!(0xB8D7B3FB, scePowerSetBusClockFrequency));
+		mixin(registerFunction!(0xFDB5BFE9, scePowerGetCpuClockFrequencyInt));
 
-		mixin(registerd!(0x2B51FE2F, scePower_2B51FE2F));
-		mixin(registerd!(0x442BFBAC, scePower_442BFBAC));
-		mixin(registerd!(0xEDC13FE5, scePowerGetIdleTimer));
-		mixin(registerd!(0x7F30B3B1, scePowerIdleTimerEnable));
-		mixin(registerd!(0x972CE941, scePowerIdleTimerDisable));
-		mixin(registerd!(0x27F3292C, scePowerBatteryUpdateInfo));
-		mixin(registerd!(0xE8E4E204, scePower_E8E4E204));
-		mixin(registerd!(0xB999184C, scePowerGetLowBatteryCapacity));
-		mixin(registerd!(0x78A1A796, scePower_78A1A796));
-		mixin(registerd!(0x94F5A53F, scePowerGetBatteryRemainCapacity));
-		mixin(registerd!(0xFD18A0FF, scePowerGetBatteryFullCapacity));
-		mixin(registerd!(0x862AE1A6, scePowerGetBatteryElec));
-		mixin(registerd!(0x23436A4A, scePower_23436A4A));
-		mixin(registerd!(0x0CD21B1F, scePowerSetPowerSwMode));
-		mixin(registerd!(0x165CE085, scePowerGetPowerSwMode));
-		mixin(registerd!(0xDB62C9CF, scePowerCancelRequest));
-		mixin(registerd!(0x7FA406DD, scePowerIsRequest));
-		mixin(registerd!(0x2B7C7CF4, scePowerRequestStandby));
-		mixin(registerd!(0xAC32C9CC, scePowerRequestSuspend));
-		mixin(registerd!(0x2875994B, scePower_2875994B));
-		mixin(registerd!(0x3951AF53, scePowerWaitRequestCompletion));
-		mixin(registerd!(0x0074EF9B, scePowerGetResumeCount));
-		mixin(registerd!(0xDB9D28DD, scePowerUnregitserCallback));
-		mixin(registerd!(0xBD681969, scePowerGetBusClockFrequencyInt));
-		mixin(registerd!(0xB1A52C83, scePowerGetCpuClockFrequencyFloat));
-		mixin(registerd!(0x9BADB3EB, scePowerGetBusClockFrequencyFloat));
+		mixin(registerFunction!(0x2B51FE2F, scePower_2B51FE2F));
+		mixin(registerFunction!(0x442BFBAC, scePower_442BFBAC));
+		mixin(registerFunction!(0xEDC13FE5, scePowerGetIdleTimer));
+		mixin(registerFunction!(0x7F30B3B1, scePowerIdleTimerEnable));
+		mixin(registerFunction!(0x972CE941, scePowerIdleTimerDisable));
+		mixin(registerFunction!(0x27F3292C, scePowerBatteryUpdateInfo));
+		mixin(registerFunction!(0xE8E4E204, scePower_E8E4E204));
+		mixin(registerFunction!(0xB999184C, scePowerGetLowBatteryCapacity));
+		mixin(registerFunction!(0x78A1A796, scePower_78A1A796));
+		mixin(registerFunction!(0x94F5A53F, scePowerGetBatteryRemainCapacity));
+		mixin(registerFunction!(0xFD18A0FF, scePowerGetBatteryFullCapacity));
+		mixin(registerFunction!(0x862AE1A6, scePowerGetBatteryElec));
+		mixin(registerFunction!(0x23436A4A, scePower_23436A4A));
+		mixin(registerFunction!(0x0CD21B1F, scePowerSetPowerSwMode));
+		mixin(registerFunction!(0x165CE085, scePowerGetPowerSwMode));
+		mixin(registerFunction!(0xDB62C9CF, scePowerCancelRequest));
+		mixin(registerFunction!(0x7FA406DD, scePowerIsRequest));
+		mixin(registerFunction!(0x2B7C7CF4, scePowerRequestStandby));
+		mixin(registerFunction!(0xAC32C9CC, scePowerRequestSuspend));
+		mixin(registerFunction!(0x2875994B, scePower_2875994B));
+		mixin(registerFunction!(0x3951AF53, scePowerWaitRequestCompletion));
+		mixin(registerFunction!(0x0074EF9B, scePowerGetResumeCount));
+		mixin(registerFunction!(0xDB9D28DD, scePowerUnregitserCallback));
+		mixin(registerFunction!(0xBD681969, scePowerGetBusClockFrequencyInt));
+		mixin(registerFunction!(0xB1A52C83, scePowerGetCpuClockFrequencyFloat));
+		mixin(registerFunction!(0x9BADB3EB, scePowerGetBusClockFrequencyFloat));
 		
-		mixin(registerd!(0xEBD177D6, scePowerSetClockFrequency));
+		mixin(registerFunction!(0xEBD177D6, scePowerSetClockFrequency));
 	}
 	
 	// PLL clock:
@@ -412,8 +414,4 @@ class scePower : ModuleNative {
 	int scePowerGetCpuClockFrequencyInt() {
 		return cpufreq;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("scePower"));
 }

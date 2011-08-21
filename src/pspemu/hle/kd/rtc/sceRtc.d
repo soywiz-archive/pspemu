@@ -7,25 +7,27 @@ import pspemu.hle.kd.rtc.Types;
 
 // http://pspemu.googlecode.com/svn-history/r166/trunk/extra/psp-gdc/pspsdk/psprtc.d
 
-class sceRtc : ModuleNative {
+class sceRtc : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xC41C2853, sceRtcGetTickResolution));
-		mixin(registerd!(0x3F7AD767, sceRtcGetCurrentTick));
-		mixin(registerd!(0x05EF322C, sceRtcGetDaysInMonth));
-		mixin(registerd!(0x57726BC1, sceRtcGetDayOfWeek));
-		mixin(registerd!(0x26D25A5D, sceRtcTickAddMicroseconds));
+		mixin(registerFunction!(0xC41C2853, sceRtcGetTickResolution));
+		mixin(registerFunction!(0x3F7AD767, sceRtcGetCurrentTick));
+		mixin(registerFunction!(0x05EF322C, sceRtcGetDaysInMonth));
+		mixin(registerFunction!(0x57726BC1, sceRtcGetDayOfWeek));
+		mixin(registerFunction!(0x26D25A5D, sceRtcTickAddMicroseconds));
 
-		mixin(registerd!(0x44F45E05, sceRtcTickAddTicks));
-		mixin(registerd!(0x6FF40ACC, sceRtcGetTick));
-		mixin(registerd!(0x7ED29E40, sceRtcSetTick));
-		mixin(registerd!(0xE7C27D1B, sceRtcGetCurrentClockLocalTime));
+		mixin(registerFunction!(0x44F45E05, sceRtcTickAddTicks));
+		mixin(registerFunction!(0x6FF40ACC, sceRtcGetTick));
+		mixin(registerFunction!(0x7ED29E40, sceRtcSetTick));
+		mixin(registerFunction!(0xE7C27D1B, sceRtcGetCurrentClockLocalTime));
 		
-		mixin(registerd!(0x34885E0D, sceRtcConvertUtcToLocalTime));
+		mixin(registerFunction!(0x34885E0D, sceRtcConvertUtcToLocalTime));
 
-		mixin(registerd!(0x27C4594C, sceRtcGetTime_t));
+		mixin(registerFunction!(0x27C4594C, sceRtcGetTime_t));
 		
-		mixin(registerd!(0x4CFA57B0, sceRtcGetCurrentClock));
-		mixin(registerd!(0x3A807CC8, sceRtcSetTime_t));
+		mixin(registerFunction!(0x4CFA57B0, sceRtcGetCurrentClock));
+		mixin(registerFunction!(0x3A807CC8, sceRtcSetTime_t));
 	}
 	
 	/**
@@ -189,9 +191,5 @@ class sceRtc : ModuleNative {
 
 
 class sceRtc_driver : sceRtc {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceRtc"));
-	mixin(ModuleNative.registerModule("sceRtc_driver"));
+	mixin TRegisterModule;
 }

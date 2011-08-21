@@ -19,13 +19,15 @@ import pspemu.hle.Callbacks;
 
 // @TODO! Fixme! In which thread should handlers be executed?
 
-class InterruptManager : ModuleNative {
+class InterruptManager : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xCA04A2B9, sceKernelRegisterSubIntrHandler));
-		mixin(registerd!(0xFB8E22EC, sceKernelEnableSubIntr));
-		mixin(registerd!(0xD61E6961, sceKernelReleaseSubIntrHandler));
-		mixin(registerd!(0xD2E8363F, sceKernelQueryIntrHandlerInfo)); // QueryIntrHandlerInfo
-		mixin(registerd!(0x36B1EF81, sceKernelQueryIntrHandlerInfo));
+		mixin(registerFunction!(0xCA04A2B9, sceKernelRegisterSubIntrHandler));
+		mixin(registerFunction!(0xFB8E22EC, sceKernelEnableSubIntr));
+		mixin(registerFunction!(0xD61E6961, sceKernelReleaseSubIntrHandler));
+		mixin(registerFunction!(0xD2E8363F, sceKernelQueryIntrHandlerInfo)); // QueryIntrHandlerInfo
+		mixin(registerFunction!(0x36B1EF81, sceKernelQueryIntrHandlerInfo));
 	}
 
 	//Interrupts.Callback[int][int] handlers;
@@ -111,8 +113,4 @@ class InterruptManager : ModuleNative {
 		unimplemented();
 		return -1;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("InterruptManager"));
 }

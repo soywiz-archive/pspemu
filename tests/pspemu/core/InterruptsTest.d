@@ -5,6 +5,8 @@ import pspemu.core.Interrupts;
 import tests.Test;
 
 class InterruptsTest : Test {
+	mixin TRegisterTest;
+	
 	Interrupts interrupts;
 	
 	void setUp() {

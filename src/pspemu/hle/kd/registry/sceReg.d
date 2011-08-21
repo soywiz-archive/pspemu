@@ -11,17 +11,19 @@ import pspemu.hle.ModuleManager;
 
 import pspemu.utils.VirtualFileSystem;
 
-class sceReg : ModuleNative {
+class sceReg : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x92E41280, sceRegOpenRegistry));
-		mixin(registerd!(0x39461B4D, sceRegFlushRegistry));
-		mixin(registerd!(0x1D8A762E, sceRegOpenCategory));
-		mixin(registerd!(0xFA8A5739, sceRegCloseRegistry));
-		mixin(registerd!(0xD4475AA8, sceRegGetKeyInfo));
-		mixin(registerd!(0x0CAE832B, sceRegCloseCategory));
-		mixin(registerd!(0x17768E14, sceRegSetKeyValue));
-		mixin(registerd!(0x0D69BF40, sceRegFlushCategory));
-		mixin(registerd!(0x28A8E98A, sceRegGetKeyValue));
+		mixin(registerFunction!(0x92E41280, sceRegOpenRegistry));
+		mixin(registerFunction!(0x39461B4D, sceRegFlushRegistry));
+		mixin(registerFunction!(0x1D8A762E, sceRegOpenCategory));
+		mixin(registerFunction!(0xFA8A5739, sceRegCloseRegistry));
+		mixin(registerFunction!(0xD4475AA8, sceRegGetKeyInfo));
+		mixin(registerFunction!(0x0CAE832B, sceRegCloseCategory));
+		mixin(registerFunction!(0x17768E14, sceRegSetKeyValue));
+		mixin(registerFunction!(0x0D69BF40, sceRegFlushCategory));
+		mixin(registerFunction!(0x28A8E98A, sceRegGetKeyValue));
 	}
 
 	void initModule() {
@@ -315,9 +317,4 @@ class Registry : RegistryNode {
 
 	void set(string path, string key, uint   value) { this.access(path, true) ~= new RegistryNode(key, value); }
 	void set(string path, string key, string value) { this.access(path, true) ~= new RegistryNode(key, value); }
-}
-
-
-static this() {
-	mixin(ModuleNative.registerModule("sceReg"));
 }

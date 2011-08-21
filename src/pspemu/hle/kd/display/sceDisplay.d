@@ -23,7 +23,9 @@ import pspemu.hle.kd.display.Types;
 
 import pspemu.hle.HleFunction;
 
-class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
+class sceDisplay_driver : HleModuleHost { // Flags: 0x00010000
+	mixin TRegisterModule;
+
 	void initNids() {
 		mixin(HleFunction.registerNids);
 	}
@@ -223,9 +225,5 @@ class sceDisplay_driver : ModuleNative { // Flags: 0x00010000
 }
 
 class sceDisplay : sceDisplay_driver { // Flags: 0x40010000
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceDisplay"));
-	mixin(ModuleNative.registerModule("sceDisplay_driver"));
+	mixin TRegisterModule;
 }

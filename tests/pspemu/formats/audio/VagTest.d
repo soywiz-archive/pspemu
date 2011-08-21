@@ -5,6 +5,8 @@ import pspemu.formats.audio.Vag;
 import tests.Test;
 
 class VagTest : Test {
+	mixin TRegisterTest;
+	
 	void testLoadWithHeader() {
 		VAG vag = new VAG();
 		vag.load(import("VAG_WITH_HEADER"));

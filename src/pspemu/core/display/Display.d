@@ -18,8 +18,6 @@ import pspemu.utils.Event;
 
 import pspemu.core.Interrupts;
 
-import pspemu.extra.Cheats;
-
 import pspemu.utils.sync.WaitEvent;
 import pspemu.utils.sync.WaitMultipleObjects;
 

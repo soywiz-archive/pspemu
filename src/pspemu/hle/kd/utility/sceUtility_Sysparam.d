@@ -3,9 +3,11 @@ module pspemu.hle.kd.utility.sceUtility_Sysparam;
 import std.process;
 
 template sceUtility_sysparams() {
+	mixin TRegisterModule;
+	
 	void initNids_sysparams() {
-		mixin(registerd!(0xA5DA2406, sceUtilityGetSystemParamInt));
-		mixin(registerd!(0x34B78343, sceUtilityGetSystemParamString));
+		mixin(registerFunction!(0xA5DA2406, sceUtilityGetSystemParamInt));
+		mixin(registerFunction!(0x34B78343, sceUtilityGetSystemParamString));
 	}
 
 	/**

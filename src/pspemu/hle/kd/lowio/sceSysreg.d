@@ -2,12 +2,14 @@ module pspemu.hle.kd.lowio.sceSysreg;
 
 import pspemu.hle.ModuleNative;
 
-class sceSysreg_driver : ModuleNative {
+class sceSysreg_driver : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0xDE59DACB, sceSysregMeResetEnable));
-		mixin(registerd!(0x44F6CDA7, sceSysregMeBusClockEnable));
-		mixin(registerd!(0x2DB0EB28, sceSysregMeResetDisable));
-		mixin(registerd!(0x7558064A, sceSysregVmeResetDisable));
+		mixin(registerFunction!(0xDE59DACB, sceSysregMeResetEnable));
+		mixin(registerFunction!(0x44F6CDA7, sceSysregMeBusClockEnable));
+		mixin(registerFunction!(0x2DB0EB28, sceSysregMeResetDisable));
+		mixin(registerFunction!(0x7558064A, sceSysregVmeResetDisable));
 	}
 	
 	/**
@@ -69,8 +71,4 @@ class sceSysreg_driver : ModuleNative {
 		unimplemented_notice();
 		return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceSysreg_driver"));
 }

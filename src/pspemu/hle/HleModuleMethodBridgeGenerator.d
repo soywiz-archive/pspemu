@@ -28,6 +28,7 @@ class HleModuleMethodBridgeGenerator {
 	
 	static public string getCallWithDebug(alias nativeFunction, uint nid = 0)() {
 		string r = "";
+		string functionName = FunctionName!nativeFunction;
 		{
 			r ~= "currentExecutingNid = " ~ to!string(nid) ~ ";";
 			r ~= "Logger.log(Logger.Level.TRACE, \"Module\", std.string.format(\"%s\", \"" ~ functionName ~ "\"));";

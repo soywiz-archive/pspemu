@@ -47,7 +47,7 @@ struct HleModuleMethodParamParsing {
 		// An integral value.
 		return *cast(T *)getParameterPointer(n);
 	}
-
+	
 	/**
 	 * Obtains the size of a parameter.
 	 */

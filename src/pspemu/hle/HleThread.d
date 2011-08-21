@@ -17,6 +17,7 @@ class HleThread : HleThreadBase {
 	public Registers registers;
 	protected ICpu cpu;
 	protected Fiber fiber;
+	protected bool delegate() isSleeping;
 	
 	this(ICpu cpu) {
 		this(cpu, new Registers);

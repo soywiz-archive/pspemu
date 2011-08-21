@@ -21,6 +21,7 @@ class GdbServerConnectionBase {
 	GdbProcessorRegisters registers;
 	
 	bool debugData;
+	bool debugMaster = false;
 	
 	this() {
 		init();
@@ -97,7 +98,9 @@ class GdbServerConnectionBase {
 		char type = packet[0];
 		
 		if (type != 'm') {
-			writefln("recvData: %s", packet);
+			if (debugMaster) {
+				writefln("recvData: %s", packet);
+			}
 			debugData = true;
 		} else {
 			debugData = false;

@@ -79,7 +79,9 @@ class FixedPool : MemoryPool {
 /**
  * Library imports for the kernel threading library.
  */
-class ThreadManForUser : ModuleNative {
+class ThreadManForUser : HleModuleHost {
+	mixin TRegisterModule;
+	
 	mixin ThreadManForUser_Threads;
 	mixin ThreadManForUser_Semaphores;
 	mixin ThreadManForUser_Events;
@@ -111,28 +113,28 @@ class ThreadManForUser : ModuleNative {
 		initNids_MsgPipes();
 		initNids_Mbx();
 		
-		mixin(registerd!(0x369ED59D, sceKernelGetSystemTimeLow));
-		mixin(registerd!(0x82BC5777, sceKernelGetSystemTimeWide));
+		mixin(registerFunction!(0x369ED59D, sceKernelGetSystemTimeLow));
+		mixin(registerFunction!(0x82BC5777, sceKernelGetSystemTimeWide));
 
-		mixin(registerd!(0xC8CD158C, sceKernelUSec2SysClockWide));
+		mixin(registerFunction!(0xC8CD158C, sceKernelUSec2SysClockWide));
 
-		mixin(registerd!(0x56C039B5, sceKernelCreateVpl));
-		//mixin(registerd!(0xD979E9BF, sceKernelAllocateVpl));
-		mixin(registerd!(0xAF36D708, sceKernelTryAllocateVpl));
-		mixin(registerd!(0x39810265, sceKernelReferVplStatus));
-		mixin(registerd!(0xB736E9FF, sceKernelFreeVpl));
+		mixin(registerFunction!(0x56C039B5, sceKernelCreateVpl));
+		//mixin(registerFunction!(0xD979E9BF, sceKernelAllocateVpl));
+		mixin(registerFunction!(0xAF36D708, sceKernelTryAllocateVpl));
+		mixin(registerFunction!(0x39810265, sceKernelReferVplStatus));
+		mixin(registerFunction!(0xB736E9FF, sceKernelFreeVpl));
 
-		mixin(registerd!(0x64D4540E, sceKernelReferThreadProfiler));
-		mixin(registerd!(0x8218B4DD, sceKernelReferGlobalProfiler));
+		mixin(registerFunction!(0x64D4540E, sceKernelReferThreadProfiler));
+		mixin(registerFunction!(0x8218B4DD, sceKernelReferGlobalProfiler));
 		
-		mixin(registerd!(0xC07BB470, sceKernelCreateFpl));
-		mixin(registerd!(0x623AE665, sceKernelTryAllocateFpl));
-		mixin(registerd!(0xD979E9BF, sceKernelAllocateFpl));
+		mixin(registerFunction!(0xC07BB470, sceKernelCreateFpl));
+		mixin(registerFunction!(0x623AE665, sceKernelTryAllocateFpl));
+		mixin(registerFunction!(0xD979E9BF, sceKernelAllocateFpl));
 		
-	    mixin(registerd!(0x110DEC9A, sceKernelUSec2SysClock));
-	    mixin(registerd!(0xC8CD158C, sceKernelUSec2SysClockWide));
+	    mixin(registerFunction!(0x110DEC9A, sceKernelUSec2SysClock));
+	    mixin(registerFunction!(0xC8CD158C, sceKernelUSec2SysClockWide));
 	    
-	    mixin(registerd!(0x912354A7, sceKernelRotateThreadReadyQueue));
+	    mixin(registerFunction!(0x912354A7, sceKernelRotateThreadReadyQueue));
 	}
 	
 	void sceKernelRotateThreadReadyQueue() {

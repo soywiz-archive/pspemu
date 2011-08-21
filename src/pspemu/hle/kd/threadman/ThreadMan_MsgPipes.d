@@ -25,13 +25,13 @@ template ThreadManForUser_MsgPipes() {
 	}
 	
 	void initNids_MsgPipes() {
-		mixin(registerd!(0x7C0DC2A0, sceKernelCreateMsgPipe));
-		mixin(registerd!(0xF0B7DA1C, sceKernelDeleteMsgPipe));
-		mixin(registerd!(0x876DBFAD, sceKernelSendMsgPipe));
-		mixin(registerd!(0x884C9F90, sceKernelTrySendMsgPipe));
-		mixin(registerd!(0x74829B76, sceKernelReceiveMsgPipe));
-		mixin(registerd!(0xDF52098F, sceKernelTryReceiveMsgPipe));
-		mixin(registerd!(0x33BE4024, sceKernelReferMsgPipeStatus));
+		mixin(registerFunction!(0x7C0DC2A0, sceKernelCreateMsgPipe));
+		mixin(registerFunction!(0xF0B7DA1C, sceKernelDeleteMsgPipe));
+		mixin(registerFunction!(0x876DBFAD, sceKernelSendMsgPipe));
+		mixin(registerFunction!(0x884C9F90, sceKernelTrySendMsgPipe));
+		mixin(registerFunction!(0x74829B76, sceKernelReceiveMsgPipe));
+		mixin(registerFunction!(0xDF52098F, sceKernelTryReceiveMsgPipe));
+		mixin(registerFunction!(0x33BE4024, sceKernelReferMsgPipeStatus));
 	}
 
 	/**

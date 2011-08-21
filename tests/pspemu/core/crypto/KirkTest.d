@@ -6,6 +6,8 @@ import pspemu.core.crypto.kirk;
 import tests.Test;
 
 class KirkTest : Test {
+	mixin TRegisterTest;
+	
 	void testKirk() {
 		/*
 		ubyte[] data_inp = cast(ubyte[])"Hello World";

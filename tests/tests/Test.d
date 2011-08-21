@@ -2,7 +2,44 @@ module tests.Test;
 
 public import std.stdio;
 
+class TestRun {
+	static struct Method {
+		void delegate() callback;
+		string name;
+	}
+
+	public string className;
+	public Test test;
+	public Method [] methods;
+	
+	static public TestRun fromClass(T : Test)(T test) {
+		TestRun testRun = new TestRun();
+		testRun.className = T.stringof;
+		testRun.test = test; 
+		
+	    foreach (i, member; __traits(allMembers, T)) {
+	    	static if (member.length > 4 && member[0..4] == "test") {
+   				mixin("testRun.methods ~= Method(&test." ~ member ~ ", \"" ~ member ~ "\");");
+	    	}
+	    }
+	    
+	    return testRun;
+	}
+}
+
+
 class Test {
+	template TRegisterTest() {
+		static this() {
+			__registeredTestRuns ~= TestRun.fromClass(new typeof(this));
+			//TestsRunner.run(new typeof(this));
+			//__registeredTests ~= new typeof(this);
+			//writefln("%s", new typeof(this));
+		}
+	}
+	
+	public static TestRun[] __registeredTestRuns;
+	
 	uint _assertsTotal;
 	uint _assertsFailed;
 	

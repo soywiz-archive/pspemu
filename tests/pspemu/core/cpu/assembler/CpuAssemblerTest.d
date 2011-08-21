@@ -8,6 +8,8 @@ import pspemu.core.cpu.tables.Table;
 import pspemu.core.Memory;
 
 class CpuAssemblerTest : Test {
+	mixin TRegisterTest;
+	
 	Memory memory;
 	CpuAssembler cpuAssembler;
 	

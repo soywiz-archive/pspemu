@@ -13,6 +13,14 @@ class TestsRunner {
 	static int assertsFailed;
 	static int assertsIncomplete;
 	
+	static public void runRegisteredTests() {
+		TestsRunner.suite({
+			foreach (testRun; Test.__registeredTestRuns) {
+				TestsRunner.run(testRun);
+			}
+		});
+	}
+	
 	static public void suite(void delegate() callback) {
 		assertsTotal = 0;
 		assertsFailed = 0;
@@ -30,40 +38,39 @@ class TestsRunner {
 		}
 	}
 	
-	static public void run(T : Test)(T object) {
-		writefln("%s:", T.stringof);
+	static public void run(TestRun testRun) {
+		writefln("%s:", testRun.className);
 		
 		int totalCount;
 		int incompleteCount;
 		int failedCount;
-	    foreach (i, member; __traits(allMembers, T)) {
-	    	static if (member.length > 4 && member[0..4] == "test") {
-	    		writef("  %s...", member);
-	    		try {
-	    			object.__setUp();
-	    			object.setUp();
-	    			try {
-	    				__traits(getMember, object, member)();
-	    			} finally {
-	    				object.tearDown();
-	    				object.__tearDown();
-	    			}
-	    			
-	    			totalCount += object._assertsTotal; 
-	    			
-	    			if (object._assertsTotal == 0) {
-	    				incompleteCount++;
-	    				writefln("NO ASSERTS");
-	    			} else {
-		    			writefln("OK");
-		    		}
-	    		} catch (Throwable o) {
-	    			failedCount++;
 
-	    			writefln("%s", o);
-	    			writefln("FAIL");
+	    foreach (i, method; testRun.methods) {
+    		writef("  %s...", method.name);
+    		try {
+    			testRun.test.__setUp();
+    			testRun.test.setUp();
+    			try {
+    				method.callback();
+    			} finally {
+    				testRun.test.tearDown();
+    				testRun.test.__tearDown();
+    			}
+    			
+    			totalCount += testRun.test._assertsTotal; 
+    			
+    			if (testRun.test._assertsTotal == 0) {
+    				incompleteCount++;
+    				writefln("NO ASSERTS");
+    			} else {
+	    			writefln("OK");
 	    		}
-	    	}
+    		} catch (Throwable o) {
+    			failedCount++;
+
+    			writefln("%s", o);
+    			writefln("FAIL");
+    		}
 	    }
 
 		if (totalCount) {

@@ -6,6 +6,8 @@ import pspemu.core.battery.Battery;
 import tests.Test;
 
 class BatteryTest : Test {
+	mixin TRegisterTest;
+	
 	IBattery battery;
 	
 	this() {

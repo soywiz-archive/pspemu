@@ -5,6 +5,8 @@ import pspemu.hle.vfs.VirtualFileSystem;
 import tests.Test;
 
 class VirtualFileSystemTest : Test {
+	mixin TRegisterTest;
+	
 	void testCompiles() {
 		scope vfs = new VirtualFileSystem();
 		vfs.init();

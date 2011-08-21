@@ -9,6 +9,8 @@ import tests.Test;
 import core.thread;
 
 class DisplayTest : Test {
+	mixin TRegisterTest;
+	
 	Interrupts interrupts;
 	IDisplay display;
 	
@@ -26,7 +28,7 @@ class DisplayTest : Test {
 
 		display.start();
 		
-		Thread.sleep(dur!"msecs"(16 * 2 + 4));
+		Thread.sleep(dur!"msecs"(cast(long)((1000 / Display.vsync_hz) * 2.5)));
 		
 		assertTrue(display.currentVblankCount >= 2);
 	}

@@ -2,22 +2,17 @@ module pspemu.hle.kd.wlan.sceWlan;
 
 import std.stdio;
 
-import pspemu.hle.ModuleNative;
+import pspemu.hle.HleModuleHost;
 
+class sceWlanDrv : HleModuleHost {
+	mixin TRegisterModule;
 
-class sceWlanDrv : ModuleNative {
-	void initNids() {
-		mixin(registerd!(0x93440B11, sceWlanDevIsPowerOn));
-		mixin(registerd!(0xD7763699, sceWlanGetSwitchState));
-		mixin(registerd!(0x0C622081, sceWlanGetEtherAddr));
-	}
-	
 	/**
 	 * Determine if the wlan device is currently powered on
 	 *
 	 * @return 0 if off, 1 if on
 	 */
-	int sceWlanDevIsPowerOn() {
+	mixin(HLE_FA(0x93440B11, 150)); int sceWlanDevIsPowerOn() {
 		return 0;
 	}
 	
@@ -26,7 +21,7 @@ class sceWlanDrv : ModuleNative {
 	 *
 	 * @return 0 if off, 1 if on
 	 */
-	int sceWlanGetSwitchState() {
+	mixin(HLE_FA(0xD7763699, 150)); int sceWlanGetSwitchState() {
 		return 0;
 	}
 	
@@ -37,9 +32,9 @@ class sceWlanDrv : ModuleNative {
 	 * requests 8 so pass it 8 bytes just in case)
 	 * @return 0 on success, < 0 on error
 	 */
-	int sceWlanGetEtherAddr(u8 *etherAddr) {
-		for (int n = 0; n < 6; n++) etherAddr[n] = 6;
-		return 0;;
+	mixin(HLE_FA(0x0C622081, 150)); int sceWlanGetEtherAddr(u8 *etherAddr) {
+		for (int n = 0; n < 6; n++) etherAddr[n] = 7;
+		return 0;
 	}
 	
 	/**
@@ -59,8 +54,4 @@ class sceWlanDrv : ModuleNative {
 	int sceWlanDevDetach() {
 		return -1;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceWlanDrv"));
 }

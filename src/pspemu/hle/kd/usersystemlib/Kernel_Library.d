@@ -9,10 +9,12 @@ import pspemu.core.cpu.CpuThreadBase;
  * no having thread switching. So probably to emulate a suspend and resume,
  * we would have to pause and resume all threads.
  */
-class Kernel_Library : ModuleNative {
+class Kernel_Library : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0x092968F4, sceKernelCpuSuspendIntr));
-		mixin(registerd!(0x5F10D406, sceKernelCpuResumeIntr));
+		mixin(registerFunction!(0x092968F4, sceKernelCpuSuspendIntr));
+		mixin(registerFunction!(0x5F10D406, sceKernelCpuResumeIntr));
 	}
 	
 	const int Enabled  = 1;
@@ -55,8 +57,4 @@ class Kernel_Library : ModuleNative {
 			}
 		}
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("Kernel_Library"));
 }

@@ -2,9 +2,11 @@ module pspemu.hle.kd.exceptionman.ExceptionManager; // kd/exceptionman.prx (sceE
 
 import pspemu.hle.ModuleNative;
 
-class ExceptionManagerForKernel : ModuleNative {
+class ExceptionManagerForKernel : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x565C0B0E, sceKernelRegisterDefaultExceptionHandler));
+		mixin(registerFunction!(0x565C0B0E, sceKernelRegisterDefaultExceptionHandler));
 	}
 
 	void* exceptionHandler;
@@ -23,8 +25,4 @@ class ExceptionManagerForKernel : ModuleNative {
 		//unimplemented();
 		return 0;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("ExceptionManagerForKernel"));
 }

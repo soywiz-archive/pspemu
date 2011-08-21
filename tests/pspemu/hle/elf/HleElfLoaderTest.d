@@ -11,6 +11,8 @@ import std.stream;
 import tests.Test;
 
 class HleElfLoaderTest : Test {
+	mixin TRegisterTest;
+	
 	ubyte[] elfData;
 	Stream elfStream;
 	Elf elf;

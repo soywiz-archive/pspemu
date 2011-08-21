@@ -7,6 +7,8 @@ import pspemu.core.gpu.impl.dummy.GpuImplDummy;
 import tests.Test;
 
 class GpuTest : Test {
+	mixin TRegisterTest;
+	
 	Memory memory;
 	Gpu gpu;
 	IGpuImpl gpuImpl;

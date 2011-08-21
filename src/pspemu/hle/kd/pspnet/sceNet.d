@@ -9,20 +9,22 @@ struct SceNetMallocStat {
 	int free;
 }
 
-class sceNet : ModuleNative {
+class sceNet : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-        mixin(registerd!(0x39AF39A6, sceNetInit));
-        mixin(registerd!(0x281928A9, sceNetTerm));
-        mixin(registerd!(0x50647530, sceNetFreeThreadinfo));
-        mixin(registerd!(0xAD6844c6, sceNetThreadAbort));
-        mixin(registerd!(0x89360950, sceNetEtherNtostr));
-        mixin(registerd!(0xD27961C9, sceNetEtherStrton));
-        //mixin(registerd!(0xF5805EFE, sceNetHtonl));
-        //mixin(registerd!(0x39C1BF02, sceNetHtons));
-        //mixin(registerd!(0x93C4AF7E, sceNetNtohl));
-        //mixin(registerd!(0x4CE03207, sceNetNtohs));
-        mixin(registerd!(0x0BF0A3AE, sceNetGetLocalEtherAddr));
-        mixin(registerd!(0xCC393E48, sceNetGetMallocStat));
+        mixin(registerFunction!(0x39AF39A6, sceNetInit));
+        mixin(registerFunction!(0x281928A9, sceNetTerm));
+        mixin(registerFunction!(0x50647530, sceNetFreeThreadinfo));
+        mixin(registerFunction!(0xAD6844c6, sceNetThreadAbort));
+        mixin(registerFunction!(0x89360950, sceNetEtherNtostr));
+        mixin(registerFunction!(0xD27961C9, sceNetEtherStrton));
+        //mixin(registerFunction!(0xF5805EFE, sceNetHtonl));
+        //mixin(registerFunction!(0x39C1BF02, sceNetHtons));
+        //mixin(registerFunction!(0x93C4AF7E, sceNetNtohl));
+        //mixin(registerFunction!(0x4CE03207, sceNetNtohs));
+        mixin(registerFunction!(0x0BF0A3AE, sceNetGetLocalEtherAddr));
+        mixin(registerFunction!(0xCC393E48, sceNetGetMallocStat));
 	}
 	
 	/**
@@ -118,8 +120,4 @@ class sceNet : ModuleNative {
 		unimplemented();
 		return -1;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceNet"));
 }

@@ -19,18 +19,20 @@ import pspemu.hle.kd.threadman.ThreadMan;
 import pspemu.hle.kd.iofilemgr.IoFileMgr;
 import pspemu.hle.vfs.VirtualFileSystem;
 
-class ModuleMgrForUser : ModuleNative {
+class ModuleMgrForUser : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0xD675EBB8, sceKernelSelfStopUnloadModule));
-		mixin(registerd!(0xB7F46618, sceKernelLoadModuleByID));
-		mixin(registerd!(0x977DE386, sceKernelLoadModule));
-		mixin(registerd!(0x50F0C1EC, sceKernelStartModule));
-		mixin(registerd!(0xD1FF982A, sceKernelStopModule));
-		mixin(registerd!(0x2E0911AA, sceKernelUnloadModule));
-		mixin(registerd!(0xD8B73127, sceKernelGetModuleIdByAddress));
-		mixin(registerd!(0xF0A26395, sceKernelGetModuleId));
-		mixin(registerd!(0x8F2DF740, sceKernelStopUnloadSelfModuleWithStatus));
-		mixin(registerd!(0x748CBED9, sceKernelQueryModuleInfo));
+		mixin(registerFunction!(0xD675EBB8, sceKernelSelfStopUnloadModule));
+		mixin(registerFunction!(0xB7F46618, sceKernelLoadModuleByID));
+		mixin(registerFunction!(0x977DE386, sceKernelLoadModule));
+		mixin(registerFunction!(0x50F0C1EC, sceKernelStartModule));
+		mixin(registerFunction!(0xD1FF982A, sceKernelStopModule));
+		mixin(registerFunction!(0x2E0911AA, sceKernelUnloadModule));
+		mixin(registerFunction!(0xD8B73127, sceKernelGetModuleIdByAddress));
+		mixin(registerFunction!(0xF0A26395, sceKernelGetModuleId));
+		mixin(registerFunction!(0x8F2DF740, sceKernelStopUnloadSelfModuleWithStatus));
+		mixin(registerFunction!(0x748CBED9, sceKernelQueryModuleInfo));
 	}
 
 	/**
@@ -288,9 +290,5 @@ class ModuleMgrForUser : ModuleNative {
 }
 
 class ModuleMgrForKernel : ModuleMgrForUser {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("ModuleMgrForKernel"));
-	mixin(ModuleNative.registerModule("ModuleMgrForUser"));
+	mixin TRegisterModule;
 }

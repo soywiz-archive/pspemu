@@ -5,10 +5,12 @@ import std.stdio;
 import pspemu.hle.ModuleNative;
 import pspemu.hle.kd.sysmem.Types;
 
-class KDebugForKernel : ModuleNative {
+class KDebugForKernel : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x7CEB2C09, sceKernelRegisterKprintfHandler));
-		mixin(registerd!(0x84F370BC, Kprintf));
+		mixin(registerFunction!(0x7CEB2C09, sceKernelRegisterKprintfHandler));
+		mixin(registerFunction!(0x84F370BC, Kprintf));
 	}
 
 	/** 
@@ -91,8 +93,4 @@ class KDebugForKernel : ModuleNative {
 		//stdout.flush();
 		//unimplemented();
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("KDebugForKernel"));
 }

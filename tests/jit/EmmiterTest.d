@@ -7,6 +7,8 @@ import jit.Emmiter;
 import tests.Test;
 
 class EmmiterTest : Test {
+	mixin TRegisterTest;
+	
 	Emmiter emmiter;
 	
 	void setUp() {

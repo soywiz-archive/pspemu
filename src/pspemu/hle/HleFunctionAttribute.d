@@ -27,12 +27,12 @@ struct HleFunctionAttribute {
 	}
 	
 	static string registerNids_RegisterFunction(alias Module, uint nid, uint requiredFirmwareVersion, string moduleMember)() {
-		return Module.registerd!(nid, __traits(getMember, Module, moduleMember), requiredFirmwareVersion);
+		return Module.registerFunction!(nid, __traits(getMember, Module, moduleMember), requiredFirmwareVersion);
 	}
 	
 	static string registerNids_FindAnnotation(alias Module)() {
 		string r;
-		HleFunctionAttribute currentHleFunction;
+		/*
 		foreach (k, member; __traits(allMembers, Module)) {
 			static if (member.length >= 13 && member[0..13] == "__HLEFunction") {
 				r ~= HleFunctionAttribute.registerNids_RegisterFunction!(
@@ -45,14 +45,19 @@ struct HleFunctionAttribute {
 				);
 			}
 		}
+		*/
 		return r;
 	}
 	
-	static string registerNids() {
-		return q{
-			HleFunctionAttribute.registerNids_FindAnnotation!(typeof(this));
-		};
+	static string registerNids(alias Module)() {
+		return "";
 	}
+	
+	/*
+	static string registerNids(alias Module)() {
+		return HleFunctionAttribute.registerNids_FindAnnotation!Module;
+	}
+	*/
 	
 	string toString() {
 		return std.string.format("HleFunction(nid=0x%08X, methodName='%s', requiredFirmwareVersion=%d)", nid, methodName, requiredFirmwareVersion);

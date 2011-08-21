@@ -14,7 +14,9 @@ import pspemu.hle.kd.audio.Types;
 
 import pspemu.utils.Logger;
 
-class sceAudio_driver : ModuleNative {
+class sceAudio_driver : HleModuleHost {
+	mixin TRegisterModule;
+
 	struct Channel {
 		int             index;
 		bool            reserved = false;
@@ -33,28 +35,28 @@ class sceAudio_driver : ModuleNative {
 	Audio   audio;
 
 	void initNids() {
-		mixin(registerd!(0x13F592BC, sceAudioOutputPannedBlocking));
-		mixin(registerd!(0x5EC81C55, sceAudioChReserve));
-		mixin(registerd!(0x6FC46853, sceAudioChRelease));
-		mixin(registerd!(0x8C1009B2, sceAudioOutput));
-		mixin(registerd!(0x136CAF51, sceAudioOutputBlocking));
-		mixin(registerd!(0xE2D56B2D, sceAudioOutputPanned));
-		mixin(registerd!(0xE9D97901, sceAudioGetChannelRestLen));
-		mixin(registerd!(0xCB2E439E, sceAudioSetChannelDataLen));
-		mixin(registerd!(0x95FD0C2D, sceAudioChangeChannelConfig));
-		mixin(registerd!(0xB7E1D8E7, sceAudioChangeChannelVolume));
+		mixin(registerFunction!(0x13F592BC, sceAudioOutputPannedBlocking));
+		mixin(registerFunction!(0x5EC81C55, sceAudioChReserve));
+		mixin(registerFunction!(0x6FC46853, sceAudioChRelease));
+		mixin(registerFunction!(0x8C1009B2, sceAudioOutput));
+		mixin(registerFunction!(0x136CAF51, sceAudioOutputBlocking));
+		mixin(registerFunction!(0xE2D56B2D, sceAudioOutputPanned));
+		mixin(registerFunction!(0xE9D97901, sceAudioGetChannelRestLen));
+		mixin(registerFunction!(0xCB2E439E, sceAudioSetChannelDataLen));
+		mixin(registerFunction!(0x95FD0C2D, sceAudioChangeChannelConfig));
+		mixin(registerFunction!(0xB7E1D8E7, sceAudioChangeChannelVolume));
 
-		mixin(registerd!(0x01562BA3, sceAudioOutput2Reserve));
-		mixin(registerd!(0x2D53F36E, sceAudioOutput2OutputBlocking));
-		mixin(registerd!(0x43196845, sceAudioOutput2Release));
-		mixin(registerd!(0xB011922F, sceAudioGetChannelRestLength));
+		mixin(registerFunction!(0x01562BA3, sceAudioOutput2Reserve));
+		mixin(registerFunction!(0x2D53F36E, sceAudioOutput2OutputBlocking));
+		mixin(registerFunction!(0x43196845, sceAudioOutput2Release));
+		mixin(registerFunction!(0xB011922F, sceAudioGetChannelRestLength));
 
-		mixin(registerd!(0x086E5895, sceAudioInputBlocking));
-		mixin(registerd!(0x7DE61688, sceAudioInputInit));
+		mixin(registerFunction!(0x086E5895, sceAudioInputBlocking));
+		mixin(registerFunction!(0x7DE61688, sceAudioInputInit));
 		
-		mixin(registerd!(0x38553111, sceAudioSRCChReserve));
-		mixin(registerd!(0x5C37C0AE, sceAudioSRCChRelease));
-		mixin(registerd!(0xE0727056, sceAudioSRCOutputBlocking));
+		mixin(registerFunction!(0x38553111, sceAudioSRCChReserve));
+		mixin(registerFunction!(0x5C37C0AE, sceAudioSRCChRelease));
+		mixin(registerFunction!(0xE0727056, sceAudioSRCOutputBlocking));
 	}
 
 	void initModule() {
@@ -431,9 +433,5 @@ class sceAudio_driver : ModuleNative {
 }
 
 class sceAudio : sceAudio_driver {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceAudio"));
-	mixin(ModuleNative.registerModule("sceAudio_driver"));
+	mixin TRegisterModule;
 }

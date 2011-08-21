@@ -5,6 +5,8 @@ import jit.EmmiterX86;
 import tests.Test;
 
 class EmmiterX86Test : Test {
+	mixin TRegisterTest;
+	
 	EmmiterX86 emmiter;
 	
 	void setUp() {

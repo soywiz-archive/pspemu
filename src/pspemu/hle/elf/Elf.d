@@ -128,21 +128,16 @@ class Elf {
 	Stream SectionStream(ElfSectionHeader sectionHeader) {
 		logTrace("SectionStream(Address=%08X, Offset=%08X, Size=%08X, Type=%08X)", sectionHeader.address, sectionHeader.offset, sectionHeader.size, sectionHeader.type);
 		
-		return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
-
-		/*
 		switch (sectionHeader.type) {
-			case ElfSectionHeader.Type.PROGBITS:
-			case ElfSectionHeader.Type.STRTAB:
-				//writefln("sectionHeader.offset:%08X", sectionHeader.offset);
+			case ElfSectionHeader.Type.PROGBITS, ElfSectionHeader.Type.STRTAB:
+			{
 				return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
-			break;
+			}
 			default:
-				//return new SliceStream(stream, sectionHeader.offset, sectionHeader.offset + sectionHeader.size);
+			{
 				return new SliceStream(stream, sectionHeader.address, sectionHeader.address + sectionHeader.size);
-			break;
+			}
 		}
-		*/
 	}
 
 	Stream SectionStream(string name) {

@@ -4,35 +4,37 @@ import pspemu.hle.kd.Types;
 
 import pspemu.hle.ModuleNative;
 
-class sceMpeg : ModuleNative {
+class sceMpeg : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x682A619B, sceMpegInit));
-		mixin(registerd!(0x874624D6, sceMpegFinish));
-		mixin(registerd!(0xD7A29F46, sceMpegRingbufferQueryMemSize));
-		mixin(registerd!(0x37295ED8, sceMpegRingbufferConstruct));
-		mixin(registerd!(0xC132E22F, sceMpegQueryMemSize));
-		mixin(registerd!(0xD8C5F121, sceMpegCreate));
-		mixin(registerd!(0x0E3C2E9D, sceMpegAvcDecode));
-		mixin(registerd!(0xA11C7026, sceMpegAvcDecodeMode));
-	    mixin(registerd!(0x13407F13, sceMpegRingbufferDestruct));
-	    mixin(registerd!(0x167AFD9E, sceMpegInitAu));
-	    mixin(registerd!(0x21FF80E4, sceMpegQueryStreamOffset));
-	    mixin(registerd!(0x42560F23, sceMpegRegistStream));
-	    mixin(registerd!(0x591A4AA2, sceMpegUnRegistStream));
-	    mixin(registerd!(0x606A4649, sceMpegDelete));
-	    mixin(registerd!(0x611E9E11, sceMpegQueryStreamSize));
-	    mixin(registerd!(0x707B7629, sceMpegFlushAllStream));
-	    mixin(registerd!(0x740FCCD1, sceMpegAvcDecodeStop));
-	    mixin(registerd!(0x800C44DF, sceMpegAtracDecode));
-	    mixin(registerd!(0xA780CF7E, sceMpegMallocAvcEsBuf));
-	    mixin(registerd!(0xB240A59E, sceMpegRingbufferPut));
-	    mixin(registerd!(0xB5F6DC87, sceMpegRingbufferAvailableSize));
-	    mixin(registerd!(0xCEB870B1, sceMpegFreeAvcEsBuf));
-	    mixin(registerd!(0xE1CE83A7, sceMpegGetAtracAu));
-	    mixin(registerd!(0xF8DCB679, sceMpegQueryAtracEsSize));
-	    mixin(registerd!(0xFE246728, sceMpegGetAvcAu));
-		mixin(registerd!(0x0F6C18D7, sceMpegAvcDecodeDetail));
-		mixin(registerd!(0x4571CC64, sceMpegAvcDecodeFlush));
+		mixin(registerFunction!(0x682A619B, sceMpegInit));
+		mixin(registerFunction!(0x874624D6, sceMpegFinish));
+		mixin(registerFunction!(0xD7A29F46, sceMpegRingbufferQueryMemSize));
+		mixin(registerFunction!(0x37295ED8, sceMpegRingbufferConstruct));
+		mixin(registerFunction!(0xC132E22F, sceMpegQueryMemSize));
+		mixin(registerFunction!(0xD8C5F121, sceMpegCreate));
+		mixin(registerFunction!(0x0E3C2E9D, sceMpegAvcDecode));
+		mixin(registerFunction!(0xA11C7026, sceMpegAvcDecodeMode));
+	    mixin(registerFunction!(0x13407F13, sceMpegRingbufferDestruct));
+	    mixin(registerFunction!(0x167AFD9E, sceMpegInitAu));
+	    mixin(registerFunction!(0x21FF80E4, sceMpegQueryStreamOffset));
+	    mixin(registerFunction!(0x42560F23, sceMpegRegistStream));
+	    mixin(registerFunction!(0x591A4AA2, sceMpegUnRegistStream));
+	    mixin(registerFunction!(0x606A4649, sceMpegDelete));
+	    mixin(registerFunction!(0x611E9E11, sceMpegQueryStreamSize));
+	    mixin(registerFunction!(0x707B7629, sceMpegFlushAllStream));
+	    mixin(registerFunction!(0x740FCCD1, sceMpegAvcDecodeStop));
+	    mixin(registerFunction!(0x800C44DF, sceMpegAtracDecode));
+	    mixin(registerFunction!(0xA780CF7E, sceMpegMallocAvcEsBuf));
+	    mixin(registerFunction!(0xB240A59E, sceMpegRingbufferPut));
+	    mixin(registerFunction!(0xB5F6DC87, sceMpegRingbufferAvailableSize));
+	    mixin(registerFunction!(0xCEB870B1, sceMpegFreeAvcEsBuf));
+	    mixin(registerFunction!(0xE1CE83A7, sceMpegGetAtracAu));
+	    mixin(registerFunction!(0xF8DCB679, sceMpegQueryAtracEsSize));
+	    mixin(registerFunction!(0xFE246728, sceMpegGetAvcAu));
+		mixin(registerFunction!(0x0F6C18D7, sceMpegAvcDecodeDetail));
+		mixin(registerFunction!(0x4571CC64, sceMpegAvcDecodeFlush));
 	}
 	
 	void sceMpegAvcDecodeDetail() {
@@ -425,7 +427,3 @@ struct SceMpegAvcMode
 	SceInt32			iPixelFormat;
 
 } 
-
-static this() {
-	mixin(ModuleNative.registerModule("sceMpeg"));
-}

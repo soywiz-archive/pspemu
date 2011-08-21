@@ -34,15 +34,17 @@ class FileWrapperStream : Stream {
 	}
 }
 
-class StdioForUser : ModuleNative {
+class StdioForUser : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x172D316E, sceKernelStdin));
-		mixin(registerd!(0xA6BAB2E9, sceKernelStdout));
-		mixin(registerd!(0xF78BA90A, sceKernelStderr));
-		mixin(registerd!(0x98220F3E, sceKernelStdoutReopen));
-		mixin(registerd!(0xFB5380C5, sceKernelStderrReopen));
-		mixin(registerd!(0xD97C8CB9, puts));
-		//mixin(registerd!(0xCAB439DF, printf));
+		mixin(registerFunction!(0x172D316E, sceKernelStdin));
+		mixin(registerFunction!(0xA6BAB2E9, sceKernelStdout));
+		mixin(registerFunction!(0xF78BA90A, sceKernelStderr));
+		mixin(registerFunction!(0x98220F3E, sceKernelStdoutReopen));
+		mixin(registerFunction!(0xFB5380C5, sceKernelStderrReopen));
+		mixin(registerFunction!(0xD97C8CB9, puts));
+		//mixin(registerFunction!(0xCAB439DF, printf));
 	}
 	
 	void initModule() {
@@ -108,9 +110,5 @@ class StdioForUser : ModuleNative {
 }
 
 class StdioForKernel : StdioForUser {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("StdioForKernel"));
-	mixin(ModuleNative.registerModule("StdioForUser"));
+	mixin TRegisterModule;
 }

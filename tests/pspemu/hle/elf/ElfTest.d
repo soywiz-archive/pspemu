@@ -6,6 +6,8 @@ import std.stream;
 import tests.Test;
 
 class ElfTest : Test {
+	mixin TRegisterTest;
+	
 	Stream elfStream;
 	Elf elf;
 	

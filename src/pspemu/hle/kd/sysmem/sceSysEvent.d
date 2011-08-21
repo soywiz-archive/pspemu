@@ -5,12 +5,14 @@ import pspemu.core.exceptions.NotImplementedException;
 
 import pspemu.hle.kd.sysmem.Types; 
 
-class sceSysEventForKernel : ModuleNative {
+class sceSysEventForKernel : HleModuleHost {
+	mixin TRegisterModule;
+
 	PspSysEventHandler pspSysEventHandler;
 	
 	void initNids() {
-		mixin(registerd!(0xCD9E4BB5, sceKernelRegisterSysEventHandler));
-		mixin(registerd!(0x36331294, sceKernelSysEventDispatch));
+		mixin(registerFunction!(0xCD9E4BB5, sceKernelRegisterSysEventHandler));
+		mixin(registerFunction!(0x36331294, sceKernelSysEventDispatch));
 	}
 
 	/**
@@ -46,8 +48,4 @@ class sceSysEventForKernel : ModuleNative {
 		return 0;
 	}
 	 
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceSysEventForKernel"));
 }

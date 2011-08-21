@@ -58,14 +58,35 @@ namespace ttf2pgf
 
 		public struct MapUshort
 		{
-			public uint src;
-			public uint dst;
+			public uint Src;
+			public uint Dst;
+
+			public override string ToString()
+			{
+				return String.Format("MapUshort({0}, {1})", Src, Dst);
+			}
 		}
 
 		public struct MapUint
 		{
-			public uint src;
-			public uint dst;
+			public uint Src;
+			public uint Dst;
+
+			public override string ToString()
+			{
+				return String.Format("MapUint({0}, {1})", Src, Dst);
+			}
+		}
+
+		public struct MapInt
+		{
+			public int Src;
+			public int Dst;
+
+			public override string ToString()
+			{
+				return String.Format("MapUint({0}, {1})", Src, Dst);
+			}
 		}
 
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
@@ -374,9 +395,9 @@ namespace ttf2pgf
 		HeaderRevision3 headerExtraRevision3;
 
 		PointFixed26_6[] dimensionTable;
-		MapUint[] advanceTable;
-		MapUint[] xAdjustTable;
-		MapUint[] yAdjustTable;
+		MapInt[] advanceTable;
+		MapInt[] xAdjustTable;
+		MapInt[] yAdjustTable;
 		byte[] packedShadowCharMap;
 
 		MapUshort[] charmapCompressionTable1;
@@ -386,9 +407,12 @@ namespace ttf2pgf
 		byte[] packedCharPointerTable;
 
 		public int[] charMap;
+		Dictionary<int, int> reverseCharMap;
 		int[] charPointer;
 
-		Dictionary<int, int> reverseCharMap;
+		public int[] shadowCharMap;
+		Dictionary<int, int> reverseShadowCharMap;
+
 
 		byte[] charData;
 
@@ -434,7 +458,6 @@ namespace ttf2pgf
 				FileStream.ReadStructVector(ref charmapCompressionTable2, headerExtraRevision3.TableCompCharMapLength2);
 			}
 
-
 			packedCharMap = FileStream.ReadBytes(BitsToBytesHighAligned(header.TableCharMapLength * header.TableCharMapBpe));
 			packedCharPointerTable = FileStream.ReadBytes(BitsToBytesHighAligned(header.TableCharPointerLength * header.TableCharPointerBpe));
 
@@ -452,6 +475,16 @@ namespace ttf2pgf
 			charPointer = new int[NumberOfCharacters];
 			Glyphs = new Glyph[NumberOfCharacters];
 			reverseCharMap = new Dictionary<int, int>();
+
+
+			foreach (var Pair in BitReader.FixedBitReader(packedShadowCharMap, header.TableShadowMapBpe))
+			{
+				var UnicodeIndex = (int)Pair.Key + header.firstGlyph;
+				var GlyphIndex = (int)Pair.Value;
+				shadowCharMap[UnicodeIndex] = GlyphIndex;
+				reverseShadowCharMap[GlyphIndex] = UnicodeIndex;
+			}
+
 
 			foreach (var Pair in BitReader.FixedBitReader(packedCharMap, header.TableCharMapBpe))
 			{

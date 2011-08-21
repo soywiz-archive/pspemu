@@ -11,25 +11,9 @@ import pspemu.Exceptions;
 
 import tests.Test;
 
-class SyscallMock : ISyscall {
-	Interrupts interrupts;
-	
-	this(Interrupts interrupts) {
-		this.interrupts = interrupts;
-	}
-	
-	void syscall(Registers registers, int syscallNum) {
-		switch (syscallNum) {
-			case 0x1002: throw(new HaltException("halt"));
-			case 0x1003:
-				interrupts.interrupt(Interrupts.Type.Systimer0);
-			break;
-			default: throw(new NotImplementedException("Not expected syscall"));
-		}
-	}
-}
-
 class CpuInterpreterTest : Test {
+	mixin TRegisterTest;
+	
 	Memory          memory;
 	SyscallMock     syscall;
 	CpuInterpreter  cpu;
@@ -115,5 +99,23 @@ class CpuInterpreterTest : Test {
 		");
 		assertEquals(systimerCalledCount, 1);
 		assertEquals(registers[1], 2);
+	}
+}
+
+class SyscallMock : ISyscall {
+	Interrupts interrupts;
+	
+	this(Interrupts interrupts) {
+		this.interrupts = interrupts;
+	}
+	
+	void syscall(Registers registers, int syscallNum) {
+		switch (syscallNum) {
+			case 0x1002: throw(new HaltException("halt"));
+			case 0x1003:
+				interrupts.interrupt(Interrupts.Type.Systimer0);
+			break;
+			default: throw(new NotImplementedException("Not expected syscall"));
+		}
 	}
 }

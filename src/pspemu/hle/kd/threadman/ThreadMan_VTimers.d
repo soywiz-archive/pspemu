@@ -30,13 +30,13 @@ template ThreadManForUser_VTimers() {
 	}
 	
 	void initNids_VTimers() {
-	    mixin(registerd!(0x20FFF560, sceKernelCreateVTimer));
-	    mixin(registerd!(0xD2D615EF, sceKernelCancelVTimerHandler));
-	    mixin(registerd!(0xD8B299AE, sceKernelSetVTimerHandler));
-	    mixin(registerd!(0xC68D9437, sceKernelStartVTimer));
-	    mixin(registerd!(0xD0AEEE87, sceKernelStopVTimer));
-	    mixin(registerd!(0x034A921F, sceKernelGetVTimerTime));
-	    mixin(registerd!(0xC0B3FFD2, sceKernelGetVTimerTimeWide));
+	    mixin(registerFunction!(0x20FFF560, sceKernelCreateVTimer));
+	    mixin(registerFunction!(0xD2D615EF, sceKernelCancelVTimerHandler));
+	    mixin(registerFunction!(0xD8B299AE, sceKernelSetVTimerHandler));
+	    mixin(registerFunction!(0xC68D9437, sceKernelStartVTimer));
+	    mixin(registerFunction!(0xD0AEEE87, sceKernelStopVTimer));
+	    mixin(registerFunction!(0x034A921F, sceKernelGetVTimerTime));
+	    mixin(registerFunction!(0xC0B3FFD2, sceKernelGetVTimerTimeWide));
 	}
 	
 	/**

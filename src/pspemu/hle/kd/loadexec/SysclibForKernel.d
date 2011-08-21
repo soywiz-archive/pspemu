@@ -6,16 +6,14 @@ import pspemu.hle.ModuleNative;
 
 import pspemu.hle.kd.loadexec.Types;
 
-class SysclibForKernel : ModuleNative {
+class SysclibForKernel : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x52DF196C, strlen));
+		mixin(registerFunction!(0x52DF196C, strlen));
 	}
 
 	int strlen(string str) {
 		return str.length;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("SysclibForKernel"));
 }

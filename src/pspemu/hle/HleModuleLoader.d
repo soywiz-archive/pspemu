@@ -252,7 +252,7 @@ class HleModuleLoader {
 				logInfo("  %s // %s:", moduleName, DPspLibdoc.singleton.getPrxInfo(moduleName));
 				foreach (nid; nids) {
 					if (auto symbol = DPspLibdoc.singleton.locate(nid, moduleName)) {
-						logInfo("    mixin(registerd!(0x%08X, %s));", nid, symbol.name);
+						logInfo("    mixin(registerFunction!(0x%08X, %s));", nid, symbol.name);
 					} else {
 						logInfo("    0x%08X:<Not found!>", nid);
 					}

@@ -39,86 +39,10 @@ import pspemu.hle.kd.sysmem.Types;
 
 import pspemu.hle.kd.mediaman.sceUmd;
 
-class PspVirtualFileSystem : VirtualFileSystem {
-	HleEmulatorState hleEmulatorState;
-	string name;
-	PspIoDrv* pspIoDrv;
-	PspIoDrvFuncs* funcs;
 
-	PspIoDrvArg* pspIoDrvArg;
-	PspIoDrvFileArg* pspIoDrvFileArg;
-	char* tmpString;
+class IoFileMgrForKernel : HleModuleHost {
+	mixin TRegisterModule;
 	
-	@property PspIoDrvArg* pspIoDrvArgGuest() {
-		return hleEmulatorState.memoryManager.memory.ptrHostToGuest(pspIoDrvArg);
-	}
-
-	@property char* tmpStringGuest() {
-		return hleEmulatorState.memoryManager.memory.ptrHostToGuest(tmpString);
-	}
-
-	@property PspIoDrvFileArg* pspIoDrvFileArgGuest() {
-		return hleEmulatorState.memoryManager.memory.ptrHostToGuest(pspIoDrvFileArg);
-	}
-	
-	@property PspIoDrv* pspIoDrvGuest() {
-		return hleEmulatorState.memoryManager.memory.ptrHostToGuest(pspIoDrv);
-	}
-
-	this(HleEmulatorState hleEmulatorState, string name, PspIoDrv* pspIoDrv, PspIoDrvFuncs* funcs) {
-		this.hleEmulatorState = hleEmulatorState;
-		this.name  = name;
-		this.pspIoDrv   = pspIoDrv;
-		this.funcs = funcs;
-		//writefln("Created PspVirtualFileSystem('%s')", name);
-		
-		init();
-	}
-	
-	void init() {
-		pspIoDrvArg = cast(PspIoDrvArg*)hleEmulatorState.memoryManager.memory.getPointerOrNull(hleEmulatorState.memoryManager.alloc(PspPartition.Kernel0, "pspIoDrvArg", PspSysMemBlockTypes.PSP_SMEM_Low, PspIoDrvArg.sizeof));
-		pspIoDrvFileArg = cast(PspIoDrvFileArg*)hleEmulatorState.memoryManager.memory.getPointerOrNull(hleEmulatorState.memoryManager.alloc(PspPartition.Kernel0, "PspIoDrvFileArg", PspSysMemBlockTypes.PSP_SMEM_Low, PspIoDrvFileArg.sizeof));
-		tmpString = cast(char *)hleEmulatorState.memoryManager.memory.getPointerOrNull(hleEmulatorState.memoryManager.alloc(PspPartition.Kernel0, "tmpString", PspSysMemBlockTypes.PSP_SMEM_Low, 0x1000));
-		
-		pspIoDrvArg.drv = pspIoDrvGuest;
-		pspIoDrvArg.arg = null;
-		
-		//writefln("init()");
-		Module.executeGuestCode(hleEmulatorState, cast(uint)funcs.IoInit, [cast(uint)pspIoDrvArgGuest]);
-	}
-	
-	void exit() {
-		// @TODO! MUST FREE MEMORY!
-		//writefln("exit()");
-		Module.executeGuestCode(hleEmulatorState, cast(uint)funcs.IoExit, [cast(uint)pspIoDrvArgGuest]);
-	}
-	
-	FileHandle open(string file, FileOpenMode flags, FileAccessMode mode) {
-		//writefln("open()");
-		
-		pspIoDrvFileArg.unk1 = 0;
-		pspIoDrvFileArg.fs_num = 0;
-		pspIoDrvFileArg.drv = pspIoDrvArgGuest;
-		pspIoDrvFileArg.unk2 = 0;
-		pspIoDrvFileArg.arg = null;
-		
-		tmpString[0..file.length] = file[0..file.length];
-		tmpString[file.length] = 0;
-		
-		//hleEmulatorState.currentThreadState().registers.A0
-
-		// int (*IoOpen)(PspIoDrvFileArg *arg, char *file, int flags, SceMode mode); 
-		uint result = Module.executeGuestCode(hleEmulatorState, cast(uint)funcs.IoOpen, [cast(uint)pspIoDrvFileArgGuest, cast(uint)tmpStringGuest, cast(uint)flags, cast(uint)mode]);
-		
-		return new FileHandle(this);
-	}
-	
-	string toString() {
-		return std.string.format("PspVirtualFileSystem('%s')", name);
-	}
-}
-
-class IoFileMgrForKernel : ModuleNative {
 	mixin IoFileMgrForKernel_Directories;
 	mixin IoFileMgrForKernel_FilesAsync;
 	
@@ -139,25 +63,25 @@ class IoFileMgrForKernel : ModuleNative {
 		initNids_Directories();
 		initNids_FilesAsync();
 		
-		mixin(registerd!(0x810C4BC3, sceIoClose));
-		mixin(registerd!(0x109F50BC, sceIoOpen));
-		mixin(registerd!(0x6A638D83, sceIoRead));
-		mixin(registerd!(0x42EC03AC, sceIoWrite));
-		mixin(registerd!(0x27EB27B8, sceIoLseek));
-		mixin(registerd!(0x68963324, sceIoLseek32));
+		mixin(registerFunction!(0x810C4BC3, sceIoClose));
+		mixin(registerFunction!(0x109F50BC, sceIoOpen));
+		mixin(registerFunction!(0x6A638D83, sceIoRead));
+		mixin(registerFunction!(0x42EC03AC, sceIoWrite));
+		mixin(registerFunction!(0x27EB27B8, sceIoLseek));
+		mixin(registerFunction!(0x68963324, sceIoLseek32));
 
-		mixin(registerd!(0x54F5FB11, sceIoDevctl));
+		mixin(registerFunction!(0x54F5FB11, sceIoDevctl));
 
-		mixin(registerd!(0xACE946E8, sceIoGetstat));
-		mixin(registerd!(0xB8A740F4, sceIoChstat));
-		mixin(registerd!(0xF27A9C51, sceIoRemove));
-		mixin(registerd!(0x779103A0, sceIoRename));
+		mixin(registerFunction!(0xACE946E8, sceIoGetstat));
+		mixin(registerFunction!(0xB8A740F4, sceIoChstat));
+		mixin(registerFunction!(0xF27A9C51, sceIoRemove));
+		mixin(registerFunction!(0x779103A0, sceIoRename));
 	
-		mixin(registerd!(0x63632449, sceIoIoctl));
+		mixin(registerFunction!(0x63632449, sceIoIoctl));
 
-		mixin(registerd!(0x3C54E908, sceIoReopen));
-		mixin(registerd!(0x8E982A74, sceIoAddDrv));
-		mixin(registerd!(0xC7F35804, sceIoDelDrv));
+		mixin(registerFunction!(0x3C54E908, sceIoReopen));
+		mixin(registerFunction!(0x8E982A74, sceIoAddDrv));
+		mixin(registerFunction!(0xC7F35804, sceIoDelDrv));
 	}
 
 	/*
@@ -689,9 +613,5 @@ FileAccessMode sceModeToFileAccessMode(SceMode mode) {
 }
 
 class IoFileMgrForUser : IoFileMgrForKernel {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("IoFileMgrForUser"));
-	mixin(ModuleNative.registerModule("IoFileMgrForKernel"));
+	mixin TRegisterModule;
 }

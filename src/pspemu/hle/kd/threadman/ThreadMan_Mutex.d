@@ -44,9 +44,9 @@ template ThreadManForUser_Mutex() {
 	}
 
 	void initNids_Mutex() {
-	    mixin(registerd!(0xB7D098C6, sceKernelCreateMutex));
-	    mixin(registerd!(0xB011B11F, sceKernelLockMutex));
-	    mixin(registerd!(0x6B30100F, sceKernelUnlockMutex));
+	    mixin(registerFunction!(0xB7D098C6, sceKernelCreateMutex));
+	    mixin(registerFunction!(0xB011B11F, sceKernelLockMutex));
+	    mixin(registerFunction!(0x6B30100F, sceKernelUnlockMutex));
 	}
 	
 	SceUID sceKernelCreateMutex(string name, int attr, int count, void* option_addr) {

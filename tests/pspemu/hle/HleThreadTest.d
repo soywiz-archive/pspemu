@@ -14,18 +14,9 @@ import pspemu.hle.HleThread;
 
 import tests.Test;
 
-class Syscall : ISyscall {
-	void syscall(Registers registers, int syscallNum) {
-		switch (syscallNum) {
-			default: throw(new Exception(std.string.format("Called syscall 0x%08X", syscallNum)));
-			case 0x1000:
-				HleThread.threadYield();
-			break;
-		}
-	}
-}
-
 class HleThreadTest : Test {
+	mixin TRegisterTest;
+	
 	Memory memory;
 	Stream memoryStream;
 	CpuAssembler cpuAssembler;
@@ -59,5 +50,16 @@ class HleThreadTest : Test {
 
 		hleThread1.threadResume();
 		assertEquals(2222, hleThread1.registers.R[1]);
+	}
+}
+
+class Syscall : ISyscall {
+	void syscall(Registers registers, int syscallNum) {
+		switch (syscallNum) {
+			default: throw(new Exception(std.string.format("Called syscall 0x%08X", syscallNum)));
+			case 0x1000:
+				HleThread.threadYield();
+			break;
+		}
 	}
 }

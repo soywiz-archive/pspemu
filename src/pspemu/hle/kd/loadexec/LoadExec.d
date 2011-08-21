@@ -8,12 +8,14 @@ import pspemu.hle.ModuleNative;
 
 import pspemu.hle.kd.loadexec.Types;
 
-class LoadExecForUser : ModuleNative {
+class LoadExecForUser : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xBD2F1094, sceKernelLoadExec));
-		mixin(registerd!(0x2AC9954B, sceKernelExitGameWithStatus));
-		mixin(registerd!(0x05572A5F, sceKernelExitGame));
-		mixin(registerd!(0x4AC57943, sceKernelRegisterExitCallback));
+		mixin(registerFunction!(0xBD2F1094, sceKernelLoadExec));
+		mixin(registerFunction!(0x2AC9954B, sceKernelExitGameWithStatus));
+		mixin(registerFunction!(0x05572A5F, sceKernelExitGame));
+		mixin(registerFunction!(0x4AC57943, sceKernelRegisterExitCallback));
 	}
 
 	void sceKernelExitGameWithStatus(int status) {
@@ -80,9 +82,5 @@ class LoadExecForUser : ModuleNative {
 }
 
 class LoadExecForKernel : LoadExecForUser {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("LoadExecForKernel"));
-	mixin(ModuleNative.registerModule("LoadExecForUser"));
+	mixin TRegisterModule;
 }

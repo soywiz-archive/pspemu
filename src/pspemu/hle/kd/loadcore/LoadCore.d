@@ -6,14 +6,16 @@ import pspemu.hle.ModuleNative;
 import pspemu.hle.ModulePsp;
 import pspemu.hle.kd.loadcore.Types;
 
-class LoadCoreForKernel : ModuleNative {
+class LoadCoreForKernel : HleModuleHost {
+	mixin TRegisterModule;
+	
 	void initNids() {
-		mixin(registerd!(0xD8779AC6, sceKernelIcacheClearAll));
-		mixin(registerd!(0xCF8A41B1, sceKernelFindModuleByName));
+		mixin(registerFunction!(0xD8779AC6, sceKernelIcacheClearAll));
+		mixin(registerFunction!(0xCF8A41B1, sceKernelFindModuleByName));
 
-		mixin(registerd!(0xACE23476, sceKernelCheckPspConfig));
-		mixin(registerd!(0xBF983EF2, sceKernelProbeExecutableObject));
-		mixin(registerd!(0xCCE4A157, sceKernelFindModuleByUID));
+		mixin(registerFunction!(0xACE23476, sceKernelCheckPspConfig));
+		mixin(registerFunction!(0xBF983EF2, sceKernelProbeExecutableObject));
+		mixin(registerFunction!(0xCCE4A157, sceKernelFindModuleByUID));
 	}
 
 	// @TODO: Unknown.
@@ -52,8 +54,4 @@ class LoadCoreForKernel : ModuleNative {
 		//unimplemented();
 		return null;
 	}
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("LoadCoreForKernel"));
 }

@@ -23,29 +23,29 @@ template ThreadManForUser_Threads() {
 	}
 
 	void initNids_Threads() {
-		mixin(registerd!(0x446D8DE6, sceKernelCreateThread));
-		mixin(registerd!(0xF475845D, sceKernelStartThread ));
-		mixin(registerd!(0xAA73C935, sceKernelExitThread  ));
-		mixin(registerd!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
-		mixin(registerd!(0x293B45B8, sceKernelGetThreadId));
-		mixin(registerd!(0x17C1684E, sceKernelReferThreadStatus));
-		mixin(registerd!(0x71BC9871, sceKernelChangeThreadPriority));
-		mixin(registerd!(0x809CE29B, sceKernelExitDeleteThread));
-		mixin(registerd!(0x9FA03CD3, sceKernelDeleteThread));
-		mixin(registerd!(0x383F7BCC, sceKernelTerminateDeleteThread));
-		mixin(registerd!(0x94AA61EE, sceKernelGetThreadCurrentPriority));
-		mixin(registerd!(0x75156E8F, sceKernelResumeThread));
-		mixin(registerd!(0xD59EAD2F, sceKernelWakeupThread));
-		mixin(registerd!(0x9944F31F, sceKernelSuspendThread));
-		mixin(registerd!(0x616403BA, sceKernelTerminateThread));
-		mixin(registerd!(0x3B183E26, sceKernelGetThreadExitStatus));
+		mixin(registerFunction!(0x446D8DE6, sceKernelCreateThread));
+		mixin(registerFunction!(0xF475845D, sceKernelStartThread ));
+		mixin(registerFunction!(0xAA73C935, sceKernelExitThread  ));
+		mixin(registerFunction!(0xEA748E31, sceKernelChangeCurrentThreadAttr));
+		mixin(registerFunction!(0x293B45B8, sceKernelGetThreadId));
+		mixin(registerFunction!(0x17C1684E, sceKernelReferThreadStatus));
+		mixin(registerFunction!(0x71BC9871, sceKernelChangeThreadPriority));
+		mixin(registerFunction!(0x809CE29B, sceKernelExitDeleteThread));
+		mixin(registerFunction!(0x9FA03CD3, sceKernelDeleteThread));
+		mixin(registerFunction!(0x383F7BCC, sceKernelTerminateDeleteThread));
+		mixin(registerFunction!(0x94AA61EE, sceKernelGetThreadCurrentPriority));
+		mixin(registerFunction!(0x75156E8F, sceKernelResumeThread));
+		mixin(registerFunction!(0xD59EAD2F, sceKernelWakeupThread));
+		mixin(registerFunction!(0x9944F31F, sceKernelSuspendThread));
+		mixin(registerFunction!(0x616403BA, sceKernelTerminateThread));
+		mixin(registerFunction!(0x3B183E26, sceKernelGetThreadExitStatus));
 
-		mixin(registerd!(0x9ACE131E, sceKernelSleepThread,                   FunctionOptions.NoSynchronized));
-		mixin(registerd!(0x82826F70, sceKernelSleepThreadCB,                 FunctionOptions.NoSynchronized));
-		mixin(registerd!(0xCEADEB47, sceKernelDelayThread,                   FunctionOptions.NoSynchronized));
-		mixin(registerd!(0x68DA9E36, sceKernelDelayThreadCB,                 FunctionOptions.NoSynchronized));
-		mixin(registerd!(0x278C0DF5, sceKernelWaitThreadEnd,                 FunctionOptions.NoSynchronized));
-		mixin(registerd!(0x840E8133, sceKernelWaitThreadEndCB,               FunctionOptions.NoSynchronized));
+		mixin(registerFunction!(0x9ACE131E, sceKernelSleepThread,                   FunctionOptions.NoSynchronized));
+		mixin(registerFunction!(0x82826F70, sceKernelSleepThreadCB,                 FunctionOptions.NoSynchronized));
+		mixin(registerFunction!(0xCEADEB47, sceKernelDelayThread,                   FunctionOptions.NoSynchronized));
+		mixin(registerFunction!(0x68DA9E36, sceKernelDelayThreadCB,                 FunctionOptions.NoSynchronized));
+		mixin(registerFunction!(0x278C0DF5, sceKernelWaitThreadEnd,                 FunctionOptions.NoSynchronized));
+		mixin(registerFunction!(0x840E8133, sceKernelWaitThreadEndCB,               FunctionOptions.NoSynchronized));
 	}
 	
 	/**

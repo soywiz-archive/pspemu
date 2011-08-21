@@ -21,45 +21,47 @@ wchar* toStringz(wstring str) {
 	return cast(wchar *)(str ~ '\0').ptr;
 }
 
-class sceUtility : ModuleNative {
+class sceUtility : HleModuleHost {
+	mixin TRegisterModule;
+
 	mixin sceUtility_sysparams;
 
 	void initNids() {
-		mixin(registerd!(0x50C4CD57, sceUtilitySavedataInitStart));
-		mixin(registerd!(0x9790B33C, sceUtilitySavedataShutdownStart));
-		mixin(registerd!(0xD4B95FFB, sceUtilitySavedataUpdate));
-		mixin(registerd!(0x8874DBE0, sceUtilitySavedataGetStatus));
+		mixin(registerFunction!(0x50C4CD57, sceUtilitySavedataInitStart));
+		mixin(registerFunction!(0x9790B33C, sceUtilitySavedataShutdownStart));
+		mixin(registerFunction!(0xD4B95FFB, sceUtilitySavedataUpdate));
+		mixin(registerFunction!(0x8874DBE0, sceUtilitySavedataGetStatus));
 
-		mixin(registerd!(0x5EEE6548, sceUtilityCheckNetParam));
-		mixin(registerd!(0x434D4B3A, sceUtilityGetNetParam));
+		mixin(registerFunction!(0x5EEE6548, sceUtilityCheckNetParam));
+		mixin(registerFunction!(0x434D4B3A, sceUtilityGetNetParam));
 
-		mixin(registerd!(0x2AD8E239, sceUtilityMsgDialogInitStart));
-		mixin(registerd!(0x67AF3428, sceUtilityMsgDialogShutdownStart));
-		mixin(registerd!(0x95FC253B, sceUtilityMsgDialogUpdate));
-		mixin(registerd!(0x9A1C91D7, sceUtilityMsgDialogGetStatus));
+		mixin(registerFunction!(0x2AD8E239, sceUtilityMsgDialogInitStart));
+		mixin(registerFunction!(0x67AF3428, sceUtilityMsgDialogShutdownStart));
+		mixin(registerFunction!(0x95FC253B, sceUtilityMsgDialogUpdate));
+		mixin(registerFunction!(0x9A1C91D7, sceUtilityMsgDialogGetStatus));
 		
-		mixin(registerd!(0xC629AF26, sceUtilityLoadAvModule));
+		mixin(registerFunction!(0xC629AF26, sceUtilityLoadAvModule));
 		
-		mixin(registerd!(0x4DB1E739, sceUtilityNetconfInitStart));
-		mixin(registerd!(0xF88155F6, sceUtilityNetconfShutdownStart));
-		mixin(registerd!(0x91E70E35, sceUtilityNetconfUpdate));
-		mixin(registerd!(0x6332AA39, sceUtilityNetconfGetStatus));
+		mixin(registerFunction!(0x4DB1E739, sceUtilityNetconfInitStart));
+		mixin(registerFunction!(0xF88155F6, sceUtilityNetconfShutdownStart));
+		mixin(registerFunction!(0x91E70E35, sceUtilityNetconfUpdate));
+		mixin(registerFunction!(0x6332AA39, sceUtilityNetconfGetStatus));
 
-		mixin(registerd!(0x3DFAEBA9, sceUtilityOskShutdownStart));
-		mixin(registerd!(0x4B85C861, sceUtilityOskUpdate));
-		mixin(registerd!(0xF3F76017, sceUtilityOskGetStatus));
-		mixin(registerd!(0xF6269B82, sceUtilityOskInitStart));
+		mixin(registerFunction!(0x3DFAEBA9, sceUtilityOskShutdownStart));
+		mixin(registerFunction!(0x4B85C861, sceUtilityOskUpdate));
+		mixin(registerFunction!(0xF3F76017, sceUtilityOskGetStatus));
+		mixin(registerFunction!(0xF6269B82, sceUtilityOskInitStart));
 
-		mixin(registerd!(0x1579A159, sceUtilityLoadNetModule));
-		mixin(registerd!(0x64D50C56, sceUtilityUnloadNetModule));
+		mixin(registerFunction!(0x1579A159, sceUtilityLoadNetModule));
+		mixin(registerFunction!(0x64D50C56, sceUtilityUnloadNetModule));
 		
-		mixin(registerd!(0x2A2B3DE0, sceUtilityLoadModule));
-		mixin(registerd!(0xE49BFE92, sceUtilityUnloadModule));
+		mixin(registerFunction!(0x2A2B3DE0, sceUtilityLoadModule));
+		mixin(registerFunction!(0xE49BFE92, sceUtilityUnloadModule));
 		
-		mixin(registerd!(0xC492F751, sceUtilityGameSharingInitStart));
-		mixin(registerd!(0xEFC6F80F, sceUtilityGameSharingShutdownStart));
-		mixin(registerd!(0x7853182D, sceUtilityGameSharingUpdate));
-		mixin(registerd!(0x946963F3, sceUtilityGameSharingGetStatus));
+		mixin(registerFunction!(0xC492F751, sceUtilityGameSharingInitStart));
+		mixin(registerFunction!(0xEFC6F80F, sceUtilityGameSharingShutdownStart));
+		mixin(registerFunction!(0x7853182D, sceUtilityGameSharingUpdate));
+		mixin(registerFunction!(0x946963F3, sceUtilityGameSharingGetStatus));
 
 		initNids_sysparams();
 	}
@@ -566,8 +568,4 @@ class sceUtility : ModuleNative {
 		unimplemented();
 	}
 
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceUtility"));
 }

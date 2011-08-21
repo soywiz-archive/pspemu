@@ -21,15 +21,17 @@ import pspemu.hle.kd.ctrl.Types;
 
 // http://forums.qj.net/psp-development-forum/141207-using-analog-stick-c-question.html
 
-class sceCtrl_driver : ModuleNative {
+class sceCtrl_driver : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0x6A2774F3, sceCtrlSetSamplingCycle));
-		mixin(registerd!(0x1F4011E6, sceCtrlSetSamplingMode));
-		mixin(registerd!(0x1F803938, sceCtrlReadBufferPositive));
-		mixin(registerd!(0x3A622550, sceCtrlPeekBufferPositive));
-		mixin(registerd!(0x0B588501, sceCtrlReadLatch));
-		mixin(registerd!(0xB1D0E5CD, sceCtrlPeekLatch));
-		mixin(registerd!(0xA7144800, sceCtrlSetIdleCancelThreshold));
+		mixin(registerFunction!(0x6A2774F3, sceCtrlSetSamplingCycle));
+		mixin(registerFunction!(0x1F4011E6, sceCtrlSetSamplingMode));
+		mixin(registerFunction!(0x1F803938, sceCtrlReadBufferPositive));
+		mixin(registerFunction!(0x3A622550, sceCtrlPeekBufferPositive));
+		mixin(registerFunction!(0x0B588501, sceCtrlReadLatch));
+		mixin(registerFunction!(0xB1D0E5CD, sceCtrlPeekLatch));
+		mixin(registerFunction!(0xA7144800, sceCtrlSetIdleCancelThreshold));
 	}
 
 	void readBufferedFrames(SceCtrlData* pad_data, int count = 1, bool positive = true) {
@@ -181,9 +183,5 @@ class sceCtrl_driver : ModuleNative {
 }
 
 class sceCtrl : sceCtrl_driver {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceCtrl"));
-	mixin(ModuleNative.registerModule("sceCtrl_driver"));
+	mixin TRegisterModule;
 }

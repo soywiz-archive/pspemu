@@ -2,12 +2,14 @@ module pspemu.hle.kd.sysmem.sceSuspend; // kd/sysmem.prx (sceSystemMemoryManager
 
 import pspemu.hle.ModuleNative;
 
-class sceSuspendForKernel : ModuleNative {
+class sceSuspendForKernel : HleModuleHost {
+	mixin TRegisterModule;
+
 	void initNids() {
-		mixin(registerd!(0xEADB1BD7, sceKernelPowerLock));
-		mixin(registerd!(0x3AEE7261, sceKernelPowerUnlock));
-		mixin(registerd!(0x090CCB3F, sceKernelPowerTick));
-		mixin(registerd!(0x3E0271D3, sceKernelVolatileMemLock));
+		mixin(registerFunction!(0xEADB1BD7, sceKernelPowerLock));
+		mixin(registerFunction!(0x3AEE7261, sceKernelPowerUnlock));
+		mixin(registerFunction!(0x090CCB3F, sceKernelPowerTick));
+		mixin(registerFunction!(0x3E0271D3, sceKernelVolatileMemLock));
 	}
 
 	// @TODO: Unknown.
@@ -44,9 +46,5 @@ class sceSuspendForKernel : ModuleNative {
 }
 
 class sceSuspendForUser : sceSuspendForKernel {
-}
-
-static this() {
-	mixin(ModuleNative.registerModule("sceSuspendForUser"));
-	mixin(ModuleNative.registerModule("sceSuspendForKernel"));
+	mixin TRegisterModule;
 }
